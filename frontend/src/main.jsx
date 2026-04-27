@@ -300,7 +300,7 @@ const Members = lazy(() => import("./Admin/Members/Members.jsx"));
 const AddMember = lazy(() => import("./Admin/Members/AddMembers.jsx"));
 const AddStock = lazy(() => import("./Admin/Products/AddStock.jsx"));
 const StockDetails = lazy(() => import("./Admin/Products/Stockdetails.jsx"));
-const SendMessage = lazy(() => import("./Admin/Members/SendMessage.jsx"));
+const SendMessage = lazy(() => import("./Admin/Message/SendMessage.jsx"));
 const PlansAll = lazy(() => import("./Admin/Plans/PlansPage.jsx"));
 const AddEditGymPlan = lazy(() => import("./Admin/Plans/AddPlans.jsx"));
 const AddEditFacility = lazy(() => import("./Admin/Fecilieties/Addfecilities.jsx"));

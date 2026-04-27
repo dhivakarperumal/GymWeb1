@@ -63,4 +63,36 @@ async function getMessageHistory(req, res) {
   }
 }
 
-module.exports = { sendMessages, getMessageHistory };
+async function sendSingleMessage(req, res) {
+  try {
+    const { userId, phone, message, type } = req.body;
+
+    if (!phone || !message) {
+      return res.status(400).json({ success: false, error: 'Phone and message are required' });
+    }
+
+    // SIMULATE SENDING WHATSAPP/SMS MESSAGE HERE
+    // For now, we will assume it succeeds immediately.
+    // In a real scenario, you'd call Twilio, WhatsApp Business API, or MSG91 here.
+    const isSuccess = true; 
+    const status = isSuccess ? 'sent' : 'failed';
+
+    // Store the result in the messages collection
+    const [result] = await db.query(
+      `INSERT INTO messages (userId, phone, message, type, status) VALUES (?, ?, ?, ?, ?)`,
+      [userId || null, phone, message, type || 'general', status]
+    );
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Message sent successfully', 
+      messageId: result.insertId 
+    });
+
+  } catch (error) {
+    console.error('sendMessage error:', error);
+    res.status(500).json({ success: false, error: 'Failed to send message' });
+  }
+}
+
+module.exports = { sendMessages, getMessageHistory, sendSingleMessage };
