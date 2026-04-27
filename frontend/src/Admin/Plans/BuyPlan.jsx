@@ -256,176 +256,181 @@ Thank you for joining 💪
         <div className="p-8 rounded-2xl bg-[#1b1b2f] shadow-xl">
 
           {/* SELECT MEMBER */}
-          <select
-            className="w-full p-3 mb-4 bg-gray-900 rounded-lg border border-white/10"
-            value={selectedUser ? `${selectedUser.source}-${selectedUser.id || selectedUser.u_id}` : ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (!val) {
-                setSelectedUser(null);
-                return;
-              }
-              const [source, idStr] = val.split('-');
-              const id = Number(idStr);
-              const user = members.find(
-                (m) => m.source === source && (m.id === id || m.u_id === id)
-              );
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Select Member</label>
+            <select
+              className="w-full p-3 bg-gray-900 rounded-lg border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={selectedUser ? `${selectedUser.source}-${selectedUser.id || selectedUser.u_id}` : ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) {
+                  setSelectedUser(null);
+                  return;
+                }
+                const [source, idStr] = val.split('-');
+                const id = Number(idStr);
+                const user = members.find(
+                  (m) => m.source === source && (m.id === id || m.u_id === id)
+                );
 
-              setSelectedUser(user);
+                setSelectedUser(user);
 
-              if (user) {
-                setForm((prev) => ({
-                  ...prev,
-                  phone: user.phone || "",
-                  email: user.email || "",
-                  address: user.address || "",
-                  height: user.height || "",
-                  weight: user.weight || "",
-                  bmi: user.bmi || "",
-                }));
-              }
-            }}
-          >
-            <option value="">Select Member</option>
+                if (user) {
+                  setForm((prev) => ({
+                    ...prev,
+                    phone: user.phone || "",
+                    email: user.email || "",
+                    address: user.address || "",
+                    height: user.height || "",
+                    weight: user.weight || "",
+                    bmi: user.bmi || "",
+                  }));
+                }
+              }}
+            >
+              <option value="">-- Choose a member --</option>
 
-            {(() => {
-              const seenPhones = new Set();
-              return members
-                .filter((m) => {
-                  // 1. Skip if already has active plan
-                  const hasPlan = m.status === "active" && m.plan;
-                  if (hasPlan) return false;
-                  
-                  // 2. Skip duplicates by phone
-                  if (seenPhones.has(m.phone)) return false;
-                  seenPhones.add(m.phone);
-                  
-                  return true;
-                })
-                .map((m) => {
-                  const uniqueKey = `${m.source}-${m.id || m.u_id}`;
-                  return (
-                    <option key={uniqueKey} value={uniqueKey}>
-                      {m.name || "Unknown"} ({m.phone})
-                    </option>
-                  );
-                });
-            })()}
-          </select>
+              {(() => {
+                const seenPhones = new Set();
+                return members
+                  .filter((m) => {
+                    // 1. Skip if already has active plan
+                    const hasPlan = m.status === "active" && m.plan;
+                    if (hasPlan) return false;
+                    
+                    // 2. Skip duplicates by phone
+                    if (seenPhones.has(m.phone)) return false;
+                    seenPhones.add(m.phone);
+                    
+                    return true;
+                  })
+                  .map((m) => {
+                    const uniqueKey = `${m.source}-${m.id || m.u_id}`;
+                    return (
+                      <option key={uniqueKey} value={uniqueKey}>
+                        {m.name || "Unknown"} ({m.phone})
+                      </option>
+                    );
+                  });
+              })()}
+            </select>
+          </div>
 
           {/* PHONE */}
-          <input
-            className="w-full p-3 mb-4 bg-gray-900 rounded-lg"
-            value={form.phone}
-            placeholder="Phone"
-            onChange={(e) =>
-              setForm({ ...form, phone: e.target.value })
-            }
-          />
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+            <input
+              className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={form.phone}
+              placeholder="Enter phone number"
+              onChange={(e) =>
+                setForm({ ...form, phone: e.target.value })
+              }
+            />
+          </div>
 
           {/* EMAIL */}
-          <input
-            className="w-full p-3 mb-4 bg-gray-900 rounded-lg"
-            value={form.email}
-            placeholder="Email"
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
-          />
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+            <input
+              className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={form.email}
+              placeholder="Enter email address"
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+            />
+          </div>
 
           {/* ADDRESS */}
-          <textarea
-            className="w-full p-3 mb-4 bg-gray-900 rounded-lg"
-            value={form.address}
-            placeholder="Address"
-            onChange={(e) =>
-              setForm({ ...form, address: e.target.value })
-            }
-          />
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Address</label>
+            <textarea
+              className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={form.address}
+              placeholder="Enter full address"
+              onChange={(e) =>
+                setForm({ ...form, address: e.target.value })
+              }
+            />
+          </div>
 
           {/* HEIGHT WEIGHT BMI */}
           <div className="grid grid-cols-3 gap-4 mb-4">
-            <input
-              className="p-3 bg-gray-900 rounded-lg"
-              placeholder="Height"
-              value={form.height}
-              onChange={(e) =>
-                setForm({ ...form, height: e.target.value })
-              }
-            />
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Height (cm)</label>
+              <input
+                className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="e.g. 175"
+                value={form.height}
+                onChange={(e) =>
+                  setForm({ ...form, height: e.target.value })
+                }
+              />
+            </div>
 
-            <input
-              className="p-3 bg-gray-900 rounded-lg"
-              placeholder="Weight"
-              value={form.weight}
-              onChange={(e) =>
-                setForm({ ...form, weight: e.target.value })
-              }
-            />
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Weight (kg)</label>
+              <input
+                className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="e.g. 70"
+                value={form.weight}
+                onChange={(e) =>
+                  setForm({ ...form, weight: e.target.value })
+                }
+              />
+            </div>
 
-            <input
-              className="p-3 bg-gray-900 rounded-lg"
-              placeholder="BMI"
-              value={form.bmi}
-              onChange={(e) =>
-                setForm({ ...form, bmi: e.target.value })
-              }
-            />
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">BMI</label>
+              <input
+                className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Auto-calculated"
+                value={form.bmi}
+                onChange={(e) =>
+                  setForm({ ...form, bmi: e.target.value })
+                }
+              />
+            </div>
           </div>
 
           {/* DATES */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="date"
-              value={form.startDate}
-              readOnly
-              className="p-3 bg-gray-900 rounded-lg"
-            />
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Start Date</label>
+              <input
+                type="date"
+                value={form.startDate}
+                readOnly
+                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
 
-            <input
-              type="date"
-              value={form.endDate}
-              readOnly
-              className="p-3 bg-gray-900 rounded-lg"
-            />
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">End Date</label>
+              <input
+                type="date"
+                value={form.endDate}
+                readOnly
+                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
           </div>
 
           {/* PAYMENT */}
-          <select
-            className="w-full p-3 bg-gray-900 rounded-lg mt-4"
-            value={form.paymentMode}
-            onChange={(e) =>
-              setForm({ ...form, paymentMode: e.target.value })
-            }
-          >
-            <option value="cash">Cash</option>
-            <option value="upi">UPI</option>
-          </select>
-
-          {/* TRAINER */}
-          <select
-            className="w-full p-3 bg-gray-900 rounded-lg mt-4"
-            value={selectedTrainer || ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              setSelectedTrainer(val === "" ? null : Number(val));
-            }}
-          >
-            <option value="">Select Trainer (optional)</option>
-            {trainers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-
-          {/* SESSION TIME */}
-          <input
-            type="time"
-            className="w-full p-3 bg-gray-900 rounded-lg mt-4"
-            value={sessionTime}
-            onChange={(e) => setSessionTime(e.target.value)}
-          />
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Payment Mode</label>
+            <select
+              className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              value={form.paymentMode}
+              onChange={(e) =>
+                setForm({ ...form, paymentMode: e.target.value })
+              }
+            >
+              <option value="cash">Cash</option>
+              <option value="upi">UPI</option>
+            </select>
+          </div>
 
           <button
             onClick={handleAssignPlan}
@@ -441,27 +446,30 @@ Thank you for joining 💪
         {/* RIGHT PLAN SELECT */}
         <div className="p-8 rounded-2xl bg-[#1b1b2f] shadow-xl">
 
-          <h2 className="text-xl mb-4">Select Plan</h2>
+          <h2 className="text-xl mb-4 font-semibold text-white">Select Plan</h2>
 
-          <select
-            className="w-full p-3 bg-gray-900 rounded-lg mb-4"
-            defaultValue=""
-            onChange={(e) => {
-              const plan = plans.find(
-                (p) => p.id === Number(e.target.value)
-              );
-              setSelectedPlan(plan);
-            }}
-          >
-            <option value="">Select Plan</option>
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Gym Plan</label>
+            <select
+              className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              defaultValue=""
+              onChange={(e) => {
+                const plan = plans.find(
+                  (p) => p.id === Number(e.target.value)
+                );
+                setSelectedPlan(plan);
+              }}
+            >
+              <option value="">-- Choose a plan --</option>
 
-            {plans.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} - {p.duration} months - ₹
-                {p.finalPrice ?? p.final_price}
-              </option>
-            ))}
-          </select>
+              {plans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} - {p.duration} months - ₹
+                  {p.finalPrice ?? p.final_price}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {selectedPlan && (
             <div className="p-4 border border-red-400 rounded-lg">
