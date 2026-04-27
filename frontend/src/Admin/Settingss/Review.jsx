@@ -150,7 +150,7 @@ const ReviewsSettings = () => {
       toast.error("Failed to update review status");
     }
   };
-  
+
   const filtered = reviews.filter(
     (r) =>
       r.name?.toLowerCase().includes(search.toLowerCase()) ||

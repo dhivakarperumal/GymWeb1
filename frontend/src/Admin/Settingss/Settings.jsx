@@ -104,6 +104,13 @@ const Settings = () => {
         />
 
         <SettingCard
+          icon={<FaHeartbeat />}
+          title="Staff & Trainers"
+          desc="Manage gym staff, trainers, and their details."
+          path="/admin/staff"
+        />
+
+        <SettingCard
           icon={<FaStar />}
           title="Gym Reviews & Ratings"
           desc="View and manage patient feedback, ratings, and complaints."

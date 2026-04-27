@@ -162,13 +162,13 @@ const UserManagement = () => {
             <option value="member">Member</option>
           </select>
 
-          <select value={statusFilter}  onChange={(e) => setStatusFilter(e.target.value)} className={glassInput}>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={glassInput}>
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Disabled</option>
           </select>
 
-          
+
         </div>
       </div>
 

@@ -35,6 +35,10 @@ const navItems = [
   { path: "/admin/members", label: "Members", icon: Users },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
 
+  { path: "/admin/assignedtrainers", label: "Assigned Trainers", icon: UserCheck },
+
+   { path: "/admin/payments", label: "Payments", icon: CreditCard },
+
   { path: "/admin/send-message", label: "Send Message", icon: Send },
 
   {
@@ -51,17 +55,10 @@ const navItems = [
 { path: "/admin/billing", label: "Billing", icon: Receipt },
   
   { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
-  { path: "/admin/payments", label: "Payments", icon: CreditCard },
+ 
   
 
-  {
-    label: "Trainers & Staff",
-    icon: UserRound,
-    children: [
-      { path: "/admin/staff", label: "Trainers", icon: HeartPulse },
-      { path: "/admin/assignedtrainers", label: "Assigned Trainers", icon: UserCheck },
-    ],
-  },
+  
 
   
   {

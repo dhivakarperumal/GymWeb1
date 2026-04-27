@@ -34,7 +34,7 @@ const ServicesList = () => {
     }
     const base = import.meta.env.VITE_API_URL || "";
     return `${base.replace(/\/$/, "")}/${img.replace(/^\/+/, "")}`;
-  }; 
+  };
 
   /* ================= FETCH SERVICES ================= */
   const fetchServices = async () => {
@@ -166,24 +166,24 @@ const ServicesList = () => {
                   </td>
 
                   <td className={tdClass}>
-  <div className="flex gap-2">
-    <button
-      onClick={() => navigate(`/admin/addservice/${s.id}`)}
-      className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-      title="Edit"
-    >
-      <FiEdit size={16} />
-    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate(`/admin/addservice/${s.id}`)}
+                        className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                        title="Edit"
+                      >
+                        <FiEdit size={16} />
+                      </button>
 
-    <button
-      onClick={() => handleDelete(s.id)}
-      className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
-      title="Delete"
-    >
-      <FiTrash2 size={16} />
-    </button>
-  </div>
-</td>
+                      <button
+                        onClick={() => handleDelete(s.id)}
+                        className="p-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                        title="Delete"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
 
                 </tr>
               ))}

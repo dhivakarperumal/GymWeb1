@@ -10,7 +10,8 @@ import {
   FaBuilding,
   FaEdit,
   FaTrash,
-  FaEye
+  FaEye,
+  FaArrowLeft
 } from "react-icons/fa";
 
 const statCard =
@@ -130,8 +131,17 @@ const Staffs = () => {
 
   return (
     <div className="p-0 min-h-screen space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h3 className="text-lg font-semibold"></h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate("/admin/settings")}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-all text-white border border-white/10"
+            title="Back to Settings"
+          >
+            <FaArrowLeft />
+          </button>
+          <h3 className="text-2xl font-bold text-white">Staff & Trainers</h3>
+        </div>
         <button
           onClick={() => navigate("/admin/addstaff")}
           className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:scale-105 transition-all shadow-lg"
