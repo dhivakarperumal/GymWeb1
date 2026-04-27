@@ -46,7 +46,6 @@ const AddEditStaff = () => {
     phone: "",
     employeeId: "",
     role: "",
-    department: "",
     gender: "",
     bloodGroup: "",
     dob: "",
@@ -93,7 +92,6 @@ const AddEditStaff = () => {
           phone: data.phone || "",
           employeeId: data.employee_id || "",
           role: data.role || "",
-          department: data.department || "",
           gender: data.gender || "",
           bloodGroup: data.blood_group || "",
           dob: data.dob || "",
@@ -247,11 +245,6 @@ const AddEditStaff = () => {
     // Role validation
     if (!form.role?.trim()) {
       newErrors.role = "Role is required";
-    }
-
-    // Department validation
-    if (!form.department?.trim()) {
-      newErrors.department = "Department is required";
     }
 
     // Salary validation
@@ -553,16 +546,6 @@ const AddEditStaff = () => {
           </select>
 
           <ErrorText field="role" />
-        </div>
-
-
-
-        {/* DEPARTMENT */}
-        <div>
-          <label className="text-sm font-medium">Department *</label>
-          <input name="department" placeholder="Enter Department" value={form.department} onChange={handleChange}
-            className={`${inputClass} ${errors.department ? "border-red-500 focus:ring-red-500" : ""}`} />
-          <ErrorText field="department" />
         </div>
 
         {/* GENDER */}

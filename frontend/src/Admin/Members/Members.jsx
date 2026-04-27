@@ -258,6 +258,15 @@ const Members = () => {
           </button>
 
           <button
+            onClick={() => navigate("/admin/buyplanadmin")}
+            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
+            bg-gradient-to-r from-blue-500 to-blue-600
+            hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
+          >
+            Buy Plan
+          </button>
+
+          <button
             onClick={() => navigate("/admin/addmembers")}
             className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
             bg-gradient-to-r from-orange-500 to-orange-600
