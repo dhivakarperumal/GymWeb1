@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 
 const Enquiry = ({ isModal = false, onClose }) => {
   const [enquiries, setEnquiries] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isModal); // Don't show loading in modal mode
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
@@ -54,6 +54,8 @@ const Enquiry = ({ isModal = false, onClose }) => {
   useEffect(() => {
     if (!isModal) {
       fetchEnquiries();
+    } else {
+      setLoading(false); // Don't show loading in modal mode
     }
   }, [isModal]);
 
@@ -248,7 +250,7 @@ const Enquiry = ({ isModal = false, onClose }) => {
       <div>
         <div className={isModal ? "w-full" : "max-w-5xl mx-auto py-10"}>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
               {/* SECTION: PERSONAL INFO */}
               <div className="space-y-4">
                 <h1 className="text-white text-4xl font-bold border-b border-white/10 pb-1">Enquiry Form</h1>
