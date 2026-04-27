@@ -319,6 +319,14 @@ const Navbar = () => {
                 <Bell size={20} />
               </button> */}
 
+              <button
+                onClick={() => navigate("/userenquiry")}
+                className="hidden md:flex items-center px-5 py-2 rounded-full 
+  bg-red-500 hover:bg-red-600 text-white font-semibold transition"
+              >
+                Enquire Now
+              </button>
+
               {/* CART */}
               <button
                 onClick={() => navigate("/cart")}
