@@ -7,6 +7,8 @@ import cache from "../../cache";
 import * as XLSX from "xlsx";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 
 const Members = () => {
@@ -18,6 +20,10 @@ const Members = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
   const [filterType, setFilterType] = useState("all"); // all, withPlan, withoutPlan
+
+  useEffect(() => {
+    AOS.init({ duration: 800, once: true });
+  }, []);
 
   useEffect(() => {
     setSearch(querySearch);
@@ -252,28 +258,9 @@ const Members = () => {
 
         {/* ➕ ADD MEMBER + IMPORT/EXPORT */}
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          {/* Import */}
-          <label className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold cursor-pointer hover:bg-blue-600 transition shadow-lg whitespace-nowrap flex-1 sm:flex-none">
-            Import Excel
-            <input type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
-          </label>
+        
 
-          {/* Export */}
-          <button
-            onClick={exportToExcel}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 transition shadow-lg whitespace-nowrap flex-1 sm:flex-none"
-          >
-            Export Excel
-          </button>
-
-          <button
-            onClick={() => navigate("/admin/buyplanadmin")}
-            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
-            bg-gradient-to-r from-blue-500 to-blue-600
-            hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
-          >
-            Buy Plan
-          </button>
+    
 
           <button
             onClick={() => navigate("/admin/addmembers")}
@@ -309,29 +296,54 @@ const Members = () => {
         </div>
       </div>
 
-      {/* 📑 TABS */}
-      <div className="flex items-center gap-2 mb-8 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit mx-auto sm:mx-0">
-        {[
-          { id: 'all', label: 'All Members', icon: <Users size={16} /> },
-          { id: 'withPlan', label: 'Active Plan', icon: <Calendar size={16} /> },
-          { id: 'withoutPlan', label: 'No Plan', icon: <Mail size={16} /> },
-        ].map((tab) => (
+      {/* 📑 TABS & ACTIONS */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8" data-aos="fade-up">
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit mx-auto sm:mx-0">
+          {[
+            { id: 'all', label: 'All Members', icon: <Users size={16} /> },
+            { id: 'withPlan', label: 'Active Plan', icon: <Calendar size={16} /> },
+            { id: 'withoutPlan', label: 'No Plan', icon: <Mail size={16} /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setFilterType(tab.id);
+                setCurrentPage(1);
+              }}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300
+                ${filterType === tab.id
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20 scale-105 z-10'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center lg:justify-end">
           <button
-            key={tab.id}
-            onClick={() => {
-              setFilterType(tab.id);
-              setCurrentPage(1);
-            }}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300
-              ${filterType === tab.id
-                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20 scale-105 z-10'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
+            onClick={() => navigate("/admin/buyplanadmin")}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
           >
-            {tab.icon}
-            {tab.label}
+            Buy Plan
           </button>
-        ))}
+
+          <label className="flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-sm font-bold cursor-pointer hover:bg-indigo-500 hover:text-white transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none">
+            Import Excel
+            <input type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
+          </label>
+
+          <button
+            onClick={exportToExcel}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-sm font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
+          >
+            Export Excel
+          </button>
+        </div>
       </div>
 
       {/* DATA VIEW */}
