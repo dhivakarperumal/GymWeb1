@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import {
-  FaUsers,
-  FaUserPlus,
-  FaSearch,
-  FaArrowLeft,
-} from "react-icons/fa";
+import { FaUsers, FaUserPlus, FaSearch, FaArrowLeft, FaEdit, FaCheck, FaTimes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 
 /* ================= GLASS CLASSES ================= */
 const glassCard =
@@ -24,9 +20,10 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
 
   // pagination
+  const { role: myRole } = useAuth();
+  const [editingId, setEditingId] = useState(null);
   const [page, setPage] = useState(1);
   const pageSize = 10; // items per page
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,7 +42,7 @@ const UserManagement = () => {
           email: u.email,
           mobile: u.mobile,
           active: true,
-          role: u.role || "member",
+          role: (u.role || "member").toLowerCase(),
         }))
       );
     } catch (err) {
@@ -107,12 +104,24 @@ const UserManagement = () => {
     <div className="space-y-8 text-white">
 
       {/* HEADER */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
-      >
-        <FaArrowLeft /> Back
-      </button>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 px-4 py-2 w-fit rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
+        >
+          <FaArrowLeft /> Back
+        </button>
+
+        <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10">
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Your Role</span>
+            <span className="text-orange-400 font-semibold text-sm capitalize">{myRole}</span>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 border border-orange-500/20">
+            <FaUsers />
+          </div>
+        </div>
+      </div>
 
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -194,16 +203,45 @@ const UserManagement = () => {
                 <td className="px-4 py-3">{u.email}</td>
 
                 <td className="px-4 py-3">
-                  <select
-                    value={u.role}
-                    onChange={(e) => updateRole(u.id, e.target.value)}
-                    className="bg-gray-800 border border-white/20 rounded-lg px-2 py-1 text-white"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="trainer">Trainer</option>
-                    <option value="staff">Staff</option>
-                    <option value="member">Member</option>
-                  </select>
+                  {editingId === u.id ? (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={u.role}
+                        onChange={(e) => {
+                          updateRole(u.id, e.target.value);
+                          setEditingId(null);
+                        }}
+                        className="bg-gray-800 border border-blue-500 rounded-lg px-2 py-1 text-white text-xs outline-none"
+                        autoFocus
+                        onBlur={() => setTimeout(() => setEditingId(null), 200)}
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="trainer">Trainer</option>
+                        <option value="staff">Staff</option>
+                        <option value="member">Member</option>
+                      </select>
+                      <button onClick={() => setEditingId(null)} className="text-red-400 hover:text-red-300">
+                        <FaTimes size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border
+                        ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' :
+                          u.role === 'trainer' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
+                            u.role === 'staff' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                              'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
+                        {u.role}
+                      </span>
+                      <button
+                        onClick={() => setEditingId(u.id)}
+                        className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all"
+                        title="Change Role"
+                      >
+                        <FaEdit size={12} />
+                      </button>
+                    </div>
+                  )}
                 </td>
 
                 <td className="px-4 py-3">
