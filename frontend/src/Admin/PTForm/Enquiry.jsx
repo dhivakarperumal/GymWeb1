@@ -94,7 +94,7 @@ const Enquiry = ({
 
   const handleEdit = (enquiry) => {
     setSelectedEnquiry(enquiry);
-    setFormData({
+    setLocalFormData({
       name: enquiry.name,
       email: enquiry.email,
       phone: enquiry.phone || "",
@@ -249,8 +249,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Name</label>
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={localFormData.name}
+                    onChange={(e) => setLocalFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -259,8 +259,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Email</label>
                   <input
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    value={localFormData.email}
+                    onChange={(e) => setLocalFormData({ ...formData, email: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -269,8 +269,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Phone</label>
                   <input
                     type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    value={localFormData.phone}
+                    onChange={(e) => setLocalFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -279,8 +279,8 @@ const Enquiry = ({
                     <label className="block text-sm font-medium text-white/80 mb-1">Date of Birth</label>
                     <input
                       type="date"
-                      value={formData.dob}
-                      onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                      value={localFormData.dob}
+                      onChange={(e) => setLocalFormData({ ...formData, dob: e.target.value })}
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -288,8 +288,8 @@ const Enquiry = ({
                     <label className="block text-sm font-medium text-white/80 mb-1">Age</label>
                     <input
                       type="number"
-                      value={formData.age}
-                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                      value={localFormData.age}
+                      onChange={(e) => setLocalFormData({ ...formData, age: e.target.value })}
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -297,8 +297,8 @@ const Enquiry = ({
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Blood Group</label>
                   <select
-                    value={formData.blood_group}
-                    onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
+                    value={localFormData.blood_group}
+                    onChange={(e) => setLocalFormData({ ...formData, blood_group: e.target.value })}
                     className="bg-[#1f2937] text-white w-full px-3 py-2  border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select Blood Group</option>
@@ -316,8 +316,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Location / Branch</label>
                   <input
                     type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    value={localFormData.location}
+                    onChange={(e) => setLocalFormData({ ...formData, location: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., Gym Branch Name"
                   />
@@ -326,8 +326,8 @@ const Enquiry = ({
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Full Address</label>
                 <textarea
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  value={localFormData.address}
+                  onChange={(e) => setLocalFormData({ ...formData, address: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -342,8 +342,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Employer</label>
                   <input
                     type="text"
-                    value={formData.employer}
-                    onChange={(e) => setFormData({ ...formData, employer: e.target.value })}
+                    value={localFormData.employer}
+                    onChange={(e) => setLocalFormData({ ...formData, employer: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -351,8 +351,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Occupation</label>
                   <input
                     type="text"
-                    value={formData.occupation}
-                    onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                    value={localFormData.occupation}
+                    onChange={(e) => setLocalFormData({ ...formData, occupation: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -367,8 +367,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Contact Name</label>
                   <input
                     type="text"
-                    value={formData.emergency_contact_name}
-                    onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })}
+                    value={localFormData.emergency_contact_name}
+                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_name: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -376,8 +376,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Relationship</label>
                   <input
                     type="text"
-                    value={formData.emergency_contact_relationship}
-                    onChange={(e) => setFormData({ ...formData, emergency_contact_relationship: e.target.value })}
+                    value={localFormData.emergency_contact_relationship}
+                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_relationship: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -385,8 +385,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Home Phone</label>
                   <input
                     type="tel"
-                    value={formData.emergency_contact_phone_home}
-                    onChange={(e) => setFormData({ ...formData, emergency_contact_phone_home: e.target.value })}
+                    value={localFormData.emergency_contact_phone_home}
+                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_phone_home: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -394,8 +394,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Work Phone</label>
                   <input
                     type="tel"
-                    value={formData.emergency_contact_phone_work}
-                    onChange={(e) => setFormData({ ...formData, emergency_contact_phone_work: e.target.value })}
+                    value={localFormData.emergency_contact_phone_work}
+                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_phone_work: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -403,8 +403,8 @@ const Enquiry = ({
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Contact Address</label>
                 <textarea
-                  value={formData.emergency_contact_address}
-                  onChange={(e) => setFormData({ ...formData, emergency_contact_address: e.target.value })}
+                  value={localFormData.emergency_contact_address}
+                  onChange={(e) => setLocalFormData({ ...formData, emergency_contact_address: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -419,8 +419,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Height (cm)</label>
                   <input
                     type="number"
-                    value={formData.height}
-                    onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                    value={localFormData.height}
+                    onChange={(e) => setLocalFormData({ ...formData, height: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -428,8 +428,8 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Weight (kg)</label>
                   <input
                     type="number"
-                    value={formData.weight}
-                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                    value={localFormData.weight}
+                    onChange={(e) => setLocalFormData({ ...formData, weight: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -437,7 +437,7 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">BMI</label>
                   <input
                     type="text"
-                    value={formData.bmi}
+                    value={localFormData.bmi}
                     readOnly
                     className="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-orange-400 font-bold focus:outline-none"
                   />
@@ -446,8 +446,8 @@ const Enquiry = ({
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Fitness Goals</label>
                 <textarea
-                  value={formData.fitness_goal}
-                  onChange={(e) => setFormData({ ...formData, fitness_goal: e.target.value })}
+                  value={localFormData.fitness_goal}
+                  onChange={(e) => setLocalFormData({ ...formData, fitness_goal: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Describe your fitness objectives..."
@@ -456,8 +456,8 @@ const Enquiry = ({
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Additional Notes / Message</label>
                 <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  value={localFormData.message}
+                  onChange={(e) => setLocalFormData({ ...formData, message: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -468,8 +468,8 @@ const Enquiry = ({
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">Status</label>
                 <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  value={localFormData.status}
+                  onChange={(e) => setLocalFormData({ ...formData, status: e.target.value })}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="pending">Pending</option>
