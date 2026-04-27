@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Send, Mail, Phone, CheckSquare, Square, Search, Loader, MessageSquare } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 const SendMessage = () => {
   const [activeTab, setActiveTab] = useState("membership");
@@ -19,6 +21,10 @@ const SendMessage = () => {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    AOS.init({ duration: 800, once: true });
+  }, []);
+
+  useEffect(() => {
     fetchUsers();
     // reset selection on tab change
     setSelectedMembers([]);
@@ -34,12 +40,18 @@ const SendMessage = () => {
           (m) => m.status === "active"
         );
         setUsers(activeMemberships);
-      } else {
+      } else if (activeTab === "enquiry") {
         const res = await api.get("/enquiries");
         const pendingEnquiries = (res.data || []).filter(
           (e) => e.status === "pending"
         );
         setUsers(pendingEnquiries);
+      } else if (activeTab === "noplan") {
+        const res = await api.get("/members");
+        const members = res.data || [];
+        // Filter those who don't have an active plan
+        const noPlanMembers = members.filter(m => !m.plan || m.status !== 'active');
+        setUsers(noPlanMembers);
       }
     } catch (err) {
       console.error(err);
@@ -53,7 +65,7 @@ const SendMessage = () => {
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
     const name = (activeTab === "membership" ? u.username || u.userName : u.name) || "";
-    const phone = (activeTab === "membership" ? u.mobile || u.userPhone || u.phone : u.phone) || "";
+    const phone = (activeTab === "membership" ? u.mobile || u.userPhone || u.phone : u.phone || u.mobile) || "";
     const email = (activeTab === "membership" ? u.email || u.userEmail : u.email) || "";
     return name.toLowerCase().includes(q) || phone.toLowerCase().includes(q) || email.toLowerCase().includes(q);
   });
@@ -115,9 +127,9 @@ const SendMessage = () => {
         type: messageType,
         message: message,
         recipients: validUsers.map(u => ({
-          name: activeTab === "membership" ? (u.username || u.userName) : u.name,
+          name: (activeTab === "membership" ? (u.username || u.userName) : u.name) || "User",
           email: activeTab === "membership" ? (u.email || u.userEmail) : u.email,
-          phone: activeTab === "membership" ? (u.mobile || u.userPhone || u.phone) : u.phone
+          phone: activeTab === "membership" ? (u.mobile || u.userPhone || u.phone) : (u.phone || u.mobile)
         }))
       };
 
@@ -153,7 +165,7 @@ const SendMessage = () => {
         </div>
 
         {/* TABS */}
-        <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 w-fit mb-4">
+        <div className="flex flex-wrap bg-white/5 rounded-xl p-1 border border-white/10 w-fit mb-4 gap-1" data-aos="fade-right">
           <button
             onClick={() => setActiveTab("membership")}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
@@ -162,7 +174,17 @@ const SendMessage = () => {
                 : "text-gray-400 hover:text-white"
             }`}
           >
-            Membership Users (Active)
+            Active Members
+          </button>
+          <button
+            onClick={() => setActiveTab("noplan")}
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "noplan"
+                ? "bg-gradient-to-r from-orange-500 to-orange-600 shadow-lg text-white"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            No Plan / New
           </button>
           <button
             onClick={() => setActiveTab("enquiry")}
@@ -172,14 +194,14 @@ const SendMessage = () => {
                 : "text-gray-400 hover:text-white"
             }`}
           >
-            Enquiry Users (Pending)
+            Enquiries
           </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* LEFT: USER SELECTION */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4" data-aos="fade-up">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-xl flex flex-col h-[600px]">
               
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
@@ -216,21 +238,21 @@ const SendMessage = () => {
                 {loading ? (
                   <div className="h-full flex items-center justify-center text-gray-400">Loading {activeTab}s...</div>
                 ) : filtered.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-gray-400">No {activeTab}s found.</div>
+                  <div className="h-full flex items-center justify-center text-gray-400">No users found for {activeTab}.</div>
                 ) : (
                   filtered.map((u) => {
-                    const id = u.id;
+                    const id = u.id || u._id;
                     const isSelected = selectedMembers.includes(id);
-                    const name = activeTab === "membership" ? u.username || u.userName : u.name;
-                    const phone = activeTab === "membership" ? u.mobile || u.userPhone || u.phone : u.phone;
-                    const email = activeTab === "membership" ? u.email || u.userEmail : u.email;
+                    const name = (activeTab === "membership" || activeTab === "noplan") ? u.username || u.userName || u.name : u.name;
+                    const phone = (activeTab === "membership" || activeTab === "noplan") ? u.mobile || u.userPhone || u.phone : u.phone || u.mobile;
+                    const email = (activeTab === "membership" || activeTab === "noplan") ? u.email || u.userEmail : u.email;
                     
                     return (
                       <div 
                         key={id}
                         onClick={() => toggleSelectMember(id)}
                         className={`flex items-center gap-4 p-3 rounded-xl border transition cursor-pointer
-                        ${isSelected ? "bg-orange-500/10 border-orange-500/50" : "bg-black/20 border-white/5 hover:bg-white/5"}
+                        ${isSelected ? "bg-orange-500/10 border-orange-500/50 shadow-[0_0_15px_rgba(234,88,12,0.1)]" : "bg-black/20 border-white/5 hover:bg-white/5"}
                         `}
                       >
                         <div className="shrink-0">
@@ -243,18 +265,23 @@ const SendMessage = () => {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white truncate">{name || "N/A"}</p>
                           <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                            <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {phone || "-"}</span>
-                            <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {email || "-"}</span>
+                            <span className="flex items-center gap-1 shrink-0"><Phone className="w-3 h-3 text-orange-500/70" /> {phone || "-"}</span>
+                            <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3 text-blue-500/70" /> {email || "-"}</span>
                           </div>
                         </div>
-                        {activeTab === "membership" && u.planName && (
+                        {(activeTab === "membership" || activeTab === "noplan") && (u.planName || u.plan) && (
                           <div className="text-xs text-cyan-300 bg-cyan-500/10 px-2 py-1 rounded border border-cyan-500/20 hidden sm:block">
-                            {u.planName}
+                            {u.planName || u.plan}
+                          </div>
+                        )}
+                        {activeTab === "noplan" && (!u.planName && !u.plan) && (
+                          <div className="text-xs text-red-300 bg-red-500/10 px-2 py-1 rounded border border-red-500/20 hidden sm:block">
+                            No Plan
                           </div>
                         )}
                         {activeTab === "enquiry" && (
                           <div className="text-xs text-purple-300 bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20 hidden sm:block max-w-[120px] truncate">
-                            {u.message || u.fitness_goal || "Pending Enquiry"}
+                            {u.status || "Pending"}
                           </div>
                         )}
                       </div>
@@ -267,7 +294,7 @@ const SendMessage = () => {
           </div>
 
           {/* RIGHT: MESSAGE COMPOSER */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-4" data-aos="fade-left">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-xl sticky top-24">
               <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-orange-500" />
