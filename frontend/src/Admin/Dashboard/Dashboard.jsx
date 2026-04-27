@@ -7,8 +7,20 @@ import {
   FaTools,
   FaUsers,
   FaBox,
+  FaPlus,
+  FaCreditCard,
+  FaUserPlus,
+  FaChartPie,
+  FaCog,
+  FaRunning,
+  FaRegEnvelope,
+  FaClipboardList,
+  FaBoxOpen,
+  FaMoneyCheckAlt
 } from "react-icons/fa";
 import dayjs from "dayjs";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 import {
   LineChart,
@@ -71,6 +83,35 @@ const StatCard = ({ title, value, icon, color }) => (
   </div>
 );
 
+/* -------------------- QUICK ACTION -------------------- */
+
+const QuickAction = ({ title, icon, color, path, navigate }) => (
+  <button
+    onClick={() => navigate(path)}
+    className="
+      group relative overflow-hidden rounded-2xl
+      bg-white/10 backdrop-blur-xl
+      border border-white/20
+      p-5 flex flex-col items-center justify-center gap-3
+      hover:bg-white/20 hover:border-white/40 transition-all duration-300
+      hover:scale-[1.03] active:scale-[0.97]
+      shadow-[0_8px_32px_rgba(0,0,0,0.12)]
+    "
+  >
+    <div className={`
+      p-4 rounded-2xl bg-gradient-to-br ${color}
+      text-white text-2xl shadow-xl group-hover:scale-110 transition-transform duration-300
+    `}>
+      {icon}
+    </div>
+    <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center group-hover:text-white transition-colors">
+      {title}
+    </span>
+    {/* Subtle glow effect on hover */}
+    <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity blur-2xl`} />
+  </button>
+);
+
 /* -------------------- HELPERS -------------------- */
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -105,6 +146,11 @@ export default function Dashboard() {
   const handleRangeChange = (type, range = null) => {
     setFilterRange({ type, range });
   };
+
+  // ================= AOS =================
+  useEffect(() => {
+    AOS.init({ duration: 800, once: true });
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -338,8 +384,35 @@ export default function Dashboard() {
         <DateRangeFilter onRangeChange={handleRangeChange} />
       </div>
 
+      {/* 🚀 QUICK ACCESS COMMAND CENTER */}
+      <section className="space-y-5" data-aos="fade-up" data-aos-delay="100">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-7 bg-gradient-to-t from-orange-600 to-orange-400 rounded-full shadow-[0_0_15px_rgba(234,88,12,0.4)]" />
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/50">
+              Quick Terminal
+            </h2>
+          </div>
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent ml-6 hidden sm:block" />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <QuickAction title="Add Member" icon={<FaPlus />} color="from-orange-500 to-rose-500" path="/admin/addmembers" navigate={navigate} />
+          <QuickAction title="Buy Plan" icon={<FaCreditCard />} color="from-blue-500 to-indigo-600" path="/admin/buyplanadmin" navigate={navigate} />
+          <QuickAction title="Add Staff" icon={<FaUserPlus />} color="from-emerald-500 to-teal-600" path="/admin/addstaff" navigate={navigate} />
+          <QuickAction title="Send Message" icon={<FaRegEnvelope />} color="from-purple-500 to-violet-600" path="/admin/send-message" navigate={navigate} />
+          <QuickAction title="Attendance" icon={<FaCalendarCheck />} color="from-amber-500 to-orange-600" path="/admin/overall-attendance" navigate={navigate} />
+          
+          <QuickAction title="Enquiries" icon={<FaClipboardList />} color="from-cyan-500 to-blue-600" path="/admin/enquiry" navigate={navigate} />
+          <QuickAction title="Inventory" icon={<FaBoxOpen />} color="from-rose-500 to-red-600" path="/admin/stockdetails" navigate={navigate} />
+          <QuickAction title="Reports" icon={<FaChartPie />} color="from-indigo-500 to-purple-600" path="/admin/reports" navigate={navigate} />
+          <QuickAction title="Payments" icon={<FaMoneyCheckAlt />} color="from-emerald-600 to-green-700" path="/admin/payments" navigate={navigate} />
+          <QuickAction title="Settings" icon={<FaCog />} color="from-gray-600 to-slate-800" path="/admin/settings" navigate={navigate} />
+        </div>
+      </section>
+
       {/* STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" data-aos="fade-up" data-aos-delay="200">
         <StatCard title="Total Members" value={loading ? "..." : stats.members} icon={<FaUsers />} color="from-blue-500 to-cyan-500" />
         <StatCard title={`${filterRange.type} Check-ins`} value={loading ? "..." : stats.checkinsToday} icon={<FaCalendarCheck />} color="from-emerald-500 to-teal-500" />
         <StatCard title="Active Plans" value={loading ? "..." : stats.activePlans} icon={<FaDumbbell />} color="from-purple-500 to-pink-500" />
@@ -354,7 +427,7 @@ export default function Dashboard() {
       </div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-aos="fade-up" data-aos-delay="300">
         <div className="bg-white/10 rounded-2xl p-6">
           <h3 className="text-sm uppercase tracking-widest text-gray-200 mb-4">
             Weekly Attendance
