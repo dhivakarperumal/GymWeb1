@@ -47,12 +47,12 @@ async function runMigrations() {
     try {
       await ensureMigrationTable();
     } catch (err) {
-      if (err.code === 'ER_NO_DB_ERROR') { // database does not exist
+      if (err.code === 'ER_NO_DB_ERROR' || err.code === 'ER_BAD_DB_ERROR') { // database does not exist
         console.warn('⚠️ Database does not exist, creating it now...');
-        const initDb = require('./init');
+        const initDbPath = require.resolve('./init');
         // init.js exits after running so spawn a separate process instead
         const spawn = require('child_process').spawnSync;
-        const result = spawn(process.execPath, [require.resolve('./init')], { stdio: 'inherit' });
+        const result = spawn(process.execPath, [initDbPath], { stdio: 'inherit' });
         if (result.status !== 0) {
           throw new Error('init-db script failed');
         }

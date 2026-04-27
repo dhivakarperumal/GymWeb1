@@ -5,7 +5,7 @@ require("dotenv").config();
 // optionally run migrations on start, helps when launching dev server
 (async () => {
   try {
-    const { runMigrations } = require("./config/migrate");
+    const { runMigrations } = require("./src/config/migrate");
     await runMigrations();
   } catch (err) {
     console.error("migration startup error:", err.message);
@@ -13,28 +13,28 @@ require("dotenv").config();
 })();
 
 // Import routes
-const productRoutes = require("./routes/productRoutes");
-const memberRoutes = require("./routes/memberRoutes");
-const planRoutes = require("./routes/planRoutes");
-const facilityRoutes = require("./routes/facilityRoutes");
-const equipmentRoutes = require("./routes/equipmentRoutes");
-const staffRoutes = require("./routes/staffRoutes");
-const serviceRoutes = require("./routes/serviceRoutes");
-const authRoutes = require("./routes/authRoutes");
-const orderRoutes = require("./routes/orderRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
-const assignmentRoutes = require("./routes/assignmentRoutes");
-const userRoutes = require("./routes/userRoutes");
-const workoutRoutes = require("./routes/workoutRoutes");
-const enquiryRoutes = require("./routes/enquiryRoutes");
-const dietRoutes = require("./routes/dietRoutes");
-const reportRoutes = require("./routes/reportRoutes");
-const addressRoutes = require("./routes/addressRoutes");
-const messageRoutes = require("./routes/messageRoutes");
-const cartRoutes = require("./routes/cartRoutes");
-const attendanceRoutes = require("./routes/attendanceRoutes");
-const checkinRoutes = require("./routes/checkinRoutes");
-const membershipRoutes = require("./routes/membershipRoutes");
+const productRoutes = require("./src/routes/productRoutes");
+const memberRoutes = require("./src/routes/memberRoutes");
+const planRoutes = require("./src/routes/planRoutes");
+const facilityRoutes = require("./src/routes/facilityRoutes");
+const equipmentRoutes = require("./src/routes/equipmentRoutes");
+const staffRoutes = require("./src/routes/staffRoutes");
+const serviceRoutes = require("./src/routes/serviceRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const orderRoutes = require("./src/routes/orderRoutes");
+const reviewRoutes = require("./src/routes/reviewRoutes");
+const assignmentRoutes = require("./src/routes/assignmentRoutes");
+const userRoutes = require("./src/routes/userRoutes");
+const workoutRoutes = require("./src/routes/workoutRoutes");
+const enquiryRoutes = require("./src/routes/enquiryRoutes");
+const dietRoutes = require("./src/routes/dietRoutes");
+const reportRoutes = require("./src/routes/reportRoutes");
+const addressRoutes = require("./src/routes/addressRoutes");
+const messageRoutes = require("./src/routes/messageRoutes");
+const cartRoutes = require("./src/routes/cartRoutes");
+const attendanceRoutes = require("./src/routes/attendanceRoutes");
+const checkinRoutes = require("./src/routes/checkinRoutes");
+const membershipRoutes = require("./src/routes/membershipRoutes");
 
 
 
@@ -87,7 +87,7 @@ app.get("/api/health", (req, res) => {
 // simple database connectivity check (useful during development)
 app.get("/api/db-check", async (req, res) => {
   try {
-    const db = require("./config/db");
+    const db = require("./src/config/db");
     const [rows] = await db.query("SELECT 1 AS ok");
     res.json({ ok: true, rows });
   } catch (err) {

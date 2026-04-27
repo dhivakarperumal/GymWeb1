@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "init-db": "node src/config/init.js",
     "migrate": "node src/config/migrate.js",
     "migration:create": "node src/config/createMigration.js"
