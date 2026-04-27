@@ -118,7 +118,11 @@ async function createMember(req, res) {
     name, phone, email, gender, height, weight, bmi,
     plan, duration, joinDate, expiryDate, status,
     photo, notes, address,
-    username, password
+    username, password,
+    dob, age, employer, occupation,
+    emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
+    emergency_contact_phone_home, emergency_contact_phone_work,
+    fitness_goal, blood_group
   } = req.body;
 
   console.log('createMember received:', { name, phone, email, gender, height, weight, bmi, plan, duration, joinDate, expiryDate, status, photo: photo ? 'base64...' : null, notes, address, username });
@@ -166,11 +170,19 @@ async function createMember(req, res) {
         [result] = await connection.query(
           `INSERT INTO gym_members
       (member_id, name, phone, email, gender, height, weight, bmi, plan, duration,
-       join_date, expiry_date, status, photo, notes, address)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       join_date, expiry_date, status, photo, notes, address,
+       dob, age, employer, occupation,
+       emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
+       emergency_contact_phone_home, emergency_contact_phone_work,
+       fitness_goal, blood_group)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           [
             memberId, name, phone, email, gender, numHeight, numWeight, numBmi,
-            plan, numDuration, joinDate, expiryDate, status, photo, notes, address
+            plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
+            dob || null, age || null, employer || null, occupation || null,
+            emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+            emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+            fitness_goal || null, blood_group || null
           ]
         );
         inserted = true;
@@ -252,7 +264,11 @@ async function updateMember(req, res) {
 
     const { name, phone, email, gender, height, weight, bmi,
       plan, duration, joinDate, expiryDate, status,
-      photo, notes, address, username } = req.body;
+      photo, notes, address, username,
+      dob, age, employer, occupation,
+      emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
+      emergency_contact_phone_home, emergency_contact_phone_work,
+      fitness_goal, blood_group } = req.body;
     // ensure numeric values are correctly typed
     const numHeight = height != null && !isNaN(height) ? Number(height) : null;
     const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
@@ -286,12 +302,21 @@ async function updateMember(req, res) {
         height=?, weight=?, bmi=?, plan=?, duration=?,
         join_date=?, expiry_date=?, status=?,
         photo=?, notes=?, address=?,
+        dob=?, age=?, employer=?, occupation=?,
+        emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
+        emergency_contact_phone_home=?, emergency_contact_phone_work=?,
+        fitness_goal=?, blood_group=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE id=?`;
       updateParams = [
         name, phone, email, gender, numHeight, numWeight, numBmi,
         plan, numDuration, joinDate, expiryDate, status,
-        photo, notes, address, idNum
+        photo, notes, address,
+        dob || null, age || null, employer || null, occupation || null,
+        emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+        emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+        fitness_goal || null, blood_group || null,
+        idNum
       ];
     } else {
       updateQuery = `UPDATE gym_members SET
@@ -299,12 +324,21 @@ async function updateMember(req, res) {
         height=?, weight=?, bmi=?, plan=?, duration=?,
         join_date=?, expiry_date=?, status=?,
         photo=?, notes=?, address=?,
+        dob=?, age=?, employer=?, occupation=?,
+        emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
+        emergency_contact_phone_home=?, emergency_contact_phone_work=?,
+        fitness_goal=?, blood_group=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE member_id=?`;
       updateParams = [
         name, phone, email, gender, numHeight, numWeight, numBmi,
         plan, numDuration, joinDate, expiryDate, status,
-        photo, notes, address, id
+        photo, notes, address,
+        dob || null, age || null, employer || null, occupation || null,
+        emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+        emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+        fitness_goal || null, blood_group || null,
+        id
       ];
     }
 

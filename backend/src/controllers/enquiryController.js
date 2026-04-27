@@ -32,15 +32,34 @@ const enquiryController = {
     // Create new enquiry
     createEnquiry: async (req, res) => {
         try {
-            const { name, email, phone, subject, message, location } = req.body;
+            const {
+                name, email, phone, subject, message, location,
+                dob, age, address, employer, occupation,
+                emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
+                emergency_contact_phone_home, emergency_contact_phone_work,
+                fitness_goal, blood_group, height, weight, bmi
+            } = req.body;
 
-            if (!name || !email || !message) {
-                return res.status(400).json({ error: 'Name, email, and message are required' });
+            if (!name || !email) {
+                return res.status(400).json({ error: 'Name and email are required' });
             }
 
             const [result] = await pool.query(
-                'INSERT INTO enquiries (name, email, phone, subject, message, location) VALUES (?, ?, ?, ?, ?, ?)',
-                [name, email, phone, subject || null, message, location || null]
+                `INSERT INTO enquiries (
+                    name, email, phone, subject, message, location,
+                    dob, age, address, employer, occupation,
+                    emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
+                    emergency_contact_phone_home, emergency_contact_phone_work,
+                    fitness_goal, blood_group, height, weight, bmi
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    name, email, phone, subject || null, message || null, location || null,
+                    dob || null, age || null, address || null, employer || null, occupation || null,
+                    emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+                    emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+                    fitness_goal || null, blood_group || null,
+                    height || null, weight || null, bmi || null
+                ]
             );
 
             const [rows] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [result.insertId]);
@@ -74,6 +93,30 @@ const enquiryController = {
             res.json(rows[0]);
         } catch (error) {
             console.error('Error updating enquiry:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // Bulk update enquiry status
+    bulkUpdateStatus: async (req, res) => {
+        try {
+            const { ids, status } = req.body;
+
+            if (!status || !Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({ error: 'Status and ids array are required' });
+            }
+
+            const [result] = await pool.query(
+                'UPDATE enquiries SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (?)',
+                [status, ids]
+            );
+
+            res.json({ 
+                message: `Successfully updated ${result.affectedRows} enquiries`,
+                affectedRows: result.affectedRows 
+            });
+        } catch (error) {
+            console.error('Error bulk updating enquiries:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     },

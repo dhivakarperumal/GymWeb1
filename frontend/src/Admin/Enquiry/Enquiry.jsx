@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, Eye, Edit, Trash2, CheckCircle, XCircle, Clock, Users } from "lucide-react";
+import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X } from "lucide-react";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
@@ -23,7 +23,19 @@ const Enquiry = () => {
     location: "",
     height: "",
     weight: "",
-    bmi: ""
+    bmi: "",
+    dob: "",
+    age: "",
+    address: "",
+    employer: "",
+    occupation: "",
+    emergency_contact_name: "",
+    emergency_contact_relationship: "",
+    emergency_contact_address: "",
+    emergency_contact_phone_home: "",
+    emergency_contact_phone_work: "",
+    fitness_goal: "",
+    blood_group: ""
   });
 
   useEffect(() => {
@@ -71,7 +83,14 @@ const Enquiry = () => {
       fetchEnquiries();
       setShowForm(false);
       setSelectedEnquiry(null);
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "", location: "", height: "", weight: "", bmi: "" });
+      setFormData({
+        name: "", email: "", phone: "", subject: "", message: "", location: "",
+        height: "", weight: "", bmi: "", dob: "", age: "", address: "",
+        employer: "", occupation: "", emergency_contact_name: "",
+        emergency_contact_relationship: "", emergency_contact_address: "",
+        emergency_contact_phone_home: "", emergency_contact_phone_work: "",
+        fitness_goal: "", blood_group: ""
+      });
     } catch (error) {
       console.error('Error saving enquiry:', error);
     }
@@ -84,11 +103,23 @@ const Enquiry = () => {
       email: enquiry.email,
       phone: enquiry.phone || "",
       subject: enquiry.subject || "",
-      message: enquiry.message,
+      message: enquiry.message || "",
       location: enquiry.location || "",
       height: enquiry.height || "",
       weight: enquiry.weight || "",
       bmi: enquiry.bmi || "",
+      dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : "",
+      age: enquiry.age || "",
+      address: enquiry.address || "",
+      employer: enquiry.employer || "",
+      occupation: enquiry.occupation || "",
+      emergency_contact_name: enquiry.emergency_contact_name || "",
+      emergency_contact_relationship: enquiry.emergency_contact_relationship || "",
+      emergency_contact_address: enquiry.emergency_contact_address || "",
+      emergency_contact_phone_home: enquiry.emergency_contact_phone_home || "",
+      emergency_contact_phone_work: enquiry.emergency_contact_phone_work || "",
+      fitness_goal: enquiry.fitness_goal || "",
+      blood_group: enquiry.blood_group || "",
       status: enquiry.status
     });
     setShowForm(true);
@@ -121,11 +152,22 @@ const Enquiry = () => {
         name: enquiry.name,
         email: enquiry.email,
         phone: enquiry.phone || null,
-        address: enquiry.location || null,
+        address: enquiry.address || enquiry.location || null,
         height: enquiry.height || null,
         weight: enquiry.weight || null,
         bmi: enquiry.bmi || null,
-        join_date: new Date().toISOString().split('T')[0],
+        dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : null,
+        age: enquiry.age || null,
+        employer: enquiry.employer || null,
+        occupation: enquiry.occupation || null,
+        emergency_contact_name: enquiry.emergency_contact_name || null,
+        emergency_contact_relationship: enquiry.emergency_contact_relationship || null,
+        emergency_contact_address: enquiry.emergency_contact_address || null,
+        emergency_contact_phone_home: enquiry.emergency_contact_phone_home || null,
+        emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
+        fitness_goal: enquiry.fitness_goal || null,
+        blood_group: enquiry.blood_group || null,
+        joinDate: new Date().toISOString().split('T')[0],
         status: 'active',
         // supply password explicitly so frontend knows credentials
         password: enquiry.phone || ''
@@ -333,101 +375,255 @@ const Enquiry = () => {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-6 w-full max-w-3xl mx-4">
-            <h2 className="text-xl font-bold text-white mb-4">
-              {selectedEnquiry ? 'View Enquiry' : 'Add New Enquiry'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
+          <div className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 p-6 w-full max-w-5xl mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">
+                {selectedEnquiry ? 'View Enquiry' : 'Add New Enquiry'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setSelectedEnquiry(null);
+                  setFormData({
+                    name: "", email: "", phone: "", subject: "", message: "", location: "",
+                    height: "", weight: "", bmi: "", dob: "", age: "", address: "",
+                    employer: "", occupation: "", emergency_contact_name: "",
+                    emergency_contact_relationship: "", emergency_contact_address: "",
+                    emergency_contact_phone_home: "", emergency_contact_phone_work: "",
+                    fitness_goal: "", blood_group: ""
+                  });
+                }}
+                className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+              {/* SECTION: PERSONAL INFO */}
+              <div className="space-y-4">
+                <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-1">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={formData.dob}
+                        onChange={(e) => setFormData({...formData, dob: e.target.value})}
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-1">Age</label>
+                      <input
+                        type="number"
+                        value={formData.age}
+                        onChange={(e) => setFormData({...formData, age: e.target.value})}
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Blood Group</label>
+                    <select
+                      value={formData.blood_group}
+                      onChange={(e) => setFormData({...formData, blood_group: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Blood Group</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Location / Branch</label>
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Gym Branch Name"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  <label className="block text-sm font-medium text-white/80 mb-1">Full Address</label>
+                  <textarea
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    rows={2}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Phone</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Subject</label>
-                  <input
-                    type="text"
-                    value={formData.subject}
-                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Location</label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Gym Branch Name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Height (cm)</label>
-                  <input
-                    type="number"
-                    value={formData.height}
-                    onChange={(e) => setFormData({...formData, height: e.target.value})}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Height in cm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Weight (kg)</label>
-                  <input
-                    type="number"
-                    value={formData.weight}
-                    onChange={(e) => setFormData({...formData, weight: e.target.value})}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Weight in kg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">BMI</label>
-                  <input
-                    type="text"
-                    value={formData.bmi}
-                    readOnly
-                    className="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-orange-400 font-bold focus:outline-none"
-                    placeholder="Auto-calculated"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">Message</label>
-                <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  rows={4}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+
+              {/* SECTION: PROFESSIONAL INFO */}
+              <div className="space-y-4">
+                <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Professional Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Employer</label>
+                    <input
+                      type="text"
+                      value={formData.employer}
+                      onChange={(e) => setFormData({...formData, employer: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Occupation</label>
+                    <input
+                      type="text"
+                      value={formData.occupation}
+                      onChange={(e) => setFormData({...formData, occupation: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
+
+              {/* SECTION: EMERGENCY CONTACT */}
+              <div className="space-y-4">
+                <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">In Case of Emergency</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Contact Name</label>
+                    <input
+                      type="text"
+                      value={formData.emergency_contact_name}
+                      onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Relationship</label>
+                    <input
+                      type="text"
+                      value={formData.emergency_contact_relationship}
+                      onChange={(e) => setFormData({...formData, emergency_contact_relationship: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Home Phone</label>
+                    <input
+                      type="tel"
+                      value={formData.emergency_contact_phone_home}
+                      onChange={(e) => setFormData({...formData, emergency_contact_phone_home: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Work Phone</label>
+                    <input
+                      type="tel"
+                      value={formData.emergency_contact_phone_work}
+                      onChange={(e) => setFormData({...formData, emergency_contact_phone_work: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Contact Address</label>
+                  <textarea
+                    value={formData.emergency_contact_address}
+                    onChange={(e) => setFormData({...formData, emergency_contact_address: e.target.value})}
+                    rows={2}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* SECTION: HEALTH & GOALS */}
+              <div className="space-y-4">
+                <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Health & Fitness Goals</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Height (cm)</label>
+                    <input
+                      type="number"
+                      value={formData.height}
+                      onChange={(e) => setFormData({...formData, height: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={formData.weight}
+                      onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">BMI</label>
+                    <input
+                      type="text"
+                      value={formData.bmi}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-orange-400 font-bold focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Fitness Goals</label>
+                  <textarea
+                    value={formData.fitness_goal}
+                    onChange={(e) => setFormData({...formData, fitness_goal: e.target.value})}
+                    rows={2}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Describe your fitness objectives..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Additional Notes / Message</label>
+                  <textarea
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    rows={2}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
               {selectedEnquiry && (
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Status</label>
@@ -443,23 +639,31 @@ const Enquiry = () => {
                 </div>
               )}
               <div className="flex gap-3 pt-4">
+                 <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setSelectedEnquiry(null);
+                    setFormData({
+                      name: "", email: "", phone: "", subject: "", message: "", location: "",
+                      height: "", weight: "", bmi: "", dob: "", age: "", address: "",
+                      employer: "", occupation: "", emergency_contact_name: "",
+                      emergency_contact_relationship: "", emergency_contact_address: "",
+                      emergency_contact_phone_home: "", emergency_contact_phone_work: "",
+                      fitness_goal: "", blood_group: ""
+                    });
+                  }}
+                  className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-orange-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   {selectedEnquiry ? 'Update' : 'Create'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setSelectedEnquiry(null);
-                    setFormData({ name: "", email: "", phone: "", subject: "", message: "", location: "", height: "", weight: "", bmi: "" });
-                  }}
-                  className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
+               
               </div>
             </form>
           </div>
