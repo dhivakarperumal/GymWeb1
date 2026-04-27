@@ -5,7 +5,7 @@ import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import dayjs from "dayjs";
 
-const Enquiry = ({ isModal = false, onClose }) => {
+const Enquiry = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(!isModal); // Don't show loading in modal mode
   const [error, setError] = useState(null);
@@ -15,27 +15,27 @@ const Enquiry = ({ isModal = false, onClose }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
-    location: "",
-    height: "",
-    weight: "",
-    bmi: "",
-    dob: "",
-    age: "",
-    address: "",
-    employer: "",
-    occupation: "",
-    emergency_contact_name: "",
-    emergency_contact_relationship: "",
-    emergency_contact_address: "",
-    emergency_contact_phone_home: "",
-    emergency_contact_phone_work: "",
-    fitness_goal: "",
-    blood_group: ""
+    name: formData?.name || "",
+    email: formData?.email || "",
+    phone: formData?.phone || "",
+    subject: formData?.subject || "",
+    message: formData?.message || "",
+    location: formData?.location || "",
+    height: formData?.height || "",
+    weight: formData?.weight || "",
+    bmi: formData?.bmi || "",
+    dob: formData?.dob || "",
+    age: formData?.age || "",
+    address: formData?.address || "",
+    employer: formData?.employer || "",
+    occupation: formData?.occupation || "",
+    emergency_contact_name: formData?.emergency_contact_name || "",
+    emergency_contact_relationship: formData?.emergency_contact_relationship || "",
+    emergency_contact_address: formData?.emergency_contact_address || "",
+    emergency_contact_phone_home: formData?.emergency_contact_phone_home || "",
+    emergency_contact_phone_work: formData?.emergency_contact_phone_work || "",
+    fitness_goal: formData?.fitness_goal || "",
+    blood_group: formData?.blood_group || ""
   });
 
   useEffect(() => {
@@ -77,27 +77,9 @@ const Enquiry = ({ isModal = false, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (selectedEnquiry) {
-        // Update status
-        await api.put(`/enquiries/${selectedEnquiry.id}/status`, { status: formData.status });
-      } else {
-        // Create new enquiry
-        await api.post('/enquiries', formData);
-      }
-      fetchEnquiries();
-      setShowForm(false);
-      setSelectedEnquiry(null);
-      setFormData({
-        name: "", email: "", phone: "", subject: "", message: "", location: "",
-        height: "", weight: "", bmi: "", dob: "", age: "", address: "",
-        employer: "", occupation: "", emergency_contact_name: "",
-        emergency_contact_relationship: "", emergency_contact_address: "",
-        emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-        fitness_goal: "", blood_group: ""
-      });
-      if (isModal && onClose) {
-        onClose();
-      }
+      // Create new enquiry
+      await api.post('/enquiries', formData);
+      onNext(formData);
     } catch (error) {
       console.error('Error saving enquiry:', error);
     }
@@ -493,20 +475,19 @@ const Enquiry = ({ isModal = false, onClose }) => {
                  <button
                   type="button"
                   onClick={() => {
-                    setShowForm(false);
-                    setSelectedEnquiry(null);
-                    setFormData({
-                      name: "", email: "", phone: "", subject: "", message: "", location: "",
-                      height: "", weight: "", bmi: "", dob: "", age: "", address: "",
-                      employer: "", occupation: "", emergency_contact_name: "",
-                      emergency_contact_relationship: "", emergency_contact_address: "",
-                      emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-                      fitness_goal: "", blood_group: ""
-                    });
-                    if (isModal && onClose) {
-                      onClose();
+                    if (!isFirstStep) {
+                      onPrevious();
                     }
                   }}
+                  disabled={isFirstStep}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                    isFirstStep
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-600 hover:bg-gray-700 text-white'
+                  }`}
+                >
+                  Previous
+                </button>
                   className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
                 >
                   Cancel
@@ -515,7 +496,7 @@ const Enquiry = ({ isModal = false, onClose }) => {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-orange-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
-                  {selectedEnquiry ? 'Update' : 'Create'}
+                  {isLastStep ? 'Complete Registration' : 'Next'}
                 </button>
                
               </div>
