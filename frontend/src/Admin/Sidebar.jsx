@@ -63,7 +63,7 @@ const navItems = [
     ],
   },
 
-  { path: "/admin/equipment", label: "Gym Equipment", icon: Activity },
+  // { path: "/admin/equipment", label: "Gym Equipment", icon: Activity },
   {
     label: "Attendance",
     icon: CalendarCheck,
@@ -72,8 +72,8 @@ const navItems = [
       { path: "/admin/member-attendance", label: "Members Attendance", icon: Users },
     ],
   },
-  { path: "/admin/commenworkoutdiet", label: "Workout & Diet", icon: HeartPulse },
-  { path: "/admin/reports", label: "Reports & Analytics", icon: BarChart3 },
+  // { path: "/admin/commenworkoutdiet", label: "Workout & Diet", icon: HeartPulse },
+  // { path: "/admin/reports", label: "Reports & Analytics", icon: BarChart3 },
   
   
   { path: "/", label: "Back Home", icon: Home },

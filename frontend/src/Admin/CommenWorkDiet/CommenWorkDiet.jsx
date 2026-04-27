@@ -9,8 +9,11 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { defaultPlans } from "../../../public/commonGymWorkouts";
+import { FaArrowLeft } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const GymWorkoutManager = () => {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState(defaultPlans);
   const [savedPlans, setSavedPlans] = useState({});
   const [activeWeek, setActiveWeek] = useState("Week 1");
@@ -73,7 +76,15 @@ const GymWorkoutManager = () => {
   }, []);
 
   return (
-    <div className="min-h-screen  text-white p-6">
+    <div className="min-h-screen text-white p-6">
+      {/* BACK BUTTON */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 px-4 py-2 mb-4 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition text-white"
+      >
+        <FaArrowLeft /> Back
+      </button>
+
       {/* HEADER */}
       <h1 className="text-3xl font-bold mb-6 text-center">
         🥗 Diet & Workout Manager

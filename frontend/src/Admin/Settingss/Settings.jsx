@@ -5,6 +5,8 @@ import {
   FaStar,
   FaClipboardList,
   FaDumbbell,
+  FaChartBar,
+  FaHeartbeat,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -120,6 +122,20 @@ const Settings = () => {
           title="Gym Equipment"
           desc="Manage gym equipment inventory, maintenance status and details."
           path="/admin/equipment"
+        />
+
+        <SettingCard
+          icon={<FaChartBar />}
+          title="Reports & Analytics"
+          desc="View gym performance, revenue, attendance and membership reports."
+          path="/admin/reports"
+        />
+
+        <SettingCard
+          icon={<FaHeartbeat />}
+          title="Workout & Diet Plans"
+          desc="Manage common workout routines and diet plans for members."
+          path="/admin/commenworkoutdiet"
         />
 
       </div>
