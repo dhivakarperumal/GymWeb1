@@ -2,18 +2,31 @@ import React, { useState } from 'react';
 
 const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
   const [healthData2, setHealthData2] = useState({
-    cardiovascular_health: formData?.cardiovascular_health || "",
-    respiratory_health: formData?.respiratory_health || "",
-    musculoskeletal_health: formData?.musculoskeletal_health || "",
-    mental_health: formData?.mental_health || "",
-    sleep_patterns: formData?.sleep_patterns || "",
-    stress_levels: formData?.stress_levels || "",
-    body_composition_goals: formData?.body_composition_goals || "",
-    performance_goals: formData?.performance_goals || "",
-    timeline_expectations: formData?.timeline_expectations || "",
-    commitment_level: formData?.commitment_level || "",
-    support_system: formData?.support_system || "",
-    previous_training_experience: formData?.previous_training_experience || ""
+    // Health History Conditions
+    heart_attack: formData?.heart_attack || "",
+    heart_bypass_cardiac_surgery: formData?.heart_bypass_cardiac_surgery || "",
+    chest_discomfort_digine: formData?.chest_discomfort_digine || "",
+    palpitation: formData?.palpitation || "",
+    epilepsy: formData?.epilepsy || "",
+    fainting_dizziness: formData?.fainting_dizziness || "",
+    hypertension: formData?.hypertension || "",
+    family_heart_disease: formData?.family_heart_disease || "",
+    rheumatic_fever: formData?.rheumatic_fever || "",
+    shortness_of_breath: formData?.shortness_of_breath || "",
+    asthma: formData?.asthma || "",
+    high_cholesterol: formData?.high_cholesterol || "",
+    diabetes: formData?.diabetes || "",
+    stroke: formData?.stroke || "",
+    recent_hospitalization: formData?.recent_hospitalization || "",
+    orthopedic_problem: formData?.orthopedic_problem || "",
+    
+    // Medical Information
+    blood_pressure: formData?.blood_pressure || "",
+    blood_sugar: formData?.blood_sugar || "",
+    blood_cholesterol: formData?.blood_cholesterol || "",
+    thyroid_level: formData?.thyroid_level || "",
+    blood_uric_acid: formData?.blood_uric_acid || "",
+    serum_3d: formData?.serum_3d || ""
   });
 
   const handleSubmit = (e) => {
@@ -26,224 +39,168 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep, isLastStep 
     setHealthData2(prev => ({ ...prev, [name]: value }));
   };
 
+  const conditions = [
+    { key: 'heart_attack', label: 'Heart Attack' },
+    { key: 'heart_bypass_cardiac_surgery', label: 'Heart bypass or any other cardiac surgery' },
+    { key: 'chest_discomfort_digine', label: 'Chest discomfort with (Digine)' },
+    { key: 'palpitation', label: 'Palpitation' },
+    { key: 'epilepsy', label: 'Epilepsy' },
+    { key: 'fainting_dizziness', label: 'Fainting or dizziness or loss of consciousness' },
+    { key: 'hypertension', label: 'Hypertension (High blood pressure)' },
+    { key: 'family_heart_disease', label: 'Family history of any heart disease (Male<55yrs & Female<65 yrs)' },
+    { key: 'rheumatic_fever', label: 'Rheumatic fever' },
+    { key: 'shortness_of_breath', label: 'Shortness of breath with or without exercise' },
+    { key: 'asthma', label: 'Asthma (Any breathing issues)' },
+    { key: 'high_cholesterol', label: 'High blood cholesterol (lipid)' },
+    { key: 'diabetes', label: 'Diabetes or impaired blood glucose' },
+    { key: 'stroke', label: 'Stroke' },
+    { key: 'recent_hospitalization', label: 'Recent hospitalization for any cause' },
+    { key: 'orthopedic_problem', label: 'Orthopedic problem (including arthritis)' }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h1 className="text-white text-4xl font-bold border-b border-white/10 pb-1">Health History Form (Part 2)</h1>
-        <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Additional Health Assessment</h3>
+        <h1 className="text-white text-4xl font-bold border-b border-white/10 pb-1">Health History Questionnaire</h1>
+        <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Please fill out all information requested below</h3>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Cardiovascular Health
-            </label>
-            <select
-              name="cardiovascular_health"
-              value={healthData2.cardiovascular_health}
-              onChange={handleChange}
-              className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select cardiovascular health</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
-              <option value="unknown">Unknown</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Respiratory Health
-            </label>
-            <select
-              name="respiratory_health"
-              value={healthData2.respiratory_health}
-              onChange={handleChange}
-              className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select respiratory health</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
-              <option value="asthma">Asthma</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Musculoskeletal Health
-            </label>
-            <select
-              name="musculoskeletal_health"
-              value={healthData2.musculoskeletal_health}
-              onChange={handleChange}
-              className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select musculoskeletal health</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
-              <option value="injury">Current Injury</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Mental Health Status
-            </label>
-            <select
-              name="mental_health"
-              value={healthData2.mental_health}
-              onChange={handleChange}
-              className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select mental health status</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="challenging">Challenging</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
+        {/* Health History Table */}
+        <div className="space-y-4 bg-white/5 p-4 rounded-lg border border-white/10">
+          <h3 className="text-orange-500 font-bold text-lg">Medical History</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-white/80 text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-white/20">
+                  <th className="text-left p-3 border-r border-white/20">Condition</th>
+                  <th className="text-center p-3 border-r border-white/20 w-20">Yes(Y)</th>
+                  <th className="text-center p-3 w-20">No(N)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {conditions.map((condition, index) => (
+                  <tr key={condition.key} className="border-b border-white/10">
+                    <td className="p-3 border-r border-white/20">{index + 1}. {condition.label}</td>
+                    <td className="text-center p-3 border-r border-white/20">
+                      <input
+                        type="radio"
+                        name={condition.key}
+                        value="yes"
+                        checked={healthData2[condition.key] === "yes"}
+                        onChange={handleChange}
+                        className="w-4 h-4"
+                      />
+                    </td>
+                    <td className="text-center p-3">
+                      <input
+                        type="radio"
+                        name={condition.key}
+                        value="no"
+                        checked={healthData2[condition.key] === "no"}
+                        onChange={handleChange}
+                        className="w-4 h-4"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Lifestyle & Goals Assessment</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Sleep Patterns
-              </label>
-              <select
-                name="sleep_patterns"
-                value={healthData2.sleep_patterns}
-                onChange={handleChange}
-                className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select sleep pattern</option>
-                <option value="excellent">7-9 hours consistently</option>
-                <option value="good">6-8 hours most nights</option>
-                <option value="fair">5-7 hours</option>
-                <option value="poor">Less than 5 hours</option>
-                <option value="irregular">Irregular schedule</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Stress Levels
-              </label>
-              <select
-                name="stress_levels"
-                value={healthData2.stress_levels}
-                onChange={handleChange}
-                className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select stress level</option>
-                <option value="low">Low</option>
-                <option value="moderate">Moderate</option>
-                <option value="high">High</option>
-                <option value="very_high">Very High</option>
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Body Composition Goals
-              </label>
-              <textarea
-                name="body_composition_goals"
-                value={healthData2.body_composition_goals}
-                onChange={handleChange}
-                rows={2}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Describe your body composition goals..."
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Performance Goals
-              </label>
-              <textarea
-                name="performance_goals"
-                value={healthData2.performance_goals}
-                onChange={handleChange}
-                rows={2}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="What performance improvements are you seeking?"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Timeline Expectations
-              </label>
-              <select
-                name="timeline_expectations"
-                value={healthData2.timeline_expectations}
-                onChange={handleChange}
-                className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select timeline</option>
-                <option value="3_months">3 months</option>
-                <option value="6_months">6 months</option>
-                <option value="1_year">1 year</option>
-                <option value="long_term">Long term (1+ years)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Commitment Level
-              </label>
-              <select
-                name="commitment_level"
-                value={healthData2.commitment_level}
-                onChange={handleChange}
-                className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select commitment level</option>
-                <option value="very_high">Very High</option>
-                <option value="high">High</option>
-                <option value="moderate">Moderate</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Support System
-              </label>
-              <textarea
-                name="support_system"
-                value={healthData2.support_system}
-                onChange={handleChange}
-                rows={2}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Who will support you in your fitness journey?"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Previous Training Experience
-              </label>
-              <textarea
-                name="previous_training_experience"
-                value={healthData2.previous_training_experience}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Describe any previous training experience..."
-              />
-            </div>
+        {/* Medical Information Section */}
+        <div className="space-y-4 bg-white/5 p-4 rounded-lg border border-white/10">
+          <h3 className="text-orange-500 font-bold text-lg">Medical Information</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-white/80 text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-white/20">
+                  <th className="text-left p-3 border-r border-white/20">Parameter</th>
+                  <th className="text-left p-3">Values</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-white/10">
+                  <td className="p-3 border-r border-white/20">Blood Pressure</td>
+                  <td className="p-3">
+                    <input
+                      type="text"
+                      name="blood_pressure"
+                      value={healthData2.blood_pressure}
+                      onChange={handleChange}
+                      placeholder="e.g., 120/80 mmHg"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40"
+                    />
+                  </td>
+                </tr>
+                <tr className="border-b border-white/10">
+                  <td className="p-3 border-r border-white/20">Blood sugar</td>
+                  <td className="p-3">
+                    <input
+                      type="text"
+                      name="blood_sugar"
+                      value={healthData2.blood_sugar}
+                      onChange={handleChange}
+                      placeholder="e.g., 100 mg/dL"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40"
+                    />
+                  </td>
+                </tr>
+                <tr className="border-b border-white/10">
+                  <td className="p-3 border-r border-white/20">Blood cholesterol</td>
+                  <td className="p-3">
+                    <input
+                      type="text"
+                      name="blood_cholesterol"
+                      value={healthData2.blood_cholesterol}
+                      onChange={handleChange}
+                      placeholder="e.g., 200 mg/dL"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40"
+                    />
+                  </td>
+                </tr>
+                <tr className="border-b border-white/10">
+                  <td className="p-3 border-r border-white/20">Thyroid level</td>
+                  <td className="p-3">
+                    <input
+                      type="text"
+                      name="thyroid_level"
+                      value={healthData2.thyroid_level}
+                      onChange={handleChange}
+                      placeholder="e.g., TSH value"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40"
+                    />
+                  </td>
+                </tr>
+                <tr className="border-b border-white/10">
+                  <td className="p-3 border-r border-white/20">Blood uric acid</td>
+                  <td className="p-3">
+                    <input
+                      type="text"
+                      name="blood_uric_acid"
+                      value={healthData2.blood_uric_acid}
+                      onChange={handleChange}
+                      placeholder="e.g., 7.0 mg/dL"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-3 border-r border-white/20">Serum 3D</td>
+                  <td className="p-3">
+                    <input
+                      type="text"
+                      name="serum_3d"
+                      value={healthData2.serum_3d}
+                      onChange={handleChange}
+                      placeholder="Enter value"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/40"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
