@@ -76,8 +76,7 @@ const InformedConsent = ({ onNext, onPrevious, formData, isFirstStep, isLastStep
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h1 className="text-white text-4xl font-bold border-b border-white/10 pb-1">Informed Consent</h1>
-        <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Please read and agree to the following terms</h3>
+        <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Please read and agree to the following terms</h3>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -245,15 +244,15 @@ const InformedConsent = ({ onNext, onPrevious, formData, isFirstStep, isLastStep
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-6">
           <button
             type="button"
             onClick={onPrevious}
             disabled={isFirstStep}
-            className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
               isFirstStep
-                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-600 hover:bg-gray-700 text-white'
+                ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-700 hover:bg-gray-600 text-white'
             }`}
           >
             Previous
@@ -261,7 +260,7 @@ const InformedConsent = ({ onNext, onPrevious, formData, isFirstStep, isLastStep
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-lg hover:shadow-green-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Submitting...' : 'Complete Registration'}
           </button>

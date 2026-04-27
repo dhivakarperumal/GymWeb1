@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Enquiry from './Enquiry';
+import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
 import HealthHistory2 from './HealthHistory2';
 import InformedConsent from './InformedConsent';
@@ -36,9 +36,9 @@ const PTForm = () => {
   const CurrentComponent = steps[currentStep - 1].component;
 
   return (
-    <div className="min-h-screen bg-[#0f0f23] text-white p-6">
+    <div className="min-h-screen text-white p-6">
       {/* Header with Step Indicator */}
-      <div className="max-w-4xl mx-auto mb-8">
+      <div className="max-w-6xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-orange-500">PT Registration Form</h1>
           <button
@@ -84,7 +84,7 @@ const PTForm = () => {
       </div>
 
       {/* Form Content */}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <CurrentComponent
           onNext={handleNext}
           onPrevious={handlePrevious}
