@@ -9,6 +9,9 @@ import cache from "../../cache";
 const MEMBERSHIPS_API = `memberships`;
 const MEMBERS_API = `members`;
 
+// Import Enquiry component for PT Form modal
+import Enquiry from "../PTForm/Enquiry";
+
 const Payments = () => {
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
@@ -23,6 +26,8 @@ const Payments = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  const [showPTForm, setShowPTForm] = useState(false);
 
   /* ================= FETCH DATA ================= */
   useEffect(() => {
@@ -432,6 +437,7 @@ const Payments = () => {
   }
 
   return (
+    <>
     <div className="min-h-screen p-4 md:p-8 text-white">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
@@ -443,6 +449,13 @@ const Payments = () => {
 
   {/* Right Section */}
   <div className="flex flex-wrap items-center gap-3 mb-5 ml-auto">
+
+    <button
+      onClick={() => setShowPTForm(true)}
+      className="px-4 py-2.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition"
+    >
+      PT Form
+    </button>
 
     {/* Import Excel */}
     <label className="px-4 py-2.5 bg-blue-500 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-600 transition">
@@ -848,6 +861,22 @@ const Payments = () => {
         </div>
       )}
     </div>
+
+    {/* PT Form Modal */}
+    {showPTForm && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-[#0f0f23] rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+          <button
+            onClick={() => setShowPTForm(false)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 text-2xl"
+          >
+            ×
+          </button>
+          <Enquiry isModal={true} onClose={() => setShowPTForm(false)} />
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
