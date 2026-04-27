@@ -288,7 +288,7 @@ const Enquiry = () => {
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">S No</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Subject</th>
+
                 <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Location</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Date</th>
@@ -308,9 +308,7 @@ const Enquiry = () => {
                       <div className="text-sm text-white/60">{enquiry.email}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-white">{enquiry.subject || 'No subject'}</div>
-                  </td>
+
                   <td className="px-6 py-4">
                     <div className="text-sm text-white">{enquiry.location || 'Not specified'}</div>
                   </td>
@@ -411,6 +409,7 @@ const Enquiry = () => {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="Enter full name"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
@@ -421,6 +420,7 @@ const Enquiry = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      placeholder="e.g., name@email.com"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
@@ -431,6 +431,7 @@ const Enquiry = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      placeholder="e.g., +91 98765 43210"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -450,7 +451,8 @@ const Enquiry = () => {
                         type="number"
                         value={formData.age}
                         onChange={(e) => setFormData({...formData, age: e.target.value})}
-                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 25"
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -489,6 +491,7 @@ const Enquiry = () => {
                     value={formData.address}
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
                     rows={2}
+                    placeholder="Door No., Street, City, State, Pincode"
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -504,7 +507,8 @@ const Enquiry = () => {
                       type="text"
                       value={formData.employer}
                       onChange={(e) => setFormData({...formData, employer: e.target.value})}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Company / Organisation name"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
@@ -513,7 +517,8 @@ const Enquiry = () => {
                       type="text"
                       value={formData.occupation}
                       onChange={(e) => setFormData({...formData, occupation: e.target.value})}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Software Engineer"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -529,7 +534,8 @@ const Enquiry = () => {
                       type="text"
                       value={formData.emergency_contact_name}
                       onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Contact person full name"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
@@ -538,7 +544,8 @@ const Enquiry = () => {
                       type="text"
                       value={formData.emergency_contact_relationship}
                       onChange={(e) => setFormData({...formData, emergency_contact_relationship: e.target.value})}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Spouse, Parent, Friend"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
@@ -547,7 +554,8 @@ const Enquiry = () => {
                       type="tel"
                       value={formData.emergency_contact_phone_home}
                       onChange={(e) => setFormData({...formData, emergency_contact_phone_home: e.target.value})}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., +91 98765 43210"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
@@ -556,7 +564,8 @@ const Enquiry = () => {
                       type="tel"
                       value={formData.emergency_contact_phone_work}
                       onChange={(e) => setFormData({...formData, emergency_contact_phone_work: e.target.value})}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., +91 98765 43210"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -566,7 +575,8 @@ const Enquiry = () => {
                     value={formData.emergency_contact_address}
                     onChange={(e) => setFormData({...formData, emergency_contact_address: e.target.value})}
                     rows={2}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Emergency contact's full address"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -581,6 +591,7 @@ const Enquiry = () => {
                       type="number"
                       value={formData.height}
                       onChange={(e) => setFormData({...formData, height: e.target.value})}
+                      placeholder="e.g., 170"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -590,6 +601,7 @@ const Enquiry = () => {
                       type="number"
                       value={formData.weight}
                       onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                      placeholder="e.g., 70"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -599,7 +611,8 @@ const Enquiry = () => {
                       type="text"
                       value={formData.bmi}
                       readOnly
-                      className="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-orange-400 font-bold focus:outline-none"
+                      placeholder="Auto-calculated"
+                      className="w-full px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-orange-400 font-bold placeholder-white/30 focus:outline-none"
                     />
                   </div>
                 </div>
