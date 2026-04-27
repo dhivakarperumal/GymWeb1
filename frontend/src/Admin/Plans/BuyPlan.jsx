@@ -297,11 +297,11 @@ Thank you for joining 💪
                     // 1. Skip if already has active plan
                     const hasPlan = m.status === "active" && m.plan;
                     if (hasPlan) return false;
-                    
+
                     // 2. Skip duplicates by phone
                     if (seenPhones.has(m.phone)) return false;
                     seenPhones.add(m.phone);
-                    
+
                     return true;
                   })
                   .map((m) => {

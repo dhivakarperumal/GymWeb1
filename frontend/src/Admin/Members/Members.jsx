@@ -17,6 +17,7 @@ const Members = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
+  const [filterType, setFilterType] = useState("all"); // all, withPlan, withoutPlan
 
   useEffect(() => {
     setSearch(querySearch);
@@ -68,7 +69,15 @@ const Members = () => {
 
     if (!matchesText) return false;
 
-    // 2. Date Range Filter
+    // 2. Plan Filter
+    let matchesPlanFilter = true;
+    const hasPlan = m.plan && m.status === 'active';
+    if (filterType === "withPlan") matchesPlanFilter = hasPlan;
+    if (filterType === "withoutPlan") matchesPlanFilter = !hasPlan;
+
+    if (!matchesPlanFilter) return false;
+
+    // 3. Date Range Filter
     return filterByDateRange([m], 'join_date', dateRange.type, dateRange.range).length > 0;
   });
 
@@ -298,6 +307,31 @@ const Members = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* 📑 TABS */}
+      <div className="flex items-center gap-2 mb-8 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit mx-auto sm:mx-0">
+        {[
+          { id: 'all', label: 'All Members', icon: <Users size={16} /> },
+          { id: 'withPlan', label: 'Active Plan', icon: <Calendar size={16} /> },
+          { id: 'withoutPlan', label: 'No Plan', icon: <Mail size={16} /> },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              setFilterType(tab.id);
+              setCurrentPage(1);
+            }}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300
+              ${filterType === tab.id
+                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20 scale-105 z-10'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* DATA VIEW */}
