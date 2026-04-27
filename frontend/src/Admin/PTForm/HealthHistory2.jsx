@@ -204,24 +204,24 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep, isLastStep 
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-6">
           <button
             type="button"
             onClick={onPrevious}
             disabled={isFirstStep}
-            className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
               isFirstStep
-                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-600 hover:bg-gray-700 text-white'
+                ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-700 hover:bg-gray-600 text-white'
             }`}
           >
             Previous
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-orange-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
           >
-            {isLastStep ? 'Complete Registration' : 'Next'}
+            {isLastStep ? 'Complete Registration' : 'Next Step'}
           </button>
         </div>
       </form>

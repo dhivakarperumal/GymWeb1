@@ -13,14 +13,11 @@ const Enquiry = ({
   isLastStep,
   isModal = false
 }) => {
-  const [enquiries, setEnquiries] = useState([]);
-  const [loading, setLoading] = useState(!isModal); // Don't show loading in modal mode
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("pending");
-  const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
-  const [showForm, setShowForm] = useState(false);
-  const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+  const [showMemberList, setShowMemberList] = useState(false);
   const [localFormData, setLocalFormData] = useState({
     name: initialFormData?.name || "",
     email: initialFormData?.email || "",
@@ -42,7 +39,8 @@ const Enquiry = ({
     emergency_contact_phone_home: initialFormData?.emergency_contact_phone_home || "",
     emergency_contact_phone_work: initialFormData?.emergency_contact_phone_work || "",
     fitness_goal: initialFormData?.fitness_goal || "",
-    blood_group: initialFormData?.blood_group || ""
+    blood_group: initialFormData?.blood_group || "",
+    gender: initialFormData?.gender || ""
   });
 
   useEffect(() => {
@@ -59,163 +57,58 @@ const Enquiry = ({
   }, [localFormData.height, localFormData.weight]);
 
   useEffect(() => {
-    if (!isModal) {
-      fetchEnquiries();
-    } else {
-      setLoading(false); // Don't show loading in modal mode
-    }
-  }, [isModal]);
+    fetchMembers();
+  }, []);
 
-  const fetchEnquiries = async () => {
+  const fetchMembers = async () => {
     try {
       setError(null);
-      const response = await api.get('/enquiries');
+      const response = await api.get('/members');
       const data = Array.isArray(response.data) ? response.data : [];
-      setEnquiries(data);
+      setMembers(data);
     } catch (error) {
-      console.error('Error fetching enquiries:', error);
-      setError('Failed to load enquiries');
-      setEnquiries([]);
+      console.error('Error fetching members:', error);
+      setError('Failed to load members');
+      setMembers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // Create new enquiry
-      await api.post('/enquiries', localFormData);
-      onNext(localFormData);
-    } catch (error) {
-      console.error('Error saving enquiry:', error);
-    }
-  };
-
-  const handleEdit = (enquiry) => {
-    setSelectedEnquiry(enquiry);
+  const handleSelectMember = (member) => {
     setLocalFormData({
-      name: enquiry.name,
-      email: enquiry.email,
-      phone: enquiry.phone || "",
-      subject: enquiry.subject || "",
-      message: enquiry.message || "",
-      location: enquiry.location || "",
-      height: enquiry.height || "",
-      weight: enquiry.weight || "",
-      bmi: enquiry.bmi || "",
-      dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : "",
-      age: enquiry.age || "",
-      address: enquiry.address || "",
-      employer: enquiry.employer || "",
-      occupation: enquiry.occupation || "",
-      emergency_contact_name: enquiry.emergency_contact_name || "",
-      emergency_contact_relationship: enquiry.emergency_contact_relationship || "",
-      emergency_contact_address: enquiry.emergency_contact_address || "",
-      emergency_contact_phone_home: enquiry.emergency_contact_phone_home || "",
-      emergency_contact_phone_work: enquiry.emergency_contact_phone_work || "",
-      fitness_goal: enquiry.fitness_goal || "",
-      blood_group: enquiry.blood_group || "",
-      status: enquiry.status
+      name: member.name || "",
+      email: member.email || member.user_email || "",
+      phone: member.phone || "",
+      subject: "",
+      message: "",
+      location: member.location || "",
+      height: member.height || "",
+      weight: member.weight || "",
+      bmi: member.bmi || "",
+      dob: member.dob ? dayjs(member.dob).format('YYYY-MM-DD') : "",
+      age: member.age || "",
+      address: member.address || "",
+      employer: member.employer || "",
+      occupation: member.occupation || "",
+      emergency_contact_name: member.emergency_contact_name || "",
+      emergency_contact_relationship: member.emergency_contact_relationship || "",
+      emergency_contact_address: member.emergency_contact_address || "",
+      emergency_contact_phone_home: member.emergency_contact_phone_home || "",
+      emergency_contact_phone_work: member.emergency_contact_phone_work || "",
+      fitness_goal: member.fitness_goal || "",
+      blood_group: member.blood_group || "",
+      gender: member.gender || ""
     });
-    setShowForm(true);
+    setSearchTerm("");
+    setShowMemberList(false);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this enquiry?')) {
-      try {
-        await api.delete(`/enquiries/${id}`);
-        fetchEnquiries();
-      } catch (error) {
-        console.error('Error deleting enquiry:', error);
-      }
-    }
-  };
-
-  const updateStatus = async (id, status) => {
-    try {
-      await api.put(`/enquiries/${id}/status`, { status });
-      fetchEnquiries();
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
-
-  const handleMoveToMembers = async (enquiry) => {
-    if (!window.confirm('Convert this enquiry into a member?')) return;
-    try {
-      const memberData = {
-        name: enquiry.name,
-        email: enquiry.email,
-        phone: enquiry.phone || null,
-        address: enquiry.address || enquiry.location || null,
-        height: enquiry.height || null,
-        weight: enquiry.weight || null,
-        bmi: enquiry.bmi || null,
-        dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : null,
-        age: enquiry.age || null,
-        employer: enquiry.employer || null,
-        occupation: enquiry.occupation || null,
-        emergency_contact_name: enquiry.emergency_contact_name || null,
-        emergency_contact_relationship: enquiry.emergency_contact_relationship || null,
-        emergency_contact_address: enquiry.emergency_contact_address || null,
-        emergency_contact_phone_home: enquiry.emergency_contact_phone_home || null,
-        emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
-        fitness_goal: enquiry.fitness_goal || null,
-        blood_group: enquiry.blood_group || null,
-        joinDate: new Date().toISOString().split('T')[0],
-        status: 'active',
-        // supply password explicitly so frontend knows credentials
-        password: enquiry.phone || ''
-      };
-      // tell admin what the temporary password is
-      await api.post('/members', memberData);
-      alert(`Member created successfully. Login using phone number as both identifier and password.`);
-      await updateStatus(enquiry.id, 'completed');
-    } catch (err) {
-      console.error('Error moving to members:', err);
-      const msg = err.response?.data?.message || 'Failed to create member';
-      alert(msg);
-    }
-  };
-
-  const filteredEnquiries = enquiries.filter(enquiry => {
-    const matchesSearch = enquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || enquiry.status === statusFilter;
-    if (!(matchesSearch && matchesStatus)) return false;
-
-    // 2. Date Range Filter
-    return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
-  });
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'cancelled':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const filteredMembers = members.filter(member => 
+    member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 20); // Limit to 20 suggestions for better selection
 
   if (loading) {
     return (
@@ -235,22 +128,77 @@ const Enquiry = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div className={isModal ? "w-full" : "max-w-5xl mx-auto py-10"}>
+      <div className={isModal ? "w-full" : "w-full py-2"}>
+        {/* Quick Select Section */}
+        {!isModal && (
+          <div className="relative mb-8 bg-white/5 p-4 rounded-xl border border-white/10">
+            <label className="block text-sm font-medium text-orange-400 mb-2 font-bold uppercase tracking-widest">
+              Import from Existing Member (Optional)
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowMemberList(true);
+                }}
+                onFocus={() => setShowMemberList(true)}
+                placeholder="Search member by name, phone or email..."
+                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-white/20"
+              />
+              
+              {showMemberList && (
+                <div className="absolute z-50 w-full mt-1 bg-[#1a1a2e] border border-white/20 rounded-lg shadow-2xl overflow-hidden backdrop-blur-xl max-h-60 overflow-y-auto custom-scrollbar">
+                  {filteredMembers.length > 0 ? (
+                    filteredMembers.map(member => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => handleSelectMember(member)}
+                        className="w-full px-4 py-3 text-left hover:bg-orange-500/10 border-b border-white/5 last:border-0 transition-colors group"
+                      >
+                        <div className="font-bold text-white group-hover:text-orange-400">{member.name}</div>
+                        <div className="text-[10px] text-white/40 flex gap-2 uppercase tracking-tight">
+                          <span>{member.phone || 'No Phone'}</span>
+                          <span>•</span>
+                          <span>{member.email || member.user_email || 'No Email'}</span>
+                          {member.plan && (
+                             <>
+                             <span>•</span>
+                             <span className="text-orange-500/60">{member.plan}</span>
+                             </>
+                          )}
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-4 text-white/40 text-sm italic text-center">No matching members found</div>
+                  )}
+                  <button 
+                    onClick={() => setShowMemberList(false)}
+                    className="w-full py-2 text-[10px] font-bold uppercase tracking-widest text-orange-500 bg-white/5 hover:bg-white/10 transition-colors"
+                  >
+                    Close Suggestions
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
-            {/* SECTION: PERSONAL INFO */}
-            <div className="space-y-4">
-              <h1 className="text-white text-4xl font-bold border-b border-white/10 pb-1">Enquiry Form</h1>
-              <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Personal Information</h3>
+        <form onSubmit={(e) => { e.preventDefault(); onNext(localFormData); }} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+          {/* SECTION: PERSONAL INFO */}
+          <div className="space-y-4">
+            <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Personal Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Name</label>
                   <input
                     type="text"
                     value={localFormData.name}
-                    onChange={(e) => setLocalFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, name: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -260,7 +208,7 @@ const Enquiry = ({
                   <input
                     type="email"
                     value={localFormData.email}
-                    onChange={(e) => setLocalFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, email: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -270,7 +218,7 @@ const Enquiry = ({
                   <input
                     type="tel"
                     value={localFormData.phone}
-                    onChange={(e) => setLocalFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, phone: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -280,7 +228,7 @@ const Enquiry = ({
                     <input
                       type="date"
                       value={localFormData.dob}
-                      onChange={(e) => setLocalFormData({ ...formData, dob: e.target.value })}
+                      onChange={(e) => setLocalFormData(prev => ({ ...prev, dob: e.target.value }))}
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -289,7 +237,7 @@ const Enquiry = ({
                     <input
                       type="number"
                       value={localFormData.age}
-                      onChange={(e) => setLocalFormData({ ...formData, age: e.target.value })}
+                      onChange={(e) => setLocalFormData(prev => ({ ...prev, age: e.target.value }))}
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -298,7 +246,7 @@ const Enquiry = ({
                   <label className="block text-sm font-medium text-white/80 mb-1">Blood Group</label>
                   <select
                     value={localFormData.blood_group}
-                    onChange={(e) => setLocalFormData({ ...formData, blood_group: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, blood_group: e.target.value }))}
                     className="bg-[#1f2937] text-white w-full px-3 py-2  border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select Blood Group</option>
@@ -313,11 +261,24 @@ const Enquiry = ({
                   </select>
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Gender</label>
+                  <select
+                    value={localFormData.gender}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, gender: e.target.value }))}
+                    className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Location / Branch</label>
                   <input
                     type="text"
                     value={localFormData.location}
-                    onChange={(e) => setLocalFormData({ ...formData, location: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, location: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., Gym Branch Name"
                   />
@@ -327,7 +288,7 @@ const Enquiry = ({
                 <label className="block text-sm font-medium text-white/80 mb-1">Full Address</label>
                 <textarea
                   value={localFormData.address}
-                  onChange={(e) => setLocalFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) => setLocalFormData(prev => ({ ...prev, address: e.target.value }))}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -343,7 +304,7 @@ const Enquiry = ({
                   <input
                     type="text"
                     value={localFormData.employer}
-                    onChange={(e) => setLocalFormData({ ...formData, employer: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, employer: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -352,7 +313,7 @@ const Enquiry = ({
                   <input
                     type="text"
                     value={localFormData.occupation}
-                    onChange={(e) => setLocalFormData({ ...formData, occupation: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, occupation: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -368,7 +329,7 @@ const Enquiry = ({
                   <input
                     type="text"
                     value={localFormData.emergency_contact_name}
-                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_name: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, emergency_contact_name: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -377,7 +338,7 @@ const Enquiry = ({
                   <input
                     type="text"
                     value={localFormData.emergency_contact_relationship}
-                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_relationship: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, emergency_contact_relationship: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -386,7 +347,7 @@ const Enquiry = ({
                   <input
                     type="tel"
                     value={localFormData.emergency_contact_phone_home}
-                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_phone_home: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, emergency_contact_phone_home: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -395,7 +356,7 @@ const Enquiry = ({
                   <input
                     type="tel"
                     value={localFormData.emergency_contact_phone_work}
-                    onChange={(e) => setLocalFormData({ ...formData, emergency_contact_phone_work: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, emergency_contact_phone_work: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -404,7 +365,7 @@ const Enquiry = ({
                 <label className="block text-sm font-medium text-white/80 mb-1">Contact Address</label>
                 <textarea
                   value={localFormData.emergency_contact_address}
-                  onChange={(e) => setLocalFormData({ ...formData, emergency_contact_address: e.target.value })}
+                  onChange={(e) => setLocalFormData(prev => ({ ...prev, emergency_contact_address: e.target.value }))}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -420,7 +381,7 @@ const Enquiry = ({
                   <input
                     type="number"
                     value={localFormData.height}
-                    onChange={(e) => setLocalFormData({ ...formData, height: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, height: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -429,7 +390,7 @@ const Enquiry = ({
                   <input
                     type="number"
                     value={localFormData.weight}
-                    onChange={(e) => setLocalFormData({ ...formData, weight: e.target.value })}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, weight: e.target.value }))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -447,7 +408,7 @@ const Enquiry = ({
                 <label className="block text-sm font-medium text-white/80 mb-1">Fitness Goals</label>
                 <textarea
                   value={localFormData.fitness_goal}
-                  onChange={(e) => setLocalFormData({ ...formData, fitness_goal: e.target.value })}
+                  onChange={(e) => setLocalFormData(prev => ({ ...prev, fitness_goal: e.target.value }))}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Describe your fitness objectives..."
@@ -457,63 +418,43 @@ const Enquiry = ({
                 <label className="block text-sm font-medium text-white/80 mb-1">Additional Notes / Message</label>
                 <textarea
                   value={localFormData.message}
-                  onChange={(e) => setLocalFormData({ ...formData, message: e.target.value })}
+                  onChange={(e) => setLocalFormData(prev => ({ ...prev, message: e.target.value }))}
                   rows={2}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
-            {selectedEnquiry && (
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">Status</label>
-                <select
-                  value={localFormData.status}
-                  onChange={(e) => setLocalFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-            )}
-            <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-6">
+            <button
+              type="button"
+              onClick={onPrevious}
+              disabled={isFirstStep}
+              className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
+                isFirstStep
+                  ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-700 hover:bg-gray-600 text-white"
+              }`}
+            >
+              Previous
+            </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isFirstStep && onPrevious) {
-                    onPrevious();
-                  }
-                }}
-                disabled={isFirstStep}
-                className={`flex-1 px-4 py-2 rounded-lg ${isFirstStep
-                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-600 hover:bg-gray-700 text-white"
-                  }`}
-              >
-                Previous
-              </button>
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold transition-all border border-white/10"
+            >
+              Cancel
+            </button>
 
-              <button
-                type="button"
-                className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg"
-              >
-                {isLastStep ? "Complete Registration" : "Next"}
-              </button>
-
-            </div>
-          </form>
-
-        </div>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
+            >
+              {isLastStep ? "Complete Registration" : "Next Step"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
