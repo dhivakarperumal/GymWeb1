@@ -8,6 +8,7 @@ import {
   FiEdit,
   FiTrash2,
 } from "react-icons/fi";
+import { FaArrowLeft } from "react-icons/fa";
 
 /* ================= STYLES ================= */
 const thClass = "px-4 py-3 text-left text-sm text-gray-300";
@@ -90,6 +91,13 @@ const ServicesList = () => {
   /* ================= UI ================= */
   return (
     <div className="p-6">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 px-4 py-2 mb-4 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition text-white"
+      >
+        <FaArrowLeft /> Back
+      </button>
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl text-white font-semibold">
           Gym Services

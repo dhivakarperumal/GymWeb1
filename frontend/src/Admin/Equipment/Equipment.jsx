@@ -7,7 +7,7 @@ import {
   Trash2,
   Wrench,
 } from "lucide-react";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaArrowLeft } from "react-icons/fa";
 import api from "../../api";
 import cache from "../../cache";
 
@@ -194,6 +194,14 @@ const Equipment = () => {
 
   return (
     <div className="p-0 space-y-6 min-h-screen">
+
+      {/* BACK BUTTON */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition text-white"
+      >
+        <FaArrowLeft /> Back
+      </button>
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row 

@@ -4,6 +4,7 @@ import {
   FaUsers,
   FaStar,
   FaClipboardList,
+  FaDumbbell,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -108,11 +109,18 @@ const Settings = () => {
         />
 
         <SettingCard
-  icon={<FaClipboardList />}
-  title="Services Lists"
-  desc="View and manage patient feedback, ratings, and complaints."
-  path="/admin/settings/servicelist"
-/>
+          icon={<FaClipboardList />}
+          title="Services Lists"
+          desc="View and manage patient feedback, ratings, and complaints."
+          path="/admin/settings/servicelist"
+        />
+
+        <SettingCard
+          icon={<FaDumbbell />}
+          title="Gym Equipment"
+          desc="Manage gym equipment inventory, maintenance status and details."
+          path="/admin/equipment"
+        />
 
       </div>
     </div>
