@@ -182,10 +182,6 @@ const InformedConsent = ({ onNext, onPrevious, isFirstStep }) => {
           />
         </div>
 
-        <div className="text-center text-xl font-semibold text-orange-400 pt-4">
-          DAP FITNESS STUDIO
-        </div>
-
         {/* Buttons */}
         <div className="flex gap-4 pt-6">
           <button

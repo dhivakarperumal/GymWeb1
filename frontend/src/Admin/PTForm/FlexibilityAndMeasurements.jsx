@@ -72,12 +72,12 @@ const FlexibilityAndMeasurements = ({
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
-        
+      <form onSubmit={handleSubmit} className="space-y-6">
+
         {/* FLEXIBILITY */}
         <div className="space-y-4">
           <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Flexibility</h3>
-          
+
           {/* Apley's Scratch test */}
           <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-4">
             <div className="font-medium text-white/80 mb-2">Apley's Scratch test:</div>
@@ -188,44 +188,81 @@ const FlexibilityAndMeasurements = ({
 
         {/* MEASUREMENTS TABLE */}
         <div className="space-y-4 pt-4">
-          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Measurements</h3>
-          
+          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">
+            Measurements
+          </h3>
+
           <div className="overflow-x-auto border border-white/20 rounded-lg">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full border-collapse">
+
               <thead>
                 <tr className="bg-white/10 border-b border-white/20">
-                  <th className="p-3 text-sm font-medium text-white/80 border-r border-white/20 w-48">S.No / Measurement</th>
-                  {[1, 2, 3, 4, 5].map(num => (
-                    <th key={num} className="p-3 text-center text-sm font-bold text-orange-400 border-r border-white/20 last:border-0">{num}</th>
+                  <th className="p-3 text-center border-r border-white/20 w-20">
+                    S.No
+                  </th>
+
+                  <th className="p-3 text-left border-r border-white/20 w-60">
+                    Measurement
+                  </th>
+
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <th
+                      key={num}
+                      className="p-3 text-center border-r border-white/20 last:border-0 text-orange-400"
+                    >
+                      {num}
+                    </th>
                   ))}
                 </tr>
               </thead>
+
+
               <tbody>
                 {measurementFields.map((field, rowIndex) => (
-                  <tr key={field.key} className="border-b border-white/10 last:border-0 hover:bg-white/5 transition-colors">
-                    <td className="p-3 text-sm font-medium text-white/80 border-r border-white/20">
+
+                  <tr
+                    key={field.key}
+                    className="border-b border-white/10 hover:bg-white/5"
+                  >
+
+                    {/* Serial number column */}
+                    <td className="p-3 text-center border-r border-white/20 text-white/70">
+                      {rowIndex + 1}
+                    </td>
+
+                    {/* Measurement name */}
+                    <td className="p-3 border-r border-white/20 text-white">
                       {field.label}
                     </td>
-                    {[0, 1, 2, 3, 4].map(colIndex => (
-                      <td key={colIndex} className="p-0 border-r border-white/20 last:border-0 relative">
+
+                    {/* 1-5 entries */}
+                    {[0, 1, 2, 3, 4].map((colIndex) => (
+                      <td
+                        key={colIndex}
+                        className="p-0 border-r border-white/20 last:border-0"
+                      >
                         <input
                           type={field.type}
                           value={localFormData.measurements[colIndex][field.key] || ""}
-                          onChange={(e) => handleMeasurementChange(colIndex, field.key, e.target.value)}
-                          className="w-full h-full p-3 bg-transparent text-white text-center focus:outline-none focus:bg-white/10 text-sm placeholder-white/20"
-                          placeholder="-"
+                          onChange={(e) =>
+                            handleMeasurementChange(
+                              colIndex,
+                              field.key,
+                              e.target.value
+                            )
+                          }
+                          className="w-full p-3 bg-transparent text-center text-white focus:outline-none focus:bg-white/10"
                         />
                       </td>
                     ))}
+
                   </tr>
+
                 ))}
               </tbody>
+
             </table>
           </div>
-        </div>
-
-        <div className="text-center mt-8 pb-4 text-white/40 text-sm tracking-widest uppercase">
-          DAP FITNESS STUDIO
         </div>
 
         {/* Navigation Buttons */}
@@ -234,11 +271,10 @@ const FlexibilityAndMeasurements = ({
             type="button"
             onClick={onPrevious}
             disabled={isFirstStep}
-            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
-              isFirstStep
+            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${isFirstStep
                 ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
                 : "bg-gray-700 hover:bg-gray-600 text-white"
-            }`}
+              }`}
           >
             Previous
           </button>
