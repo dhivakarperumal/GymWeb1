@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X, 
   ChevronLeft, ChevronRight, MessageSquare, Phone, Mail, Calendar, 
@@ -10,6 +11,7 @@ import { filterByDateRange } from "../utils/dateUtils";
 import dayjs from "dayjs";
 
 const FollowupEnquiry = () => {
+  const navigate = useNavigate();
   // State
   const [enquiries, setEnquiries] = useState([]);
   const [followups, setFollowups] = useState([]);
@@ -25,6 +27,7 @@ const FollowupEnquiry = () => {
   
   // Selection
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState("followup"); // Default to followup tab
   
   // Pagination
@@ -39,7 +42,9 @@ const FollowupEnquiry = () => {
     emergency_contact_relationship: "", emergency_contact_address: "",
     emergency_contact_phone_home: "", emergency_contact_phone_work: "",
     fitness_goal: "", blood_group: "", gender: "", status: "followup",
-    plan_name: "", plan_duration: ""
+    plan_name: "", plan_duration: "",
+    reg_no: "", organization: "", website: "", best_time_to_reach: "",
+    updated_by: "", referred_by: ""
   });
 
   const [followupFormData, setFollowupFormData] = useState({
@@ -82,22 +87,22 @@ const FollowupEnquiry = () => {
   const fetchEnquiries = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/enquiries');
+      const res = await api.get("/followups");
       setEnquiries(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setError("Failed to load enquiries");
+      setError("Failed to load follow-ups");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchFollowups = async (enquiryId) => {
+  const fetchFollowups = async (followupId) => {
     try {
       setFollowupLoading(true);
-      const res = await api.get(`/enquiry-followups/enquiry/${enquiryId}`);
+      const res = await api.get(`/followups/${followupId}/interactions`);
       setFollowups(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Error fetching follow-ups", err);
+      console.error("Error fetching interactions", err);
     } finally {
       setFollowupLoading(false);
     }
@@ -107,15 +112,15 @@ const FollowupEnquiry = () => {
     e.preventDefault();
     try {
       if (selectedEnquiry) {
-        await api.put(`/enquiries/${selectedEnquiry.id}`, formData);
+        await api.put(`/followups/${selectedEnquiry.id}`, formData);
       } else {
-        const res = await api.post('/enquiries', formData);
-        setSelectedEnquiry(res.data);
+        await api.post("/followups", formData);
       }
       fetchEnquiries();
-      alert("Enquiry saved successfully!");
+      setShowForm(false);
+      alert("Follow-up record saved successfully!");
     } catch (err) {
-      alert("Error saving enquiry");
+      alert("Error saving follow-up record");
     }
   };
 
@@ -123,20 +128,21 @@ const FollowupEnquiry = () => {
     e.preventDefault();
     if (!selectedEnquiry) return;
     try {
-      await api.post('/enquiry-followups', {
-        ...followupFormData,
-        enquiry_id: selectedEnquiry.id
+      await api.post("/followups/interactions", {
+        followup_id: selectedEnquiry.id,
+        ...followupFormData
+      });
+      setFollowupFormData({ 
+        followup_date: dayjs().format('YYYY-MM-DDTHH:mm'), 
+        notes: "", 
+        status: "pending", 
+        next_followup_date: "" 
       });
       fetchFollowups(selectedEnquiry.id);
-      setFollowupFormData({
-        followup_date: dayjs().format('YYYY-MM-DDTHH:mm'),
-        notes: "",
-        status: "followup",
-        next_followup_date: ""
-      });
       fetchEnquiries();
+      alert("Interaction logged!");
     } catch (err) {
-      alert("Error adding follow-up");
+      alert("Error logging interaction");
     }
   };
 
@@ -148,8 +154,23 @@ const FollowupEnquiry = () => {
       emergency_contact_relationship: "", emergency_contact_address: "",
       emergency_contact_phone_home: "", emergency_contact_phone_work: "",
       fitness_goal: "", blood_group: "", gender: "", status: "followup",
-      plan_name: "", plan_duration: ""
+      plan_name: "", plan_duration: "",
+      reg_no: "", organization: "", website: "", best_time_to_reach: "",
+      updated_by: "", referred_by: ""
     });
+  };
+
+  const handleDeleteEnquiry = async () => {
+    if (!selectedEnquiry) return;
+    if (!window.confirm("Are you sure you want to delete this follow-up record?")) return;
+    try {
+      await api.delete(`/followups/${selectedEnquiry.id}`);
+      fetchEnquiries();
+      setShowForm(false);
+      alert("Follow-up record deleted successfully!");
+    } catch (err) {
+      alert("Error deleting follow-up record");
+    }
   };
 
   // Filters
@@ -207,6 +228,28 @@ const FollowupEnquiry = () => {
             </div>
           </div>
 
+          <div className="flex items-center gap-3">
+             <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+
+             <button 
+              onClick={() => navigate("/admin/enquiry")}
+              className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-white bg-white/10 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap"
+            >
+              <Users size={16} className="text-orange-500" />
+              General Enquiry
+            </button>
+
+            <button 
+              onClick={() => {
+                setSelectedEnquiry(null);
+                setShowForm(true);
+              }}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:scale-105 transition-all outline-none"
+            >
+              <Plus className="w-4 h-4" />
+              Add Enquiry
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-white/5">
@@ -240,7 +283,14 @@ const FollowupEnquiry = () => {
                     </td>
                     <td className="px-4 py-3">{getStatusBadge(enquiry.status)}</td>
                     <td className="px-4 py-3 text-right">
-                      <button className="p-1.5 text-orange-500 hover:bg-orange-500/10 rounded-lg transition-all">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedEnquiry(enquiry);
+                          setShowForm(true);
+                        }}
+                        className="p-1.5 text-orange-500 hover:bg-orange-500/10 rounded-lg transition-all"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                     </td>
@@ -345,11 +395,291 @@ const FollowupEnquiry = () => {
                     <input type="email" value={formData.email} onChange={(e)=>setFormData({...formData, email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm"/>
                   </div>
                </div>
-               <button type="submit" className="px-8 py-2 bg-orange-600 text-white rounded-xl font-bold">Update Profile</button>
+               <button 
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-8 py-2 bg-orange-600 text-white rounded-xl font-bold"
+                >
+                  Update Profile
+                </button>
             </form>
           )}
         </div>
       </div>
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Plus className="w-6 h-6 text-orange-500" />
+                {selectedEnquiry ? 'Edit Enquiry Details' : 'Add New Enquiry'}
+              </h2>
+              <button 
+                onClick={() => setShowForm(false)}
+                className="p-2 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmitEnquiry} className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+              {/* Main Info Grid - Matching Screenshot Density */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                
+                {/* Left Column */}
+                <div className="space-y-6">
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Date</label>
+                    <input 
+                      type="datetime-local" 
+                      value={formData.created_at ? dayjs(formData.created_at).format('YYYY-MM-DDTHH:mm') : dayjs().format('YYYY-MM-DDTHH:mm')} 
+                      readOnly
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Name</label>
+                    <div className="col-span-2 relative">
+                      <input 
+                        required
+                        type="text" 
+                        value={formData.name} 
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                      />
+                      <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-red-500 font-bold">*</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Date Of Birth</label>
+                    <div className="col-span-2 grid grid-cols-2 gap-2">
+                      <input 
+                        type="date" 
+                        value={formData.dob} 
+                        onChange={(e) => setFormData({...formData, dob: e.target.value})}
+                        className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none text-xs"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-bold text-white/40 uppercase">Age</label>
+                        <input 
+                          type="text" 
+                          value={formData.age} 
+                          readOnly
+                          className="w-full bg-white/10 border border-white/10 rounded-lg px-2 py-2 text-white outline-none text-xs text-center"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Gender</label>
+                    <select 
+                      value={formData.gender} 
+                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none appearance-none"
+                    >
+                      <option value="">[SELECT]</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Email</label>
+                    <input 
+                      type="email" 
+                      value={formData.email} 
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Phone</label>
+                    <input 
+                      type="tel" 
+                      value={formData.phone} 
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-start gap-4">
+                    <label className="text-sm font-bold text-white/60">Address</label>
+                    <textarea 
+                      value={formData.address} 
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      rows={2}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-start gap-4">
+                    <label className="text-sm font-bold text-white/60">Message</label>
+                    <div className="col-span-2 relative">
+                      <textarea 
+                        value={formData.message} 
+                        onChange={(e) => setFormData({...formData, message: e.target.value})}
+                        rows={2}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                      />
+                      <span className="absolute -right-4 top-4 text-red-500 font-bold">*</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Reg. No</label>
+                    <input 
+                      type="text" 
+                      value={formData.id || ""} 
+                      readOnly
+                      className="col-span-2 bg-white/10 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Organization</label>
+                    <input 
+                      type="text" 
+                      value={formData.employer || ""} 
+                      onChange={(e) => setFormData({...formData, employer: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Web Site</label>
+                    <input 
+                      type="text" 
+                      value={formData.website || ""} 
+                      onChange={(e) => setFormData({...formData, website: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Mobile</label>
+                    <div className="col-span-2 flex items-center gap-3">
+                      <div className="flex-1 relative">
+                        <input 
+                          type="tel" 
+                          value={formData.phone} 
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                        />
+                        <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-red-500 font-bold">*</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" className="w-3 h-3 rounded" />
+                        <span className="text-[10px] text-white/40 font-bold">SMS</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Best Time To Reach</label>
+                    <input 
+                      type="text" 
+                      value={formData.best_time_to_reach || ""} 
+                      onChange={(e) => setFormData({...formData, best_time_to_reach: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Status</label>
+                    <select 
+                      value={formData.status} 
+                      onChange={(e) => setFormData({...formData, status: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none appearance-none"
+                    >
+                      <option value="">[SELECT]</option>
+                      <option value="pending">Pending</option>
+                      <option value="followup">Followup</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Plan</label>
+                    <select 
+                      value={formData.plan_name} 
+                      onChange={(e) => setFormData({...formData, plan_name: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none appearance-none"
+                    >
+                      <option value="">[SELECT]</option>
+                      <option value="3 Months">3 Months</option>
+                      <option value="6 Months">6 Months</option>
+                      <option value="12 Months">12 Months</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Updated By</label>
+                    <input 
+                      type="text" 
+                      value={formData.updated_by || ""} 
+                      readOnly
+                      className="col-span-2 bg-white/10 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <label className="text-sm font-bold text-white/60">Referred By</label>
+                    <input 
+                      type="text" 
+                      value={formData.referred_by || ""} 
+                      onChange={(e) => setFormData({...formData, referred_by: e.target.value})}
+                      className="col-span-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="flex justify-end gap-3 pt-8 border-t border-white/5">
+                <button 
+                  type="submit"
+                  className="px-8 py-2 bg-white/10 text-white rounded-lg font-bold border border-white/10 hover:bg-white/20 transition-all"
+                >
+                  {selectedEnquiry ? 'Update' : 'Save'}
+                </button>
+                <button 
+                  type="button"
+                  onClick={resetForm}
+                  className="px-8 py-2 bg-white/10 text-white rounded-lg font-bold border border-white/10 hover:bg-white/20 transition-all"
+                >
+                  Clear
+                </button>
+                {selectedEnquiry && (
+                  <button 
+                    type="button"
+                    onClick={handleDeleteEnquiry}
+                    className="px-8 py-2 bg-red-500/20 text-red-500 rounded-lg font-bold border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
+                  >
+                    Delete
+                  </button>
+                )}
+                <button 
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-8 py-2 bg-white/10 text-white rounded-lg font-bold border border-white/10 hover:bg-white/20 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

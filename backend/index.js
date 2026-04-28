@@ -123,7 +123,7 @@ app.use("/api/send-message", messageRoutes);
 
 app.use("/api/memberships", membershipRoutes);
 app.use("/api/pt-forms", ptFormRoutes);
-app.use("/api/enquiry-followups", followupRoutes);
+app.use("/api/followups", followupRoutes);
 
 
 const PORT = process.env.PORT || 5000;
