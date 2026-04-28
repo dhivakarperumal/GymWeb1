@@ -349,13 +349,12 @@ const FollowupEnquiry = () => {
 
         {/* Profile Modal (Dense Form + History at bottom) */}
         {showForm && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in zoom-in duration-300">
-            <div className="bg-[#121212] border border-white/10 rounded-[2.5rem] w-full max-w-6xl h-[90vh] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] flex flex-col">
-
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 max-h-[90vh] p-6 w-full max-w-5xl mx-4">
               {/* Modal Header */}
               <div className="p-2 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                 
+
                   <div className="p-2">
                     <h2 className="text-2xl font-black text-white">{selectedEnquiry ? 'Followup Management' : 'Create New Followup'}</h2>
                     <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-0.5">
@@ -395,6 +394,7 @@ const FollowupEnquiry = () => {
                           type="text"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Enter lead full name"
                           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-orange-500/50 outline-none"
                         />
                         <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-red-500 font-bold">*</span>
@@ -442,6 +442,7 @@ const FollowupEnquiry = () => {
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="e.g., name@example.com"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                       />
                     </div>
@@ -452,6 +453,7 @@ const FollowupEnquiry = () => {
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="e.g., +91 9876543210"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                       />
                     </div>
@@ -462,6 +464,7 @@ const FollowupEnquiry = () => {
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         rows={2}
+                        placeholder="House No, Street, City, State, ZIP"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none resize-none"
                       />
                     </div>
@@ -473,6 +476,7 @@ const FollowupEnquiry = () => {
                           value={formData.message}
                           onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                           rows={2}
+                          placeholder="Additional details or special requirements..."
                           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none resize-none"
                         />
                         <span className="absolute -right-4 top-4 text-red-500 font-bold">*</span>
@@ -498,6 +502,7 @@ const FollowupEnquiry = () => {
                         type="text"
                         value={formData.organization || formData.employer || ""}
                         onChange={(e) => setFormData({ ...formData, organization: e.target.value, employer: e.target.value })}
+                        placeholder="Company or Employer name"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                       />
                     </div>
@@ -508,6 +513,7 @@ const FollowupEnquiry = () => {
                         type="text"
                         value={formData.website}
                         onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                        placeholder="www.example.com"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                       />
                     </div>
@@ -520,6 +526,7 @@ const FollowupEnquiry = () => {
                             type="tel"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="Secondary contact..."
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                           />
                           <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-red-500 font-bold">*</span>
@@ -537,6 +544,7 @@ const FollowupEnquiry = () => {
                         type="text"
                         value={formData.best_time_to_reach}
                         onChange={(e) => setFormData({ ...formData, best_time_to_reach: e.target.value })}
+                        placeholder="e.g., 10 AM - 12 PM"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                       />
                     </div>
@@ -561,8 +569,8 @@ const FollowupEnquiry = () => {
                         value={formData.plan_name}
                         onChange={(e) => {
                           const selectedPlan = plans.find(p => p.name === e.target.value);
-                          setFormData({ 
-                            ...formData, 
+                          setFormData({
+                            ...formData,
                             plan_name: e.target.value,
                             plan_price: selectedPlan ? (selectedPlan.finalPrice || selectedPlan.price) : ""
                           });
@@ -604,6 +612,7 @@ const FollowupEnquiry = () => {
                         type="text"
                         value={formData.referred_by}
                         onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })}
+                        placeholder="Agent name or Friend's name"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                       />
                     </div>
