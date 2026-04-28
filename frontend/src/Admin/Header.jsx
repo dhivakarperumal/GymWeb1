@@ -12,51 +12,62 @@ import {
   Package,
   Clock,
   AlertCircle,
-  X
+  X,
+  LayoutDashboard,
+  MessageSquare,
+  Users,
+  CreditCard,
+  UserCheck,
+  ClipboardList,
+  Activity,
+  UserRound,
+  CalendarCheck,
+  Receipt,
+  ShoppingCart,
+  BarChart3,
+  Dumbbell,
+  HeartPulse,
+  Send,
+  Boxes,
+  Plus
 } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
 
-const pageTitles = {
-  "/admin": "Dashboard",
-  "/admin/enquiry": "Enquiries",
-  "/admin/products": "Products",
-  "/admin/addproducts": "Add Products",
-  "/admin/orders": "Orders",
-  "/admin/members": "Members",
-  "/admin/addmembers": "Add Members",
-  "/admin/plansall": "All Plans",
-  "/admin/buyplanadmin": "Buy Plans",
-  "/admin/assignedtrainers": "Assigned Trainers",
-  "/admin/addplan": "Add Plan",
-  "/admin/fecilities": "Facilities",
-  "/admin/addfecilities": "Add Facilities",
-  "/admin/staff": "Trainers & Staffs",
-  "/admin/addstaff": "Add Staffs",
-  "/admin/appointments": "Appointments",
-  "/admin/addappointments": "Add Appointments",
-  "/admin/treatments": "Treatments",
-  "/admin/addtreatments": "Add Treatments",
-  "/admin/billing": "Billing",
-  "/admin/addbillings": "Add Billing",
-  "/admin/stockdetails": "Inventory",
-  "/admin/add-stock": "Add Inventory",
-  "/admin/equipment": "Gym Equipments",
-  "/admin/addequipment": "Add Equipments",
-  "/admin/overall-attendance": "Attendance",
-  "/admin/reports": "Reports",
-  "/admin/settings": "Settings",
-  "/admin/settings/profile": "Profile",
-  "/admin/settings/usermanagement": "Usermanagement",
-  "/admin/settings/reviews": "Review",
-  "/admin/settings/servicelist": "Services Lists",
-  "/admin/addservice": "Add Services",
-  "/admin/send-message": "Send Message",
-  "/admin/payments": "Payments",
-  "/admin/member-attendance": "Member Attendance",
-  "/admin/commenworkoutdiet": "Workout & Diet",
-  "/admin/users": "Users",
+const pageInfo = {
+  "/admin": { title: "Dashboard", icon: LayoutDashboard },
+  "/admin/enquiry": { title: "Enquiries", icon: MessageSquare },
+  "/admin/products": { title: "Products", icon: Dumbbell },
+  "/admin/addproducts": { title: "Add Products", icon: Plus },
+  "/admin/orders": { title: "Orders", icon: ShoppingCart },
+  "/admin/members": { title: "Members", icon: Users },
+  "/admin/addmembers": { title: "Add Members", icon: Plus },
+  "/admin/plansall": { title: "All Plans", icon: ClipboardList },
+  "/admin/buyplanadmin": { title: "Buy Plans", icon: CreditCard },
+  "/admin/assignedtrainers": { title: "Assigned Trainers", icon: UserCheck },
+  "/admin/addplan": { title: "Add Plan", icon: Plus },
+  "/admin/fecilities": { title: "Facilities", icon: Activity },
+  "/admin/addfecilities": { title: "Add Facilities", icon: Plus },
+  "/admin/staff": { title: "Trainers & Staffs", icon: UserRound },
+  "/admin/addstaff": { title: "Add Staffs", icon: Plus },
+  "/admin/appointments": { title: "Appointments", icon: CalendarCheck },
+  "/admin/billing": { title: "Billing", icon: Receipt },
+  "/admin/stockdetails": { title: "Inventory", icon: Boxes },
+  "/admin/equipment": { title: "Gym Equipments", icon: Activity },
+  "/admin/overall-attendance": { title: "Attendance", icon: CalendarCheck },
+  "/admin/reports": { title: "Reports", icon: BarChart3 },
+  "/admin/settings": { title: "Settings", icon: Settings },
+  "/admin/settings/profile": { title: "Profile", icon: User },
+  "/admin/settings/usermanagement": { title: "Usermanagement", icon: UserRound },
+  "/admin/settings/reviews": { title: "Review", icon: MessageSquare },
+  "/admin/settings/servicelist": { title: "Services Lists", icon: ClipboardList },
+  "/admin/addservice": { title: "Add Services", icon: Plus },
+  "/admin/send-message": { title: "Bulk Messaging", icon: Send },
+  "/admin/payments": { title: "Payments", icon: CreditCard },
+  "/admin/member-attendance": { title: "Member Attendance", icon: Users },
+  "/admin/commenworkoutdiet": { title: "Workout & Diet", icon: HeartPulse },
+  "/admin/users": { title: "Users", icon: Users },
 };
 
 const Header = ({ onMenuClick }) => {
@@ -123,15 +134,17 @@ const Header = ({ onMenuClick }) => {
     alerts.expiring.length +
     alerts.registrations.length;
 
-  const getPageTitle = () => {
-    if (pageTitles[location.pathname]) return pageTitles[location.pathname];
+  const getPageInfo = () => {
+    if (pageInfo[location.pathname]) return pageInfo[location.pathname];
 
-    for (const [path, title] of Object.entries(pageTitles)) {
-      if (location.pathname.startsWith(path + "/")) return title;
+    for (const [path, info] of Object.entries(pageInfo)) {
+      if (location.pathname.startsWith(path + "/")) return info;
     }
 
-    return "Dashboard";
+    return { title: "Dashboard", icon: LayoutDashboard };
   };
+
+  const { title: currentPageTitle, icon: PageIcon } = getPageInfo();
 
   const handleLogout = async () => {
     try {
@@ -190,9 +203,11 @@ const Header = ({ onMenuClick }) => {
           </button>
 
           <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold 
-            text-white tracking-wide truncate">
-            {getPageTitle()}
+            text-white tracking-wide truncate flex items-center gap-2">
+            <PageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
+            {currentPageTitle}
           </h1>
+          
         </div>
 
         {/* RIGHT */}

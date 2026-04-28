@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X } from "lucide-react";
+import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
@@ -12,6 +12,8 @@ const Enquiry = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [showForm, setShowForm] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [formData, setFormData] = useState({
@@ -57,6 +59,10 @@ const Enquiry = () => {
       setFormData(prev => ({ ...prev, age: age >= 0 ? age.toString() : "" }));
     }
   }, [formData.dob]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, dateRange]);
 
   useEffect(() => {
     fetchEnquiries();
@@ -203,6 +209,11 @@ const Enquiry = () => {
     return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEnquiries = filteredEnquiries.slice(startIndex, startIndex + itemsPerPage);
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'completed':
@@ -247,9 +258,7 @@ const Enquiry = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold text-white">Enquiries</h1>
+      <div className="flex justify-end items-center mb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowForm(true)}
@@ -304,11 +313,11 @@ const Enquiry = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
-              {filteredEnquiries && filteredEnquiries.length > 0 ? (
-                filteredEnquiries.map((enquiry,ind) => (
+              {paginatedEnquiries && paginatedEnquiries.length > 0 ? (
+                paginatedEnquiries.map((enquiry,ind) => (
                 <tr key={enquiry.id} className="hover:bg-white/5">
                    <td className="px-6 py-4">
-                    <div className="text-sm text-white">{ ind+1 }</div>
+                    <div className="text-sm text-white">{ startIndex + ind + 1 }</div>
                   </td>
                   <td className="px-6 py-4">
                     <div>
@@ -337,25 +346,31 @@ const Enquiry = () => {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleMoveToMembers(enquiry)}
-                        className="p-1 text-blue-400 hover:text-blue-300 hover:bg-white/10 rounded"
-                        title="Move to members"
-                      >
-                        <Users className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => updateStatus(enquiry.id, 'completed')}
-                        className="p-1 text-green-400 hover:text-green-300 hover:bg-white/10 rounded"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => updateStatus(enquiry.id, 'cancelled')}
-                        className="p-1 text-red-400 hover:text-red-300 hover:bg-white/10 rounded"
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </button>
+                      {enquiry.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleMoveToMembers(enquiry)}
+                            className="p-1 text-blue-400 hover:text-blue-300 hover:bg-white/10 rounded"
+                            title="Move to members"
+                          >
+                            <Users className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => updateStatus(enquiry.id, 'completed')}
+                            className="p-1 text-green-400 hover:text-green-300 hover:bg-white/10 rounded"
+                            title="Mark as completed"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => updateStatus(enquiry.id, 'cancelled')}
+                            className="p-1 text-red-400 hover:text-red-300 hover:bg-white/10 rounded"
+                            title="Cancel enquiry"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => handleDelete(enquiry.id)}
                         className="p-1 text-red-400 hover:text-red-300 hover:bg-white/10 rounded"
@@ -376,6 +391,61 @@ const Enquiry = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-white/5 border-t border-white/10 gap-4">
+            <div className="text-sm text-white/60 order-2 sm:order-1">
+              Showing <span className="text-white font-medium">{startIndex + 1}</span> to <span className="text-white font-medium">{Math.min(startIndex + itemsPerPage, filteredEnquiries.length)}</span> of <span className="text-white font-medium">{filteredEnquiries.length}</span> results
+            </div>
+            <div className="flex items-center gap-2 order-1 sm:order-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg bg-white/10 text-white disabled:opacity-50 hover:bg-white/20 transition-all border border-white/10"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  // Only show current, first, last, and surrounding pages if many
+                  if (
+                    totalPages > 7 &&
+                    i + 1 !== 1 &&
+                    i + 1 !== totalPages &&
+                    Math.abs(currentPage - (i + 1)) > 1
+                  ) {
+                    if (Math.abs(currentPage - (i + 1)) === 2) return <span key={i} className="text-white/30 px-1">...</span>;
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      key={i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-all border ${
+                        currentPage === i + 1
+                          ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/20"
+                          : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg bg-white/10 text-white disabled:opacity-50 hover:bg-white/20 transition-all border border-white/10"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Form Modal */}

@@ -151,17 +151,10 @@ const SendMessage = () => {
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8 text-white">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Send className="text-orange-500" />
-              Bulk Messaging
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Send an email or SMS to selected members or enquiries.
-            </p>
-          </div>
+        <div className="mb-4">
+          <p className="text-gray-400 text-sm">
+            Send an email or SMS to selected members or enquiries.
+          </p>
         </div>
 
         {/* TABS */}
