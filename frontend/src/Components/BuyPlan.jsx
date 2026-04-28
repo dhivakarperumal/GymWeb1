@@ -279,13 +279,13 @@ const BuyPlan = () => {
 
                     {/* PLAN PRICE */}
 
-                    <div className="bg-gray-900 p-4 rounded-lg">
+                    {/* <div className="bg-gray-900 p-4 rounded-lg">
                       <p className="text-gray-400 text-sm">Plan Price</p>
 
                       <p className="text-2xl font-bold text-red-500">
                         ₹{price.toLocaleString("en-IN")}
                       </p>
-                    </div>
+                    </div> */}
 
                     {/* PAY BUTTON */}
 
@@ -293,7 +293,7 @@ const BuyPlan = () => {
                       onClick={handlePayment}
                       className="w-full mt-6 bg-red-600 hover:bg-red-700 py-3 rounded-full font-semibold"
                     >
-                      Pay ₹{price.toLocaleString("en-IN")}
+                      Confirm Payment
                     </button>
 
                   </div>
