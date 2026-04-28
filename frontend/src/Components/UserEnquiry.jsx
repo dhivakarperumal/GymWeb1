@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X } from "lucide-react";
 import api from "../api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -12,6 +12,8 @@ import PageContainer from "./PageContainer";
 
 const UserEnquiry = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefilledPlan = location.state?.selectedPlan;
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,8 +44,20 @@ const UserEnquiry = () => {
     fitness_goal: "",
     blood_group: "",
     gender: "",
-    termsAccepted: false
+    termsAccepted: false,
+    plan_name: "",
+    plan_duration: "",
   });
+
+  useEffect(() => {
+    if (prefilledPlan) {
+      setFormData(prev => ({
+        ...prev,
+        plan_name: prefilledPlan.planName,
+        plan_duration: prefilledPlan.duration
+      }));
+    }
+  }, [prefilledPlan]);
 
   useEffect(() => {
     if (formData.height && formData.weight) {
@@ -95,9 +109,9 @@ const UserEnquiry = () => {
         // Create new enquiry
         await api.post('/enquiries', formData);
       }
-      
+
       toast.success(selectedEnquiry ? 'Enquiry updated!' : 'Thank you! Your enquiry has been submitted.');
-      
+
       if (!selectedEnquiry) {
         // Navigate home after new enquiry
         setTimeout(() => navigate("/"), 1500);
@@ -170,9 +184,9 @@ const UserEnquiry = () => {
     }
   };
 
-  
 
- 
+
+
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -224,7 +238,7 @@ const UserEnquiry = () => {
 
       <div className="relative z-10 pt-28 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto" data-aos="fade-up">
-          
+
           {/* TITLE SECTION */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight uppercase italic">
@@ -238,7 +252,29 @@ const UserEnquiry = () => {
           <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
             <div className="p-8 md:p-12">
               <form onSubmit={handleSubmit} className="space-y-10">
-                
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <InputField
+                    label="Selected Plan"
+                    value={formData.plan_name}
+                    readOnly
+                    onChange={(val) => setFormData({
+                      ...formData,
+                      plan_name: val
+                    })}
+                  />
+
+                  <InputField
+                    label="Plan Duration"
+                    value={formData.plan_duration}
+                    readOnly
+                    onChange={(val) => setFormData({
+                      ...formData,
+                      plan_duration: val
+                    })}
+                  />
+                </div>
+
                 {/* SECTION: PERSONAL INFO */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-4 mb-2">
@@ -249,20 +285,20 @@ const UserEnquiry = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label="Full Name" value={formData.name} onChange={(val) => setFormData({...formData, name: val})} required placeholder="e.g. John Doe" />
-                    <InputField label="Email Address" type="email" value={formData.email} onChange={(val) => setFormData({...formData, email: val})} required placeholder="john@example.com" />
-                    <InputField label="Phone Number" type="tel" value={formData.phone} onChange={(val) => setFormData({...formData, phone: val})} placeholder="Enter 10-digit mobile number" />
-                    
+                    <InputField label="Full Name" value={formData.name} onChange={(val) => setFormData({ ...formData, name: val })} required placeholder="e.g. John Doe" />
+                    <InputField label="Email Address" type="email" value={formData.email} onChange={(val) => setFormData({ ...formData, email: val })} required placeholder="john@example.com" />
+                    <InputField label="Phone Number" type="tel" value={formData.phone} onChange={(val) => setFormData({ ...formData, phone: val })} placeholder="Enter 10-digit mobile number" />
+
                     <div className="grid grid-cols-2 gap-4">
-                      <InputField label="Date of Birth" type="date" value={formData.dob} onChange={(val) => setFormData({...formData, dob: val})} />
-                      <InputField label="Current Age" type="number" value={formData.age} onChange={(val) => setFormData({...formData, age: val})} placeholder="Years" />
+                      <InputField label="Date of Birth" type="date" value={formData.dob} onChange={(val) => setFormData({ ...formData, dob: val })} />
+                      <InputField label="Current Age" type="number" value={formData.age} onChange={(val) => setFormData({ ...formData, age: val })} placeholder="Years" />
                     </div>
 
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Blood Group</label>
                       <select
                         value={formData.blood_group}
-                        onChange={(e) => setFormData({...formData, blood_group: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
                       >
                         <option value="" className="bg-gray-900">Select Blood Group</option>
@@ -276,7 +312,7 @@ const UserEnquiry = () => {
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Gender</label>
                       <select
                         value={formData.gender}
-                        onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
                         required
                       >
@@ -288,15 +324,15 @@ const UserEnquiry = () => {
                     </div>
                   </div>
 
-                  <InputField label="Permanent Address" value={formData.address} onChange={(val) => setFormData({...formData, address: val})} isTextArea placeholder="Enter your full residential address..." />
+                  <InputField label="Permanent Address" value={formData.address} onChange={(val) => setFormData({ ...formData, address: val })} isTextArea placeholder="Enter your full residential address..." />
                 </div>
 
                 {/* SECTION: PROFESSIONAL INFO */}
                 <div className="space-y-6 pt-6 border-t border-white/5">
                   <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Work & Career</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label="Company / Employer" value={formData.employer} onChange={(val) => setFormData({...formData, employer: val})} placeholder="Company name" />
-                    <InputField label="Job Title / Occupation" value={formData.occupation} onChange={(val) => setFormData({...formData, occupation: val})} placeholder="e.g. Software Engineer" />
+                    <InputField label="Company / Employer" value={formData.employer} onChange={(val) => setFormData({ ...formData, employer: val })} placeholder="Company name" />
+                    <InputField label="Job Title / Occupation" value={formData.occupation} onChange={(val) => setFormData({ ...formData, occupation: val })} placeholder="e.g. Software Engineer" />
                   </div>
                 </div>
 
@@ -304,20 +340,20 @@ const UserEnquiry = () => {
                 <div className="space-y-6 pt-6 border-t border-white/5">
                   <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Emergency Contact</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label="Guardian/Contact Name" value={formData.emergency_contact_name} onChange={(val) => setFormData({...formData, emergency_contact_name: val})} placeholder="Full name" />
-                    <InputField label="Relationship" value={formData.emergency_contact_relationship} onChange={(val) => setFormData({...formData, emergency_contact_relationship: val})} placeholder="e.g. Father, Spouse, Friend" />
-                    <InputField label="Home / Primary Phone" type="tel" value={formData.emergency_contact_phone_home} onChange={(val) => setFormData({...formData, emergency_contact_phone_home: val})} placeholder="Phone number" />
-                    <InputField label="Work / Secondary Phone" type="tel" value={formData.emergency_contact_phone_work} onChange={(val) => setFormData({...formData, emergency_contact_phone_work: val})} placeholder="Alternative number" />
+                    <InputField label="Guardian/Contact Name" value={formData.emergency_contact_name} onChange={(val) => setFormData({ ...formData, emergency_contact_name: val })} placeholder="Full name" />
+                    <InputField label="Relationship" value={formData.emergency_contact_relationship} onChange={(val) => setFormData({ ...formData, emergency_contact_relationship: val })} placeholder="e.g. Father, Spouse, Friend" />
+                    <InputField label="Home / Primary Phone" type="tel" value={formData.emergency_contact_phone_home} onChange={(val) => setFormData({ ...formData, emergency_contact_phone_home: val })} placeholder="Phone number" />
+                    <InputField label="Work / Secondary Phone" type="tel" value={formData.emergency_contact_phone_work} onChange={(val) => setFormData({ ...formData, emergency_contact_phone_work: val })} placeholder="Alternative number" />
                   </div>
-                  <InputField label="Emergency Contact Address" value={formData.emergency_contact_address} onChange={(val) => setFormData({...formData, emergency_contact_address: val})} isTextArea placeholder="Guardian's address..." />
+                  <InputField label="Emergency Contact Address" value={formData.emergency_contact_address} onChange={(val) => setFormData({ ...formData, emergency_contact_address: val })} isTextArea placeholder="Guardian's address..." />
                 </div>
 
                 {/* SECTION: HEALTH & GOALS */}
                 <div className="space-y-6 pt-6 border-t border-white/5">
                   <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Fitness Profile</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <InputField label="Height (cm)" type="number" value={formData.height} onChange={(val) => setFormData({...formData, height: val})} placeholder="Height in cm" />
-                    <InputField label="Weight (kg)" type="number" value={formData.weight} onChange={(val) => setFormData({...formData, weight: val})} placeholder="Weight in kg" />
+                    <InputField label="Height (cm)" type="number" value={formData.height} onChange={(val) => setFormData({ ...formData, height: val })} placeholder="Height in cm" />
+                    <InputField label="Weight (kg)" type="number" value={formData.weight} onChange={(val) => setFormData({ ...formData, weight: val })} placeholder="Weight in kg" />
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Current BMI</label>
                       <div className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-orange-500 font-black text-center text-xl">
@@ -326,17 +362,17 @@ const UserEnquiry = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label="What are your fitness goals?" value={formData.fitness_goal} onChange={(val) => setFormData({...formData, fitness_goal: val})} isTextArea placeholder="Describe what you want to achieve (e.g. Lose 5kg, build muscle, marathon prep)..." />
-                    <InputField label="Any Medical History or Notes?" value={formData.message} onChange={(val) => setFormData({...formData, message: val})} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
+                    <InputField label="What are your fitness goals?" value={formData.fitness_goal} onChange={(val) => setFormData({ ...formData, fitness_goal: val })} isTextArea placeholder="Describe what you want to achieve (e.g. Lose 5kg, build muscle, marathon prep)..." />
+                    <InputField label="Any Medical History or Notes?" value={formData.message} onChange={(val) => setFormData({ ...formData, message: val })} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
                   </div>
-                  
+
                   <div className="flex items-center gap-3 pt-4">
                     <input
                       type="checkbox"
                       id="terms"
                       required
                       checked={formData.termsAccepted || false}
-                      onChange={(e) => setFormData({...formData, termsAccepted: e.target.checked})}
+                      onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
                       className="w-5 h-5 text-orange-500 bg-white/5 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-gray-900 cursor-pointer"
                     />
                     <label htmlFor="terms" className="text-sm text-gray-400 cursor-pointer">
@@ -371,7 +407,7 @@ const UserEnquiry = () => {
 };
 
 // Helper Input Component for clean code
-const InputField = ({ label, type = "text", value, onChange, placeholder, required, isTextArea }) => (
+const InputField = ({ label, type = "text", value, onChange, placeholder, required, isTextArea, readOnly = false }) => (
   <div className="space-y-2">
     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{label} {required && <span className="text-red-500">*</span>}</label>
     {isTextArea ? (
@@ -390,7 +426,11 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, requir
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+        className={`w-full px-4 py-3 rounded-xl text-white transition-all
+    ${readOnly
+            ? "bg-white/10 border border-orange-500/30 cursor-not-allowed"
+            : "bg-white/5 border border-white/10 focus:ring-2 focus:ring-orange-500"
+          }`}
       />
     )}
   </div>

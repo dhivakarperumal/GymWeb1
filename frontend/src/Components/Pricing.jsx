@@ -12,7 +12,7 @@ const Pricing = () => {
   const [services, setServices] = useState([]);
   const [availableDurations, setAvailableDurations] = useState([]);
   const [selectedDuration, setSelectedDuration] = useState("ALL");
-  
+
 
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [checkingPlan, setCheckingPlan] = useState(true);
@@ -105,10 +105,9 @@ const Pricing = () => {
           <button
             onClick={() => setSelectedDuration("ALL")}
             className={`px-8 py-2 rounded-full text-sm tracking-widest transition
-              ${
-                selectedDuration === "ALL"
-                  ? "bg-red-600 text-white"
-                  : "border border-red-500/40 text-white/70 hover:bg-red-600/20"
+              ${selectedDuration === "ALL"
+                ? "bg-red-600 text-white"
+                : "border border-red-500/40 text-white/70 hover:bg-red-600/20"
               }`}
           >
             ALL
@@ -119,10 +118,9 @@ const Pricing = () => {
               key={duration}
               onClick={() => setSelectedDuration(duration)}
               className={`px-8 py-2 rounded-full text-sm tracking-widest transition
-                ${
-                  selectedDuration === duration
-                    ? "bg-red-600 text-white"
-                    : "border border-red-500/40 text-white/70 hover:bg-red-600/20"
+                ${selectedDuration === duration
+                  ? "bg-red-600 text-white"
+                  : "border border-red-500/40 text-white/70 hover:bg-red-600/20"
                 }`}
             >
               {duration.toUpperCase()} Month
@@ -154,7 +152,14 @@ const Pricing = () => {
                   return;
                 }
 
-                navigate("/buy-plan", { state: { plan: selected } });
+                navigate("/userenquiry", {
+                  state: {
+                    selectedPlan: {
+                      planName: selected.name,
+                      duration: selected.duration || selected.duration_months
+                    }
+                  }
+                });
               }}
             />
           ))}
