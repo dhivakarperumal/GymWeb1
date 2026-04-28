@@ -398,26 +398,17 @@ const Members = () => {
                     </td>
                     <td className="p-4">
                       {m.pt_form_completed ? (
-                          <div className="flex items-center gap-2">
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1 text-emerald-500 font-bold">
-                                <CheckCircle size={16} />
-                                <span className="text-[10px] uppercase">Done</span>
-                              </div>
-                              {m.pt_form_completed_at && (
-                                <span className="text-[9px] text-white/40 mt-0.5">
-                                  {dayjs(m.pt_form_completed_at).format("DD/MM/YY HH:mm")}
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => navigate(`/admin/pt-form/print/${m.id || m.member_id}`)}
-                              className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md text-white/60 hover:text-white transition-colors"
-                              title="Print PT Form"
-                            >
-                              <Printer size={14} />
-                            </button>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1 text-emerald-500 font-bold">
+                            <CheckCircle size={16} />
+                            <span className="text-[10px] uppercase">Done</span>
                           </div>
+                          {m.pt_form_completed_at && (
+                            <span className="text-[9px] text-white/40 mt-0.5">
+                              {dayjs(m.pt_form_completed_at).format("DD/MM/YY HH:mm")}
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <button 
                           onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
@@ -444,6 +435,15 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="p-4 flex gap-2">
+                      {m.pt_form_completed && (
+                        <button
+                          onClick={() => navigate(`/admin/pt-form/print/${m.id || m.member_id}`)}
+                          className="p-2 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 text-white transition"
+                          title="Print PT Form"
+                        >
+                          <Printer size={16} />
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           if (m.source === "users") {
@@ -460,6 +460,7 @@ const Members = () => {
                       <button
                         onClick={() => handleDelete(m)}
                         className="p-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition"
+                        title="Delete Member"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -495,6 +496,15 @@ const Members = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      {m.pt_form_completed && (
+                        <button
+                          onClick={() => navigate(`/admin/pt-form/print/${m.id || m.member_id}`)}
+                          className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition"
+                          title="Print PT Form"
+                        >
+                          <Printer size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           if (m.source === "users") {
@@ -504,12 +514,14 @@ const Members = () => {
                           }
                         }}
                         className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white transition"
+                        title={m.source === "users" ? "Convert to Gym Member" : "Edit Member"}
                       >
                         <Pencil size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(m)}
                         className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition"
+                        title="Delete Member"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -539,17 +551,9 @@ const Members = () => {
                     <div className="flex items-center gap-2 pt-1">
                       <p className="text-[10px] text-gray-500 uppercase">PT Form:</p>
                       {m.pt_form_completed ? (
-                        <div className="flex items-center gap-2">
-                          <span className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold">
-                            <CheckCircle size={12} /> COMPLETED
-                          </span>
-                          <button
-                            onClick={() => navigate(`/admin/pt-form/print/${m.id || m.member_id}`)}
-                            className="p-1 bg-white/10 hover:bg-white/20 rounded text-white/60 transition-colors"
-                          >
-                            <Printer size={10} />
-                          </button>
-                        </div>
+                        <span className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold">
+                          <CheckCircle size={12} /> COMPLETED
+                        </span>
                       ) : (
                         <button 
                           onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}

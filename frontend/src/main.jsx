@@ -84,6 +84,7 @@ const AssingnedTrainers = lazy(() => import("./Admin/Payments/AssingnedTrainers.
 const GymWorkoutManager = lazy(() => import("./Admin/CommenWorkDiet/CommenWorkDiet.jsx"));
 const UpdateWeight = lazy(() => import("./TrainerAdminPanel/UpdateWeight/UpdateWeight.jsx"));
 const PTForm = lazy(() => import("./Admin/PTForm/PTForm.jsx"));
+const PTFormPrint = lazy(() => import("./Admin/PTForm/PTFormPrint.jsx"));
 
 
 const router = createBrowserRouter([
@@ -184,6 +185,7 @@ const router = createBrowserRouter([
       { path: "assignedtrainers", element: <AssingnedTrainers /> },
       { path: "payments", element: <Payments /> },
       { path: "pt-form", element: <PTForm /> },
+      { path: "pt-form/print/:id", element: <PTFormPrint /> },
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
 
     ],
