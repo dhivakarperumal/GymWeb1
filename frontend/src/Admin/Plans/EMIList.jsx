@@ -127,6 +127,13 @@ const EMIList = () => {
     }
   };
 
+  const Card = ({ title, value, color = "text-white" }) => (
+  <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+    <p className="text-xs text-white/50">{title}</p>
+    <p className={`font-bold ${color}`}>{value}</p>
+  </div>
+);
+
   return (
     <div className="min-h-screen p-6 text-white">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -225,142 +232,159 @@ const EMIList = () => {
       )}
 
       {selectedMembership && (
-        <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setSelectedMembership(null)} />
-          <div className="relative z-50 mt-8 rounded-3xl border border-white/20 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl p-8">
-            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">Update EMI Payment</h2>
-            <p className="text-white/70 mb-6 text-lg">
-              Recording next installment for <strong className="text-white">{selectedMembership.userName || selectedMembership.username}</strong>.
+  <>
+    {/* Overlay */}
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-md z-50"
+      onClick={() => setSelectedMembership(null)}
+    />
+
+    {/* Modal */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto
+        rounded-3xl border border-white/20
+        bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900
+        shadow-[0_30px_80px_rgba(0,0,0,0.6)] p-8"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-orange-400">
+          Update EMI Payment
+        </h2>
+
+        {/* Info Cards */}
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+            <p className="text-xs text-white/50">Plan</p>
+            <p className="font-semibold">{selectedMembership.planName}</p>
+            <p className="text-sm text-white/60">
+              {selectedMembership.duration} months
             </p>
-            <div className="grid gap-6 md:grid-cols-3 mb-6">
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Plan</p>
-                <p className="mt-3 font-bold text-xl text-white">{selectedMembership.planName}</p>
-                <p className="text-sm text-white/60">{selectedMembership.duration} months</p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Current Paid</p>
-                <p className="mt-3 font-bold text-xl text-green-400">₹{parseDecimal(selectedMembership.pricePaid).toFixed(2)}</p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Current Status</p>
-                <p className="mt-3 font-bold text-xl text-white">{selectedMembership.status || "active"}</p>
-              </div>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 mb-6">
-              <label className="block">
-                <span className="text-sm text-gray-300 font-medium mb-2 block">Next installment amount</span>
-                <input
-                  type="number"
-                  value={updateAmount}
-                  onChange={(e) => setUpdateAmount(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-800 text-white border border-white/20 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                  placeholder="Enter amount collected now"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm text-gray-300 font-medium mb-2 block">Payment reference</span>
-                <input
-                  type="text"
-                  value={paymentReference}
-                  onChange={(e) => setPaymentReference(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-800 text-white border border-white/20 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                  placeholder="Transaction note or receipt ID"
-                />
-              </label>
-            </div>
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <button
-                onClick={handleUpdatePayment}
-                disabled={updating}
-                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 px-8 py-4 text-lg font-semibold text-white hover:from-orange-600 hover:to-pink-600 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-lg"
-              >
-                {updating ? "Saving..." : "Save Next Payment"}
-              </button>
-              <button
-                onClick={() => setSelectedMembership(null)}
-                className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-transparent px-8 py-4 text-lg font-semibold text-white hover:bg-white/10 transition-all"
-              >
-                Cancel
-              </button>
-            </div>
           </div>
-        </>
-      )}
+
+          <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+            <p className="text-xs text-white/50">Paid</p>
+            <p className="text-green-400 font-bold">
+              ₹{parseDecimal(selectedMembership.pricePaid).toFixed(2)}
+            </p>
+          </div>
+
+          <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+            <p className="text-xs text-white/50">Status</p>
+            <p className="font-semibold">
+              {selectedMembership.status || "active"}
+            </p>
+          </div>
+        </div>
+
+        {/* Inputs */}
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <input
+            type="number"
+            value={updateAmount}
+            onChange={(e) => setUpdateAmount(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/5 border border-white/20 focus:ring-2 focus:ring-orange-500 outline-none"
+            placeholder="Enter amount"
+          />
+
+          <input
+            type="text"
+            value={paymentReference}
+            onChange={(e) => setPaymentReference(e.target.value)}
+            className="w-full p-3 rounded-xl bg-white/5 border border-white/20 focus:ring-2 focus:ring-orange-500 outline-none"
+            placeholder="Payment reference"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleUpdatePayment}
+            disabled={updating}
+            className="flex-1 bg-orange-500 hover:bg-orange-600 py-3 rounded-xl font-semibold"
+          >
+            {updating ? "Saving..." : "Save Payment"}
+          </button>
+
+          <button
+            onClick={() => setSelectedMembership(null)}
+            className="flex-1 border border-white/20 py-3 rounded-xl"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </>
+)}
 
       {viewingDetails && (
-        <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setViewingDetails(null)} />
-          <div className="relative z-50 mt-8 rounded-3xl border border-white/20 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl p-8">
-            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">EMI Payment Details</h2>
-            <p className="text-white/70 mb-6 text-lg">
-              Detailed breakdown for <strong className="text-white">{viewingDetails.userName || viewingDetails.username}</strong>.
-            </p>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Plan</p>
-                <p className="mt-3 font-bold text-xl text-white">{viewingDetails.planName}</p>
-                <p className="text-sm text-white/60">{viewingDetails.duration} months</p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Total Plan Price</p>
-                <p className="mt-3 font-bold text-xl text-white">₹{(() => {
-                  const plan = findPlanForMembership(viewingDetails);
-                  return plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
-                })().toFixed(2)}</p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">First Due Amount</p>
-                <p className="mt-3 font-bold text-xl text-green-400">₹{parseDecimal(viewingDetails.pricePaid).toFixed(2)}</p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Second Due Amount</p>
-                <p className="mt-3 font-bold text-xl text-orange-400">₹{(() => {
-                  const plan = findPlanForMembership(viewingDetails);
-                  const total = plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
-                  const remaining = total - parseDecimal(viewingDetails.pricePaid);
-                  const durationMonths = parseDuration(viewingDetails.duration);
-                  return durationMonths > 1 ? (remaining / (durationMonths - 1)).toFixed(2) : remaining.toFixed(2);
-                })()}</p>
-              </div>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 mb-6">
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Total Paid</p>
-                <p className="mt-3 font-bold text-xl text-green-400">₹{parseDecimal(viewingDetails.pricePaid).toFixed(2)}</p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Remaining Balance</p>
-                <p className="mt-3 font-bold text-xl text-red-400">₹{(() => {
-                  const plan = findPlanForMembership(viewingDetails);
-                  const total = plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
-                  return (total - parseDecimal(viewingDetails.pricePaid)).toFixed(2);
-                })()}</p>
-              </div>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 mb-6">
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Payment Mode</p>
-                <p className="mt-3 font-bold text-xl text-white">{viewingDetails.paymentMode || "N/A"}</p>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
-                <p className="text-xs uppercase text-white/50 tracking-widest">Status</p>
-                <p className="mt-3 font-bold text-xl text-white">{viewingDetails.status || "active"}</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <button
-                onClick={() => setViewingDetails(null)}
-                className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-transparent px-8 py-4 text-lg font-semibold text-white hover:bg-white/10 transition-all"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+  <>
+    {/* Overlay */}
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-md z-50"
+      onClick={() => setViewingDetails(null)}
+    />
+
+    {/* Modal */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto
+        rounded-3xl border border-white/20
+        bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900
+        shadow-[0_30px_80px_rgba(0,0,0,0.6)] p-8"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-cyan-400">
+          EMI Details
+        </h2>
+
+        {/* Top Stats */}
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+          <Card title="Plan" value={viewingDetails.planName} />
+          <Card
+            title="Total Price"
+            value={`₹${(() => {
+              const plan = findPlanForMembership(viewingDetails);
+              return plan
+                ? parseDecimal(plan.finalPrice ?? plan.price)
+                : parseDecimal(viewingDetails.pricePaid) *
+                    parseDuration(viewingDetails.duration);
+            })().toFixed(2)}`}
+          />
+          <Card
+            title="Paid"
+            value={`₹${parseDecimal(viewingDetails.pricePaid).toFixed(2)}`}
+            color="text-green-400"
+          />
+          <Card
+            title="Remaining"
+            value={`₹${(() => {
+              const plan = findPlanForMembership(viewingDetails);
+              const total = plan
+                ? parseDecimal(plan.finalPrice ?? plan.price)
+                : parseDecimal(viewingDetails.pricePaid) *
+                  parseDuration(viewingDetails.duration);
+              return (total - parseDecimal(viewingDetails.pricePaid)).toFixed(2);
+            })()}`}
+            color="text-red-400"
+          />
+        </div>
+
+        {/* Bottom Info */}
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <Card title="Payment Mode" value={viewingDetails.paymentMode} />
+          <Card title="Status" value={viewingDetails.status} />
+        </div>
+
+        <button
+          onClick={() => setViewingDetails(null)}
+          className="w-full border border-white/20 py-3 rounded-xl"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </>
+)}
     </div>
   );
 };
