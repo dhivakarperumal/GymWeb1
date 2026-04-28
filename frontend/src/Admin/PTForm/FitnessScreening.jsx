@@ -277,14 +277,7 @@ const FitnessScreening = ({
               Previous
             </button>
 
-            <button
-              type="button"
-              onClick={() => window.history.back()}
-              className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold transition-all border border-white/10"
-            >
-              Cancel
-            </button>
-
+            
             <button
               type="submit"
               className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
