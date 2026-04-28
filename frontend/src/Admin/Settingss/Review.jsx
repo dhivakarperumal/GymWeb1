@@ -214,72 +214,69 @@ bg-gradient-to-r from-orange-500 to-orange-600 hover:scale-105 transition shadow
 
       {/* LIST CONTENT */}
       {viewMode === "card" ? (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {filtered.map((r) => (
-            <div key={r.id} className={`${glassCard} p-5 flex gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+            <div key={r.id} className={`${glassCard} p-5 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500`}>
 
-              {/* IMAGE */}
-              {r.image ? (
-                <img
-                  src={r.image}
-                  className="w-16 h-16 rounded-full object-cover border border-white/20 shadow-md"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                  <FaImage className="text-gray-400" />
-                </div>
-              )}
+              <div className="flex justify-between items-start">
+                {/* IMAGE */}
+                {r.image ? (
+                  <img
+                    src={r.image}
+                    className="w-14 h-14 rounded-full object-cover border-2 border-orange-500/50 shadow-lg shadow-orange-500/10"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center border border-white/10">
+                    <FaImage className="text-gray-400" />
+                  </div>
+                )}
+
+                {/* STATUS BADGE */}
+                <button
+                  onClick={() => toggleStatus(r)}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-all ${r.status ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-gray-500/10 text-gray-400 border border-white/10"}`}
+                >
+                  {r.status ? "Approved" : "Pending"}
+                </button>
+              </div>
 
               {/* CONTENT */}
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{r.name}</h3>
-                    <div className="flex gap-1 mt-1">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <FaStar
-                          key={i}
-                          className={
-                            i <= r.rating
-                              ? "text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]"
-                              : "text-gray-500"
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* ACTIONS */}
-                  <div className="flex gap-3 items-center">
-                    <button
-                      onClick={() => toggleStatus(r)}
-                      title={r.status ? "Approved" : "Pending"}
-                      className={`p-2 rounded-lg transition border border-white/10 backdrop-blur-md ${r.status ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30" : "bg-gray-500/10 text-gray-400 hover:bg-gray-500/20"}`}
-                    >
-                      <FaCheckCircle className="text-lg" />
-                    </button>
-
-                    <button
-                      onClick={() => handleEdit(r)}
-                      title="Edit Review"
-                      className="p-2 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 transition border border-yellow-500/20"
-                    >
-                      <FaEdit />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      title="Delete Review"
-                      className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 transition border border-red-500/20"
-                    >
-                      <FaTrash />
-                    </button>
+              <div className="flex-1 space-y-2">
+                <div>
+                  <h3 className="font-bold text-white truncate" title={r.name}>{r.name}</h3>
+                  <div className="flex gap-0.5 mt-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <FaStar
+                        key={i}
+                        className={
+                          i <= r.rating
+                            ? "text-yellow-400 text-xs drop-shadow-[0_0_3px_rgba(250,204,21,0.5)]"
+                            : "text-gray-600 text-xs"
+                        }
+                      />
+                    ))}
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-300 mt-2 italic leading-relaxed">
+                <p className="text-xs text-gray-400 line-clamp-3 italic leading-relaxed min-h-[3rem]">
                   "{r.message}"
                 </p>
+              </div>
+
+              {/* ACTIONS */}
+              <div className="flex gap-2 pt-3 border-t border-white/5">
+                <button
+                  onClick={() => handleEdit(r)}
+                  className="flex-1 flex items-center justify-center py-2 rounded-lg bg-white/5 hover:bg-yellow-500/20 text-gray-400 hover:text-yellow-400 transition border border-white/5 hover:border-yellow-500/20"
+                >
+                  <FaEdit className="text-sm mr-2" /> <span className="text-xs">Edit</span>
+                </button>
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  className="flex-1 flex items-center justify-center py-2 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition border border-white/5 hover:border-red-500/20"
+                >
+                  <FaTrash className="text-sm mr-2" /> <span className="text-xs">Delete</span>
+                </button>
               </div>
             </div>
           ))}
