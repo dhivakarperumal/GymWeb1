@@ -204,65 +204,113 @@ const AddMember = () => {
 
           <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-5">
 
-            <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
-            {/* username auto from email */}
-            <input name="username" value={form.username} placeholder="Username" readOnly disabled className="mt-1 w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-400" />
-            <input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone" className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-            <input name="email" value={form.email} onChange={handleChange} placeholder="Email" className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
-            {/* password auto from phone, displayed only when adding */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Full Name</label>
+              <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. John Doe" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Username (Auto-generated)</label>
+              <input name="username" value={form.username} placeholder="username" readOnly disabled className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-500" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Phone Number</label>
+              <input name="phone" value={form.phone} onChange={handleChange} placeholder="e.g. +91 9876543210" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Email Address</label>
+              <input name="email" value={form.email} onChange={handleChange} placeholder="e.g. john@example.com" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
+            </div>
+
             {!isEdit && (
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                readOnly
-                disabled
-                placeholder="Password (same as phone)"
-                className="mt-1 w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-400" 
-              />
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as Phone)</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  readOnly
+                  disabled
+                  placeholder="Password"
+                  className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-500" 
+                />
+              </div>
             )}
 
-            <select name="gender" value={form.gender} onChange={handleChange} className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500">
-              <option value="">Gender</option>
-              <option className="text-black">Male</option>
-              <option className="text-black">Female</option>
-            </select>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Gender</label>
+              <select name="gender" value={form.gender} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <option value="">Select Gender</option>
+                <option className="text-black">Male</option>
+                <option className="text-black">Female</option>
+                <option className="text-black">Other</option>
+              </select>
+            </div>
 
-            <input name="height" value={form.height} onChange={handleChange} placeholder="Height (cm)" className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-            <input name="weight" value={form.weight} onChange={handleChange} placeholder="Weight (kg)" className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-            <input name="bmi" value={form.bmi} readOnly placeholder="BMI" className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Height (cm)</label>
+              <input name="height" value={form.height} onChange={handleChange} placeholder="e.g. 175" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
 
-            <input type="date" name="joinDate" value={form.joinDate} onChange={handleChange} className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Weight (kg)</label>
+              <input name="weight" value={form.weight} onChange={handleChange} placeholder="e.g. 70" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
 
-          
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">BMI (Auto-calculated)</label>
+              <input name="bmi" value={form.bmi} readOnly placeholder="BMI" className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-500" />
+            </div>
 
-            <select name="status" value={form.status} onChange={handleChange} className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500">
-              <option value="active" className="text-black">Active</option>
-              <option value="inactive" className="text-black">Inactive</option>
-            </select>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Join Date</label>
+              <input type="date" name="joinDate" value={form.joinDate} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
 
-            <textarea
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              placeholder="Address"
-              rows={1}
-              className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Status</label>
+              <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <option value="active" className="text-black">Active</option>
+                <option value="inactive" className="text-black">Inactive</option>
+              </select>
+            </div>
 
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              placeholder="Notes"
-              rows={1}
-              className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Home Address</label>
+              <textarea
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                placeholder="Enter full address"
+                rows={1}
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
 
-            <input type="file" accept="image/*" onChange={handleImage} className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Additional Notes</label>
+              <textarea
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                placeholder="Health conditions, goals, etc."
+                rows={1}
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Profile Photo</label>
+              <input type="file" accept="image/*" onChange={handleImage} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
 
             {form.photo && (
-              <img src={form.photo} alt="preview" className="w-24 h-24 rounded-full object-cover md:col-span-2" />
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-white/70 ml-1 mb-2 block">Photo Preview</label>
+                <img src={form.photo} alt="preview" className="w-24 h-24 rounded-full object-cover border-2 border-orange-500 shadow-lg shadow-orange-500/20" />
+              </div>
             )}
 
             <div className="md:col-span-2 flex justify-end mt-4">
