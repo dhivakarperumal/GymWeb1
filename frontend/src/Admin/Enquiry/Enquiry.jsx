@@ -616,7 +616,8 @@ const Enquiry = () => {
                     />
                   </div>
                 </div>
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Fitness Goals</label>
                   <textarea
                     value={formData.fitness_goal}
@@ -635,6 +636,21 @@ const Enquiry = () => {
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+               </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  required
+                  checked={formData.termsAccepted || false}
+                  onChange={(e) => setFormData({...formData, termsAccepted: e.target.checked})}
+                  className="w-4 h-4 text-orange-500 bg-transparent border border-white/40 rounded focus:ring-orange-500 focus:ring-offset-gray-900 cursor-pointer"
+                />
+                <label htmlFor="terms" className="text-sm text-white/80 cursor-pointer">
+                  I agree to the <span className="text-orange-500 hover:underline">Terms and Conditions</span>
+                </label>
               </div>
 
               {selectedEnquiry && (
