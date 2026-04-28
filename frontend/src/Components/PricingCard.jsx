@@ -67,14 +67,14 @@ export default function PricingCard({
           {service.duration || service.duration_months || "1"}
         </span>
 
-        <span
+        {/* <span
           className="
     text-4xl font-extrabold text-red-500
     drop-shadow-[0_0_14px_rgba(255,0,0,0.9)]
     "
         >
           {(service.duration || service.duration_months) > 1 ? "Months" : "Month"}
-        </span>
+        </span> */}
       </div>
 
       {/* TRAINER INCLUDED */}

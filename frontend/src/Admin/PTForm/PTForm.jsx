@@ -100,7 +100,8 @@ const PTForm = () => {
         const payload = {
           member_id: memberId || updatedData.member_id, // prioritize URL param
           user_id: updatedData.u_id || updatedData.user_id,
-          formData: updatedData
+          formData: updatedData,
+          completed: true
         };
 
         await api.post("/pt-forms", payload);

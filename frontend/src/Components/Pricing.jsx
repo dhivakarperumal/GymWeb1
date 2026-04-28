@@ -123,7 +123,7 @@ const Pricing = () => {
                   : "border border-red-500/40 text-white/70 hover:bg-red-600/20"
                 }`}
             >
-              {duration.toUpperCase()} Month
+              {duration.toUpperCase()}
             </button>
           ))}
         </div>
