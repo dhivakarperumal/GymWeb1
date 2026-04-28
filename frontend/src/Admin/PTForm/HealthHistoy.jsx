@@ -1,214 +1,354 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
-  const [healthData, setHealthData] = useState({
-    medical_conditions: formData?.medical_conditions || "",
-    medications: formData?.medications || "",
-    allergies: formData?.allergies || "",
-    previous_injuries: formData?.previous_injuries || "",
-    surgeries: formData?.surgeries || "",
-    family_medical_history: formData?.family_medical_history || "",
-    smoking_habits: formData?.smoking_habits || "",
-    alcohol_consumption: formData?.alcohol_consumption || "",
-    exercise_history: formData?.exercise_history || "",
-    dietary_restrictions: formData?.dietary_restrictions || ""
-  });
+const HealthHistoy = ({ onNext, onPrevious, isFirstStep }) => {
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onNext(healthData);
-  };
+const [form,setForm] = useState({
+medications:"",
+med1:"",
+dose1:"",
+reason1:"",
+med2:"",
+dose2:"",
+reason2:"",
+med3:"",
+dose3:"",
+reason3:"",
+allergies:"",
+surgeries1:"",
+surgeries2:"",
+surgeries3:"",
+exercise_program:"",
+sports:"",
+sport1:"",
+sport2:"",
+sport3:"",
+sport4:"",
+sport5:"",
+sport6:"",
+smoking:"",
+alcohol:"",
+food_preference:"",
+supplements:""
+})
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setHealthData(prev => ({ ...prev, [name]: value }));
-  };
+const handleChange=(e)=>{
+const {name,value,type,checked}=e.target
+setForm(prev=>({
+...prev,
+[name]:type==="checkbox"?checked:value
+}))
+}
 
-  return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Medical Information</h3>
-      </div>
+const handleSubmit=(e)=>{
+e.preventDefault()
+onNext(form)
+}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Current Medical Conditions
-            </label>
-            <textarea
-              name="medical_conditions"
-              value={healthData.medical_conditions}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="List any current medical conditions..."
-            />
-          </div>
+return(
+<div className="space-y-6">
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Current Medications
-            </label>
-            <textarea
-              name="medications"
-              value={healthData.medications}
-              onChange={handleChange}
-              rows={2}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="List any medications you are currently taking..."
-            />
-          </div>
+<h3 className="text-orange-500 font-bold border-b border-white/10 pb-2 uppercase tracking-wider">
+Health History Questionnaire
+</h3>
 
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Allergies
-            </label>
-            <input
-              type="text"
-              name="allergies"
-              value={healthData.allergies}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Any known allergies..."
-            />
-          </div>
+<form onSubmit={handleSubmit} className="space-y-6">
 
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Previous Injuries
-            </label>
-            <input
-              type="text"
-              name="previous_injuries"
-              value={healthData.previous_injuries}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Any previous injuries..."
-            />
-          </div>
+{/* Medications */}
+<div className="bg-white/5 border border-white/10 rounded-xl p-6">
+<p className="mb-4 text-white">
+Are you taking any medications?
+</p>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Surgeries
-            </label>
-            <textarea
-              name="surgeries"
-              value={healthData.surgeries}
-              onChange={handleChange}
-              rows={2}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="List any surgeries you've had..."
-            />
-          </div>
+<div className="flex gap-8 mb-5">
+<label>
+<input
+type="radio"
+name="medications"
+value="Yes"
+onChange={handleChange}
+/> Yes
+</label>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Family Medical History
-            </label>
-            <textarea
-              name="family_medical_history"
-              value={healthData.family_medical_history}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Family history of medical conditions..."
-            />
-          </div>
-        </div>
+<label>
+<input
+type="radio"
+name="medications"
+value="No"
+onChange={handleChange}
+/> No
+</label>
+</div>
 
-        <div className="space-y-4">
-          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Lifestyle Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Smoking Habits
-              </label>
-              <select
-                name="smoking_habits"
-                value={healthData.smoking_habits}
-                onChange={handleChange}
-                className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select smoking habit</option>
-                <option value="never">Never smoked</option>
-                <option value="former">Former smoker</option>
-                <option value="current">Current smoker</option>
-                <option value="occasional">Occasional smoker</option>
-              </select>
-            </div>
+<p className="text-orange-400 mb-4">
+If yes, complete the following
+</p>
 
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Alcohol Consumption
-              </label>
-              <select
-                name="alcohol_consumption"
-                value={healthData.alcohol_consumption}
-                onChange={handleChange}
-                className="bg-[#1f2937] text-white w-full px-3 py-2 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select alcohol consumption</option>
-                <option value="none">None</option>
-                <option value="occasional">Occasional</option>
-                <option value="moderate">Moderate</option>
-                <option value="heavy">Heavy</option>
-              </select>
-            </div>
+<div className="grid md:grid-cols-3 gap-4">
+<input name="med1" onChange={handleChange}
+placeholder="Name"
+className="input"/>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Exercise History
-              </label>
-              <textarea
-                name="exercise_history"
-                value={healthData.exercise_history}
-                onChange={handleChange}
-                rows={2}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Describe your exercise history..."
-              />
-            </div>
+<input name="dose1" onChange={handleChange}
+placeholder="Dosage/Frequency"
+className="input"/>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-white/80 mb-1">
-                Dietary Restrictions
-              </label>
-              <textarea
-                name="dietary_restrictions"
-                value={healthData.dietary_restrictions}
-                onChange={handleChange}
-                rows={2}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Any dietary restrictions or preferences..."
-              />
-            </div>
-          </div>
-        </div>
+<input name="reason1" onChange={handleChange}
+placeholder="Reason"
+className="input"/>
 
-        <div className="flex gap-3 pt-6">
-          <button
-            type="button"
-            onClick={onPrevious}
-            disabled={isFirstStep}
-            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
-              isFirstStep
-                ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-700 hover:bg-gray-600 text-white'
-            }`}
-          >
-            Previous
-          </button>
-          <button
-            type="submit"
-            className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
-          >
-            {isLastStep ? 'Complete Registration' : 'Next Step'}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
+<input name="med2" onChange={handleChange}
+placeholder="Name"
+className="input"/>
 
-export default HealthHistoy;
+<input name="dose2" onChange={handleChange}
+placeholder="Dosage/Frequency"
+className="input"/>
+
+<input name="reason2" onChange={handleChange}
+placeholder="Reason"
+className="input"/>
+
+<input name="med3" onChange={handleChange}
+placeholder="Name"
+className="input"/>
+
+<input name="dose3" onChange={handleChange}
+placeholder="Dosage/Frequency"
+className="input"/>
+
+<input name="reason3" onChange={handleChange}
+placeholder="Reason"
+className="input"/>
+</div>
+</div>
+
+
+{/* Allergies */}
+<div className="bg-white/5 border border-white/10 rounded-xl p-6">
+<label className="block mb-2">
+Please list any allergies
+</label>
+
+<input
+name="allergies"
+onChange={handleChange}
+className="input w-full"
+/>
+</div>
+
+
+{/* Surgeries */}
+<div className="bg-white/5 border border-white/10 rounded-xl p-6">
+<p className="mb-4">
+Have you undergone any major surgeries/major accidents?
+</p>
+
+<input
+name="surgeries1"
+placeholder="1."
+onChange={handleChange}
+className="input w-full mb-3"
+/>
+
+<input
+name="surgeries2"
+placeholder="2."
+onChange={handleChange}
+className="input w-full mb-3"
+/>
+
+<input
+name="surgeries3"
+placeholder="3."
+onChange={handleChange}
+className="input w-full"
+/>
+</div>
+
+
+{/* Exercise Program */}
+<div className="bg-white/5 border border-white/10 rounded-xl p-6">
+
+<p className="mb-4">
+Are you currently involved in any exercise program?
+</p>
+
+<div className="flex gap-8 mb-6">
+<label>
+<input
+type="radio"
+name="exercise_program"
+value="Yes"
+onChange={handleChange}
+/> Yes
+</label>
+
+<label>
+<input
+type="radio"
+name="exercise_program"
+value="No"
+onChange={handleChange}
+/> No
+</label>
+</div>
+
+
+<p className="mb-4">
+Are you involved in recreational sports?
+</p>
+
+<div className="grid md:grid-cols-2 gap-4">
+<input name="sport1" placeholder="1." onChange={handleChange} className="input"/>
+<input name="sport4" placeholder="4." onChange={handleChange} className="input"/>
+
+<input name="sport2" placeholder="2." onChange={handleChange} className="input"/>
+<input name="sport5" placeholder="5." onChange={handleChange} className="input"/>
+
+<input name="sport3" placeholder="3." onChange={handleChange} className="input"/>
+<input name="sport6" placeholder="6." onChange={handleChange} className="input"/>
+</div>
+
+</div>
+
+
+{/* Lifestyle */}
+<div className="bg-white/5 border border-white/10 rounded-xl p-6">
+<h3 className="text-orange-400 font-bold mb-5">
+LIFESTYLE AND DIETARY FACTORS
+</h3>
+
+<p className="mb-4 font-semibold">
+Smoking and Alcohol Consumption
+</p>
+
+<div className="grid md:grid-cols-2 gap-6">
+
+<div>
+<label>Smoking</label>
+<select
+name="smoking"
+onChange={handleChange}
+className="input w-full mt-2"
+>
+<option value="">Select</option>
+<option>Yes</option>
+<option>No</option>
+</select>
+</div>
+
+<div>
+<label>Alcohol</label>
+<select
+name="alcohol"
+onChange={handleChange}
+className="input w-full mt-2"
+>
+<option value="">Select</option>
+<option>Yes</option>
+<option>No</option>
+</select>
+</div>
+
+</div>
+
+
+<div className="mt-6">
+<label className="block mb-3">
+Food Preference
+</label>
+
+<div className="flex gap-8">
+<label>
+<input
+type="radio"
+name="food_preference"
+value="Veg"
+onChange={handleChange}
+/> Veg
+</label>
+
+<label>
+<input
+type="radio"
+name="food_preference"
+value="Non-Veg"
+onChange={handleChange}
+/> Non-Veg
+</label>
+</div>
+</div>
+
+
+<div className="mt-6">
+<label className="block mb-3">
+Do you take dietary supplements?
+</label>
+
+<div className="flex gap-8">
+<label>
+<input
+type="radio"
+name="supplements"
+value="Yes"
+onChange={handleChange}
+/> Yes
+</label>
+
+<label>
+<input
+type="radio"
+name="supplements"
+value="No"
+onChange={handleChange}
+/> No
+</label>
+</div>
+
+</div>
+
+</div>
+
+
+<div className="text-center text-orange-400 font-semibold text-xl">
+DAP FITNESS STUDIO
+</div>
+
+
+<div className="flex gap-3 pt-6">
+<button
+type="button"
+onClick={onPrevious}
+disabled={isFirstStep}
+className="flex-1 px-4 py-3 bg-gray-700 rounded-lg"
+>
+Previous
+</button>
+
+<button
+type="submit"
+className="flex-1 px-4 py-3 bg-orange-600 rounded-lg font-bold"
+>
+Next Step
+</button>
+</div>
+
+</form>
+
+<style jsx>{`
+.input{
+background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.2);
+padding:12px;
+border-radius:10px;
+width:100%;
+color:white;
+}
+`}</style>
+
+</div>
+)
+
+}
+
+export default HealthHistoy

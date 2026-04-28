@@ -1,270 +1,210 @@
-import React, { useState } from 'react';
-import api from '../../api';
+import React, { useState } from "react";
 
-const InformedConsent = ({ onNext, onPrevious, formData, isFirstStep, isLastStep }) => {
-  const [consentData, setConsentData] = useState({
-    understand_risks: formData?.understand_risks || false,
-    voluntary_participation: formData?.voluntary_participation || false,
-    medical_clearance: formData?.medical_clearance || false,
-    emergency_contact_verified: formData?.emergency_contact_verified || false,
-    photo_consent: formData?.photo_consent || false,
-    data_privacy_consent: formData?.data_privacy_consent || false,
-    signature: formData?.signature || "",
-    signature_date: formData?.signature_date || "",
-    witness_signature: formData?.witness_signature || "",
-    witness_date: formData?.witness_date || ""
+const InformedConsent = ({ onNext, onPrevious, isFirstStep }) => {
+  const [form, setForm] = useState({
+    participant_name: "",
+    agree: false,
+    signature: "",
+    date: "",
+    guardian_signature: "",
+    witness: "",
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validate required consents
-    const requiredConsents = [
-      'understand_risks',
-      'voluntary_participation',
-      'medical_clearance',
-      'emergency_contact_verified',
-      'data_privacy_consent'
-    ];
-
-    const missingConsents = requiredConsents.filter(consent => !consentData[consent]);
-
-    if (missingConsents.length > 0) {
-      alert(`Please provide consent for: ${missingConsents.join(', ')}`);
-      return;
-    }
-
-    if (!consentData.signature) {
-      alert('Please provide your signature');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Combine all form data
-      const completeFormData = {
-        ...formData,
-        ...consentData,
-        registration_date: new Date().toISOString(),
-        status: 'completed'
-      };
-
-      // Submit the complete registration
-      await api.post('/pt-registrations', completeFormData);
-
-      alert('PT Registration completed successfully!');
-      onNext(consentData);
-    } catch (error) {
-      console.error('Error completing registration:', error);
-      alert('Failed to complete registration. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleChange = (e) => {
+    const { name, value, checked, type } = e.target;
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setConsentData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext(form);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Please read and agree to the following terms</h3>
-      </div>
+    <div className="bg-[#111827] border border-white/10 rounded-2xl p-8 shadow-2xl text-white">
+      
+      <h2 className="text-3xl font-bold text-orange-500 mb-8 text-center">
+        Informed Consent Form
+      </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Risk Acknowledgment */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-4">
-          <h4 className="text-orange-400 font-bold mb-2">Risk Acknowledgment</h4>
-          <p className="text-white/80 text-sm mb-3">
-            I understand that physical exercise and training carry inherent risks including, but not limited to,
-            muscle strains, sprains, fractures, and other injuries. I acknowledge that results are not guaranteed
-            and depend on various factors including my commitment and adherence to the program.
+      <form onSubmit={handleSubmit} className="space-y-8">
+
+        {/* Consent Intro */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <p className="uppercase text-sm text-orange-400 font-semibold mb-5">
+            Please Fill In All Information Requested Below
           </p>
-          <label className="flex items-center">
+
+          <div className="flex flex-wrap items-center gap-3 leading-8">
+            <span>I</span>
+
+            <input
+              type="text"
+              name="participant_name"
+              value={form.participant_name}
+              onChange={handleChange}
+              placeholder="Full Name"
+              className="bg-transparent border-b border-orange-400 px-2 outline-none"
+            />
+
+            <span>
+              give my consent to participate in the physical fitness evaluation
+              program conducted by DAP Unisex Fitness Studio.
+            </span>
+          </div>
+
+          <label className="flex items-center gap-3 mt-6">
             <input
               type="checkbox"
-              name="understand_risks"
-              checked={consentData.understand_risks}
+              name="agree"
+              checked={form.agree}
               onChange={handleChange}
-              className="mr-2"
             />
-            <span className="text-white/80 text-sm">I understand and accept these risks</span>
+            <span>I Agree</span>
           </label>
         </div>
 
-        {/* Voluntary Participation */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-4">
-          <h4 className="text-orange-400 font-bold mb-2">Voluntary Participation</h4>
-          <p className="text-white/80 text-sm mb-3">
-            My participation in this personal training program is completely voluntary. I understand that I may
-            withdraw from the program at any time without penalty.
+        {/* Benefits */}
+        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+          <h3 className="text-orange-400 font-bold text-lg mb-4">
+            BENEFITS
+          </h3>
+
+          <p className="text-white/80 leading-8">
+            Participation in a regular program of physical activity has been
+            shown to produce positive changes in a number of organ systems.
+            These changes include increased work capacity, improved
+            cardiovascular efficiency, and increased muscular strength,
+            flexibility power and endurance.
           </p>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="voluntary_participation"
-              checked={consentData.voluntary_participation}
-              onChange={handleChange}
-              className="mr-2"
-            />
-            <span className="text-white/80 text-sm">I voluntarily agree to participate</span>
-          </label>
         </div>
 
-        {/* Medical Clearance */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-4">
-          <h4 className="text-orange-400 font-bold mb-2">Medical Clearance</h4>
-          <p className="text-white/80 text-sm mb-3">
-            I certify that I have provided accurate health information and have not withheld any medical
-            conditions that could affect my participation in exercise. I understand the importance of
-            consulting with a physician before beginning any exercise program.
+        {/* Risks */}
+        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+          <h3 className="text-orange-400 font-bold text-lg mb-4">
+            RISKS
+          </h3>
+
+          <p className="text-white/80 leading-8">
+            I recognize that exercise carries some risk to the musculoskeletal
+            system (sprains, strains) and the cardiorespiratory system
+            (dizziness, discomfort in breathing, heart attack). I hereby certify
+            that I know of no medical problem that would increase my risk of
+            illness and injury as a result of participation in a regular
+            exercise program.
           </p>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="medical_clearance"
-              checked={consentData.medical_clearance}
-              onChange={handleChange}
-              className="mr-2"
-            />
-            <span className="text-white/80 text-sm">I have provided accurate medical information</span>
-          </label>
         </div>
 
-        {/* Emergency Contact */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-4">
-          <h4 className="text-orange-400 font-bold mb-2">Emergency Contact Verification</h4>
-          <p className="text-white/80 text-sm mb-3">
-            I confirm that the emergency contact information provided is current and accurate.
-            In case of emergency, I authorize the trainer to contact these individuals.
+        {/* Testing */}
+        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+          <h3 className="text-orange-400 font-bold text-lg mb-4">
+            TESTING AND EVALUATION RESULTS
+          </h3>
+
+          <p className="text-white/80 leading-8 mb-5">
+            I understand that I will undergo initial testing to determine my
+            current physical fitness status. Testing will consist of health
+            inventory, assessing body composition, treadmill testing,
+            muscular fitness and flexibility screening.
           </p>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="emergency_contact_verified"
-              checked={consentData.emergency_contact_verified}
-              onChange={handleChange}
-              className="mr-2"
-            />
-            <span className="text-white/80 text-sm">Emergency contact information is verified</span>
-          </label>
+
+          <p className="text-white/80 leading-8 mb-5">
+            I understand my individual results will be made available only to
+            me and are not intended to replace any medical test or physician
+            services.
+          </p>
+
+          <p className="text-white/80 leading-8">
+            By signing this consent form, I understand I am personally
+            responsible for my actions during my tenure at DAP Unisex Fitness
+            Studio.
+          </p>
         </div>
 
-        {/* Photo/Video Consent */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-4">
-          <h4 className="text-orange-400 font-bold mb-2">Photo/Video Consent (Optional)</h4>
-          <p className="text-white/80 text-sm mb-3">
-            I grant permission for photographs or videos to be taken of me during training sessions
-            for progress tracking and educational purposes only.
-          </p>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="photo_consent"
-              checked={consentData.photo_consent}
-              onChange={handleChange}
-              className="mr-2"
-            />
-            <span className="text-white/80 text-sm">I consent to photos/videos for progress tracking</span>
-          </label>
-        </div>
-
-        {/* Data Privacy */}
-        <div className="bg-white/5 border border-white/20 rounded-lg p-4">
-          <h4 className="text-orange-400 font-bold mb-2">Data Privacy Consent</h4>
-          <p className="text-white/80 text-sm mb-3">
-            I consent to the collection, storage, and processing of my personal and health information
-            for the purposes of providing personal training services. This information will be kept
-            confidential and secure in accordance with applicable privacy laws.
-          </p>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="data_privacy_consent"
-              checked={consentData.data_privacy_consent}
-              onChange={handleChange}
-              className="mr-2"
-            />
-            <span className="text-white/80 text-sm">I consent to data collection and processing</span>
-          </label>
+        {/* Policy */}
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-5 text-orange-300 font-semibold">
+          * No Refund • No Transfer • No Extension • No Freezing
         </div>
 
         {/* Signatures */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Participant Signature
+            <label className="block mb-2 text-orange-300">
+              Signature
             </label>
             <input
-              type="text"
               name="signature"
-              value={consentData.signature}
+              value={form.signature}
               onChange={handleChange}
-              placeholder="Type your full name as signature"
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="date"
-              name="signature_date"
-              value={consentData.signature_date}
-              onChange={handleChange}
-              className="w-full mt-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3"
+              placeholder="Type signature"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Witness Signature (Optional)
+            <label className="block mb-2 text-orange-300">
+              Date
             </label>
             <input
-              type="text"
-              name="witness_signature"
-              value={consentData.witness_signature}
-              onChange={handleChange}
-              placeholder="Witness full name"
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
               type="date"
-              name="witness_date"
-              value={consentData.witness_date}
+              name="date"
+              value={form.date}
               onChange={handleChange}
-              className="w-full mt-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3"
             />
           </div>
         </div>
 
-        <div className="flex gap-3 pt-6">
+        <div>
+          <label className="block mb-2 text-orange-300">
+            Parent/Guardian Signature (if minor)
+          </label>
+          <input
+            name="guardian_signature"
+            value={form.guardian_signature}
+            onChange={handleChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-2 text-orange-300">
+            Witness
+          </label>
+          <input
+            name="witness"
+            value={form.witness}
+            onChange={handleChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3"
+          />
+        </div>
+
+        <div className="text-center text-xl font-semibold text-orange-400 pt-4">
+          DAP FITNESS STUDIO
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-4 pt-6">
           <button
             type="button"
             onClick={onPrevious}
             disabled={isFirstStep}
-            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
-              isFirstStep
-                ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-700 hover:bg-gray-600 text-white'
-            }`}
+            className="flex-1 py-3 bg-gray-700 rounded-lg hover:bg-gray-600"
           >
             Previous
           </button>
+
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-lg hover:shadow-green-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-3 bg-orange-500 rounded-lg hover:bg-orange-600 font-bold"
           >
-            {isSubmitting ? 'Submitting...' : 'Complete Registration'}
+            Complete Registration
           </button>
         </div>
+
       </form>
     </div>
   );
