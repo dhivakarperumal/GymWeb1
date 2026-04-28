@@ -44,6 +44,15 @@ const Enquiry = ({
   });
 
   useEffect(() => {
+    if (initialFormData && Object.keys(initialFormData).length > 0) {
+      setLocalFormData(prev => ({
+        ...prev,
+        ...initialFormData
+      }));
+    }
+  }, [initialFormData]);
+
+  useEffect(() => {
     if (localFormData.height && localFormData.weight) {
       const h = parseFloat(localFormData.height) / 100;
       const w = parseFloat(localFormData.weight);

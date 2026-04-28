@@ -31,6 +31,7 @@ async function getAllMembers(req, res) {
         gm.emergency_contact_phone_work,
         gm.fitness_goal,
         gm.blood_group,
+        gm.pt_form_completed,
         u.id AS u_id, 
         u.email AS user_email, 
         u.role,
@@ -68,6 +69,7 @@ async function getAllMembers(req, res) {
         NULL as emergency_contact_phone_work,
         NULL as fitness_goal,
         NULL as blood_group,
+        0 as pt_form_completed,
         u.id AS u_id, 
         u.email AS user_email, 
         u.role,
@@ -146,7 +148,7 @@ async function createMember(req, res) {
     dob, age, employer, occupation,
     emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
     emergency_contact_phone_home, emergency_contact_phone_work,
-    fitness_goal, blood_group
+    fitness_goal, blood_group, pt_form_completed
   } = req.body;
 
   console.log('createMember received:', { name, phone, email, gender, height, weight, bmi, plan, duration, joinDate, expiryDate, status, photo: photo ? 'base64...' : null, notes, address, username });
@@ -198,15 +200,16 @@ async function createMember(req, res) {
        dob, age, employer, occupation,
        emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
        emergency_contact_phone_home, emergency_contact_phone_work,
-       fitness_goal, blood_group)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       fitness_goal, blood_group, pt_form_completed)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           [
             memberId, name, phone, email, gender, numHeight, numWeight, numBmi,
             plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
             dob || null, age || null, employer || null, occupation || null,
             emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
             emergency_contact_phone_home || null, emergency_contact_phone_work || null,
-            fitness_goal || null, blood_group || null
+            fitness_goal || null, blood_group || null,
+            pt_form_completed ? 1 : 0
           ]
         );
         inserted = true;
@@ -292,7 +295,7 @@ async function updateMember(req, res) {
       dob, age, employer, occupation,
       emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
       emergency_contact_phone_home, emergency_contact_phone_work,
-      fitness_goal, blood_group } = req.body;
+      fitness_goal, blood_group, pt_form_completed } = req.body;
     // ensure numeric values are correctly typed
     const numHeight = height != null && !isNaN(height) ? Number(height) : null;
     const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
@@ -329,7 +332,7 @@ async function updateMember(req, res) {
         dob=?, age=?, employer=?, occupation=?,
         emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
         emergency_contact_phone_home=?, emergency_contact_phone_work=?,
-        fitness_goal=?, blood_group=?,
+        fitness_goal=?, blood_group=?, pt_form_completed=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE id=?`;
       updateParams = [
@@ -340,6 +343,7 @@ async function updateMember(req, res) {
         emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
         emergency_contact_phone_home || null, emergency_contact_phone_work || null,
         fitness_goal || null, blood_group || null,
+        pt_form_completed ? 1 : 0,
         idNum
       ];
     } else {
@@ -351,7 +355,7 @@ async function updateMember(req, res) {
         dob=?, age=?, employer=?, occupation=?,
         emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
         emergency_contact_phone_home=?, emergency_contact_phone_work=?,
-        fitness_goal=?, blood_group=?,
+        fitness_goal=?, blood_group=?, pt_form_completed=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE member_id=?`;
       updateParams = [
@@ -362,6 +366,7 @@ async function updateMember(req, res) {
         emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
         emergency_contact_phone_home || null, emergency_contact_phone_work || null,
         fitness_goal || null, blood_group || null,
+        pt_form_completed ? 1 : 0,
         id
       ];
     }

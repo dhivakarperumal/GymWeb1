@@ -29,6 +29,7 @@ const AddMember = () => {
     photo: "",
     notes: "",
     address: "",
+    pt_form_completed: false,
   });
 
   const { id } = useParams();
@@ -56,6 +57,7 @@ const AddMember = () => {
             bmi: data.bmi || "",
             notes: data.notes || "",
             address: data.address || "",
+            pt_form_completed: data.pt_form_completed === 1,
             joinDate: dayjs(data.join_date).format("YYYY-MM-DD"),
             expiryDate: data.expiry_date
               ? dayjs(data.expiry_date).format("YYYY-MM-DD")
@@ -262,6 +264,20 @@ const AddMember = () => {
             <div className="space-y-1">
               <label className="text-sm font-medium text-white/70 ml-1">BMI (Auto-calculated)</label>
               <input name="bmi" value={form.bmi} readOnly placeholder="BMI" className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-500" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">PT Form Status</label>
+              <div className="flex items-center gap-3 mt-2 bg-white/5 border border-white/10 p-3 rounded-lg">
+                <input
+                  type="checkbox"
+                  name="pt_form_completed"
+                  checked={form.pt_form_completed}
+                  onChange={(e) => setForm(prev => ({ ...prev, pt_form_completed: e.target.checked }))}
+                  className="w-5 h-5 text-orange-500 bg-transparent border border-white/40 rounded focus:ring-orange-500 cursor-pointer"
+                />
+                <span className="text-white text-sm font-medium">PT Form Completed</span>
+              </div>
             </div>
 
             <div className="space-y-1">

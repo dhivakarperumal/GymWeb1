@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import api from '../../api';
+import dayjs from 'dayjs';
 import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
 import HealthHistory2 from './HealthHistory2';
@@ -10,7 +12,49 @@ import FlexibilityAndMeasurements from './FlexibilityAndMeasurements';
 const PTForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const memberId = searchParams.get("member_id");
+
+  useEffect(() => {
+    if (memberId) {
+      const fetchMember = async () => {
+        setLoading(true);
+        try {
+          const res = await api.get(`/members/${memberId}`);
+          const data = res.data;
+          setFormData({
+            name: data.name || "",
+            email: data.email || data.user_email || "",
+            phone: data.phone || "",
+            location: data.location || "",
+            height: data.height || "",
+            weight: data.weight || "",
+            bmi: data.bmi || "",
+            dob: data.dob ? dayjs(data.dob).format('YYYY-MM-DD') : "",
+            age: data.age || "",
+            address: data.address || "",
+            employer: data.employer || "",
+            occupation: data.occupation || "",
+            emergency_contact_name: data.emergency_contact_name || "",
+            emergency_contact_relationship: data.emergency_contact_relationship || "",
+            emergency_contact_address: data.emergency_contact_address || "",
+            emergency_contact_phone_home: data.emergency_contact_phone_home || "",
+            emergency_contact_phone_work: data.emergency_contact_phone_work || "",
+            fitness_goal: data.fitness_goal || "",
+            blood_group: data.blood_group || "",
+            gender: data.gender || ""
+          });
+        } catch (err) {
+          console.error("Failed to pre-fill member data", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchMember();
+    }
+  }, [memberId]);
 
   const steps = [
     { id: 1, name: 'Enquiry Form', component: Enquiry },
@@ -89,13 +133,20 @@ const PTForm = () => {
 
       {/* Form Content */}
       <div className="max-w-6xl mx-auto">
-        <CurrentComponent
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          formData={formData}
-          isFirstStep={currentStep === 1}
-          isLastStep={currentStep === steps.length}
-        />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+            <p className="text-white/40 text-sm animate-pulse">Pre-filling member data...</p>
+          </div>
+        ) : (
+          <CurrentComponent
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            formData={formData}
+            isFirstStep={currentStep === 1}
+            isLastStep={currentStep === steps.length}
+          />
+        )}
       </div>
     </div>
   );

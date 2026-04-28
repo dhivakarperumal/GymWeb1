@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, ChevronLeft, ChevronRight, LayoutGrid, List, Search, Users, Mail, Phone, Calendar } from "lucide-react";
+import { Trash2, Pencil, Plus, ChevronLeft, ChevronRight,Clock, LayoutGrid, List, Search, Users, Mail, Phone, Calendar } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api"
@@ -263,6 +263,15 @@ const Members = () => {
     
 
           <button
+            onClick={() => navigate("/admin/pt-form")}
+            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
+            bg-white/10 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
+          >
+            <Calendar size={16} className="text-orange-500" />
+            PT Form
+          </button>
+
+          <button
             onClick={() => navigate("/admin/addmembers")}
             className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
             bg-gradient-to-r from-orange-500 to-orange-600
@@ -360,6 +369,7 @@ const Members = () => {
                 <th className="p-4 text-left font-medium">Height</th>
                 <th className="p-4 text-left font-medium">Weight</th>
                 <th className="p-4 text-left font-medium">BMI</th>
+                <th className="p-4 text-left font-medium">PT Form</th>
                 <th className="p-4 text-left font-medium">Plan</th>
                 <th className="p-4 text-left font-medium">Type</th>
                 <th className="p-4 text-left font-medium">Actions</th>
@@ -385,6 +395,23 @@ const Members = () => {
                       <span className="px-2 py-1 rounded bg-white/10 text-orange-400 font-bold text-xs">
                         {m.bmi || "-"}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      {m.pt_form_completed ? (
+                        <div className="flex items-center gap-1 text-emerald-500 font-bold">
+                          <CheckCircle size={16} />
+                          <span className="text-[10px] uppercase">Done</span>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
+                          className="flex items-center gap-1 text-orange-400 hover:text-orange-500 transition-colors group"
+                          title="Complete PT Form"
+                        >
+                          <Clock size={16} className="group-hover:animate-pulse" />
+                          <span className="text-[10px] uppercase font-bold underline decoration-dotted underline-offset-4">Pending</span>
+                        </button>
+                      )}
                     </td>
                    
                     <td className="p-4">
@@ -492,6 +519,21 @@ const Members = () => {
                         }`}>
                         {m.source === "users" ? "User" : "Gym Member"}
                       </span>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <p className="text-[10px] text-gray-500 uppercase">PT Form:</p>
+                      {m.pt_form_completed ? (
+                        <span className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold">
+                          <CheckCircle size={12} /> COMPLETED
+                        </span>
+                      ) : (
+                        <button 
+                          onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
+                          className="flex items-center gap-1 text-orange-400 hover:text-orange-500 text-[10px] font-bold underline decoration-dotted underline-offset-2"
+                        >
+                          <Clock size={12} /> PENDING
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
