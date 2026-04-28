@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../../api';
 import dayjs from 'dayjs';
 import Enquiry from './PTFormEnquiry';
@@ -25,6 +26,8 @@ const PTForm = () => {
           const res = await api.get(`/members/${memberId}`);
           const data = res.data;
           setFormData({
+            member_id: data.id,
+            u_id: data.u_id,
             name: data.name || "",
             email: data.email || data.user_email || "",
             phone: data.phone || "",
@@ -46,6 +49,25 @@ const PTForm = () => {
             blood_group: data.blood_group || "",
             gender: data.gender || ""
           });
+
+          // Also try to fetch existing PT Form data if any
+          try {
+            const ptRes = await api.get(`/pt-forms/${memberId}`);
+            if (ptRes.data && ptRes.data.form_data) {
+              const savedData = typeof ptRes.data.form_data === 'string' 
+                ? JSON.parse(ptRes.data.form_data) 
+                : ptRes.data.form_data;
+              
+              setFormData(prev => ({
+                ...prev,
+                ...savedData
+              }));
+            }
+          } catch (ptErr) {
+            // It's okay if no PT form exists yet
+            console.log("No existing PT form found for this member");
+          }
+
         } catch (err) {
           console.error("Failed to pre-fill member data", err);
         } finally {
@@ -65,13 +87,31 @@ const PTForm = () => {
     { id: 6, name: 'Informed Consent', component: InformedConsent }
   ];
 
-  const handleNext = (stepData) => {
-    setFormData(prev => ({ ...prev, ...stepData }));
+  const handleNext = async (stepData) => {
+    const updatedData = { ...formData, ...stepData };
+    setFormData(updatedData);
+
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Form completed, navigate back to payments or show success
-      navigate('/admin/payments');
+      // Final Step Completed
+      setLoading(true);
+      try {
+        const payload = {
+          member_id: memberId || updatedData.member_id, // prioritize URL param
+          user_id: updatedData.u_id || updatedData.user_id,
+          formData: updatedData
+        };
+
+        await api.post("/pt-forms", payload);
+        toast.success("PT Registration completed and stored successfully!");
+        navigate('/admin/members');
+      } catch (err) {
+        console.error("Save PT Form error:", err);
+        toast.error(err.response?.data?.error || "Failed to save registration");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

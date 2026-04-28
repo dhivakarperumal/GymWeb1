@@ -35,6 +35,7 @@ const cartRoutes = require("./src/routes/cartRoutes");
 const attendanceRoutes = require("./src/routes/attendanceRoutes");
 const checkinRoutes = require("./src/routes/checkinRoutes");
 const membershipRoutes = require("./src/routes/membershipRoutes");
+const ptFormRoutes = require("./src/routes/ptFormRoutes");
 
 
 
@@ -119,6 +120,7 @@ app.use("/api/addresses", addressRoutes);
 app.use("/api/send-message", messageRoutes);
 
 app.use("/api/memberships", membershipRoutes);
+app.use("/api/pt-forms", ptFormRoutes);
 
 const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'production') {

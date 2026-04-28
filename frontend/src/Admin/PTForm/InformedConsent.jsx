@@ -1,14 +1,24 @@
 import React, { useState } from "react";
 
-const InformedConsent = ({ onNext, onPrevious, isFirstStep }) => {
+const InformedConsent = ({ onNext, onPrevious, formData, isFirstStep }) => {
   const [form, setForm] = useState({
-    participant_name: "",
-    agree: false,
-    signature: "",
-    date: "",
-    guardian_signature: "",
-    witness: "",
+    participant_name: formData?.participant_name || formData?.name || "",
+    agree: formData?.agree || false,
+    signature: formData?.signature || "",
+    date: formData?.date || "",
+    guardian_signature: formData?.guardian_signature || "",
+    witness: formData?.witness || "",
   });
+
+  React.useEffect(() => {
+    if (formData) {
+      setForm(prev => ({
+        ...prev,
+        ...formData,
+        participant_name: formData.participant_name || formData.name || prev.participant_name
+      }));
+    }
+  }, [formData]);
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;

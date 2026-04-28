@@ -19,16 +19,23 @@ const questions = [
     "Orthopedic problem (including arthritis)"
 ];
 
-const HealthHistory2 = ({ onNext, onPrevious, isFirstStep }) => {
+const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
 
     const [form, setForm] = useState({
-        bp: "",
-        sugar: "",
-        cholesterol: "",
-        thyroid: "",
-        uric: "",
-        serum3d: ""
+        bp: formData?.bp || "",
+        sugar: formData?.sugar || "",
+        cholesterol: formData?.cholesterol || "",
+        thyroid: formData?.thyroid || "",
+        uric: formData?.uric || "",
+        serum3d: formData?.serum3d || "",
+        ...formData
     });
+
+    React.useEffect(() => {
+        if (formData) {
+            setForm(prev => ({ ...prev, ...formData }));
+        }
+    }, [formData]);
 
     const handleRadio = (name, val) => {
         setForm(prev => ({ ...prev, [name]: val }))
@@ -78,6 +85,7 @@ const HealthHistory2 = ({ onNext, onPrevious, isFirstStep }) => {
                                             <input
                                                 type="radio"
                                                 name={`q${index}`}
+                                                checked={form[`q${index}`] === "Yes"}
                                                 onChange={() => handleRadio(`q${index}`, "Yes")}
                                             />
                                             Yes
@@ -87,6 +95,7 @@ const HealthHistory2 = ({ onNext, onPrevious, isFirstStep }) => {
                                             <input
                                                 type="radio"
                                                 name={`q${index}`}
+                                                checked={form[`q${index}`] === "No"}
                                                 onChange={() => handleRadio(`q${index}`, "No")}
                                             />
                                             No

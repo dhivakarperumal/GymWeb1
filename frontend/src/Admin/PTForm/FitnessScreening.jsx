@@ -40,6 +40,12 @@ const FitnessScreening = ({
     fs_curl_ups_level: initialFormData?.fs_curl_ups_level || "",
   });
 
+  React.useEffect(() => {
+    if (initialFormData && Object.keys(initialFormData).length > 0) {
+      setLocalFormData(prev => ({ ...prev, ...initialFormData }));
+    }
+  }, [initialFormData]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "radio") {

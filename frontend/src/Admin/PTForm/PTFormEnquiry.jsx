@@ -19,6 +19,8 @@ const Enquiry = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [showMemberList, setShowMemberList] = useState(false);
   const [localFormData, setLocalFormData] = useState({
+    member_id: initialFormData?.member_id || "",
+    u_id: initialFormData?.u_id || "",
     name: initialFormData?.name || "",
     email: initialFormData?.email || "",
     phone: initialFormData?.phone || "",
@@ -86,6 +88,8 @@ const Enquiry = ({
 
   const handleSelectMember = (member) => {
     setLocalFormData({
+      member_id: member.id,
+      u_id: member.u_id,
       name: member.name || "",
       email: member.email || member.user_email || "",
       phone: member.phone || "",

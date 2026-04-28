@@ -31,6 +31,16 @@ const FlexibilityAndMeasurements = ({
     })
   });
 
+  React.useEffect(() => {
+    if (initialFormData && Object.keys(initialFormData).length > 0) {
+      setLocalFormData(prev => ({
+        ...prev,
+        ...initialFormData,
+        measurements: initialFormData.measurements || prev.measurements
+      }));
+    }
+  }, [initialFormData]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "radio") {

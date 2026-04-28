@@ -1,35 +1,41 @@
 import React, { useState } from "react";
 
-const HealthHistoy = ({ onNext, onPrevious, isFirstStep }) => {
+const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
 
     const [form, setForm] = useState({
-        medications: "",
-        med1: "",
-        dose1: "",
-        reason1: "",
-        med2: "",
-        dose2: "",
-        reason2: "",
-        med3: "",
-        dose3: "",
-        reason3: "",
-        allergies: "",
-        surgeries1: "",
-        surgeries2: "",
-        surgeries3: "",
-        exercise_program: "",
-        sports: "",
-        sport1: "",
-        sport2: "",
-        sport3: "",
-        sport4: "",
-        sport5: "",
-        sport6: "",
-        smoking: "",
-        alcohol: "",
-        food_preference: "",
-        supplements: ""
+        medications: formData?.medications || "",
+        med1: formData?.med1 || "",
+        dose1: formData?.dose1 || "",
+        reason1: formData?.reason1 || "",
+        med2: formData?.med2 || "",
+        dose2: formData?.dose2 || "",
+        reason2: formData?.reason2 || "",
+        med3: formData?.med3 || "",
+        dose3: formData?.dose3 || "",
+        reason3: formData?.reason3 || "",
+        allergies: formData?.allergies || "",
+        surgeries1: formData?.surgeries1 || "",
+        surgeries2: formData?.surgeries2 || "",
+        surgeries3: formData?.surgeries3 || "",
+        exercise_program: formData?.exercise_program || "",
+        sports: formData?.sports || "",
+        sport1: formData?.sport1 || "",
+        sport2: formData?.sport2 || "",
+        sport3: formData?.sport3 || "",
+        sport4: formData?.sport4 || "",
+        sport5: formData?.sport5 || "",
+        sport6: formData?.sport6 || "",
+        smoking: formData?.smoking || "",
+        alcohol: formData?.alcohol || "",
+        food_preference: formData?.food_preference || "",
+        supplements: formData?.supplements || ""
     })
+
+    React.useEffect(() => {
+        if (formData) {
+            setForm(prev => ({ ...prev, ...formData }));
+        }
+    }, [formData]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
