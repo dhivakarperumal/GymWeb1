@@ -48,6 +48,7 @@ const UserEnquiry = () => {
     plan_name: "",
     plan_duration: "",
   });
+  const [showConsent, setShowConsent] = useState(false);
 
   useEffect(() => {
     if (prefilledPlan) {
@@ -364,19 +365,134 @@ const UserEnquiry = () => {
                     <InputField label="Any Medical History or Notes?" value={formData.message} onChange={(val) => setFormData({ ...formData, message: val })} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
                   </div>
 
-                  <div className="flex items-center gap-3 pt-4">
+                 
+
+
+                  <div className="pt-6 border-t border-white/5">
+
+                   {/* Top Text */}
+                  <p className="text-sm text-gray-400 mb-3">
+                    Please read the <span className="text-orange-500 font-semibold">Terms & Conditions</span>
+                  </p>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowConsent(!showConsent)}
+                      className="w-full flex items-center justify-between px-6 py-4
+ bg-white/5 border border-white/10 rounded-2xl
+ hover:bg-white/10 transition-all"
+                    >
+                      <span className="text-white font-bold tracking-wider">
+                        INFORMED CONSENT FORM
+                      </span>
+
+                      <span className="text-orange-500 text-2xl">
+                        {showConsent ? "−" : "+"}
+                      </span>
+                    </button>
+
+                    {showConsent && (
+                      <div className="mt-5 p-8 rounded-2xl bg-white/5 border border-white/10 space-y-8">
+
+                        {/* Consent Intro */}
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                          <p className="uppercase text-sm text-orange-400 font-semibold mb-5">
+                            Please Read The Consent Information Below
+                          </p>
+
+                          <p className="text-white/80 leading-8">
+                            I give my consent to participate in the physical fitness evaluation
+                            program conducted by DAP Unisex Fitness Studio.
+                          </p>
+                        </div>
+
+
+                        {/* Benefits */}
+                        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                          <h3 className="text-orange-400 font-bold text-lg mb-4">
+                            BENEFITS
+                          </h3>
+
+                          <p className="text-white/80 leading-8">
+                            Participation in a regular program of physical activity has been
+                            shown to produce positive changes in a number of organ systems.
+                            These changes include increased work capacity, improved
+                            cardiovascular efficiency, increased muscular strength,
+                            flexibility, power and endurance.
+                          </p>
+                        </div>
+
+
+                        {/* Risks */}
+                        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                          <h3 className="text-orange-400 font-bold text-lg mb-4">
+                            RISKS
+                          </h3>
+
+                          <p className="text-white/80 leading-8">
+                            Exercise carries some risk to the musculoskeletal
+                            system (sprains, strains) and cardiorespiratory system
+                            (dizziness, discomfort in breathing, heart attack).
+                            I certify that I know of no medical problem that would
+                            increase my risk of illness or injury.
+                          </p>
+                        </div>
+
+
+                        {/* Testing */}
+                        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                          <h3 className="text-orange-400 font-bold text-lg mb-4">
+                            TESTING AND EVALUATION RESULTS
+                          </h3>
+
+                          <p className="text-white/80 leading-8 mb-5">
+                            I understand I will undergo initial testing to determine
+                            my current physical fitness status including health inventory,
+                            body composition, treadmill testing, muscular fitness and
+                            flexibility screening.
+                          </p>
+
+                          <p className="text-white/80 leading-8 mb-5">
+                            My individual results will be made available only to me and
+                            are not intended to replace medical tests or physician services.
+                          </p>
+
+                          <p className="text-white/80 leading-8">
+                            By agreeing, I understand I am personally responsible for my
+                            actions during my tenure at DAP Unisex Fitness Studio.
+                          </p>
+                        </div>
+
+
+                        {/* Policy */}
+                        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-5 text-orange-300 font-semibold">
+                          No Refund • No Transfer • No Extension • No Freezing
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Agreement */}
+                  <label className="flex items-center gap-3 pt-4 border-t border-white/10">
                     <input
                       type="checkbox"
-                      id="terms"
                       required
                       checked={formData.termsAccepted || false}
-                      onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
-                      className="w-5 h-5 text-orange-500 bg-white/5 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-gray-900 cursor-pointer"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          termsAccepted: e.target.checked
+                        })
+                      }
+                      className="w-5 h-5"
                     />
-                    <label htmlFor="terms" className="text-sm text-gray-400 cursor-pointer">
-                      I agree to the <span className="text-orange-500 hover:underline">Terms and Conditions</span>
-                    </label>
-                  </div>
+
+                    <span className="text-gray-300">
+                      I have read and agree to the informed consent terms
+                    </span>
+                  </label>
                 </div>
 
                 {/* ACTION BUTTONS */}
