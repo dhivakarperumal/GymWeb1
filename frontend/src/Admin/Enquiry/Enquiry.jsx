@@ -358,13 +358,7 @@ const Enquiry = () => {
                           >
                             <Users className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => updateStatus(enquiry.id, 'completed')}
-                            className="p-1 text-green-400 hover:text-green-300 hover:bg-white/10 rounded"
-                            title="Mark as completed"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
+
                           <button
                             onClick={() => updateStatus(enquiry.id, 'cancelled')}
                             className="p-1 text-red-400 hover:text-red-300 hover:bg-white/10 rounded"
