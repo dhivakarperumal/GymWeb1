@@ -120,8 +120,13 @@ export default function PricingSwiper() {
                       return;
                     }
 
-                    navigate("/buy-plan", {
-                      state: { plan: selected },
+                    navigate("/userenquiry", {
+                      state: {
+                        selectedPlan: {
+                          planName: selected.name,
+                          duration: selected.duration || selected.duration_months
+                        }
+                      }
                     });
                   }}
                 />

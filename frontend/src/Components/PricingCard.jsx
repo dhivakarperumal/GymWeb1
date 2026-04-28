@@ -34,9 +34,7 @@ export default function PricingCard({
         {service.description}
       </p>
 
-      {/* PRICE */}
-      <div className="mb-6 flex flex-col">
-        {/* Final Price + Duration */}
+      {/* <div className="mb-6 flex flex-col">
         <div className="flex items-end gap-2">
           <span
             className="
@@ -51,13 +49,32 @@ export default function PricingCard({
             / {service.duration || service.duration_months || "month"}
           </span>
         </div>
-        {/* Original Price */}
         {service.price && service.final_price && service.price !== service.final_price && (
           <span className="text-sm text-white/90 line-through mb-1">
             ₹{service.price}
           </span>
         )}
+        </div> */}
 
+      {/* DURATION ONLY */}
+      <div className="mb-6 flex items-end gap-2">
+        <span
+          className="
+    text-4xl font-extrabold text-red-500
+    drop-shadow-[0_0_14px_rgba(255,0,0,0.9)]
+    "
+        >
+          {service.duration || service.duration_months || "1"}
+        </span>
+
+        <span
+          className="
+    text-4xl font-extrabold text-red-500
+    drop-shadow-[0_0_14px_rgba(255,0,0,0.9)]
+    "
+        >
+          {(service.duration || service.duration_months) > 1 ? "Months" : "Month"}
+        </span>
       </div>
 
       {/* TRAINER INCLUDED */}

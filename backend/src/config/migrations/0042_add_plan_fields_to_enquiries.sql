@@ -1,0 +1,3 @@
+ALTER TABLE enquiries
+ADD COLUMN plan_name VARCHAR(255) NULL,
+ADD COLUMN plan_duration VARCHAR(100) NULL;
