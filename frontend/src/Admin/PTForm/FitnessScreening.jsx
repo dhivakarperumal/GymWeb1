@@ -109,7 +109,7 @@ const FitnessScreening = ({
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+      <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* RESTING PARAMETERS */}
         <div className="space-y-4">
@@ -219,10 +219,6 @@ const FitnessScreening = ({
             {renderMuscleEnduranceRow('Triceps', 'fs_triceps')}
             {renderMuscleEnduranceRow('Curl ups', 'fs_curl_ups')}
           </div>
-        </div>
-
-        <div className="text-center mt-8 pb-4 text-white/40 text-sm tracking-widest uppercase">
-          DAP FITNESS STUDIO
         </div>
 
         {/* Navigation Buttons */}
