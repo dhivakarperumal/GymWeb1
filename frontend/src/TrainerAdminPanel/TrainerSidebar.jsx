@@ -31,21 +31,13 @@ const navItems = [
     exact: true,
   },
 
-  // {
-  //   path: "/trainer/addworkouts",
-  //   label: "Add Workouts",
-  //   icon: Dumbbell,
-  // },
+
   {
     path: "/trainer/alladdworkouts",
     label: "All Workouts",
     icon: Activity,
   },
-  // {
-  //   path: "/trainer/adddietplans",
-  //   label: "Add Diet Plans",
-  //   icon: Receipt,
-  // },
+  
   {
     path: "/trainer/alladddietplans",
     label: "All Diet Plans",
@@ -57,21 +49,13 @@ const navItems = [
     icon: Scale,
   },
 
-  {
-    path: "/trainer/overall-attendance",
-    label: "Attendance",
-    icon: CalendarCheck,
-  },
+ 
   {
     path: "/trainer/send-message",
     label: "Send Message",
     icon: Send,
   },
-  // {
-  //   path: "/trainer/reports",
-  //   label: "Reports & Analytics",
-  //   icon: BarChart3,
-  // },
+
 
   {
     path: "/trainer/pt-form",
@@ -83,6 +67,11 @@ const navItems = [
   label: "Pricing",
   icon: DollarSign,
 },
+ {
+    path: "/trainer/overall-attendance",
+    label: "Attendance",
+    icon: CalendarCheck,
+  },
   { path: "/", label: "Back Home", icon: Home },
 ];
 
