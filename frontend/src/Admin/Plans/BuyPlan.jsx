@@ -34,6 +34,47 @@ const BuyPlanadmin = () => {
     paymentMode: "cash",
   });
 
+  const normalizePlanText = (text) =>
+    text
+      ? text.toString().trim().toLowerCase().replace(/\s+/g, " ")
+      : "";
+
+  const parseDurationValue = (value) => {
+    if (value == null) return null;
+    const numeric = Number(value);
+    if (!Number.isNaN(numeric) && numeric !== 0) return numeric;
+    const match = value.toString().match(/(\d+)/);
+    return match ? Number(match[1]) : null;
+  };
+
+  const findMatchingPlan = (user, planList) => {
+    if (!user || !Array.isArray(planList)) return null;
+    const planName = normalizePlanText(user.plan);
+    const durationValue = parseDurationValue(user.duration);
+
+    if (planName) {
+      const exactByName = planList.find(
+        (p) => normalizePlanText(p.name) === planName
+      );
+      if (exactByName) return exactByName;
+
+      const partialByName = planList.find((p) => {
+        const normalized = normalizePlanText(p.name);
+        return normalized.includes(planName) || planName.includes(normalized);
+      });
+      if (partialByName) return partialByName;
+    }
+
+    if (durationValue != null) {
+      const exactByDuration = planList.find(
+        (p) => parseDurationValue(p.duration) === durationValue
+      );
+      if (exactByDuration) return exactByDuration;
+    }
+
+    return null;
+  };
+
   // ================= FETCH MEMBERS =================
   useEffect(() => {
     const fetchMembers = async () => {
@@ -63,6 +104,14 @@ const BuyPlanadmin = () => {
 
     fetchPlans();
   }, []);
+
+  useEffect(() => {
+    if (!selectedUser || plans.length === 0) return;
+    const matchedPlan = findMatchingPlan(selectedUser, plans);
+    if (matchedPlan && matchedPlan.id !== selectedPlan?.id) {
+      setSelectedPlan(matchedPlan);
+    }
+  }, [selectedUser, plans]);
 
   // ================= FETCH TRAINERS =================
   useEffect(() => {
@@ -265,6 +314,7 @@ Thank you for joining 💪
                 const val = e.target.value;
                 if (!val) {
                   setSelectedUser(null);
+                  setSelectedPlan(null);
                   return;
                 }
                 const [source, idStr] = val.split('-');
@@ -286,20 +336,10 @@ Thank you for joining 💪
                     bmi: user.bmi || "",
                   }));
 
-                  if (user.plan || user.duration) {
-                    const planName = user.plan?.toString().trim().toLowerCase() || "";
-                    const durationValue = user.duration != null ? user.duration.toString().trim() : "";
-
-                    const matchedPlan = plans.find((p) => {
-                      const nameMatches = planName && p.name?.toString().trim().toLowerCase() === planName;
-                      const durationMatches = durationValue && p.duration?.toString().trim() === durationValue;
-                      return nameMatches || (durationMatches && !planName);
-                    });
-
-                    if (matchedPlan) {
-                      setSelectedPlan(matchedPlan);
-                      return;
-                    }
+                  const matchedPlan = findMatchingPlan(user, plans);
+                  if (matchedPlan) {
+                    setSelectedPlan(matchedPlan);
+                    return;
                   }
                 }
 
