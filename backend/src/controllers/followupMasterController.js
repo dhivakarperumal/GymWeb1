@@ -52,8 +52,8 @@ const followupMasterController = {
                     emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                     emergency_contact_phone_home, emergency_contact_phone_work,
                     fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration,
-                    reg_no, organization, website, best_time_to_reach, referred_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    reg_no, organization, website, best_time_to_reach, referred_by, updated_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     name, email || null, phone, subject || null, message || null, location || null,
                     dob || null, age || null, address || null, employer || null, occupation || null,
@@ -62,7 +62,8 @@ const followupMasterController = {
                     fitness_goal || null, blood_group || null,
                     height || null, weight || null, bmi || null, gender || null,
                     plan_name || null, plan_duration || null,
-                    reg_no || null, organization || null, website || null, best_time_to_reach || null, referred_by || null
+                    reg_no || null, organization || null, website || null, best_time_to_reach || null, referred_by || null,
+                    req.body.updated_by || 'Admin'
                 ]
             );
 
@@ -94,7 +95,7 @@ const followupMasterController = {
                     emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_address = ?,
                     emergency_contact_phone_home = ?, emergency_contact_phone_work = ?,
                     fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?,
-                    reg_no = ?, organization = ?, website = ?, best_time_to_reach = ?, referred_by = ?
+                    reg_no = ?, organization = ?, website = ?, best_time_to_reach = ?, referred_by = ?, updated_by = ?
                 WHERE id = ?`,
                 [
                     name, email || null, phone, subject || null, message || null, location || null,
@@ -104,6 +105,7 @@ const followupMasterController = {
                     fitness_goal || null, blood_group || null,
                     height || null, weight || null, bmi || null, gender || null, plan_name || null, plan_duration || null, status || 'pending',
                     reg_no || null, organization || null, website || null, best_time_to_reach || null, referred_by || null,
+                    req.body.updated_by || 'Admin',
                     id
                 ]
             );

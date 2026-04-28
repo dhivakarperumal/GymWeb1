@@ -236,6 +236,7 @@ const router = createBrowserRouter([
       { path: "pt-form", element: <PTForm /> },
       { path: "pt-form/print/:id", element: <PTFormPrint /> },
       { path: "pricing", element: <TrainerPricing /> },
+      { path: "followupenquriy", element: <FollowupEnquiry /> },
     ],
   },
 

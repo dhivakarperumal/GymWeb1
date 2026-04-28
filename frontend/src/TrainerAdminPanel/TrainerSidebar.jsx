@@ -67,6 +67,11 @@ const navItems = [
   label: "Pricing",
   icon: DollarSign,
 },
+{
+  path: "/trainer/followupenquriy",
+  label: "Followup Enquiry",
+  icon: MessageSquare,
+},
  {
     path: "/trainer/overall-attendance",
     label: "Attendance",
