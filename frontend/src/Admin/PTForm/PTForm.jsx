@@ -121,6 +121,23 @@ const PTForm = () => {
     }
   };
 
+  const handleMemberSelected = async (memberId) => {
+    setFormData(prev => ({ ...prev, member_id: memberId }));
+
+    try {
+      const ptRes = await api.get(`/pt-forms/${memberId}`);
+      if (ptRes.data && ptRes.data.form_data) {
+        const savedData = typeof ptRes.data.form_data === 'string'
+          ? JSON.parse(ptRes.data.form_data)
+          : ptRes.data.form_data;
+        setFormData(prev => ({ ...prev, ...savedData }));
+      }
+    } catch (err) {
+      // no existing PT form yet
+      console.log('No saved PT form for selected member');
+    }
+  };
+
   const CurrentComponent = steps[currentStep - 1].component;
 
   return (
@@ -182,6 +199,7 @@ const PTForm = () => {
           <CurrentComponent
             onNext={handleNext}
             onPrevious={handlePrevious}
+            onSelectMember={handleMemberSelected}
             formData={formData}
             isFirstStep={currentStep === 1}
             isLastStep={currentStep === steps.length}

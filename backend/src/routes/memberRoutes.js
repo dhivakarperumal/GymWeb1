@@ -2,6 +2,7 @@ const express = require("express");
 const {
   getAllMembers,
   getMemberById,
+  getMemberByUserId,
   createMember,
   updateMember,
   deleteMember,
@@ -17,10 +18,16 @@ const router = express.Router();
 router.get("/", getAllMembers);
 
 /**
+ * @route   GET /api/members/user/:user_id
+ * @desc    Get member record by user id or fallback to the user profile
+ */
+router.get('/user/:user_id', getMemberByUserId);
+
+/**
  * @route   GET /api/members/:id
  * @desc    Get single member
  */
-router.get("/:id", getMemberById);
+router.get('/:id', getMemberById);
 
 /**
  * @route   POST /api/members

@@ -9,6 +9,7 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
+import PTFormUser from "./PTFormUser";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -75,17 +76,16 @@ const Account = () => {
   const tabs = [
     { key: "personal", label: "Personal Details" },
     { key: "plans", label: "My Plans" },
-
+    { key: "ptform", label: "PT Form" },
     ...(hasActivePlan
       ? [
-        { key: "diet", label: "Diet Chart" },
-        { key: "workouts", label: "Workouts" },
-      ]
+          { key: "diet", label: "Diet Chart" },
+          { key: "workouts", label: "Workouts" },
+        ]
       : []),
-
     { key: "orders", label: "My Orders" },
     { key: "address", label: "Address" },
-    { key: "notifications", label: "Notifications" }, // Added
+    { key: "notifications", label: "Notifications" },
   ];
 
   /* ================= CONTENT ================= */
@@ -132,6 +132,9 @@ const Account = () => {
             No active plan for diet chart.
           </p>
         );
+
+      case "ptform":
+        return <PTFormUser />;
 
       case "workouts":
         return <Workouts />;

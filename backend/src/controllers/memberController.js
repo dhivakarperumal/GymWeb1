@@ -139,6 +139,41 @@ async function getMemberById(req, res) {
   }
 }
 
+async function getMemberByUserId(req, res) {
+  try {
+    const { user_id } = req.params;
+    const [memberRows] = await db.query(
+      `SELECT gm.*, u.id AS u_id, u.email AS user_email
+       FROM gym_members gm
+       JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '')
+                    OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+       WHERE u.id = ?
+       LIMIT 1`,
+      [user_id]
+    );
+
+    if (memberRows.length > 0) {
+      return res.json({ ...memberRows[0], source: 'member' });
+    }
+
+    const [userRows] = await db.query(
+      `SELECT id AS u_id, username AS name, email, mobile AS phone, role
+       FROM users
+       WHERE id = ?`,
+      [user_id]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json({ ...userRows[0], source: 'user' });
+  } catch (err) {
+    console.error('getMemberByUserId error', err);
+    res.status(500).json({ error: 'Query failed' });
+  }
+}
+
 async function createMember(req, res) {
   const {
     name, phone, email, gender, height, weight, bmi,
@@ -534,4 +569,4 @@ async function getMemberPlans(req, res) {
   }
 }
 
-module.exports = { getAllMembers, getMemberById, createMember, updateMember, deleteMember, getMemberPlans };
+module.exports = { getAllMembers, getMemberById, getMemberByUserId, createMember, updateMember, deleteMember, getMemberPlans };
