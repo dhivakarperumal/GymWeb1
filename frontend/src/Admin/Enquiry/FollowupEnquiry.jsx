@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X,
   ChevronLeft, ChevronRight, MessageSquare, Phone, Mail, Calendar,
-  User, MapPin, Target, Activity, RefreshCcw, Save, Briefcase, History
+  User, MapPin, Target, Activity, RefreshCcw, Save, Briefcase, History, Edit2
 } from "lucide-react";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
@@ -100,6 +100,23 @@ const FollowupEnquiry = () => {
     }
   };
 
+  const handleDeleteEnquiry = async (id) => {
+    const targetId = id || (selectedEnquiry ? selectedEnquiry.id : null);
+    if (!targetId) return;
+
+    if (window.confirm("Are you sure you want to delete this record?")) {
+      try {
+        await api.delete(`/enquiries/${targetId}`);
+        fetchEnquiries();
+        if (showForm) setShowForm(false);
+        alert("Record deleted successfully!");
+      } catch (err) {
+        console.error("Error deleting enquiry", err);
+        alert("Failed to delete record");
+      }
+    }
+  };
+
   const fetchFollowups = async (followupId) => {
     try {
       setFollowupLoading(true);
@@ -155,26 +172,13 @@ const FollowupEnquiry = () => {
       name: "", email: "", phone: "", subject: "", message: "",
       height: "", weight: "", bmi: "", dob: "", age: "", address: "",
       employer: "", occupation: "", emergency_contact_name: "",
-      emergency_contact_relationship: "", emergency_contact_address: "",
-      emergency_contact_phone_home: "", emergency_contact_phone_work: "",
+      relationship: "", emergency_contact_address: "",
+      phone_home: "", phone_work: "",
       fitness_goal: "", blood_group: "", gender: "", status: "pending",
       plan_name: "", plan_duration: "",
       reg_no: "", organization: "", website: "", best_time_to_reach: "",
       updated_by: "", referred_by: ""
     });
-  };
-
-  const handleDeleteEnquiry = async () => {
-    if (!selectedEnquiry) return;
-    if (!window.confirm("Are you sure you want to delete this record?")) return;
-    try {
-      await api.delete(`/followups/${selectedEnquiry.id}`);
-      fetchEnquiries();
-      setShowForm(false);
-      alert("Record deleted successfully!");
-    } catch (err) {
-      alert("Error deleting record");
-    }
   };
 
   // Filters
@@ -215,7 +219,7 @@ const FollowupEnquiry = () => {
       <div className="flex-1 flex flex-col min-h-0">
 
         {/* Header Area */}
-        <div className="p-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="p-2 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <h1 className="text-2xl font-black text-white flex items-center gap-3">
               <div className="relative group">
@@ -254,14 +258,15 @@ const FollowupEnquiry = () => {
 
 
           {/* Table Body (Full Width) */}
-          <div className="flex-1 overflow-y-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden custom-scrollbar">
+          <div className="flex-1 mt-5 overflow-y-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border border-white/10  overflow-hidden z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
                 <tr>
-                  <th className="px-6 py-4 border-b border-white/5">Details</th>
-                  <th className="px-6 py-4 border-b border-white/5">Organization</th>
-                  <th className="px-6 py-4 border-b border-white/5">Status</th>
-                  <th className="px-6 py-4 border-b border-white/5">Created</th>
+                  <th className="px-6 py-4 border-b border-white/5 w-16">S No</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-left">Details</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-left">Organization</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-left">Status</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-left">Created</th>
                   <th className="px-6 py-4 border-b border-white/5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -278,39 +283,56 @@ const FollowupEnquiry = () => {
                         setShowForm(true);
                       }}
                     >
+                      <td className="px-6 py-4 text-xs font-bold text-white/40">
+                        {(currentPage - 1) * itemsPerPage + paginatedEnquiries.indexOf(enquiry) + 1}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-white font-bold text-base group-hover:text-orange-400 transition-colors">{enquiry.name}</span>
+                          <span className="text-white font-bold text-base group-hover:text-orange-400 transition-colors">
+                            {enquiry.name}
+                          </span>
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="flex items-center gap-1 text-white/40 text-xs">
-                              <Phone size={10} /> {enquiry.phone}
+                            <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest">
+                              <Phone size={10} /> {enquiry.phone || 'N/A'}
                             </span>
-                            <span className="flex items-center gap-1 text-white/40 text-xs">
+                            <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest">
                               <Mail size={10} /> {enquiry.email || 'N/A'}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Briefcase size={14} className="text-white/20" />
-                          <span className="text-white/60 font-medium">{enquiry.organization || enquiry.employer || "Individual"}</span>
-                        </div>
+                      <td className="px-6 py-4 text-xs font-bold text-white/60">
+                        {enquiry.organization || enquiry.employer || 'Direct Lead'}
                       </td>
-                      <td className="px-6 py-4">{getStatusBadge(enquiry.status)}</td>
-                      <td className="px-6 py-4 text-white/40 text-xs font-medium uppercase">
+                      <td className="px-6 py-4">
+                        {getStatusBadge(enquiry.status)}
+                      </td>
+                      <td className="px-6 py-4 text-[10px] text-white/40 font-bold">
                         {dayjs(enquiry.created_at).format('MMM DD, YYYY')}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2.5 bg-white/5 rounded-xl text-white/40 group-hover:bg-orange-500 group-hover:text-white transition-all shadow-sm">
-                          <Eye size={18} />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
+                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
+                            title="Edit"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEnquiry(enquiry.id)}
+                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="py-20 text-center">
+                    <td colSpan="6" className="py-20 text-center">
                       <div className="flex flex-col items-center gap-3 text-white/20">
                         <History size={48} strokeWidth={1} />
                         <p className="text-sm font-medium">No records found</p>
@@ -322,26 +344,30 @@ const FollowupEnquiry = () => {
             </table>
           </div>
 
-          {/* Pagination Container */}
-          <div className="p-4 border-t border-white/10 flex items-center justify-between bg-white/5">
-            <p className="text-xs text-white/40 font-bold uppercase tracking-widest">
+          {/* Footer / Pagination */}
+          <div className="p-4 border-t border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between mt-auto">
+            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
               Showing {paginatedEnquiries.length} of {filteredEnquiries.length} entries
-            </p>
-            <div className="flex items-center gap-2">
+            </div>
+            <div className="flex items-center gap-3">
               <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => prev - 1)}
-                className="p-2 rounded-lg bg-white/5 border border-white/10 text-white disabled:opacity-30 hover:bg-white/10 transition-all"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs font-bold text-white px-2">Page {currentPage} of {totalPages || 1}</span>
+
+              <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] text-white font-black uppercase tracking-[0.1em]">
+                Page {currentPage} / {totalPages}
+              </div>
+
               <button
-                disabled={currentPage === totalPages || totalPages === 0}
-                onClick={() => setCurrentPage(prev => prev + 1)}
-                className="p-2 rounded-lg bg-white/5 border border-white/10 text-white disabled:opacity-30 hover:bg-white/10 transition-all"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
-                <ChevronRight size={16} />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -349,8 +375,8 @@ const FollowupEnquiry = () => {
 
         {/* Profile Modal (Dense Form + History at bottom) */}
         {showForm && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 max-h-[90vh] p-6 w-full max-w-5xl mx-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in zoom-in duration-300">
+            <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl w-full max-w-6xl max-h-[93vh] overflow-hidden shadow-2xl flex flex-col relative">
               {/* Modal Header */}
               <div className="p-2 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -371,7 +397,7 @@ const FollowupEnquiry = () => {
               </div>
 
               {/* Modal Content - Scrollable Grid */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
                   {/* Left Side: Personal Info */}
