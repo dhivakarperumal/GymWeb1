@@ -25,6 +25,7 @@ const AdminLayout = () => {
   }, []);
 
   const location = useLocation();
+  const isPrintPage = location.pathname.includes('/admin/pt-form/print/');
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
@@ -36,27 +37,28 @@ const AdminLayout = () => {
   }, [location.pathname]);
 
   return (
-    <div className="admin-root flex min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white">
+    <div className={`admin-root flex min-h-screen ${isPrintPage ? 'bg-white' : 'bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e]'} text-white`}>
       
       {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      {!isPrintPage && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      )}
 
       {/* Main Content */}
       <div
         className={`
           flex flex-col flex-1 min-w-0 min-h-screen
           transition-all duration-300 ease-in-out
-          ${isLargeScreen ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-64") : ""}
+          ${!isPrintPage && isLargeScreen ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-64") : ""}
         `}
       >
         {/* Header */}
-      {/* Header */}
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+        {!isPrintPage && <Header onMenuClick={() => setSidebarOpen(true)} />}
 
         {/* ⚡ ROUTE PROGRESS BAR */}
         <AnimatePresence>
@@ -72,8 +74,8 @@ const AdminLayout = () => {
         </AnimatePresence>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-5 lg:p-6 overflow-y-auto">
-          <div className="glass-container">
+        <main className={`flex-1 ${isPrintPage ? 'p-0' : 'p-4 sm:p-5 lg:p-6'} overflow-y-auto`}>
+          <div className={isPrintPage ? '' : 'glass-container'}>
             <Suspense fallback={
               <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
                 <PacmanLoader color="#ef4444" size={20} />
@@ -86,9 +88,11 @@ const AdminLayout = () => {
         </main>
 
         {/* Footer */}
-       <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">
-  © {new Date().getFullYear()} Q-Techx Solutions. All rights reserved.
-</footer>
+       {!isPrintPage && (
+         <footer className="glass-footer text-center py-4 mt-10 text-sm text-white/70">
+           © {new Date().getFullYear()} Q-Techx Solutions. All rights reserved.
+         </footer>
+       )}
 
       </div>
     </div>
