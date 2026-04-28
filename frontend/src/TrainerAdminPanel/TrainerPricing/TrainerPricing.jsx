@@ -108,7 +108,7 @@ const TrainerPricing = () => {
       </div>
 
       {/* ========== STATS GRID ========== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* TOTAL PLANS */}
         <div
           className={`${glassCard} p-6 space-y-3 hover:border-orange-500/50 transition group cursor-pointer`}

@@ -9,9 +9,11 @@ import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import dayjs from "dayjs";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 
 const FollowupEnquiry = () => {
   const navigate = useNavigate();
+  const { user, role } = useAuth();
   // State
   const [enquiries, setEnquiries] = useState([]);
   const [followups, setFollowups] = useState([]);
@@ -79,7 +81,8 @@ const FollowupEnquiry = () => {
       setFormData({
         ...selectedEnquiry,
         dob: selectedEnquiry.dob ? dayjs(selectedEnquiry.dob).format('YYYY-MM-DD') : "",
-        status: selectedEnquiry.status || "pending"
+        status: selectedEnquiry.status || "pending",
+        updated_by: selectedEnquiry.updated_by || user?.username || "Admin"
       });
     } else {
       resetForm();
@@ -183,7 +186,7 @@ const FollowupEnquiry = () => {
       fitness_goal: "", blood_group: "", gender: "", status: "pending",
       plan_name: "", plan_duration: "",
       reg_no: "", organization: "", website: "", best_time_to_reach: "",
-      updated_by: "", referred_by: ""
+      updated_by: user?.username || "Admin", referred_by: ""
     });
   };
 
@@ -195,8 +198,9 @@ const FollowupEnquiry = () => {
       enquiry.organization?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
+    const matchesTrainer = role === 'admin' || enquiry.updated_by === user?.username;
 
-    if (!matchesSearch || !matchesStatus) return false;
+    if (!matchesSearch || !matchesStatus || !matchesTrainer) return false;
     return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
   });
 
@@ -262,14 +266,14 @@ const FollowupEnquiry = () => {
             <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg transition-all ${ viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white' }`}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
                 title="Table View"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
               </button>
               <button
                 onClick={() => setViewMode('card')}
-                className={`p-2 rounded-lg transition-all ${ viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white' }`}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
                 title="Card View"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
@@ -358,101 +362,101 @@ const FollowupEnquiry = () => {
               )}
             </div>
           ) : (
-          /* TABLE VIEW */
-          <div className="flex-1 mt-5 overflow-y-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border border-white/10  overflow-hidden z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
-                <tr>
-                  <th className="px-6 py-4 border-b border-white/5 w-16">S No</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-left">Name</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-left">Mobile</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-left">Organization</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-left">Status</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-left">Created</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {loading ? (
-                  <tr><td colSpan="5" className="py-20 text-center"><div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
-                ) : paginatedEnquiries.length > 0 ? (
-                  paginatedEnquiries.map((enquiry) => (
-                    <tr
-                      key={enquiry.id}
-                      className="group hover:bg-white/5 transition-all cursor-pointer"
-                      onClick={() => {
-                        setSelectedEnquiry(enquiry);
-                        setShowForm(true);
-                      }}
-                    >
-                      <td className="px-6 py-4 text-xs font-bold text-white/40">
-                        {(currentPage - 1) * itemsPerPage + paginatedEnquiries.indexOf(enquiry) + 1}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-white font-bold text-base group-hover:text-orange-400 transition-colors">
-                            {enquiry.name}
+            /* TABLE VIEW */
+            <div className="flex-1 mt-5 overflow-y-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden custom-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border border-white/10  overflow-hidden z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
+                  <tr>
+                    <th className="px-6 py-4 border-b border-white/5 w-16">S No</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-left">Name</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-left">Mobile</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-left">Organization</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-left">Status</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-left">Created</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {loading ? (
+                    <tr><td colSpan="5" className="py-20 text-center"><div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
+                  ) : paginatedEnquiries.length > 0 ? (
+                    paginatedEnquiries.map((enquiry) => (
+                      <tr
+                        key={enquiry.id}
+                        className="group hover:bg-white/5 transition-all cursor-pointer"
+                        onClick={() => {
+                          setSelectedEnquiry(enquiry);
+                          setShowForm(true);
+                        }}
+                      >
+                        <td className="px-6 py-4 text-xs font-bold text-white/40">
+                          {(currentPage - 1) * itemsPerPage + paginatedEnquiries.indexOf(enquiry) + 1}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-white font-bold text-base group-hover:text-orange-400 transition-colors">
+                              {enquiry.name}
+                            </span>
+                            <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
+                              <Mail size={10} /> {enquiry.email || 'No Email'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="flex items-center gap-2 text-white/60 text-sm font-bold">
+                            <Phone size={12} className="text-orange-500" />
+                            {enquiry.phone || 'N/A'}
                           </span>
-                          <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
-                            <Mail size={10} /> {enquiry.email || 'No Email'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="flex items-center gap-2 text-white/60 text-sm font-bold">
-                          <Phone size={12} className="text-orange-500" />
-                          {enquiry.phone || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-xs font-bold text-white/60">
-                        {enquiry.organization || enquiry.employer || 'Direct Lead'}
-                      </td>
-                      <td className="px-6 py-4">
-                        {getStatusBadge(enquiry.status)}
-                      </td>
-                      <td className="px-6 py-4 text-[10px] text-white/40 font-bold">
-                        {dayjs(enquiry.created_at).format('MMM DD, YYYY')}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
-                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
-                            title="View"
-                          >
-                            <Eye size={14} />
-                          </button>
-                          <button
-                            onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
-                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
-                            title="Edit"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEnquiry(enquiry.id)}
-                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-bold text-white/60">
+                          {enquiry.organization || enquiry.employer || 'Direct Lead'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {getStatusBadge(enquiry.status)}
+                        </td>
+                        <td className="px-6 py-4 text-[10px] text-white/40 font-bold">
+                          {dayjs(enquiry.created_at).format('MMM DD, YYYY')}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
+                              title="View"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <button
+                              onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
+                              title="Edit"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEnquiry(enquiry.id)}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="py-20 text-center">
+                        <div className="flex flex-col items-center gap-3 text-white/20">
+                          <History size={48} strokeWidth={1} />
+                          <p className="text-sm font-medium">No records found</p>
                         </div>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-20 text-center">
-                      <div className="flex flex-col items-center gap-3 text-white/20">
-                        <History size={48} strokeWidth={1} />
-                        <p className="text-sm font-medium">No records found</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
           )} {/* End table view ternary */}
 
           {/* Footer / Pagination — only shown when records exceed 10 */}
@@ -748,6 +752,120 @@ const FollowupEnquiry = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Interaction History & Log New Interaction */}
+                {selectedEnquiry ? (
+                  <div className="mt-12 pt-12 border-t border-white/10">
+                    <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
+                      <History className="text-orange-500" /> Interaction History
+                    </h3>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                      {/* Interaction Form */}
+                      <div className="lg:col-span-1 bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+                        <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-4">Log New Activity</h4>
+                        <form onSubmit={handleAddFollowup} className="space-y-4">
+                          <div>
+                            <label className="text-[10px] font-bold text-white/40 uppercase mb-1 block">Activity Date</label>
+                            <input
+                              type="datetime-local"
+                              value={followupFormData.followup_date}
+                              onChange={(e) => setFollowupFormData({ ...followupFormData, followup_date: e.target.value })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-white/40 uppercase mb-1 block">Activity Notes</label>
+                            <textarea
+                              required
+                              value={followupFormData.notes}
+                              onChange={(e) => setFollowupFormData({ ...followupFormData, notes: e.target.value })}
+                              placeholder="What was discussed?"
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none h-24 resize-none"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-white/40 uppercase mb-1 block">Outcome</label>
+                              <select
+                                value={followupFormData.status}
+                                onChange={(e) => setFollowupFormData({ ...followupFormData, status: e.target.value })}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-xs outline-none appearance-none"
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="followup">Followup</option>
+                                <option value="completed">Interested</option>
+                                <option value="cancelled">Not Interested</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-white/40 uppercase mb-1 block">Next Follow-up</label>
+                              <input
+                                type="date"
+                                value={followupFormData.next_followup_date}
+                                onChange={(e) => setFollowupFormData({ ...followupFormData, next_followup_date: e.target.value })}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-xs outline-none"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="submit"
+                            className="w-full py-3 bg-white text-black font-black uppercase tracking-widest text-xs rounded-xl hover:bg-orange-500 hover:text-white transition-all shadow-lg"
+                          >
+                            Save Activity
+                          </button>
+                        </form>
+                      </div>
+
+                      {/* Interaction Timeline */}
+                      <div className="lg:col-span-2 space-y-4 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                        {followupLoading ? (
+                          <div className="py-10 text-center"><div className="animate-spin w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></div>
+                        ) : followups.length > 0 ? (
+                          followups.map((f, idx) => (
+                            <div key={idx} className="relative pl-8 pb-8 border-l border-white/10 last:border-0 last:pb-0">
+                              <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+                              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
+                                    {dayjs(f.followup_date).format('MMM DD, YYYY - HH:mm')}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${
+                                    f.status === 'completed' ? 'border-green-500/50 text-green-500' : 
+                                    f.status === 'cancelled' ? 'border-red-500/50 text-red-500' :
+                                    'border-blue-500/50 text-blue-500'
+                                  }`}>
+                                    {f.status}
+                                  </span>
+                                </div>
+                                <p className="text-white/80 text-sm">{f.notes}</p>
+                                {f.next_followup_date && (
+                                  <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2 text-[10px] text-white/40 font-bold uppercase">
+                                    <Clock size={12} className="text-orange-500" /> Next Follow-up: {dayjs(f.next_followup_date).format('MMM DD, YYYY')}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="py-20 text-center bg-white/5 border border-white/10 border-dashed rounded-3xl text-white/20">
+                            <MessageSquare size={32} strokeWidth={1} className="mx-auto mb-2" />
+                            <p className="text-xs font-bold uppercase tracking-widest">No interactions logged yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-12 p-20 text-center border-t border-white/10 text-white/20">
+                    <div className="max-w-sm mx-auto space-y-4">
+                      <Target size={48} strokeWidth={1} className="mx-auto" />
+                      <p className="text-sm font-bold uppercase tracking-widest leading-relaxed">
+                        Please save the lead details first to enable interaction tracking and activity logging.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Modal Footer Actions */}
