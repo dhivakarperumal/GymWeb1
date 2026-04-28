@@ -77,7 +77,7 @@ const PTFormPrint = () => {
 
       <div className="max-w-4xl mx-auto border-2 border-black p-8">
         {/* Header */}
-        <div className="text-center border-b-2 border-black pb-6 mb-8">
+        <div className="text-center border-b-2 border-black pb-4 mb-4">
           <h1 className="text-3xl font-bold uppercase tracking-widest">DAP Unisex Fitness Studio</h1>
           <p className="text-sm mt-1">Personal Training Registration & Assessment Form</p>
           <div className="mt-4 flex justify-between text-xs font-bold uppercase">
@@ -87,7 +87,7 @@ const PTFormPrint = () => {
         </div>
 
         {/* Section 1: Personal Details */}
-        <div className="mb-10">
+        <div className="mb-6">
           <h2 className="text-xl font-bold bg-gray-100 p-2 mb-4 border border-black uppercase">1. Personal Information</h2>
           <div className="grid grid-cols-2 gap-y-4 text-sm">
             <div className="border-b border-gray-300 pb-1"><span className="font-bold">Full Name:</span> {ptForm.name || member.name}</div>
@@ -103,10 +103,19 @@ const PTFormPrint = () => {
         </div>
 
         {/* Section 2: Health History */}
-        <div className="mb-10">
+        <div className="mb-6">
           <h2 className="text-xl font-bold bg-gray-100 p-2 mb-4 border border-black uppercase">2. Health History</h2>
-          <div className="text-sm space-y-2">
-            <p><span className="font-bold">Taking Medications:</span> {ptForm.medications}</p>
+          <div className="text-sm space-y-4">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+              <p><span className="font-bold">Meds:</span> {ptForm.medications}</p>
+              <p><span className="font-bold">Allergies:</span> {ptForm.allergies || "None"}</p>
+              <p className="col-span-2"><span className="font-bold">Surgeries:</span> {ptForm.surgeries1} {ptForm.surgeries2} {ptForm.surgeries3}</p>
+              <p><span className="font-bold">Smoking/Alc:</span> {ptForm.smoking} / {ptForm.alcohol}</p>
+              <p><span className="font-bold">Food:</span> {ptForm.food_preference}</p>
+              <p><span className="font-bold">Exercise Prgm:</span> {ptForm.exercise_program}</p>
+              <p><span className="font-bold">Supplements:</span> {ptForm.supplements}</p>
+            </div>
+
             {ptForm.medications === "Yes" && (
               <table className="w-full border-collapse border border-black mt-2 text-xs">
                 <thead>
@@ -127,25 +136,44 @@ const PTFormPrint = () => {
                 </tbody>
               </table>
             )}
-            <p className="mt-4"><span className="font-bold">Allergies:</span> {ptForm.allergies || "None"}</p>
-            <p><span className="font-bold">Surgeries/Accidents:</span> {ptForm.surgeries1} {ptForm.surgeries2} {ptForm.surgeries3}</p>
-            <p><span className="font-bold">Smoking/Alcohol:</span> {ptForm.smoking} / {ptForm.alcohol}</p>
-            <p><span className="font-bold">Food Preference:</span> {ptForm.food_preference}</p>
+
+            <div className="mt-4">
+              <p className="font-bold mb-2 underline">Health Questionnaire:</p>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[10px]">
+                {[
+                  "Heart Attack", "Cardiac Surgery", "Chest Discomfort", "Palpitation", "Epilepsy",
+                  "Fainting/Dizziness", "Hypertension", "Family History (Heart)", "Rheumatic Fever",
+                  "Shortness of Breath", "Asthma/Wheezing", "High Cholesterol", "Diabetes", "Stroke",
+                  "Recent Hospitalization", "Orthopedic Problem"
+                ].map((q, i) => (
+                  <div key={i} className="flex justify-between border-b border-gray-200">
+                    <span>{i + 1}. {q}</span>
+                    <span className="font-bold">{ptForm[`q${i}`] || "No"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p><span className="font-bold">Recreational Sports:</span> {[1, 2, 3, 4, 5, 6].map(i => ptForm[`sport${i}`]).filter(Boolean).join(", ") || "None"}</p>
           </div>
         </div>
 
         {/* Section 3: Clinical Parameters */}
-        <div className="mb-10">
+        <div className="mb-6">
           <h2 className="text-xl font-bold bg-gray-100 p-2 mb-4 border border-black uppercase">3. Clinical & Fitness Screening</h2>
-          <div className="grid grid-cols-3 gap-4 text-sm text-center">
+          <div className="grid grid-cols-4 gap-4 text-sm text-center">
             <div className="border border-black p-2"><div className="font-bold">BP</div>{ptForm.bp}</div>
             <div className="border border-black p-2"><div className="font-bold">Sugar</div>{ptForm.sugar}</div>
+            <div className="border border-black p-2"><div className="font-bold">Cholesterol</div>{ptForm.cholesterol}</div>
+            <div className="border border-black p-2"><div className="font-bold">Thyroid</div>{ptForm.thyroid}</div>
+            <div className="border border-black p-2"><div className="font-bold">Uric Acid</div>{ptForm.uric}</div>
+            <div className="border border-black p-2"><div className="font-bold">Serum 3D</div>{ptForm.serum3d}</div>
             <div className="border border-black p-2"><div className="font-bold">Height</div>{ptForm.fs_height} cm</div>
             <div className="border border-black p-2"><div className="font-bold">Weight</div>{ptForm.fs_weight} kg</div>
             <div className="border border-black p-2"><div className="font-bold">Fat%</div>{ptForm.fs_fat_percentage}%</div>
             <div className="border border-black p-2"><div className="font-bold">BMI</div>{member.bmi}</div>
           </div>
-          <div className="mt-4 text-sm">
+          <div className="mt-4 text-sm grid grid-cols-3 gap-4">
             <p><span className="font-bold">Push-ups:</span> {ptForm.fs_push_ups_count} ({ptForm.fs_push_ups_level})</p>
             <p><span className="font-bold">Squats:</span> {ptForm.fs_squats_count} ({ptForm.fs_squats_level})</p>
             <p><span className="font-bold">Plank:</span> {ptForm.fs_plank_hold_count} ({ptForm.fs_plank_hold_level})</p>
@@ -153,7 +181,7 @@ const PTFormPrint = () => {
         </div>
 
         {/* Section 4: Measurements Table */}
-        <div className="mb-10 page-break-before">
+        <div className="mb-6">
           <h2 className="text-xl font-bold bg-gray-100 p-2 mb-4 border border-black uppercase">4. Biometric Measurements</h2>
           <table className="w-full border-collapse border border-black text-[10px]">
             <thead>
@@ -214,7 +242,7 @@ const PTFormPrint = () => {
           }
 
           /* Reset layouts and colors */
-          body, html, #root, .min-h-screen, section, main { 
+          html, body, #root, .min-h-screen, section, main, .admin-root, .flex-1 { 
             background: white !important; 
             color: black !important; 
             margin: 0 !important; 
@@ -224,24 +252,12 @@ const PTFormPrint = () => {
             height: auto !important;
             position: static !important;
             overflow: visible !important;
-          }
-
-          .admin-root { 
             display: block !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
           }
 
           .lg\\:ml-64, .lg\\:ml-20, .ml-0, .ml-64, .p-4, .p-6, .sm\\:p-5, .lg\\:p-6 {
             margin-left: 0 !important;
             padding: 0 !important;
-          }
-
-          main {
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
           }
 
           .glass-container {
@@ -260,12 +276,8 @@ const PTFormPrint = () => {
             margin: 0 !important;
           }
 
-          .page-break-before { 
-            page-break-before: always; 
-          }
-
           @page { 
-            margin: 1.5cm; 
+            margin: 1cm; 
             size: auto;
           }
 
@@ -274,6 +286,8 @@ const PTFormPrint = () => {
             color: black !important;
             background: transparent !important;
             -webkit-print-color-adjust: exact;
+            box-shadow: none !important;
+            text-shadow: none !important;
           }
           
           .bg-gray-100 {
