@@ -183,8 +183,10 @@ const Enquiry = () => {
         emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
         fitness_goal: enquiry.fitness_goal || null,
         blood_group: enquiry.blood_group || null,
+        plan: enquiry.plan_name || null,
+        duration: enquiry.plan_duration ? parseInt(enquiry.plan_duration, 10) || null : null,
         joinDate: new Date().toISOString().split('T')[0],
-        status: 'active',
+        status: 'pending',
         gender: enquiry.gender || null,
         // supply password explicitly so frontend knows credentials
         password: enquiry.phone || ''

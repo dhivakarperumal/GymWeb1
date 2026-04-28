@@ -13,6 +13,7 @@ const BuyPlanadmin = () => {
 
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [enquiries, setEnquiries] = useState([]);
   const [trainers, setTrainers] = useState([]);
 
   const [selectedUser, setSelectedUser] = useState(null);
@@ -33,6 +34,72 @@ const BuyPlanadmin = () => {
     endDate: "",
     paymentMode: "cash",
   });
+
+  const normalizePlanText = (text) =>
+    text
+      ? text.toString().trim().toLowerCase().replace(/\s+/g, " ")
+      : "";
+
+  const parseDurationValue = (value) => {
+    if (value == null) return null;
+    const numeric = Number(value);
+    if (!Number.isNaN(numeric) && numeric !== 0) return numeric;
+    const match = value.toString().match(/(\d+)/);
+    return match ? Number(match[1]) : null;
+  };
+
+  const findPreferredEnquiryPlan = (user, enquiryList) => {
+    if (!user || !Array.isArray(enquiryList)) return null;
+    const phone = user.phone?.toString().trim();
+    const email = user.email?.toString().trim().toLowerCase();
+    const candidates = enquiryList
+      .filter((q) => {
+        const qPhone = q.phone?.toString().trim();
+        const qEmail = q.email?.toString().trim().toLowerCase();
+        return (phone && qPhone === phone) || (email && qEmail === email);
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const latest = candidates.find((q) => q.plan_name || q.plan_duration);
+    return latest ? { plan: latest.plan_name, duration: latest.plan_duration } : null;
+  };
+
+  const findMatchingPlan = (user, planList, enquiryList) => {
+    if (!user || !Array.isArray(planList)) return null;
+
+    let planName = normalizePlanText(user.plan);
+    let durationValue = parseDurationValue(user.duration);
+
+    if (!planName && durationValue == null && Array.isArray(enquiryList)) {
+      const fromEnquiry = findPreferredEnquiryPlan(user, enquiryList);
+      if (fromEnquiry) {
+        planName = normalizePlanText(fromEnquiry.plan);
+        durationValue = parseDurationValue(fromEnquiry.duration);
+      }
+    }
+
+    if (planName) {
+      const exactByName = planList.find(
+        (p) => normalizePlanText(p.name) === planName
+      );
+      if (exactByName) return exactByName;
+
+      const partialByName = planList.find((p) => {
+        const normalized = normalizePlanText(p.name);
+        return normalized.includes(planName) || planName.includes(normalized);
+      });
+      if (partialByName) return partialByName;
+    }
+
+    if (durationValue != null) {
+      const exactByDuration = planList.find(
+        (p) => parseDurationValue(p.duration) === durationValue
+      );
+      if (exactByDuration) return exactByDuration;
+    }
+
+    return null;
+  };
 
   // ================= FETCH MEMBERS =================
   useEffect(() => {
@@ -63,6 +130,27 @@ const BuyPlanadmin = () => {
 
     fetchPlans();
   }, []);
+
+  useEffect(() => {
+    const fetchEnquiries = async () => {
+      try {
+        const res = await api.get('/enquiries');
+        setEnquiries(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchEnquiries();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedUser || plans.length === 0) return;
+    const matchedPlan = findMatchingPlan(selectedUser, plans, enquiries);
+    if (matchedPlan && matchedPlan.id !== selectedPlan?.id) {
+      setSelectedPlan(matchedPlan);
+    }
+  }, [selectedUser, plans, enquiries]);
 
   // ================= FETCH TRAINERS =================
   useEffect(() => {
@@ -265,6 +353,7 @@ Thank you for joining 💪
                 const val = e.target.value;
                 if (!val) {
                   setSelectedUser(null);
+                  setSelectedPlan(null);
                   return;
                 }
                 const [source, idStr] = val.split('-');
@@ -285,7 +374,15 @@ Thank you for joining 💪
                     weight: user.weight || "",
                     bmi: user.bmi || "",
                   }));
+
+                  const matchedPlan = findMatchingPlan(user, plans, enquiries);
+                  if (matchedPlan) {
+                    setSelectedPlan(matchedPlan);
+                    return;
+                  }
                 }
+
+                setSelectedPlan(null);
               }}
             >
               <option value="">-- Choose a member --</option>
@@ -452,7 +549,7 @@ Thank you for joining 💪
             <label className="block text-sm text-gray-400 mb-1">Gym Plan</label>
             <select
               className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              defaultValue=""
+              value={selectedPlan ? selectedPlan.id : ""}
               onChange={(e) => {
                 const plan = plans.find(
                   (p) => p.id === Number(e.target.value)
