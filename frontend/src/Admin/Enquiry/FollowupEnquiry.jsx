@@ -15,6 +15,7 @@ const FollowupEnquiry = () => {
   // State
   const [enquiries, setEnquiries] = useState([]);
   const [followups, setFollowups] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [followupLoading, setFollowupLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,7 +40,7 @@ const FollowupEnquiry = () => {
     emergency_contact_relationship: "", emergency_contact_address: "",
     emergency_contact_phone_home: "", emergency_contact_phone_work: "",
     fitness_goal: "", blood_group: "", gender: "", status: "pending",
-    plan_name: "", plan_duration: "",
+    plan_name: "", plan_price: "", plan_duration: "",
     reg_no: "", organization: "", website: "", best_time_to_reach: "",
     updated_by: "", referred_by: ""
   });
@@ -54,7 +55,17 @@ const FollowupEnquiry = () => {
   // Effects
   useEffect(() => {
     fetchEnquiries();
+    fetchPlans();
   }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const res = await api.get("/plans");
+      setPlans(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching plans", err);
+    }
+  };
 
   useEffect(() => {
     if (selectedEnquiry) {
@@ -344,11 +355,9 @@ const FollowupEnquiry = () => {
               {/* Modal Header */}
               <div className="p-2 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-                    <RefreshCcw className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-white">{selectedEnquiry ? 'Record Management' : 'Create New Record'}</h2>
+                 
+                  <div className="p-2">
+                    <h2 className="text-2xl font-black text-white">{selectedEnquiry ? 'Followup Management' : 'Create New Followup'}</h2>
                     <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-0.5">
                       {selectedEnquiry ? `ID: #F-${selectedEnquiry.id}` : 'New Entry'}
                     </p>
@@ -550,14 +559,33 @@ const FollowupEnquiry = () => {
                       <label className="text-xs font-bold text-white/60">Plan</label>
                       <select
                         value={formData.plan_name}
-                        onChange={(e) => setFormData({ ...formData, plan_name: e.target.value })}
+                        onChange={(e) => {
+                          const selectedPlan = plans.find(p => p.name === e.target.value);
+                          setFormData({ 
+                            ...formData, 
+                            plan_name: e.target.value,
+                            plan_price: selectedPlan ? (selectedPlan.finalPrice || selectedPlan.price) : ""
+                          });
+                        }}
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none appearance-none"
                       >
-                        <option value="">[SELECT]</option>
-                        <option value="3 Months">3 Months</option>
-                        <option value="6 Months">6 Months</option>
-                        <option value="12 Months">12 Months</option>
+                        <option value="">[SELECT PLAN]</option>
+                        {plans.map(plan => (
+                          <option key={plan.id} value={plan.name}>
+                            {plan.name} - ₹{plan.finalPrice || plan.price}
+                          </option>
+                        ))}
                       </select>
+                    </div>
+
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <label className="text-xs font-bold text-white/60">Plan Price</label>
+                      <input
+                        type="text"
+                        value={formData.plan_price ? `₹${formData.plan_price}` : ""}
+                        readOnly
+                        className="col-span-2 bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 text-orange-400 font-bold outline-none"
+                      />
                     </div>
 
                     <div className="grid grid-cols-3 items-center gap-4">
@@ -608,7 +636,7 @@ const FollowupEnquiry = () => {
                     onClick={handleSubmitEnquiry}
                     className="px-12 py-3 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-orange-500/30 hover:scale-105 active:scale-95 transition-all"
                   >
-                    {selectedEnquiry && selectedEnquiry.id ? 'Update Profile' : 'Create Record'}
+                    {selectedEnquiry && selectedEnquiry.id ? 'Update Followup' : 'Create Followup'}
                   </button>
                 </div>
               </div>
