@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Eye, Edit } from "lucide-react";
 import api from "../../api";
 
 const parseDecimal = (value) => {
@@ -69,6 +70,18 @@ const EMIList = () => {
     setSelectedMembership(membership);
     setUpdateAmount("");
     setPaymentReference("");
+
+    // Auto-fill next EMI amount
+    const plan = findPlanForMembership(membership);
+    const totalPrice = plan
+      ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
+      : parseDecimal(membership.pricePaid) * parseDuration(membership.duration);
+    const currentPaid = parseDecimal(membership.pricePaid);
+    const remaining = totalPrice - currentPaid;
+    const durationMonths = parseDuration(membership.duration);
+    const emiAmount = durationMonths > 1 ? remaining / (durationMonths - 1) : remaining;
+    const suggested = remaining > 0 ? emiAmount.toFixed(2) : '0.00';
+    setUpdateAmount(suggested);
   };
 
   const viewDetails = (membership) => {
@@ -144,19 +157,19 @@ const EMIList = () => {
           No EMI records found yet.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-3xl border border-white/10 bg-white/5 shadow-xl p-4">
+        <div className="overflow-x-auto rounded-3xl border border-white/20 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl p-6">
           <table className="min-w-full text-sm text-left text-white/90">
             <thead>
-              <tr className="border-b border-white/10 text-xs uppercase tracking-[0.2em] text-white/60">
-                <th className="px-4 py-3">Member</th>
-                <th className="px-4 py-3">Plan</th>
-                <th className="px-4 py-3">Duration</th>
-                <th className="px-4 py-3">First Installment</th>
-                <th className="px-4 py-3">EMI / Month</th>
-                <th className="px-4 py-3">Remaining</th>
-                <th className="px-4 py-3">Payment Method</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Actions</th>
+              <tr className="border-b border-white/20 text-xs uppercase tracking-[0.2em] text-white/70 bg-white/5">
+                <th className="px-6 py-4 rounded-tl-2xl">Member</th>
+                <th className="px-6 py-4">Plan</th>
+                <th className="px-6 py-4">Duration</th>
+                <th className="px-6 py-4">First Installment</th>
+                <th className="px-6 py-4">EMI / Month</th>
+                <th className="px-6 py-4">Remaining</th>
+                <th className="px-6 py-4">Payment Method</th>
+                <th className="px-6 py-4">Created</th>
+                <th className="px-6 py-4 rounded-tr-2xl">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -166,38 +179,40 @@ const EMIList = () => {
                 const totalPrice = plan
                   ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
                   : parseDecimal(membership.pricePaid) * duration;
-                const monthlyEMI = duration > 0 ? Number((totalPrice / duration).toFixed(2)) : 0;
                 const firstInstallment = parseDecimal(membership.pricePaid);
                 const remainingBalance = Number((totalPrice - firstInstallment).toFixed(2));
+                const monthlyEMI = duration > 1 ? Number((remainingBalance / (duration - 1)).toFixed(2)) : remainingBalance;
                 const paymentMethodLabel = membership.paymentId || "N/A";
 
                 return (
-                  <tr key={membership.id} className="border-b border-white/10 last:border-b-0">
-                    <td className="px-4 py-4">
+                  <tr key={membership.id} className="border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4">
                       <div className="font-semibold text-white">{membership.userName || membership.username || "Unknown"}</div>
                       <div className="text-[11px] text-white/50">{membership.userEmail || membership.email || "-"}</div>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-6 py-4">
                       <div className="font-semibold">{membership.planName}</div>
                       <div className="text-[11px] text-white/50">{plan ? "Matched plan" : "Plan lookup not found"}</div>
                     </td>
-                    <td className="px-4 py-4">{duration} months</td>
-                    <td className="px-4 py-4">₹{firstInstallment.toFixed(2)}</td>
-                    <td className="px-4 py-4">₹{monthlyEMI.toFixed(2)}</td>
-                    <td className="px-4 py-4">₹{remainingBalance.toFixed(2)}</td>
-                    <td className="px-4 py-4 capitalize">{paymentMethodLabel}</td>
-                    <td className="px-4 py-4">{new Date(membership.createdAt).toLocaleDateString()}</td>
-                    <td className="px-4 py-4 flex gap-2">
+                    <td className="px-6 py-4">{duration} months</td>
+                    <td className="px-6 py-4">₹{firstInstallment.toFixed(2)}</td>
+                    <td className="px-6 py-4">₹{monthlyEMI.toFixed(2)}</td>
+                    <td className="px-6 py-4">₹{remainingBalance.toFixed(2)}</td>
+                    <td className="px-6 py-4 capitalize">{paymentMethodLabel}</td>
+                    <td className="px-6 py-4">{new Date(membership.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 flex gap-2">
                       <button
                         onClick={() => viewDetails(membership)}
-                        className="rounded-full border border-blue-500 px-3 py-2 text-sm text-blue-300 hover:bg-blue-500/10"
+                        className="rounded-full bg-blue-500/20 border border-blue-500 px-4 py-2 text-sm text-blue-300 hover:bg-blue-500/30 transition-colors flex items-center gap-2"
                       >
+                        <Eye size={16} />
                         View Details
                       </button>
                       <button
                         onClick={() => selectMembership(membership)}
-                        className="rounded-full border border-orange-500 px-3 py-2 text-sm text-orange-300 hover:bg-orange-500/10"
+                        className="rounded-full bg-orange-500/20 border border-orange-500 px-4 py-2 text-sm text-orange-300 hover:bg-orange-500/30 transition-colors flex items-center gap-2"
                       >
+                        <Edit size={16} />
                         Update Payment
                       </button>
                     </td>
@@ -210,119 +225,141 @@ const EMIList = () => {
       )}
 
       {selectedMembership && (
-        <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl">
-          <h2 className="text-2xl font-semibold mb-4 text-white">Update EMI Payment</h2>
-          <p className="text-white/60 mb-4">
-            Recording next installment for <strong>{selectedMembership.userName || selectedMembership.username}</strong>.
-          </p>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Plan</p>
-              <p className="mt-2 font-semibold text-white">{selectedMembership.planName}</p>
-              <p className="text-xs text-white/50">{selectedMembership.duration} months</p>
+        <>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setSelectedMembership(null)} />
+          <div className="relative z-50 mt-8 rounded-3xl border border-white/20 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl p-8">
+            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">Update EMI Payment</h2>
+            <p className="text-white/70 mb-6 text-lg">
+              Recording next installment for <strong className="text-white">{selectedMembership.userName || selectedMembership.username}</strong>.
+            </p>
+            <div className="grid gap-6 md:grid-cols-3 mb-6">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Plan</p>
+                <p className="mt-3 font-bold text-xl text-white">{selectedMembership.planName}</p>
+                <p className="text-sm text-white/60">{selectedMembership.duration} months</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Current Paid</p>
+                <p className="mt-3 font-bold text-xl text-green-400">₹{parseDecimal(selectedMembership.pricePaid).toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Current Status</p>
+                <p className="mt-3 font-bold text-xl text-white">{selectedMembership.status || "active"}</p>
+              </div>
             </div>
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Current Paid</p>
-              <p className="mt-2 font-semibold text-white">₹{parseDecimal(selectedMembership.pricePaid).toFixed(2)}</p>
-            </div>
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Current Status</p>
-              <p className="mt-2 font-semibold text-white">{selectedMembership.status || "active"}</p>
-            </div>
-          </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="text-sm text-gray-400">Next installment amount</span>
-              <input
-                type="number"
-                value={updateAmount}
-                onChange={(e) => setUpdateAmount(e.target.value)}
-                className="mt-2 w-full rounded-xl bg-gray-900 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-orange-500"
-                placeholder="Enter amount collected now"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm text-gray-400">Payment reference</span>
-              <input
-                type="text"
-                value={paymentReference}
-                onChange={(e) => setPaymentReference(e.target.value)}
-                className="mt-2 w-full rounded-xl bg-gray-900 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-orange-500"
-                placeholder="Transaction note or receipt ID"
-              />
-            </label>
-          </div>
+            <div className="grid gap-6 md:grid-cols-2 mb-6">
+              <label className="block">
+                <span className="text-sm text-gray-300 font-medium mb-2 block">Next installment amount</span>
+                <input
+                  type="number"
+                  value={updateAmount}
+                  onChange={(e) => setUpdateAmount(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-800 text-white border border-white/20 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                  placeholder="Enter amount collected now"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm text-gray-300 font-medium mb-2 block">Payment reference</span>
+                <input
+                  type="text"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-800 text-white border border-white/20 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                  placeholder="Transaction note or receipt ID"
+                />
+              </label>
+            </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button
-              onClick={handleUpdatePayment}
-              disabled={updating}
-              className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {updating ? "Saving..." : "Save Next Payment"}
-            </button>
-            <button
-              onClick={() => setSelectedMembership(null)}
-              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-transparent px-6 py-3 text-sm font-semibold text-white hover:bg-white/5"
-            >
-              Cancel
-            </button>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <button
+                onClick={handleUpdatePayment}
+                disabled={updating}
+                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 px-8 py-4 text-lg font-semibold text-white hover:from-orange-600 hover:to-pink-600 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-lg"
+              >
+                {updating ? "Saving..." : "Save Next Payment"}
+              </button>
+              <button
+                onClick={() => setSelectedMembership(null)}
+                className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-transparent px-8 py-4 text-lg font-semibold text-white hover:bg-white/10 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {viewingDetails && (
-        <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl">
-          <h2 className="text-2xl font-semibold mb-4 text-white">EMI Payment Details</h2>
-          <p className="text-white/60 mb-4">
-            Detailed breakdown for <strong>{viewingDetails.userName || viewingDetails.username}</strong>.
-          </p>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Plan</p>
-              <p className="mt-2 font-semibold text-white">{viewingDetails.planName}</p>
-              <p className="text-xs text-white/50">{viewingDetails.duration} months</p>
+        <>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setViewingDetails(null)} />
+          <div className="relative z-50 mt-8 rounded-3xl border border-white/20 bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl p-8">
+            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">EMI Payment Details</h2>
+            <p className="text-white/70 mb-6 text-lg">
+              Detailed breakdown for <strong className="text-white">{viewingDetails.userName || viewingDetails.username}</strong>.
+            </p>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Plan</p>
+                <p className="mt-3 font-bold text-xl text-white">{viewingDetails.planName}</p>
+                <p className="text-sm text-white/60">{viewingDetails.duration} months</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Total Plan Price</p>
+                <p className="mt-3 font-bold text-xl text-white">₹{(() => {
+                  const plan = findPlanForMembership(viewingDetails);
+                  return plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
+                })().toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">First Due Amount</p>
+                <p className="mt-3 font-bold text-xl text-green-400">₹{parseDecimal(viewingDetails.pricePaid).toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Second Due Amount</p>
+                <p className="mt-3 font-bold text-xl text-orange-400">₹{(() => {
+                  const plan = findPlanForMembership(viewingDetails);
+                  const total = plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
+                  const remaining = total - parseDecimal(viewingDetails.pricePaid);
+                  const durationMonths = parseDuration(viewingDetails.duration);
+                  return durationMonths > 1 ? (remaining / (durationMonths - 1)).toFixed(2) : remaining.toFixed(2);
+                })()}</p>
+              </div>
             </div>
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Total Plan Price</p>
-              <p className="mt-2 font-semibold text-white">₹{(() => {
-                const plan = findPlanForMembership(viewingDetails);
-                return plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
-              })().toFixed(2)}</p>
+            <div className="grid gap-6 md:grid-cols-2 mb-6">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Total Paid</p>
+                <p className="mt-3 font-bold text-xl text-green-400">₹{parseDecimal(viewingDetails.pricePaid).toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Remaining Balance</p>
+                <p className="mt-3 font-bold text-xl text-red-400">₹{(() => {
+                  const plan = findPlanForMembership(viewingDetails);
+                  const total = plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
+                  return (total - parseDecimal(viewingDetails.pricePaid)).toFixed(2);
+                })()}</p>
+              </div>
             </div>
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Total Paid</p>
-              <p className="mt-2 font-semibold text-white">₹{parseDecimal(viewingDetails.pricePaid).toFixed(2)}</p>
+            <div className="grid gap-6 md:grid-cols-2 mb-6">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Payment Mode</p>
+                <p className="mt-3 font-bold text-xl text-white">{viewingDetails.paymentMode || "N/A"}</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-white/10">
+                <p className="text-xs uppercase text-white/50 tracking-widest">Status</p>
+                <p className="mt-3 font-bold text-xl text-white">{viewingDetails.status || "active"}</p>
+              </div>
             </div>
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Remaining Balance</p>
-              <p className="mt-2 font-semibold text-white">₹{(() => {
-                const plan = findPlanForMembership(viewingDetails);
-                const total = plan ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price) : parseDecimal(viewingDetails.pricePaid) * parseDuration(viewingDetails.duration);
-                return (total - parseDecimal(viewingDetails.pricePaid)).toFixed(2);
-              })()}</p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <button
+                onClick={() => setViewingDetails(null)}
+                className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-transparent px-8 py-4 text-lg font-semibold text-white hover:bg-white/10 transition-all"
+              >
+                Close
+              </button>
             </div>
           </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Payment Mode</p>
-              <p className="mt-2 font-semibold text-white">{viewingDetails.paymentMode || "N/A"}</p>
-            </div>
-            <div className="rounded-2xl bg-slate-950/50 p-4">
-              <p className="text-xs uppercase text-white/50">Status</p>
-              <p className="mt-2 font-semibold text-white">{viewingDetails.status || "active"}</p>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button
-              onClick={() => setViewingDetails(null)}
-              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-transparent px-6 py-3 text-sm font-semibold text-white hover:bg-white/5"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

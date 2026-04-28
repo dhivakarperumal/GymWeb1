@@ -601,16 +601,26 @@ Thank you for joining 💪
 
           {selectedPlan && paymentType === "emi" && isEMIAllowed && (
             <div className="mb-4 p-4 rounded-lg bg-gray-900 border border-orange-500">
-              <p className="text-gray-300 mb-2">
-                Total Price: ₹{getSelectedPlanTotal()}
-              </p>
-              <p className="text-gray-300 mb-2">
-                Duration: {getSelectedPlanDuration()} months
-              </p>
-              <p className="text-gray-300 mb-2">
-                Suggested EMI per 30-day installment: ₹{getSelectedPlanEMI()}
-              </p>
-              <div className="mb-2">
+              <h3 className="text-lg font-semibold text-white mb-4">EMI Breakdown</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-gray-300 text-sm">Total Plan Price</p>
+                  <p className="text-white font-semibold">₹{getSelectedPlanTotal()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm">Plan Duration</p>
+                  <p className="text-white font-semibold">{getSelectedPlanDuration()} months</p>
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm">Monthly EMI Amount</p>
+                  <p className="text-white font-semibold">₹{getSelectedPlanEMI()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm">Total EMIs</p>
+                  <p className="text-white font-semibold">{getSelectedPlanDuration()}</p>
+                </div>
+              </div>
+              <div className="mb-4">
                 <label className="block text-sm text-gray-400 mb-1">Initial Payment Amount</label>
                 <input
                   type="number"
@@ -620,14 +630,34 @@ Thank you for joining 💪
                   placeholder="Enter initial payment"
                 />
               </div>
-              <p className="text-gray-300 mb-2">
-                Amount collected now: ₹{parseDecimal(initialPayment).toFixed(2)}
-              </p>
-              <p className="text-gray-300">
-                Remaining balance: ₹{(
-                  getSelectedPlanTotal() - parseDecimal(initialPayment)
-                ).toFixed(2)}
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-gray-300 text-sm">Amount Collected Now</p>
+                  <p className="text-white font-semibold">₹{parseDecimal(initialPayment).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm">Remaining Balance</p>
+                  <p className="text-white font-semibold">₹{(
+                    getSelectedPlanTotal() - parseDecimal(initialPayment)
+                  ).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm">Remaining EMIs</p>
+                  <p className="text-white font-semibold">{(() => {
+                    const remaining = getSelectedPlanTotal() - parseDecimal(initialPayment);
+                    const emi = getSelectedPlanEMI();
+                    return emi > 0 ? Math.ceil(remaining / emi) : 0;
+                  })()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-300 text-sm">Next EMI Amount (Suggested)</p>
+                  <p className="text-white font-semibold">₹{(() => {
+                    const remaining = getSelectedPlanTotal() - parseDecimal(initialPayment);
+                    const emi = getSelectedPlanEMI();
+                    return remaining > 0 ? Math.min(emi, remaining).toFixed(2) : '0.00';
+                  })()}</p>
+                </div>
+              </div>
             </div>
           )}
 
