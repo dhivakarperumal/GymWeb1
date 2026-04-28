@@ -13,6 +13,7 @@ const BuyPlanadmin = () => {
 
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [enquiries, setEnquiries] = useState([]);
   const [trainers, setTrainers] = useState([]);
 
   const [selectedUser, setSelectedUser] = useState(null);
@@ -47,10 +48,35 @@ const BuyPlanadmin = () => {
     return match ? Number(match[1]) : null;
   };
 
-  const findMatchingPlan = (user, planList) => {
+  const findPreferredEnquiryPlan = (user, enquiryList) => {
+    if (!user || !Array.isArray(enquiryList)) return null;
+    const phone = user.phone?.toString().trim();
+    const email = user.email?.toString().trim().toLowerCase();
+    const candidates = enquiryList
+      .filter((q) => {
+        const qPhone = q.phone?.toString().trim();
+        const qEmail = q.email?.toString().trim().toLowerCase();
+        return (phone && qPhone === phone) || (email && qEmail === email);
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const latest = candidates.find((q) => q.plan_name || q.plan_duration);
+    return latest ? { plan: latest.plan_name, duration: latest.plan_duration } : null;
+  };
+
+  const findMatchingPlan = (user, planList, enquiryList) => {
     if (!user || !Array.isArray(planList)) return null;
-    const planName = normalizePlanText(user.plan);
-    const durationValue = parseDurationValue(user.duration);
+
+    let planName = normalizePlanText(user.plan);
+    let durationValue = parseDurationValue(user.duration);
+
+    if (!planName && durationValue == null && Array.isArray(enquiryList)) {
+      const fromEnquiry = findPreferredEnquiryPlan(user, enquiryList);
+      if (fromEnquiry) {
+        planName = normalizePlanText(fromEnquiry.plan);
+        durationValue = parseDurationValue(fromEnquiry.duration);
+      }
+    }
 
     if (planName) {
       const exactByName = planList.find(
@@ -106,12 +132,25 @@ const BuyPlanadmin = () => {
   }, []);
 
   useEffect(() => {
+    const fetchEnquiries = async () => {
+      try {
+        const res = await api.get('/enquiries');
+        setEnquiries(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchEnquiries();
+  }, []);
+
+  useEffect(() => {
     if (!selectedUser || plans.length === 0) return;
-    const matchedPlan = findMatchingPlan(selectedUser, plans);
+    const matchedPlan = findMatchingPlan(selectedUser, plans, enquiries);
     if (matchedPlan && matchedPlan.id !== selectedPlan?.id) {
       setSelectedPlan(matchedPlan);
     }
-  }, [selectedUser, plans]);
+  }, [selectedUser, plans, enquiries]);
 
   // ================= FETCH TRAINERS =================
   useEffect(() => {
@@ -336,7 +375,7 @@ Thank you for joining 💪
                     bmi: user.bmi || "",
                   }));
 
-                  const matchedPlan = findMatchingPlan(user, plans);
+                  const matchedPlan = findMatchingPlan(user, plans, enquiries);
                   if (matchedPlan) {
                     setSelectedPlan(matchedPlan);
                     return;
