@@ -34,6 +34,7 @@ const navItems = [
 
   { path: "/admin/members", label: "Members", icon: Users },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
+  { path: "/admin/emi", label: "EMI", icon: BarChart3 },
 
   { path: "/admin/assignedtrainers", label: "Assigned Trainers", icon: UserCheck },
 
