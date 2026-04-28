@@ -56,12 +56,12 @@ async function getPlanById(req, res) {
 
 async function createPlan(req, res) {
   const {
-    name, description, duration, price, discount, finalPrice,
+    name, image, description, duration, price, discount, finalPrice,
     facilities, trainerIncluded, dietPlans, active
   } = req.body;
 
   console.log('createPlan received:', {
-    name, description, duration, price, discount, finalPrice,
+    name, image, description, duration, price, discount, finalPrice,
     facilities: facilities?.length || 0, trainerIncluded, dietPlans: dietPlans?.length || 0, active
   });
 
@@ -78,11 +78,11 @@ async function createPlan(req, res) {
 
     const [result] = await db.query(
       `INSERT INTO gym_plans
-      (plan_id, name, description, duration, price, discount, final_price, 
+      (plan_id, name, image, description, duration, price, discount, final_price, 
        facilities, trainer_included, diet_plans, active)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
-        planId, name, description, duration, Number(price), Number(discount),
+        planId, name, image || null, description, duration, Number(price), Number(discount),
         Number(finalPrice), JSON.stringify(facilities || []), trainerIncluded ? 1 : 0,
         JSON.stringify(dietPlans || []), active !== false ? 1 : 0
       ]
@@ -101,7 +101,7 @@ async function createPlan(req, res) {
 async function updatePlan(req, res) {
   const { id } = req.params;
   const {
-    name, description, duration, price, discount, finalPrice,
+    name, image, description, duration, price, discount, finalPrice,
     facilities, trainerIncluded, dietPlans, active
   } = req.body;
 
@@ -114,21 +114,21 @@ async function updatePlan(req, res) {
     let params;
     
     const baseParams = [
-      name, description, duration, Number(price), Number(discount),
+      name, image || null, description, duration, Number(price), Number(discount),
       Number(finalPrice), JSON.stringify(facilities || []), trainerIncluded ? 1 : 0,
       JSON.stringify(dietPlans || []), active !== false ? 1 : 0
     ];
 
     if (isNum) {
       query = `UPDATE gym_plans SET
-        name=?, description=?, duration=?, price=?, discount=?,
+        name=?, image=?, description=?, duration=?, price=?, discount=?,
         final_price=?, facilities=?, trainer_included=?, diet_plans=?,
         active=?, updated_at=CURRENT_TIMESTAMP
        WHERE id=?`;
       params = [...baseParams, idNum];
     } else {
       query = `UPDATE gym_plans SET
-        name=?, description=?, duration=?, price=?, discount=?,
+        name=?, image=?, description=?, duration=?, price=?, discount=?,
         final_price=?, facilities=?, trainer_included=?, diet_plans=?,
         active=?, updated_at=CURRENT_TIMESTAMP
        WHERE plan_id=?`;

@@ -35,6 +35,7 @@ async function createEquipment(req, res) {
   try {
     const {
       name,
+      image,
       category,
       purchaseDate,
       condition,
@@ -50,9 +51,9 @@ async function createEquipment(req, res) {
 
     const [result] = await db.query(
       `INSERT INTO gym_equipment 
-       (name, category, purchase_date, \`condition\`, status, service_due_month, under_warranty, under_maintenance)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, category, purchaseDate, condition || 'Good', status || 'available', serviceDueMonth || null, underWarranty ? 1 : 0, underMaintenance ? 1 : 0]
+       (name, image, category, purchase_date, \`condition\`, status, service_due_month, under_warranty, under_maintenance)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, image || null, category, purchaseDate, condition || 'Good', status || 'available', serviceDueMonth || null, underWarranty ? 1 : 0, underMaintenance ? 1 : 0]
     );
 
     // Fetch the created equipment
@@ -71,6 +72,7 @@ async function updateEquipment(req, res) {
     
     const {
       name,
+      image,
       category,
       purchaseDate,
       condition,
@@ -82,11 +84,11 @@ async function updateEquipment(req, res) {
 
     const [result] = await db.query(
       `UPDATE gym_equipment 
-       SET name = ?, category = ?, purchase_date = ?, \`condition\` = ?, 
+       SET name = ?, image = ?, category = ?, purchase_date = ?, \`condition\` = ?, 
            status = ?, service_due_month = ?, under_warranty = ?, 
            under_maintenance = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name, category, purchaseDate, condition, status, serviceDueMonth, underWarranty ? 1 : 0, underMaintenance ? 1 : 0, idNum]
+      [name, image || null, category, purchaseDate, condition, status, serviceDueMonth, underWarranty ? 1 : 0, underMaintenance ? 1 : 0, idNum]
     );
 
     if (result.affectedRows === 0) {
