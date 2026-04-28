@@ -118,9 +118,11 @@ const Enquiry = ({
   };
 
   const filteredMembers = members.filter(member =>
-    member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    !member.pt_form_completed && (
+      member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   ).slice(0, 20); // Limit to 20 suggestions for better selection
 
   if (loading) {
