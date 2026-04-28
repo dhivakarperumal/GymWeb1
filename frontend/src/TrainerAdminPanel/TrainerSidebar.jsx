@@ -79,10 +79,10 @@ const navItems = [
     icon: Activity,
   },
   {
-    path: "/trainer/pricing",
-    label: "Pricing",
-    icon: DollarSign,
-  },
+  path: "/trainer/pricing",   // ✅ correct
+  label: "Pricing",
+  icon: DollarSign,
+},
   { path: "/", label: "Back Home", icon: Home },
 ];
 

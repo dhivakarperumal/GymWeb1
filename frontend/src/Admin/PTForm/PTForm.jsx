@@ -105,7 +105,11 @@ const PTForm = () => {
 
         await api.post("/pt-forms", payload);
         toast.success("PT Registration completed and stored successfully!");
-        navigate('/admin/members');
+        if (role === 'trainer') {
+          navigate('/trainer');
+        } else {
+          navigate('/admin/members');
+        }
       } catch (err) {
         console.error("Save PT Form error:", err);
         toast.error(err.response?.data?.error || "Failed to save registration");
