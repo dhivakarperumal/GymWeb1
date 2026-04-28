@@ -109,151 +109,152 @@ const FitnessScreening = ({
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* RESTING PARAMETERS */}
-        <div className="space-y-4">
-          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Resting Parameters</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Height in cm:</label>
-              <input
-                type="text"
-                name="fs_height"
-                value={localFormData.fs_height}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Weight in KG:</label>
-              <input
-                type="text"
-                name="fs_weight"
-                value={localFormData.fs_weight}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Resting HR:</label>
-              <input
-                type="text"
-                name="fs_resting_hr"
-                value={localFormData.fs_resting_hr}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+      <div className="border-2 border-white/20 rounded-2xl p-8 bg-white/[0.02] shadow-xl">
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* RESTING PARAMETERS */}
+          <div className="space-y-4">
+            <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Resting Parameters</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Height in cm:</label>
+                <input
+                  type="text"
+                  name="fs_height"
+                  value={localFormData.fs_height}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Weight in KG:</label>
+                <input
+                  type="text"
+                  name="fs_weight"
+                  value={localFormData.fs_weight}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Resting HR:</label>
+                <input
+                  type="text"
+                  name="fs_resting_hr"
+                  value={localFormData.fs_resting_hr}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* COMPOSITIONS */}
-        <div className="space-y-4">
-          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Compositions</h3>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="md:w-1/3">
-              <label className="block text-sm font-medium text-white/80 mb-1">Fat% (BIA):</label>
-              <input
-                type="text"
-                name="fs_fat_percentage"
-                value={localFormData.fs_fat_percentage}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-6 mt-2">
-              {['Low', 'Healthy', 'Obese', 'Overweight'].map((level) => (
-                <label key={level} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="fs_fat_level"
-                    value={level}
-                    checked={localFormData.fs_fat_level === level}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
-                  />
-                  <span className="text-white/80 text-sm">{level}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* CARDIORESPIRATORY FITNESS */}
-        <div className="space-y-4">
-          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Cardiorespiratory Fitness</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Speed in KM:</label>
-              <input
-                type="text"
-                name="fs_speed_km"
-                value={localFormData.fs_speed_km}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">Heart rate:</label>
-              <input
-                type="text"
-                name="fs_heart_rate"
-                value={localFormData.fs_heart_rate}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+          {/* COMPOSITIONS */}
+          <div className="space-y-4">
+            <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Compositions</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="md:w-1/3">
+                <label className="block text-sm font-medium text-white/80 mb-1">Fat% (BIA):</label>
+                <input
+                  type="text"
+                  name="fs_fat_percentage"
+                  value={localFormData.fs_fat_percentage}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-6 mt-2">
+                {['Low', 'Healthy', 'Obese', 'Overweight'].map((level) => (
+                  <label key={level} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="fs_fat_level"
+                      value={level}
+                      checked={localFormData.fs_fat_level === level}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
+                    />
+                    <span className="text-white/80 text-sm">{level}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* MUSCLE ENDURANCE */}
-        <div className="space-y-4">
-          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Muscle Endurance</h3>
-          <div className="flex flex-col gap-2">
-            {renderMuscleEnduranceRow('Push-ups', 'fs_push_ups')}
-            {renderMuscleEnduranceRow('Squats', 'fs_squats')}
-            {renderMuscleEnduranceRow('Plank Hold', 'fs_plank_hold')}
-            {renderMuscleEnduranceRow('Shoulder', 'fs_shoulder')}
-            {renderMuscleEnduranceRow('Biceps', 'fs_biceps')}
-            {renderMuscleEnduranceRow('Triceps', 'fs_triceps')}
-            {renderMuscleEnduranceRow('Curl ups', 'fs_curl_ups')}
+          {/* CARDIORESPIRATORY FITNESS */}
+          <div className="space-y-4">
+            <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Cardiorespiratory Fitness</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Speed in KM:</label>
+                <input
+                  type="text"
+                  name="fs_speed_km"
+                  value={localFormData.fs_speed_km}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">Heart rate:</label>
+                <input
+                  type="text"
+                  name="fs_heart_rate"
+                  value={localFormData.fs_heart_rate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex gap-3 pt-6">
-          <button
-            type="button"
-            onClick={onPrevious}
-            disabled={isFirstStep}
-            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
-              isFirstStep
-                ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
-                : "bg-gray-700 hover:bg-gray-600 text-white"
-            }`}
-          >
-            Previous
-          </button>
+          {/* MUSCLE ENDURANCE */}
+          <div className="space-y-4">
+            <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Muscle Endurance</h3>
+            <div className="flex flex-col gap-2">
+              {renderMuscleEnduranceRow('Push-ups', 'fs_push_ups')}
+              {renderMuscleEnduranceRow('Squats', 'fs_squats')}
+              {renderMuscleEnduranceRow('Plank Hold', 'fs_plank_hold')}
+              {renderMuscleEnduranceRow('Shoulder', 'fs_shoulder')}
+              {renderMuscleEnduranceRow('Biceps', 'fs_biceps')}
+              {renderMuscleEnduranceRow('Triceps', 'fs_triceps')}
+              {renderMuscleEnduranceRow('Curl ups', 'fs_curl_ups')}
+            </div>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => window.history.back()}
-            className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold transition-all border border-white/10"
-          >
-            Cancel
-          </button>
+          {/* Navigation Buttons */}
+          <div className="flex gap-3 pt-6">
+            <button
+              type="button"
+              onClick={onPrevious}
+              disabled={isFirstStep}
+              className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${isFirstStep
+                  ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-700 hover:bg-gray-600 text-white"
+                }`}
+            >
+              Previous
+            </button>
 
-          <button
-            type="submit"
-            className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
-          >
-            {isLastStep ? "Complete Registration" : "Next Step"}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold transition-all border border-white/10"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
+            >
+              {isLastStep ? "Complete Registration" : "Next Step"}
+            </button>
+          </div>
+        </form>
+      </div>
+      </div>
+      );
 };
 
-export default FitnessScreening;
+      export default FitnessScreening;
