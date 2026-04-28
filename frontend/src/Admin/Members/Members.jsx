@@ -435,15 +435,7 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="p-4 flex gap-2">
-                      {m.pt_form_completed && (
-                        <button
-                          onClick={() => navigate(`/admin/pt-form/print/${m.id || m.member_id}`)}
-                          className="p-2 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 text-white transition"
-                          title="Print PT Form"
-                        >
-                          <Printer size={16} />
-                        </button>
-                      )}
+                     
                       <button
                         onClick={() => {
                           if (m.source === "users") {

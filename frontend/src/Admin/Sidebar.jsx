@@ -30,7 +30,9 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 const navItems = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
 
-  { path: "/admin/enquiry", label: "Enquiry", icon: MessageSquare },
+  { path: "/admin/followupenquriy", label: "Follow Up Enquiry", icon: MessageSquare },
+
+  { path: "/admin/enquiry", label: "Client Enquiry", icon: MessageSquare },
 
   { path: "/admin/members", label: "Members", icon: Users },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },

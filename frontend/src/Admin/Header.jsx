@@ -68,6 +68,7 @@ const pageInfo = {
   "/admin/member-attendance": { title: "Member Attendance", icon: Users },
   "/admin/commenworkoutdiet": { title: "Workout & Diet", icon: HeartPulse },
   "/admin/users": { title: "Users", icon: Users },
+  "/admin/pt-form": { title: "Personal Training Form", icon: HeartPulse },
 };
 
 const Header = ({ onMenuClick }) => {

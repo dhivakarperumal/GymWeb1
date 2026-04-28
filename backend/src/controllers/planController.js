@@ -7,7 +7,8 @@ const parsePlan = (plan) => {
     ...plan,
     facilities: typeof plan.facilities === 'string' ? JSON.parse(plan.facilities || '[]') : (plan.facilities || []),
     features: typeof plan.features === 'string' ? JSON.parse(plan.features || '[]') : (plan.features || []),
-    diet_plans: typeof plan.diet_plans === 'string' ? JSON.parse(plan.diet_plans || '[]') : (plan.diet_plans || []),
+    dietPlans: typeof plan.diet_plans === 'string' ? JSON.parse(plan.diet_plans || '[]') : (plan.diet_plans || []),
+    finalPrice: plan.final_price,
     // Handle duration_months as fallback to duration
     duration: plan.duration || plan.duration_months,
     // Handle trainer_included mapping

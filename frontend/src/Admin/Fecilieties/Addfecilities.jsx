@@ -50,7 +50,7 @@ const AddEditFacility = () => {
         const data = res.data;
 
         // if fetch failed, bail out before using data
-        if (!res.ok) {
+        if (res.status !== 200) {
           toast.error("Facility not found");
           navigate(-1);
           return;

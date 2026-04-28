@@ -31,6 +31,7 @@ const pageTitles = {
   "/trainer/send-message": "Send Message",
   "/trainer/reports": "Reports",
   "/trainer/settings/profile": "Profile",
+  "/trainer/pt-form": "Personal Training Form",
 };
 
 /* ------------------------------------------------------------------ */

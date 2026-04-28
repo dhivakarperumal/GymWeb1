@@ -20,6 +20,7 @@ function normalizeAssignment(row) {
     trainerSource: row.trainer_source,
     sessionTime: row.session_time || null,
     status: row.status,
+    ptFormCompleted: row.pt_form_completed || 0,
     updatedAt: row.updated_at,
   };
 }
@@ -69,6 +70,7 @@ async function getAllAssignments(req, res) {
              m.email as member_email,
              m.phone as member_mobile,
              m.weight as member_weight,
+             m.pt_form_completed as pt_form_completed,
              s.name as current_trainer_name,
              s.role as trainer_source
       FROM trainer_assignments a

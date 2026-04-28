@@ -29,7 +29,6 @@ const enquiryController = {
         }
     },
 
-    // Create new enquiry
     createEnquiry: async (req, res) => {
         try {
             const {

@@ -13,7 +13,7 @@ const glassInput =
   "w-full px-4 py-2 rounded-xl bg-white/10 text-white border border-white/20";
 
 /* ================= CONSTANTS ================= */
-const DURATIONS = ["1 Month", "3 Months", "6 Months", "1 Year"];
+const DURATIONS = ["1 Day", "1 Week", "1 Month", "3 Months", "6 Months", "1 Year"];
 const FACILITIES = [
   "Cardio & HIIT Workouts",
       "Fat Loss Training Program",
@@ -63,6 +63,7 @@ const AddEditGymPlan = () => {
   const [form, setForm] = useState({
     planId: "",
     name: "",
+    image: "", // New image field
     description: "",
     duration: "",
     price: "",
@@ -83,7 +84,7 @@ const AddEditGymPlan = () => {
         const res = await api.get(`/plans/${id}`);
         const data = res.data;
 
-        if (!res.ok) {
+        if (res.status !== 200) {
           toast.error("Plan not found");
           navigate(-1);
           return;
@@ -104,6 +105,28 @@ const AddEditGymPlan = () => {
     loadPlan();
     // eslint-disable-next-line
   }, [id]);
+
+  /* ================= IMAGE ================= */
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const { default: imageCompression } = await import("browser-image-compression");
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.2,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      });
+
+      const reader = new FileReader();
+      reader.onloadend = () =>
+        setForm((p) => ({ ...p, image: reader.result }));
+      reader.readAsDataURL(compressed);
+    } catch (err) {
+      toast.error("Image upload failed");
+    }
+  };
 
   /* ================= AUTO FINAL PRICE ================= */
   useEffect(() => {
@@ -198,7 +221,7 @@ const AddEditGymPlan = () => {
 
       const data = res.data;
 
-      if (!res.ok) {
+      if (res.status !== 200 && res.status !== 201) {
         toast.error(data.message || data.error || "Save failed");
         setSaving(false);
         return;
@@ -255,6 +278,24 @@ const AddEditGymPlan = () => {
               </option>
             ))}
           </select>
+
+          {/* IMAGE UPLOAD */}
+          <div className="md:col-span-2 space-y-2">
+            <label className="block text-sm text-gray-300">Plan Hero Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className={glassInput}
+            />
+            {form.image && (
+              <img
+                src={form.image}
+                alt="Preview"
+                className="h-40 w-full object-cover rounded-xl border border-white/20 mt-2"
+              />
+            )}
+          </div>
 
           <textarea
             name="description"
@@ -368,7 +409,7 @@ const AddEditGymPlan = () => {
                       + Add Day
                     </button>
 
-                    {Object.entries(plan.days).map(([day, meals]) => (
+                    {Object.entries(plan.days || {}).map(([day, meals]) => (
                       <div key={day} className="mb-4">
                         <h4 className="font-semibold mb-2">{day}</h4>
                         <div className="grid md:grid-cols-2 gap-3">
