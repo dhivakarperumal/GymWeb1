@@ -40,16 +40,51 @@ const FitnessScreening = ({
     fs_curl_ups_level: initialFormData?.fs_curl_ups_level || "",
   });
 
+  const [isManualLevel, setIsManualLevel] = useState(false);
+
   React.useEffect(() => {
     if (initialFormData && Object.keys(initialFormData).length > 0) {
-      setLocalFormData(prev => ({ ...prev, ...initialFormData }));
+      setLocalFormData(prev => ({
+        ...prev,
+        ...initialFormData,
+        fs_height: initialFormData.fs_height || initialFormData.height || "",
+        fs_weight: initialFormData.fs_weight || initialFormData.weight || "",
+      }));
     }
   }, [initialFormData]);
+
+  // Auto-calculate Fat Level based on percentage and gender
+  React.useEffect(() => {
+    if (isManualLevel) return;
+
+    const fat = parseFloat(localFormData.fs_fat_percentage);
+    if (isNaN(fat)) return;
+
+    const gender = initialFormData?.gender || "Male";
+    let level = "";
+
+    if (gender === "Male") {
+      if (fat < 8) level = "Low";
+      else if (fat <= 19) level = "Healthy";
+      else if (fat <= 25) level = "Overweight";
+      else level = "Obese";
+    } else {
+      if (fat < 21) level = "Low";
+      else if (fat <= 33) level = "Healthy";
+      else if (fat <= 39) level = "Overweight";
+      else level = "Obese";
+    }
+
+    if (level) {
+      setLocalFormData(prev => ({ ...prev, fs_fat_level: level }));
+    }
+  }, [localFormData.fs_fat_percentage, initialFormData?.gender, isManualLevel]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "radio") {
       if (checked) {
+        if (name === "fs_fat_level") setIsManualLevel(true);
         setLocalFormData((prev) => ({ ...prev, [name]: value }));
       }
     } else {
@@ -235,8 +270,8 @@ const FitnessScreening = ({
               onClick={onPrevious}
               disabled={isFirstStep}
               className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${isFirstStep
-                  ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-700 hover:bg-gray-600 text-white"
+                ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                : "bg-gray-700 hover:bg-gray-600 text-white"
                 }`}
             >
               Previous
@@ -259,8 +294,8 @@ const FitnessScreening = ({
           </div>
         </form>
       </div>
-      </div>
-      );
+    </div>
+  );
 };
 
-      export default FitnessScreening;
+export default FitnessScreening;
