@@ -71,7 +71,7 @@ const PTFormPrint = () => {
           <p className="text-sm mt-1">Personal Training Registration & Assessment Form</p>
           <div className="mt-4 flex justify-between text-xs font-bold uppercase">
             <span>Member ID: {member.member_id || member.id}</span>
-            <span>Date: {dayjs(member.pt_form_completed_at).format('DD/MM/YYYY')}</span>
+            <span>Date: {dayjs(member.pt_form_completed_at || new Date()).format('DD/MM/YYYY')}</span>
           </div>
         </div>
 
@@ -129,13 +129,12 @@ const PTFormPrint = () => {
           <div className="grid grid-cols-3 gap-4 text-sm text-center">
             <div className="border border-black p-2"><div className="font-bold">BP</div>{ptForm.bp}</div>
             <div className="border border-black p-2"><div className="font-bold">Sugar</div>{ptForm.sugar}</div>
-            <div className="border border-black p-2"><div className="font-bold">Cholesterol</div>{ptForm.cholesterol}</div>
-            <div className="border border-black p-2"><div className="font-bold">Thyroid</div>{ptForm.thyroid}</div>
             <div className="border border-black p-2"><div className="font-bold">Height</div>{ptForm.fs_height} cm</div>
             <div className="border border-black p-2"><div className="font-bold">Weight</div>{ptForm.fs_weight} kg</div>
+            <div className="border border-black p-2"><div className="font-bold">Fat%</div>{ptForm.fs_fat_percentage}%</div>
+            <div className="border border-black p-2"><div className="font-bold">BMI</div>{member.bmi}</div>
           </div>
           <div className="mt-4 text-sm">
-            <p><span className="font-bold">Fat%:</span> {ptForm.fs_fat_percentage}% ({ptForm.fs_fat_level})</p>
             <p><span className="font-bold">Push-ups:</span> {ptForm.fs_push_ups_count} ({ptForm.fs_push_ups_level})</p>
             <p><span className="font-bold">Squats:</span> {ptForm.fs_squats_count} ({ptForm.fs_squats_level})</p>
             <p><span className="font-bold">Plank:</span> {ptForm.fs_plank_hold_count} ({ptForm.fs_plank_hold_level})</p>
@@ -188,7 +187,7 @@ const PTFormPrint = () => {
           </div>
         </div>
 
-        <div className="mt-12 text-[10px] text-center text-gray-500">
+        <div className="mt-12 text-[10px] text-center text-gray-500 italic">
           * No Refund • No Transfer • No Extension • No Freezing
         </div>
       </div>
@@ -204,12 +203,16 @@ const PTFormPrint = () => {
           }
 
           /* Reset layouts and colors */
-          body, html { 
+          body, html, #root, .min-h-screen, section, main { 
             background: white !important; 
             color: black !important; 
             margin: 0 !important; 
             padding: 0 !important;
             width: 100% !important;
+            min-height: auto !important;
+            height: auto !important;
+            position: static !important;
+            overflow: visible !important;
           }
 
           .admin-root { 
