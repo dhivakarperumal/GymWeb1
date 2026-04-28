@@ -108,6 +108,7 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                                 type="text"
                                                 name={`specify${index}`}
                                                 placeholder="List specifies"
+                                                value={form[`specify${index}`]}
                                                 onChange={handleChange}
                                                 className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3"
                                             />
@@ -135,6 +136,7 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                 <label className="block mb-2">Blood Pressure</label>
                                 <input
                                     name="bp"
+                                    value={form.bp}
                                     onChange={handleChange}
                                     className="input"
                                 />
@@ -144,6 +146,7 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                 <label className="block mb-2">Blood Sugar</label>
                                 <input
                                     name="sugar"
+                                    value={form.sugar}
                                     onChange={handleChange}
                                     className="input"
                                 />
@@ -154,6 +157,7 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                 <input
                                     name="cholesterol"
                                     onChange={handleChange}
+                                    value={form.cholesterol}
                                     className="input"
                                 />
                             </div>
@@ -163,6 +167,7 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                 <input
                                     name="thyroid"
                                     onChange={handleChange}
+                                    value={form.thyroid}
                                     className="input"
                                 />
                             </div>
@@ -172,6 +177,7 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                 <input
                                     name="uric"
                                     onChange={handleChange}
+                                    value={form.uric}
                                     className="input"
                                 />
                             </div>
@@ -181,6 +187,7 @@ const HealthHistory2 = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                 <input
                                     name="serum3d"
                                     onChange={handleChange}
+                                    value={form.serum3d}
                                     className="input"
                                 />
                             </div>
