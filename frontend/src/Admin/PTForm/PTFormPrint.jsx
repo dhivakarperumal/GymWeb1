@@ -195,11 +195,76 @@ const PTFormPrint = () => {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body { background: white !important; color: black !important; padding: 0 !important; }
-          .min-h-screen { min-height: auto !important; }
-          .max-w-4xl { max-width: 100% !important; border: none !important; p: 0 !important; }
-          .page-break-before { page-break-before: always; }
-          @page { margin: 2cm; }
+          /* Hide everything except the printable form */
+          nav, aside, header, footer, .print-hidden, 
+          .admin-root sidebar, .admin-root header, .admin-root footer,
+          .glass-footer, .fixed, .fixed-top, .fixed-bottom,
+          button, .ChevronLeft, .Printer { 
+            display: none !important; 
+          }
+
+          /* Reset layouts and colors */
+          body, html { 
+            background: white !important; 
+            color: black !important; 
+            margin: 0 !important; 
+            padding: 0 !important;
+            width: 100% !important;
+          }
+
+          .admin-root { 
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+
+          .lg\\:ml-64, .lg\\:ml-20, .ml-0, .ml-64, .p-4, .p-6, .sm\\:p-5, .lg\\:p-6 {
+            margin-left: 0 !important;
+            padding: 0 !important;
+          }
+
+          main {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+
+          .glass-container {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+
+          .max-w-4xl { 
+            max-width: 100% !important; 
+            width: 100% !important;
+            border: none !important; 
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+
+          .page-break-before { 
+            page-break-before: always; 
+          }
+
+          @page { 
+            margin: 1.5cm; 
+            size: auto;
+          }
+
+          /* Force text to black for better contrast */
+          * {
+            color: black !important;
+            background: transparent !important;
+            -webkit-print-color-adjust: exact;
+          }
+          
+          .bg-gray-100 {
+            background-color: #f3f4f6 !important;
+          }
         }
       `}} />
     </div>
