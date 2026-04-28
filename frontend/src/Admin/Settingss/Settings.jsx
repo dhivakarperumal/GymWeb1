@@ -110,6 +110,20 @@ const Settings = () => {
           path="/admin/staff"
         />
 
+           <SettingCard
+          icon={<FaClipboardList />}
+          title="Staff Attendance"
+          desc="Track and manage daily attendance for all gym staff and trainers."
+          path="/admin/overall-attendance"
+        />
+
+        <SettingCard
+          icon={<FaUsers />}
+          title="Member Attendance"
+          desc="View and manage individual member attendance records."
+          path="/admin/member-attendance"
+        />
+
         <SettingCard
           icon={<FaStar />}
           title="Gym Reviews & Ratings"
@@ -144,6 +158,8 @@ const Settings = () => {
           desc="Manage common workout routines and diet plans for members."
           path="/admin/commenworkoutdiet"
         />
+
+     
 
       </div>
     </div>

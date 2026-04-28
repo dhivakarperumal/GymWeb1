@@ -61,14 +61,6 @@ const navItems = [
   
 
   
-  {
-    label: "Attendance",
-    icon: CalendarCheck,
-    children: [
-      { path: "/admin/overall-attendance", label: "Staff Attendance", icon: UserCheck },
-      { path: "/admin/member-attendance", label: "Members Attendance", icon: Users },
-    ],
-  },
   // { path: "/admin/commenworkoutdiet", label: "Workout & Diet", icon: HeartPulse },
   // { path: "/admin/reports", label: "Reports & Analytics", icon: BarChart3 },
   // { path: "/admin/equipment", label: "Gym Equipment", icon: Activity },
