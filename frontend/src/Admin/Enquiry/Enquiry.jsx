@@ -52,6 +52,13 @@ const Enquiry = () => {
   }, [formData.height, formData.weight]);
 
   useEffect(() => {
+    if (formData.dob) {
+      const age = dayjs().diff(dayjs(formData.dob), 'year');
+      setFormData(prev => ({ ...prev, age: age >= 0 ? age.toString() : "" }));
+    }
+  }, [formData.dob]);
+
+  useEffect(() => {
     fetchEnquiries();
   }, []);
 
@@ -474,18 +481,7 @@ const Enquiry = () => {
                       <option value="AB-">AB-</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1">Location / Branch</label>
-                    <input
-                      type="text"
-                      value={formData.location}
-                      onChange={(e) => setFormData({...formData, location: e.target.value})}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Gym Branch Name"
-                    />
-                  </div>
-                </div>
-                <div>
+                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Full Address</label>
                   <textarea
                     value={formData.address}
@@ -495,6 +491,8 @@ const Enquiry = () => {
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                </div>
+                
               </div>
 
               {/* SECTION: PROFESSIONAL INFO */}
