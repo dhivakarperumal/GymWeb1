@@ -353,33 +353,35 @@ const FollowupEnquiry = () => {
             </table>
           </div>
 
-          {/* Footer / Pagination */}
-          <div className="p-4 border-t border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between mt-auto">
-            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
-              Showing {paginatedEnquiries.length} of {filteredEnquiries.length} entries
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] text-white font-black uppercase tracking-[0.1em]">
-                Page {currentPage} / {totalPages}
+          {/* Footer / Pagination — only shown when records exceed 10 */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between mt-auto">
+              <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
+                Showing {paginatedEnquiries.length} of {filteredEnquiries.length} entries
               </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
 
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] text-white font-black uppercase tracking-[0.1em]">
+                  Page {currentPage} / {totalPages}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Profile Modal (Dense Form + History at bottom) */}
