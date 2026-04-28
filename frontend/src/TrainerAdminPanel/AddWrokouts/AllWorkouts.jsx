@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { Edit2, Eye, Trash2, X, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import * as XLSX from "xlsx";
 import api from "../../api";
 
 const weekDays = [
@@ -97,6 +98,105 @@ const AllWorkouts = () => {
     }
   };
 
+  /* ---------------- EXPORT TO EXCEL ---------------- */
+  const exportToExcel = () => {
+    if (workouts.length === 0) {
+      toast.error("No workouts to export");
+      return;
+    }
+
+    const dataToExport = filteredWorkouts.map((w, index) => ({
+      "S.No": index + 1,
+      "Member Name": w.memberName || "N/A",
+      "Trainer Name": w.trainerName || "N/A",
+      "Level": w.level || "N/A",
+      "Category": w.category || "N/A",
+      "Goal": w.goal || "N/A",
+      "Duration (Weeks)": w.durationWeeks || 0,
+      "Created At": w.createdAt ? new Date(w.createdAt).toLocaleDateString() : "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Workouts");
+    XLSX.writeFile(workbook, `Workouts_Report_${new Date().toLocaleDateString()}.xlsx`);
+    toast.success("Workouts exported successfully");
+  };
+
+  /* ---------------- IMPORT FROM EXCEL ---------------- */
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setLoading(true);
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        let successCount = 0;
+        for (const row of jsonData) {
+          const memberId = row.MemberId || row["Member ID"] || row.member_id;
+          if (!memberId) continue;
+
+          const payload = {
+            trainerId,
+            trainerName: user?.username || "Trainer",
+            memberId: String(memberId),
+            memberName: row.MemberName || row["Member Name"] || "Member",
+            level: row.Level || "Beginner",
+            category: row.Category || "Weight Training",
+            goal: row.Goal || "",
+            durationWeeks: Number(row.Duration || row["Duration (Weeks)"] || 4),
+            days: {}, // Default empty program
+            status: "active",
+          };
+
+          await api.post("/workouts", payload);
+          successCount++;
+        }
+
+        if (successCount > 0) {
+          toast.success(`Successfully imported ${successCount} workout(s)`);
+          // Refresh list
+          window.location.reload();
+        } else {
+          toast.error("No valid data found in Excel");
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Import failed. Check file format.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  /* ---------------- DOWNLOAD TEMPLATE ---------------- */
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        "MemberId": "101",
+        "MemberName": "Sample Member",
+        "Level": "Beginner",
+        "Category": "Weight Training",
+        "Goal": "Strength",
+        "Duration (Weeks)": 12
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
+    XLSX.writeFile(workbook, "Workout_Import_Template.xlsx");
+    toast.success("Template downloaded");
+  };
+
   /* ---------------- RESET WEEK WHEN MODAL OPENS ---------------- */
   useEffect(() => {
     if (selectedWorkout) {
@@ -109,15 +209,7 @@ const AllWorkouts = () => {
     <div className="min-h-screen p-6 text-white">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-2xl font-bold">All Workout Programs</h2>
-
-          <div className="flex flex-col gap-3 
-                sm:flex-row sm:flex-wrap 
-                sm:items-center sm:gap-3 
-                w-full sm:w-auto">
-
-  {/* Search */}
-  <input
+          <input
     value={search}
     onChange={(e) => setSearch(e.target.value)}
     placeholder="Search by member or goal..."
@@ -126,6 +218,14 @@ const AllWorkouts = () => {
                rounded-lg focus:outline-none 
                focus:ring-2 focus:ring-cyan-500"
   />
+
+          <div className="flex flex-col gap-3 
+                sm:flex-row sm:flex-wrap 
+                sm:items-center sm:gap-3 
+                w-full sm:w-auto">
+
+  
+ 
 
   {/* Category Filter */}
   <select
@@ -156,6 +256,15 @@ const AllWorkouts = () => {
       <option key={l} value={l}>{l}</option>
     ))}
   </select>
+
+  {/* Import/Export */}
+  <div className="flex gap-2 w-full sm:w-auto">
+    <label className="flex-1 sm:flex-none px-4 py-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-sm font-bold cursor-pointer hover:bg-indigo-500 hover:text-white transition text-center flex items-center justify-center">
+      Import
+      <input type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
+    </label>
+    
+  </div>
 
   {/* Add Button */}
   <button

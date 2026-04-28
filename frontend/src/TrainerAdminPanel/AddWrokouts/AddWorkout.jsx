@@ -320,6 +320,53 @@ const AddWorkout = () => {
           {/* MEMBER SELECTION */}
           {!isEditMode ? (
             <div className="bg-black/40 border border-white/10 rounded-xl p-4 space-y-4">
+              {/* Quick Select Section (PT Form Style) */}
+              <div className="relative mb-4 bg-orange-500/5 p-4 rounded-xl border border-orange-500/10">
+                <label className="block text-xs font-bold text-orange-400 mb-2 uppercase tracking-widest">
+                  Quick Import Member
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                    }}
+                    placeholder="Search by name, phone or email..."
+                    className="w-full pl-10 pr-4 py-3 bg-black/60 border border-white/10 rounded-lg text-white focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-white/20 text-sm"
+                  />
+                </div>
+                {search && filteredMembers.length > 0 && (
+                   <div className="absolute z-50 w-full mt-1 bg-[#1a1a2e] border border-white/20 rounded-lg shadow-2xl overflow-hidden backdrop-blur-xl max-h-60 overflow-y-auto custom-scrollbar">
+                     {filteredMembers.map(m => (
+                       <button
+                         key={m.id}
+                         type="button"
+                         onClick={() => {
+                           toggleOne(m.id);
+                           setSearch("");
+                         }}
+                         className="w-full px-4 py-3 text-left hover:bg-orange-500/10 border-b border-white/5 last:border-0 transition-colors group"
+                       >
+                         <div className="font-bold text-white group-hover:text-orange-400 text-sm">{m.name}</div>
+                         <div className="text-[10px] text-white/40 flex gap-2 uppercase tracking-tight">
+                           <span>{m.mobile || 'No Phone'}</span>
+                           <span>•</span>
+                           <span>{m.email || 'No Email'}</span>
+                           {m.planName && (
+                             <>
+                               <span>•</span>
+                               <span className="text-orange-500/60">{m.planName}</span>
+                             </>
+                           )}
+                         </div>
+                       </button>
+                     ))}
+                   </div>
+                )}
+              </div>
+
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold flex items-center gap-2">
                   <Users size={18} className="text-orange-400" />
@@ -338,27 +385,6 @@ const AddWorkout = () => {
                     {allSelected ? "Deselect All" : "Select All"}
                   </span>
                 </div>
-              </div>
-
-              {/* Member Search */}
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-                <input
-                  type="text"
-                  placeholder="Search members..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-black/60 text-white text-sm border border-white/10 focus:ring-1 focus:ring-orange-500 outline-none"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
               </div>
 
               {/* Member List */}
