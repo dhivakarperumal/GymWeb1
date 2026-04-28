@@ -76,18 +76,16 @@ const Account = () => {
   const tabs = [
     { key: "personal", label: "Personal Details" },
     { key: "plans", label: "My Plans" },
-
+    { key: "ptform", label: "PT Form" },
     ...(hasActivePlan
       ? [
-        { key: "diet", label: "Diet Chart" },
-        { key: "workouts", label: "Workouts" },
-        { key: "ptform", label: "PT Form" },
-      ]
+          { key: "diet", label: "Diet Chart" },
+          { key: "workouts", label: "Workouts" },
+        ]
       : []),
-
     { key: "orders", label: "My Orders" },
     { key: "address", label: "Address" },
-    { key: "notifications", label: "Notifications" }, // Added
+    { key: "notifications", label: "Notifications" },
   ];
 
   /* ================= CONTENT ================= */

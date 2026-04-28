@@ -48,7 +48,10 @@ const BuyPlan = () => {
   /* ================= CHECK ENQUIRY ================= */
 
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      setCheckingEnquiry(false);
+      return;
+    }
 
     const checkEnquiry = async () => {
       try {
@@ -247,7 +250,15 @@ const BuyPlan = () => {
   }
 
   return (
+    <>
+      <PageHeader
+        title="Buy Membership Plan"
+        subtitle="Complete your enrollment and start your fitness journey today"
+        bgImage="https://images.unsplash.com/photo-1599058917212-d750089bc07e"
+      />
 
+      <div className="bg-black text-white min-h-screen">
+        <PageContainer>
           <div className="py-10">
 
             <h1 className="text-3xl font-bold mb-6">
