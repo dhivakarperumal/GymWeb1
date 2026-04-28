@@ -1,7 +1,7 @@
 const db = require('../config/db');
 
 async function savePTForm(req, res) {
-  const { member_id, user_id, formData } = req.body;
+  const { member_id, user_id, formData, completed = false } = req.body;
 
   if (!member_id) {
     return res.status(400).json({ error: 'Member ID is required' });
@@ -11,7 +11,7 @@ async function savePTForm(req, res) {
   try {
     await connection.beginTransaction();
 
-    // 1. Save or Update PT Form data
+    // 1. Save or update PT form data
     const [existing] = await connection.query(
       'SELECT id FROM pt_forms WHERE member_id = ?',
       [member_id]
@@ -32,8 +32,8 @@ async function savePTForm(req, res) {
     // 2. Update gym_members table status and basic info
     await connection.query(
       `UPDATE gym_members SET 
-        pt_form_completed = 1, 
-        pt_form_completed_at = NOW(),
+        pt_form_completed = CASE WHEN ? THEN 1 ELSE pt_form_completed END,
+        pt_form_completed_at = CASE WHEN ? THEN NOW() ELSE pt_form_completed_at END,
         name = COALESCE(?, name),
         email = COALESCE(?, email),
         phone = COALESCE(?, phone),
@@ -43,6 +43,8 @@ async function savePTForm(req, res) {
         bmi = COALESCE(?, bmi)
        WHERE id = ?`,
       [
+        completed ? 1 : 0,
+        completed ? 1 : 0,
         formData.name || null,
         formData.email || null,
         formData.phone || null,
