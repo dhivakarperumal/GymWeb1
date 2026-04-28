@@ -20,7 +20,6 @@ const Enquiry = () => {
     phone: "",
     subject: "",
     message: "",
-    location: "",
     height: "",
     weight: "",
     bmi: "",
@@ -35,7 +34,8 @@ const Enquiry = () => {
     emergency_contact_phone_home: "",
     emergency_contact_phone_work: "",
     fitness_goal: "",
-    blood_group: ""
+    blood_group: "",
+    gender: ""
   });
 
   useEffect(() => {
@@ -91,12 +91,12 @@ const Enquiry = () => {
       setShowForm(false);
       setSelectedEnquiry(null);
       setFormData({
-        name: "", email: "", phone: "", subject: "", message: "", location: "",
+        name: "", email: "", phone: "", subject: "", message: "",
         height: "", weight: "", bmi: "", dob: "", age: "", address: "",
         employer: "", occupation: "", emergency_contact_name: "",
         emergency_contact_relationship: "", emergency_contact_address: "",
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-        fitness_goal: "", blood_group: ""
+        fitness_goal: "", blood_group: "", gender: ""
       });
     } catch (error) {
       console.error('Error saving enquiry:', error);
@@ -481,7 +481,23 @@ const Enquiry = () => {
                       <option value="AB-">AB-</option>
                     </select>
                   </div>
-                 <div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Gender</label>
+                    <select
+                      value={formData.gender}
+                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                 
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Full Address</label>
                   <textarea
                     value={formData.address}
@@ -491,8 +507,6 @@ const Enquiry = () => {
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                </div>
-                
               </div>
 
               {/* SECTION: PROFESSIONAL INFO */}

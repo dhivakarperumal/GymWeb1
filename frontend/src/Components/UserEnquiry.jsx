@@ -26,7 +26,6 @@ const UserEnquiry = () => {
     phone: "",
     subject: "",
     message: "",
-    location: "",
     height: "",
     weight: "",
     bmi: "",
@@ -41,7 +40,9 @@ const UserEnquiry = () => {
     emergency_contact_phone_home: "",
     emergency_contact_phone_work: "",
     fitness_goal: "",
-    blood_group: ""
+    blood_group: "",
+    gender: "",
+    termsAccepted: false
   });
 
   useEffect(() => {
@@ -56,6 +57,13 @@ const UserEnquiry = () => {
       setFormData(prev => ({ ...prev, bmi: "" }));
     }
   }, [formData.height, formData.weight]);
+
+  useEffect(() => {
+    if (formData.dob) {
+      const age = dayjs().diff(dayjs(formData.dob), 'year');
+      setFormData(prev => ({ ...prev, age: age >= 0 ? age.toString() : "" }));
+    }
+  }, [formData.dob]);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
@@ -100,12 +108,12 @@ const UserEnquiry = () => {
       }
 
       setFormData({
-        name: "", email: "", phone: "", subject: "", message: "", location: "",
+        name: "", email: "", phone: "", subject: "", message: "",
         height: "", weight: "", bmi: "", dob: "", age: "", address: "",
         employer: "", occupation: "", emergency_contact_name: "",
         emergency_contact_relationship: "", emergency_contact_address: "",
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-        fitness_goal: "", blood_group: ""
+        fitness_goal: "", blood_group: "", gender: "", termsAccepted: false
       });
     } catch (error) {
       console.error('Error saving enquiry:', error);
@@ -264,7 +272,20 @@ const UserEnquiry = () => {
                       </select>
                     </div>
 
-                    <InputField label="Preferred Branch" value={formData.location} onChange={(val) => setFormData({...formData, location: val})} placeholder="Select or type branch name" />
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Gender</label>
+                      <select
+                        value={formData.gender}
+                        onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                        required
+                      >
+                        <option value="" className="bg-gray-900">Select Gender</option>
+                        <option value="Male" className="bg-gray-900">Male</option>
+                        <option value="Female" className="bg-gray-900">Female</option>
+                        <option value="Other" className="bg-gray-900">Other</option>
+                      </select>
+                    </div>
                   </div>
 
                   <InputField label="Permanent Address" value={formData.address} onChange={(val) => setFormData({...formData, address: val})} isTextArea placeholder="Enter your full residential address..." />
@@ -304,8 +325,24 @@ const UserEnquiry = () => {
                       </div>
                     </div>
                   </div>
-                  <InputField label="What are your fitness goals?" value={formData.fitness_goal} onChange={(val) => setFormData({...formData, fitness_goal: val})} isTextArea placeholder="Describe what you want to achieve (e.g. Lose 5kg, build muscle, marathon prep)..." />
-                  <InputField label="Any Medical History or Notes?" value={formData.message} onChange={(val) => setFormData({...formData, message: val})} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputField label="What are your fitness goals?" value={formData.fitness_goal} onChange={(val) => setFormData({...formData, fitness_goal: val})} isTextArea placeholder="Describe what you want to achieve (e.g. Lose 5kg, build muscle, marathon prep)..." />
+                    <InputField label="Any Medical History or Notes?" value={formData.message} onChange={(val) => setFormData({...formData, message: val})} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
+                  </div>
+                  
+                  <div className="flex items-center gap-3 pt-4">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      required
+                      checked={formData.termsAccepted || false}
+                      onChange={(e) => setFormData({...formData, termsAccepted: e.target.checked})}
+                      className="w-5 h-5 text-orange-500 bg-white/5 border-white/10 rounded focus:ring-orange-500 focus:ring-offset-gray-900 cursor-pointer"
+                    />
+                    <label htmlFor="terms" className="text-sm text-gray-400 cursor-pointer">
+                      I agree to the <span className="text-orange-500 hover:underline">Terms and Conditions</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* ACTION BUTTONS */}
