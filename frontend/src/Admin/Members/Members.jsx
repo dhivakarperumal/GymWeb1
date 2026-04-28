@@ -258,9 +258,9 @@ const Members = () => {
 
         {/* ➕ ADD MEMBER + IMPORT/EXPORT */}
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-        
 
-    
+
+
 
           <button
             onClick={() => navigate("/admin/pt-form")}
@@ -397,30 +397,28 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="p-4">
-                      {m.pt_form_completed ? (
+                      {!(m.plan && m.status === "active") ? (
+                        <span className="text-white/30">-</span>
+                      ) : m.pt_form_completed ? (
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1 text-emerald-500 font-bold">
                             <CheckCircle size={16} />
                             <span className="text-[10px] uppercase">Done</span>
                           </div>
-                          {m.pt_form_completed_at && (
-                            <span className="text-[9px] text-white/40 mt-0.5">
-                              {dayjs(m.pt_form_completed_at).format("DD/MM/YY HH:mm")}
-                            </span>
-                          )}
                         </div>
                       ) : (
-                        <button 
+                        <button
                           onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
-                          className="flex items-center gap-1 text-orange-400 hover:text-orange-500 transition-colors group"
-                          title="Complete PT Form"
+                          className="flex items-center gap-1 text-orange-400"
                         >
-                          <Clock size={16} className="group-hover:animate-pulse" />
-                          <span className="text-[10px] uppercase font-bold underline decoration-dotted underline-offset-4">Pending</span>
+                          <Clock size={16} />
+                          <span className="text-[10px] uppercase font-bold">
+                            Pending
+                          </span>
                         </button>
                       )}
                     </td>
-                   
+
                     <td className="p-4">
                       <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
                         {m.plan || m.role || "Member"}
@@ -435,7 +433,7 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="p-4 flex gap-2">
-                     
+
                       <button
                         onClick={() => {
                           if (m.source === "users") {
@@ -547,7 +545,7 @@ const Members = () => {
                           <CheckCircle size={12} /> COMPLETED
                         </span>
                       ) : (
-                        <button 
+                        <button
                           onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
                           className="flex items-center gap-1 text-orange-400 hover:text-orange-500 text-[10px] font-bold underline decoration-dotted underline-offset-2"
                         >
