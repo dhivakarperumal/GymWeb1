@@ -285,7 +285,25 @@ Thank you for joining 💪
                     weight: user.weight || "",
                     bmi: user.bmi || "",
                   }));
+
+                  if (user.plan || user.duration) {
+                    const planName = user.plan?.toString().trim().toLowerCase() || "";
+                    const durationValue = user.duration != null ? user.duration.toString().trim() : "";
+
+                    const matchedPlan = plans.find((p) => {
+                      const nameMatches = planName && p.name?.toString().trim().toLowerCase() === planName;
+                      const durationMatches = durationValue && p.duration?.toString().trim() === durationValue;
+                      return nameMatches || (durationMatches && !planName);
+                    });
+
+                    if (matchedPlan) {
+                      setSelectedPlan(matchedPlan);
+                      return;
+                    }
+                  }
                 }
+
+                setSelectedPlan(null);
               }}
             >
               <option value="">-- Choose a member --</option>
@@ -452,7 +470,7 @@ Thank you for joining 💪
             <label className="block text-sm text-gray-400 mb-1">Gym Plan</label>
             <select
               className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              defaultValue=""
+              value={selectedPlan ? selectedPlan.id : ""}
               onChange={(e) => {
                 const plan = plans.find(
                   (p) => p.id === Number(e.target.value)
