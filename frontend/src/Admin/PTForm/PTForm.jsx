@@ -4,6 +4,7 @@ import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
 import HealthHistory2 from './HealthHistory2';
 import InformedConsent from './InformedConsent';
+import FitnessScreening from './FitnessScreening';
 
 const PTForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -14,7 +15,8 @@ const PTForm = () => {
     { id: 1, name: 'Enquiry Form', component: Enquiry },
     { id: 2, name: 'Health History', component: HealthHistoy },
     { id: 3, name: 'Health History 2', component: HealthHistory2 },
-    { id: 4, name: 'Informed Consent', component: InformedConsent }
+    { id: 4, name: 'Fitness Screening', component: FitnessScreening },
+    { id: 5, name: 'Informed Consent', component: InformedConsent }
   ];
 
   const handleNext = (stepData) => {
