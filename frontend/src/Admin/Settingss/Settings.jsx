@@ -76,15 +76,8 @@ const Settings = () => {
         
       "
     >
-      {/* HEADER */}
-      <div>
-        <h2 className="text-3xl font-bold text-white">
-          Settings
-        </h2>
-        <p className="text-white/60 mt-1">
-          Manage application preferences and controls
-        </p>
-      </div>
+
+  
 
       {/* SETTINGS LIST */}
       <div className="space-y-4">

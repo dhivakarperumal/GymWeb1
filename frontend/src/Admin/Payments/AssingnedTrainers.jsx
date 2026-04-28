@@ -229,8 +229,7 @@ const AssingnedTrainers = () => {
     <div className="min-h-screen p-4 md:p-8 text-white" dir="ltr">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Assign Trainers</h1>
-          <p className="text-gray-400 text-sm mt-1">Manage trainer assignments for members with active plans</p>
+         
         </div>
 
         <button
