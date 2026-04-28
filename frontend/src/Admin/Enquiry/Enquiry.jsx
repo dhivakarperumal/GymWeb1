@@ -37,7 +37,8 @@ const Enquiry = () => {
     emergency_contact_phone_work: "",
     fitness_goal: "",
     blood_group: "",
-    gender: ""
+    gender: "",
+    termsAccepted: false
   });
 
   useEffect(() => {
@@ -102,7 +103,7 @@ const Enquiry = () => {
         employer: "", occupation: "", emergency_contact_name: "",
         emergency_contact_relationship: "", emergency_contact_address: "",
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-        fitness_goal: "", blood_group: "", gender: ""
+        fitness_goal: "", blood_group: "", gender: "", termsAccepted: false
       });
     } catch (error) {
       console.error('Error saving enquiry:', error);
@@ -134,6 +135,7 @@ const Enquiry = () => {
       fitness_goal: enquiry.fitness_goal || "",
       blood_group: enquiry.blood_group || "",
       gender: enquiry.gender || "",
+      termsAccepted: enquiry.termsAccepted || false,
       status: enquiry.status
     });
     setShowForm(true);
