@@ -10,6 +10,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { Toaster, toast } from "react-hot-toast";
 import UserEnquiry from "./Components/UserEnquiry.jsx";
+import PTFormUser from "./Components/PTFormUser.jsx";
 
 // Lazy load components
 const Login = lazy(() => import("./Components/Login.jsx"));
@@ -111,6 +112,7 @@ const router = createBrowserRouter([
       { path: "/login", element: <Login /> },
       { path: "/register", element: <Register /> },
       { path: "/userenquiry", element: <UserEnquiry /> },
+      { path: "/ptformuser", element: <PTFormUser /> },
     ]
   },
 
