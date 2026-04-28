@@ -87,8 +87,8 @@ const Enquiry = () => {
     e.preventDefault();
     try {
       if (selectedEnquiry) {
-        // Update status
-        await api.put(`/enquiries/${selectedEnquiry.id}/status`, { status: formData.status });
+        // Update full enquiry
+        await api.put(`/enquiries/${selectedEnquiry.id}`, formData);
       } else {
         // Create new enquiry
         await api.post('/enquiries', formData);
@@ -133,6 +133,7 @@ const Enquiry = () => {
       emergency_contact_phone_work: enquiry.emergency_contact_phone_work || "",
       fitness_goal: enquiry.fitness_goal || "",
       blood_group: enquiry.blood_group || "",
+      gender: enquiry.gender || "",
       status: enquiry.status
     });
     setShowForm(true);
@@ -502,6 +503,19 @@ const Enquiry = () => {
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Gender</label>
+                    <select
+                      value={formData.gender}
+                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-1">Phone</label>

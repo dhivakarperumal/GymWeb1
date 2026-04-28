@@ -70,7 +70,51 @@ const enquiryController = {
         }
     },
 
-    // Update enquiry status
+    // Update enquiry (all fields)
+    updateEnquiry: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const {
+                name, email, phone, subject, message, location,
+                dob, age, address, employer, occupation,
+                emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
+                emergency_contact_phone_home, emergency_contact_phone_work,
+                fitness_goal, blood_group, height, weight, bmi, gender, status
+            } = req.body;
+
+            const [result] = await pool.query(
+                `UPDATE enquiries SET 
+                    name = ?, email = ?, phone = ?, subject = ?, message = ?, location = ?,
+                    dob = ?, age = ?, address = ?, employer = ?, occupation = ?,
+                    emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_address = ?,
+                    emergency_contact_phone_home = ?, emergency_contact_phone_work = ?,
+                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, status = ?,
+                    updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?`,
+                [
+                    name, email, phone, subject || null, message || null, location || null,
+                    dob || null, age || null, address || null, employer || null, occupation || null,
+                    emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+                    emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+                    fitness_goal || null, blood_group || null,
+                    height || null, weight || null, bmi || null, gender || null, status || 'pending',
+                    id
+                ]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Enquiry not found' });
+            }
+
+            const [rows] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [id]);
+            res.json(rows[0]);
+        } catch (error) {
+            console.error('Error updating enquiry:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // Update enquiry status (partial update)
     updateEnquiryStatus: async (req, res) => {
         try {
             const { id } = req.params;
@@ -92,7 +136,7 @@ const enquiryController = {
             const [rows] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [id]);
             res.json(rows[0]);
         } catch (error) {
-            console.error('Error updating enquiry:', error);
+            console.error('Error updating status:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     },

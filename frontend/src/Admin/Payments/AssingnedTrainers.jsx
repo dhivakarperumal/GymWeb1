@@ -15,7 +15,7 @@ const AssingnedTrainers = () => {
   const [assigning, setAssigning] = useState(false);
   const [assignments, setAssignments] = useState({});
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("all"); // all, assigned, unassigned
+  const [filterType, setFilterType] = useState("unassigned"); // all, assigned, unassigned
   const [viewMode, setViewMode] = useState("card"); // card, table
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
