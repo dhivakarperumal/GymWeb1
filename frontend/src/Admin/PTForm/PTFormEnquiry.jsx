@@ -3,6 +3,7 @@ import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X } from
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
 
 const Enquiry = ({
@@ -13,6 +14,7 @@ const Enquiry = ({
   isLastStep,
   isModal = false
 }) => {
+  const { user, role } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -74,8 +76,26 @@ const Enquiry = ({
   const fetchMembers = async () => {
     try {
       setError(null);
-      const response = await api.get('/members');
-      const data = Array.isArray(response.data) ? response.data : [];
+      let data = [];
+      
+      if (role === 'trainer') {
+        // Fetch only members assigned to this trainer
+        const res = await api.get(`/assignments?trainerUserId=${user.id}`);
+        const assignments = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        data = assignments.map(a => ({
+          id: a.gymMemberId,
+          u_id: a.userId,
+          name: a.username,
+          email: a.userEmail,
+          phone: a.userMobile,
+          plan: a.planName,
+          pt_form_completed: a.ptFormCompleted
+        })).filter(m => m.id); // ensure we have a valid gymMemberId
+      } else {
+        const response = await api.get('/members');
+        data = Array.isArray(response.data) ? response.data : [];
+      }
+      
       setMembers(data);
     } catch (error) {
       console.error('Error fetching members:', error);

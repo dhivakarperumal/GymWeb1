@@ -6,6 +6,7 @@ import {
   FaClipboardList,
   FaCalendarCheck,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
 import api from "../../api";
@@ -30,6 +31,7 @@ const StatCard = ({ title, value, icon, color }) => (
 
 /* -------------------- TRAINER DASHBOARD -------------------- */
 const TrainerDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const trainerId = user?.id;
 
@@ -196,6 +198,7 @@ const TrainerDashboard = () => {
                     <th className="px-4 py-4 text-left">Plan</th>
                     <th className="px-4 py-4 text-left">Start Date</th>
                     <th className="px-4 py-4 text-left">End Date</th>
+                    <th className="px-4 py-4 text-left">PT Form</th>
                     <th className="px-4 py-4 text-left">Status</th>
                   </tr>
                 </thead>
@@ -240,6 +243,19 @@ const TrainerDashboard = () => {
 
                         <td className="px-4 py-4 text-gray-400">
                           {m.planEndDate ? new Date(m.planEndDate).toLocaleDateString() : "-"}
+                        </td>
+
+                        <td className="px-4 py-4">
+                          <button
+                            onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all hover:scale-105 active:scale-95 ${
+                              m.ptFormCompleted 
+                                ? "bg-green-500/10 text-green-400 border-green-500/20" 
+                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                            }`}
+                          >
+                            {m.ptFormCompleted ? "Completed" : "Pending"}
+                          </button>
                         </td>
 
                         <td className="px-4 py-4">
@@ -299,6 +315,19 @@ const TrainerDashboard = () => {
                             <p className="text-[10px] text-gray-500 uppercase">Ends</p>
                             <p className="text-[11px] text-gray-300">{m.planEndDate ? new Date(m.planEndDate).toLocaleDateString() : "-"}</p>
                           </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <button
+                             onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
+                             className={`w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${
+                               m.ptFormCompleted 
+                                 ? "bg-green-500/10 text-green-400 border-green-500/20" 
+                                 : "bg-red-500/10 text-red-400 border-red-500/20"
+                             }`}
+                          >
+                            PT Form: {m.ptFormCompleted ? "Completed" : "Pending"}
+                          </button>
                         </div>
                       </div>
 

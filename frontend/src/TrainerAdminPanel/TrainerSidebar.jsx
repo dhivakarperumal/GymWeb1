@@ -72,6 +72,11 @@ const navItems = [
   //   icon: BarChart3,
   // },
 
+  {
+    path: "/trainer/pt-form",
+    label: "PT Form",
+    icon: Activity,
+  },
   { path: "/", label: "Back Home", icon: Home },
 ];
 

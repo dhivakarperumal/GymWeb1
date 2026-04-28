@@ -224,8 +224,8 @@ const router = createBrowserRouter([
 
 
       { path: "member-attendance", element: <MemberAttendance /> },
-
-
+      { path: "pt-form", element: <PTForm /> },
+      { path: "pt-form/print/:id", element: <PTFormPrint /> },
 
     ],
   },
