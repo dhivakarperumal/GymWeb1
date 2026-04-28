@@ -253,27 +253,21 @@ const UserEnquiry = () => {
             <div className="p-8 md:p-12">
               <form onSubmit={handleSubmit} className="space-y-10">
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <InputField
-                    label="Selected Plan"
-                    value={formData.plan_name}
-                    readOnly
-                    onChange={(val) => setFormData({
-                      ...formData,
-                      plan_name: val
-                    })}
-                  />
+                {prefilledPlan && (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <InputField
+                      label="Selected Plan"
+                      value={formData.plan_name}
+                      readOnly
+                    />
 
-                  <InputField
-                    label="Plan Duration"
-                    value={formData.plan_duration}
-                    readOnly
-                    onChange={(val) => setFormData({
-                      ...formData,
-                      plan_duration: val
-                    })}
-                  />
-                </div>
+                    <InputField
+                      label="Plan Duration"
+                      value={formData.plan_duration}
+                      readOnly
+                    />
+                  </div>
+                )}
 
                 {/* SECTION: PERSONAL INFO */}
                 <div className="space-y-6">
