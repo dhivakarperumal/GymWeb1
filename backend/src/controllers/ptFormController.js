@@ -75,7 +75,15 @@ async function getPTForm(req, res) {
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Form not found' });
     }
-    res.json(rows[0]);
+    const record = rows[0];
+    if (record.form_data && typeof record.form_data === 'string') {
+      try {
+        record.form_data = JSON.parse(record.form_data);
+      } catch (parseError) {
+        console.warn('Failed to parse pt_forms.form_data', parseError);
+      }
+    }
+    res.json(record);
   } catch (err) {
     console.error('getPTForm error:', err);
     res.status(500).json({ error: 'Query failed' });

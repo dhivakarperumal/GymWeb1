@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 const Enquiry = ({
   onNext,
   onPrevious,
+  onSelectMember,
   formData: initialFormData,
   isFirstStep,
   isLastStep,
@@ -113,6 +114,9 @@ const Enquiry = ({
       blood_group: member.blood_group || "",
       gender: member.gender || ""
     });
+    if (onSelectMember) {
+      onSelectMember(member.id);
+    }
     setSearchTerm("");
     setShowMemberList(false);
   };
