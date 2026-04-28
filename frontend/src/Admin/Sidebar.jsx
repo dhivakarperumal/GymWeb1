@@ -22,6 +22,7 @@ import {
   Package,
   MessageSquare,
   Send,
+  PhoneCall,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -30,7 +31,7 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 const navItems = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
 
-  { path: "/admin/followupenquriy", label: "Follow Up Enquiry", icon: MessageSquare },
+  { path: "/admin/followupenquriy", label: "Follow Up Enquiry", icon: PhoneCall },
 
   { path: "/admin/enquiry", label: "Client Enquiry", icon: MessageSquare },
 
