@@ -83,6 +83,7 @@ const TrainerSendMessage = lazy(() => import("./TrainerAdminPanel/TrainerSendMes
 const AssingnedTrainers = lazy(() => import("./Admin/Payments/AssingnedTrainers.jsx"));
 const GymWorkoutManager = lazy(() => import("./Admin/CommenWorkDiet/CommenWorkDiet.jsx"));
 const UpdateWeight = lazy(() => import("./TrainerAdminPanel/UpdateWeight/UpdateWeight.jsx"));
+const TrainerPricing = lazy(() => import("./TrainerAdminPanel/TrainerPricing/TrainerPricing.jsx"));
 const PTForm = lazy(() => import("./Admin/PTForm/PTForm.jsx"));
 const PTFormPrint = lazy(() => import("./Admin/PTForm/PTFormPrint.jsx"));
 
@@ -226,7 +227,7 @@ const router = createBrowserRouter([
       { path: "member-attendance", element: <MemberAttendance /> },
       { path: "pt-form", element: <PTForm /> },
       { path: "pt-form/print/:id", element: <PTFormPrint /> },
-
+      { path: "pricing", element: <TrainerPricing /> },
     ],
   },
 

@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Send,
   Scale,
+  DollarSign,
 } from "lucide-react";
 
 
@@ -76,6 +77,11 @@ const navItems = [
     path: "/trainer/pt-form",
     label: "PT Form",
     icon: Activity,
+  },
+  {
+    path: "/trainer/pricing",
+    label: "Pricing",
+    icon: DollarSign,
   },
   { path: "/", label: "Back Home", icon: Home },
 ];
