@@ -166,11 +166,36 @@ async function getMembershipById(req, res) {
 async function updateMembership(req, res) {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const allowedFields = [
+      "status",
+      "pricePaid",
+      "paymentMode",
+      "paymentId",
+      "startDate",
+      "endDate",
+      "duration",
+      "planName",
+    ];
+
+    const updates = [];
+    const values = [];
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates.push(`${field} = ?`);
+        values.push(req.body[field]);
+      }
+    });
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, message: "No valid fields provided for update" });
+    }
+
+    values.push(id);
 
     const [result] = await db.query(
-      "UPDATE memberships SET status = ? WHERE id = ?",
-      [status, id]
+      `UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`,
+      values
     );
 
     if (result.affectedRows === 0) {

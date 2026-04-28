@@ -447,13 +447,6 @@ const Payments = () => {
   {/* Right Section */}
   <div className="flex flex-wrap items-center gap-3 mb-5 ml-auto">
 
-    <button
-      onClick={() => navigate('/admin/pt-form')}
-      className="px-4 py-2.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition"
-    >
-      PT Form
-    </button>
-
     {/* Import Excel */}
     <label className="px-4 py-2.5 bg-blue-500 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-600 transition">
       Import Excel
