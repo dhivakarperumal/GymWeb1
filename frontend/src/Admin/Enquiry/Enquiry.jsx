@@ -176,6 +176,7 @@ const Enquiry = () => {
         blood_group: enquiry.blood_group || null,
         joinDate: new Date().toISOString().split('T')[0],
         status: 'active',
+        gender: enquiry.gender || null,
         // supply password explicitly so frontend knows credentials
         password: enquiry.phone || ''
       };
