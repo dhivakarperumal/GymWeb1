@@ -1,0 +1,266 @@
+import React, { useState } from "react";
+
+const FlexibilityAndMeasurements = ({
+  onNext,
+  onPrevious,
+  formData: initialFormData,
+  isFirstStep,
+  isLastStep,
+}) => {
+  const [localFormData, setLocalFormData] = useState({
+    flex_apley_test: initialFormData?.flex_apley_test || "",
+    flex_ymca_val: initialFormData?.flex_ymca_val || "",
+    flex_ymca_test: initialFormData?.flex_ymca_test || "",
+    flex_knee_val: initialFormData?.flex_knee_val || "",
+    flex_knee_test: initialFormData?.flex_knee_test || "",
+    measurements: initialFormData?.measurements || Array(5).fill({
+      date: "",
+      height: "",
+      weight: "",
+      neck: "",
+      shoulder: "",
+      arm: "",
+      chest_normal: "",
+      chest_expanded: "",
+      waist: "",
+      abdomen: "",
+      hip: "",
+      thigh: "",
+      calf: "",
+      lat: "",
+    })
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === "radio") {
+      if (checked) {
+        setLocalFormData((prev) => ({ ...prev, [name]: value }));
+      }
+    } else {
+      setLocalFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleMeasurementChange = (index, field, value) => {
+    const newMeasurements = [...localFormData.measurements];
+    newMeasurements[index] = { ...newMeasurements[index], [field]: value };
+    setLocalFormData((prev) => ({ ...prev, measurements: newMeasurements }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext(localFormData);
+  };
+
+  const measurementFields = [
+    { label: "Date", key: "date", type: "date" },
+    { label: "Height (cms)", key: "height", type: "text" },
+    { label: "Weight", key: "weight", type: "text" },
+    { label: "Neck", key: "neck", type: "text" },
+    { label: "Shoulder (cms)", key: "shoulder", type: "text" },
+    { label: "Arm", key: "arm", type: "text" },
+    { label: "Chest (Normal)", key: "chest_normal", type: "text" },
+    { label: "Chest (Expanded)", key: "chest_expanded", type: "text" },
+    { label: "Waist", key: "waist", type: "text" },
+    { label: "Abdomen", key: "abdomen", type: "text" },
+    { label: "Hip", key: "hip", type: "text" },
+    { label: "Thigh", key: "thigh", type: "text" },
+    { label: "Calf", key: "calf", type: "text" },
+    { label: "Lat", key: "lat", type: "text" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+        
+        {/* FLEXIBILITY */}
+        <div className="space-y-4">
+          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Flexibility</h3>
+          
+          {/* Apley's Scratch test */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-4">
+            <div className="font-medium text-white/80 mb-2">Apley's Scratch test:</div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="flex_apley_test"
+                  value="Normal"
+                  checked={localFormData.flex_apley_test === "Normal"}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
+                />
+                <span className="text-white/80 text-sm">Normal</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="flex_apley_test"
+                  value="Restricted"
+                  checked={localFormData.flex_apley_test === "Restricted"}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
+                />
+                <span className="text-white/80 text-sm">Restricted</span>
+              </label>
+            </div>
+          </div>
+
+          {/* YMCA sit & Reach test */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-2">
+              <div className="font-medium text-white/80">YMCA sit & Reach test (normal/back saver):</div>
+              <input
+                type="text"
+                name="flex_ymca_val"
+                value={localFormData.flex_ymca_val}
+                onChange={handleChange}
+                className="w-32 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Value"
+              />
+            </div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="flex_ymca_test"
+                  value="Well"
+                  checked={localFormData.flex_ymca_test === "Well"}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
+                />
+                <span className="text-white/80 text-sm">Well</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="flex_ymca_test"
+                  value="Average"
+                  checked={localFormData.flex_ymca_test === "Average"}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
+                />
+                <span className="text-white/80 text-sm">Average</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Knee to Wall Lunge test */}
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-2">
+              <div className="font-medium text-white/80">Knee to Wall Lunge test:</div>
+              <input
+                type="text"
+                name="flex_knee_val"
+                value={localFormData.flex_knee_val}
+                onChange={handleChange}
+                className="w-32 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Value"
+              />
+            </div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="flex_knee_test"
+                  value="Normal"
+                  checked={localFormData.flex_knee_test === "Normal"}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
+                />
+                <span className="text-white/80 text-sm">Normal</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="flex_knee_test"
+                  value="Restricted"
+                  checked={localFormData.flex_knee_test === "Restricted"}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
+                />
+                <span className="text-white/80 text-sm">Restricted</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* MEASUREMENTS TABLE */}
+        <div className="space-y-4 pt-4">
+          <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1 uppercase tracking-wider text-sm">Measurements</h3>
+          
+          <div className="overflow-x-auto border border-white/20 rounded-lg">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/10 border-b border-white/20">
+                  <th className="p-3 text-sm font-medium text-white/80 border-r border-white/20 w-48">S.No / Measurement</th>
+                  {[1, 2, 3, 4, 5].map(num => (
+                    <th key={num} className="p-3 text-center text-sm font-bold text-orange-400 border-r border-white/20 last:border-0">{num}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {measurementFields.map((field, rowIndex) => (
+                  <tr key={field.key} className="border-b border-white/10 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="p-3 text-sm font-medium text-white/80 border-r border-white/20">
+                      {field.label}
+                    </td>
+                    {[0, 1, 2, 3, 4].map(colIndex => (
+                      <td key={colIndex} className="p-0 border-r border-white/20 last:border-0 relative">
+                        <input
+                          type={field.type}
+                          value={localFormData.measurements[colIndex][field.key] || ""}
+                          onChange={(e) => handleMeasurementChange(colIndex, field.key, e.target.value)}
+                          className="w-full h-full p-3 bg-transparent text-white text-center focus:outline-none focus:bg-white/10 text-sm placeholder-white/20"
+                          placeholder="-"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="text-center mt-8 pb-4 text-white/40 text-sm tracking-widest uppercase">
+          DAP FITNESS STUDIO
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex gap-3 pt-6">
+          <button
+            type="button"
+            onClick={onPrevious}
+            disabled={isFirstStep}
+            className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${
+              isFirstStep
+                ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                : "bg-gray-700 hover:bg-gray-600 text-white"
+            }`}
+          >
+            Previous
+          </button>
+
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold transition-all border border-white/10"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
+          >
+            {isLastStep ? "Complete Registration" : "Next Step"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default FlexibilityAndMeasurements;
