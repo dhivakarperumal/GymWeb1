@@ -263,7 +263,8 @@ const FollowupEnquiry = () => {
               <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border border-white/10  overflow-hidden z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
                 <tr>
                   <th className="px-6 py-4 border-b border-white/5 w-16">S No</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-left">Details</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-left">Name</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-left">Mobile</th>
                   <th className="px-6 py-4 border-b border-white/5 text-left">Organization</th>
                   <th className="px-6 py-4 border-b border-white/5 text-left">Status</th>
                   <th className="px-6 py-4 border-b border-white/5 text-left">Created</th>
@@ -291,15 +292,16 @@ const FollowupEnquiry = () => {
                           <span className="text-white font-bold text-base group-hover:text-orange-400 transition-colors">
                             {enquiry.name}
                           </span>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest">
-                              <Phone size={10} /> {enquiry.phone || 'N/A'}
-                            </span>
-                            <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest">
-                              <Mail size={10} /> {enquiry.email || 'N/A'}
-                            </span>
-                          </div>
+                          <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
+                            <Mail size={10} /> {enquiry.email || 'No Email'}
+                          </span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="flex items-center gap-2 text-white/60 text-sm font-bold">
+                          <Phone size={12} className="text-orange-500" />
+                          {enquiry.phone || 'N/A'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-xs font-bold text-white/60">
                         {enquiry.organization || enquiry.employer || 'Direct Lead'}
@@ -312,6 +314,13 @@ const FollowupEnquiry = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
+                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
+                            title="View"
+                          >
+                            <Eye size={14} />
+                          </button>
                           <button
                             onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
                             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
