@@ -72,6 +72,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                     type="radio"
                                     name="medications"
                                     value="Yes"
+                                    checked={form.medications === "Yes"}
                                     onChange={handleChange}
                                 /> Yes
                             </label>
@@ -81,6 +82,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                     type="radio"
                                     name="medications"
                                     value="No"
+                                    checked={form.medications === "No"}
                                     onChange={handleChange}
                                 /> No
                             </label>
@@ -91,39 +93,39 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                         </p>
 
                         <div className="grid md:grid-cols-3 gap-4">
-                            <input name="med1" onChange={handleChange}
+                            <input name="med1"  value={form.med1} onChange={handleChange}
                                 placeholder="Name"
                                 className="input" />
 
-                            <input name="dose1" onChange={handleChange}
+                            <input name="dose1" value={form.dose1} onChange={handleChange}
                                 placeholder="Dosage/Frequency"
                                 className="input" />
 
-                            <input name="reason1" onChange={handleChange}
+                            <input name="reason1" value={form.reason1} onChange={handleChange}
                                 placeholder="Reason"
                                 className="input" />
 
-                            <input name="med2" onChange={handleChange}
+                            <input name="med2" value={form.med2} onChange={handleChange}
                                 placeholder="Name"
                                 className="input" />
 
-                            <input name="dose2" onChange={handleChange}
+                            <input name="dose2" value={form.dose2} onChange={handleChange}
                                 placeholder="Dosage/Frequency"
                                 className="input" />
 
-                            <input name="reason2" onChange={handleChange}
+                            <input name="reason2" value={form.reason2} onChange={handleChange}
                                 placeholder="Reason"
                                 className="input" />
 
-                            <input name="med3" onChange={handleChange}
+                            <input name="med3" value={form.med3} onChange={handleChange}
                                 placeholder="Name"
                                 className="input" />
 
-                            <input name="dose3" onChange={handleChange}
+                            <input name="dose3" value={form.dose3} onChange={handleChange}
                                 placeholder="Dosage/Frequency"
                                 className="input" />
 
-                            <input name="reason3" onChange={handleChange}
+                            <input name="reason3" value={form.reason3} onChange={handleChange}
                                 placeholder="Reason"
                                 className="input" />
                         </div>
@@ -138,6 +140,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
 
                         <input
                             name="allergies"
+                            value={form.allergies}
                             onChange={handleChange}
                             className="input w-full"
                         />
@@ -152,6 +155,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
 
                         <input
                             name="surgeries1"
+                            value={form.surgeries1}
                             placeholder="1."
                             onChange={handleChange}
                             className="input w-full mb-3"
@@ -159,6 +163,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
 
                         <input
                             name="surgeries2"
+                            value={form.surgeries2}
                             placeholder="2."
                             onChange={handleChange}
                             className="input w-full mb-3"
@@ -166,6 +171,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
 
                         <input
                             name="surgeries3"
+                            value={form.surgeries3}
                             placeholder="3."
                             onChange={handleChange}
                             className="input w-full"
@@ -186,6 +192,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                     type="radio"
                                     name="exercise_program"
                                     value="Yes"
+                                    checked={form.exercise_program === "Yes"}
                                     onChange={handleChange}
                                 /> Yes
                             </label>
@@ -195,6 +202,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                     type="radio"
                                     name="exercise_program"
                                     value="No"
+                                    checked={form.exercise_program === "No"}
                                     onChange={handleChange}
                                 /> No
                             </label>
@@ -206,14 +214,14 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                         </p>
 
                         <div className="grid md:grid-cols-2 gap-4">
-                            <input name="sport1" placeholder="1." onChange={handleChange} className="input" />
-                            <input name="sport4" placeholder="4." onChange={handleChange} className="input" />
+                            <input name="sport1" value={form.sport1} placeholder="1." onChange={handleChange} className="input" />
+                            <input name="sport4" value={form.sport4} placeholder="4." onChange={handleChange} className="input" />
 
-                            <input name="sport2" placeholder="2." onChange={handleChange} className="input" />
-                            <input name="sport5" placeholder="5." onChange={handleChange} className="input" />
+                            <input name="sport2" value={form.sport2} placeholder="2." onChange={handleChange} className="input" />
+                            <input name="sport5" value={form.sport5} placeholder="5." onChange={handleChange} className="input" />
 
-                            <input name="sport3" placeholder="3." onChange={handleChange} className="input" />
-                            <input name="sport6" placeholder="6." onChange={handleChange} className="input" />
+                            <input name="sport3" value={form.sport3} placeholder="3." onChange={handleChange} className="input" />
+                            <input name="sport6" value={form.sport6} placeholder="6." onChange={handleChange} className="input" />
                         </div>
 
                     </div>
@@ -237,6 +245,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                     name="smoking"
                                     onChange={handleChange}
                                     className="input w-full mt-2"
+                                    value={form.smoking}
                                 >
                                     <option value="">Select</option>
                                     <option>Yes</option>
@@ -250,6 +259,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                     name="alcohol"
                                     onChange={handleChange}
                                     className="input w-full mt-2"
+                                    value={form.alcohol}
                                 >
                                     <option value="">Select</option>
                                     <option>Yes</option>
@@ -272,6 +282,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                         name="food_preference"
                                         value="Veg"
                                         onChange={handleChange}
+                                        checked={form.food_preference === "Veg"}
                                     /> Veg
                                 </label>
 
@@ -281,6 +292,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                         name="food_preference"
                                         value="Non-Veg"
                                         onChange={handleChange}
+                                        checked={form.food_preference === "Non-Veg"}
                                     /> Non-Veg
                                 </label>
                             </div>
@@ -299,6 +311,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                         name="supplements"
                                         value="Yes"
                                         onChange={handleChange}
+                                        checked={form.supplements === "Yes"}
                                     /> Yes
                                 </label>
 
@@ -308,6 +321,7 @@ const HealthHistoy = ({ onNext, onPrevious, formData, isFirstStep }) => {
                                         name="supplements"
                                         value="No"
                                         onChange={handleChange}
+                                        checked={form.supplements === "No"}
                                     /> No
                                 </label>
                             </div>
