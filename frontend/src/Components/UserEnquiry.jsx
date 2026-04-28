@@ -127,7 +127,8 @@ const UserEnquiry = () => {
         employer: "", occupation: "", emergency_contact_name: "",
         emergency_contact_relationship: "", emergency_contact_address: "",
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-        fitness_goal: "", blood_group: "", gender: "", termsAccepted: false
+        fitness_goal: "", blood_group: "", gender: "", termsAccepted: false,
+        plan_name: "", plan_duration: ""
       });
     } catch (error) {
       console.error('Error saving enquiry:', error);
@@ -159,7 +160,10 @@ const UserEnquiry = () => {
       emergency_contact_phone_work: enquiry.emergency_contact_phone_work || "",
       fitness_goal: enquiry.fitness_goal || "",
       blood_group: enquiry.blood_group || "",
-      status: enquiry.status
+      gender: enquiry.gender || "",
+      status: enquiry.status,
+      plan_name: enquiry.plan_name || "",
+      plan_duration: enquiry.plan_duration || ""
     });
     setShowForm(true);
   };
@@ -253,7 +257,7 @@ const UserEnquiry = () => {
             <div className="p-8 md:p-12">
               <form onSubmit={handleSubmit} className="space-y-10">
 
-                {prefilledPlan && (
+                {(formData.plan_name || formData.plan_duration) && (
                   <div className="grid md:grid-cols-2 gap-6">
                     <InputField
                       label="Selected Plan"

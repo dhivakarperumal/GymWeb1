@@ -37,7 +37,8 @@ const enquiryController = {
                 dob, age, address, employer, occupation,
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
-                fitness_goal, blood_group, height, weight, bmi, gender, termsAccepted
+                fitness_goal, blood_group, height, weight, bmi, gender, termsAccepted,
+                plan_name, plan_duration
             } = req.body;
 
             if (!name || !email) {
@@ -50,8 +51,8 @@ const enquiryController = {
                     dob, age, address, employer, occupation,
                     emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                     emergency_contact_phone_home, emergency_contact_phone_work,
-                    fitness_goal, blood_group, height, weight, bmi, gender, terms_accepted
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     name, email, phone, subject || null, message || null, location || null,
                     dob || null, age || null, address || null, employer || null, occupation || null,
@@ -59,6 +60,7 @@ const enquiryController = {
                     emergency_contact_phone_home || null, emergency_contact_phone_work || null,
                     fitness_goal || null, blood_group || null,
                     height || null, weight || null, bmi || null, gender || null,
+                    plan_name || null, plan_duration || null,
                     termsAccepted ? 1 : 0
                 ]
             );
@@ -80,7 +82,7 @@ const enquiryController = {
                 dob, age, address, employer, occupation,
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
-                fitness_goal, blood_group, height, weight, bmi, gender, status, termsAccepted
+                fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, status, termsAccepted
             } = req.body;
 
             const [result] = await pool.query(
@@ -89,7 +91,7 @@ const enquiryController = {
                     dob = ?, age = ?, address = ?, employer = ?, occupation = ?,
                     emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_address = ?,
                     emergency_contact_phone_home = ?, emergency_contact_phone_work = ?,
-                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, status = ?, terms_accepted = ?,
+                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?, terms_accepted = ?,
                     updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?`,
                 [
@@ -98,7 +100,7 @@ const enquiryController = {
                     emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
                     emergency_contact_phone_home || null, emergency_contact_phone_work || null,
                     fitness_goal || null, blood_group || null,
-                    height || null, weight || null, bmi || null, gender || null, status || 'pending',
+                    height || null, weight || null, bmi || null, gender || null, plan_name || null, plan_duration || null, status || 'pending',
                     termsAccepted ? 1 : 0,
                     id
                 ]
