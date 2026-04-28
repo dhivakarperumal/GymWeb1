@@ -29,7 +29,8 @@ import {
   HeartPulse,
   Send,
   Boxes,
-  Plus
+  Plus,
+  PhoneCall
 } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -37,7 +38,8 @@ import dayjs from "dayjs";
 
 const pageInfo = {
   "/admin": { title: "Dashboard", icon: LayoutDashboard },
-  "/admin/enquiry": { title: "Enquiries", icon: MessageSquare },
+  "/admin/followupenquriy": { title: "Follow Up Enquiry", icon: PhoneCall },
+  "/admin/enquiry": { title: "Client Enquiry", icon: MessageSquare },
   "/admin/products": { title: "Products", icon: Dumbbell },
   "/admin/addproducts": { title: "Add Products", icon: Plus },
   "/admin/orders": { title: "Orders", icon: ShoppingCart },
