@@ -654,16 +654,7 @@ const FollowupEnquiry = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 items-center gap-4">
-                      <label className="text-xs font-bold text-white/60">Web Site</label>
-                      <input
-                        type="text"
-                        value={formData.website}
-                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        placeholder="www.example.com"
-                        className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
-                      />
-                    </div>
+
 
                     <div className="grid grid-cols-3 items-center gap-4">
                       <label className="text-xs font-bold text-white/60">Mobile</label>
