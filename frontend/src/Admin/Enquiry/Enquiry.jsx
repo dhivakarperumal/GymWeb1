@@ -317,7 +317,7 @@ const Enquiry = () => {
                 <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-white/30">
               {paginatedEnquiries && paginatedEnquiries.length > 0 ? (
                 paginatedEnquiries.map((enquiry,ind) => (
                 <tr key={enquiry.id} className="hover:bg-white/5">

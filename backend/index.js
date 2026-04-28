@@ -36,6 +36,8 @@ const attendanceRoutes = require("./src/routes/attendanceRoutes");
 const checkinRoutes = require("./src/routes/checkinRoutes");
 const membershipRoutes = require("./src/routes/membershipRoutes");
 const ptFormRoutes = require("./src/routes/ptFormRoutes");
+const followupRoutes = require("./src/routes/followupRoutes");
+
 
 
 
@@ -121,6 +123,8 @@ app.use("/api/send-message", messageRoutes);
 
 app.use("/api/memberships", membershipRoutes);
 app.use("/api/pt-forms", ptFormRoutes);
+app.use("/api/enquiry-followups", followupRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'production') {
