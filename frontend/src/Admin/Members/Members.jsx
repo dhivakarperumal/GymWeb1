@@ -137,7 +137,8 @@ const Members = () => {
       Source: m.source === "users" ? "User" : "Gym Member",
       "Join Date": m.join_date || "-",
       "Expiry Date": m.expiry_date || "-",
-      Status: m.status || "active"
+      Status: m.status || "active",
+      "Payment Status": m.paymentMode === 'emi' ? "Pending" : m.plan ? "Paid" : "N/A"
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -376,13 +377,15 @@ const Members = () => {
                 <th className="p-4 text-left font-medium">PT Form</th>
                 <th className="p-4 text-left font-medium">Plan</th>
                 <th className="p-4 text-left font-medium">Type</th>
+                <th className="p-4 text-left font-medium">Payment</th>
+                <th className="p-4 text-left font-medium text-blue-400">Remaining</th>
                 <th className="p-4 text-left font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="p-8 text-center text-gray-400">
+                  <td colSpan="13" className="p-8 text-center text-gray-400">
                     {loading ? "Loading members..." : filtered.length === 0 ? "No records found" : "No data on this page"}
                   </td>
                 </tr>
@@ -445,6 +448,28 @@ const Members = () => {
                         }`}>
                         {m.source === "users" ? "User" : "Gym Member"}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      {m.plan ? (
+                        <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                          m.paymentMode === 'emi' 
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        }`}>
+                          {m.paymentMode === 'emi' ? 'Pending' : 'Paid'}
+                        </span>
+                      ) : (
+                        <span className="text-white/20 text-xs">-</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {m.plan && m.paymentMode === 'emi' ? (
+                        <span className="text-blue-400 font-bold">
+                          ₹{Math.max(0, (Number(m.price || 0) - Number(m.pricePaid || 0) - Number(m.secondPaymentPaid || 0))).toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-white/20">-</span>
+                      )}
                     </td>
                     <td className="p-4 flex gap-2">
 
@@ -551,6 +576,15 @@ const Members = () => {
                         }`}>
                         {m.source === "users" ? "User" : "Gym Member"}
                       </span>
+                      {m.plan && (
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold ring-1 ${
+                          m.paymentMode === 'emi'
+                            ? "bg-blue-500/20 text-blue-400 ring-blue-500/30"
+                            : "bg-emerald-500/20 text-emerald-400 ring-emerald-500/30"
+                        }`}>
+                          {m.paymentMode === 'emi' ? 'Payment: Pending' : 'Payment: Paid'}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 pt-1">
                       <p className="text-[10px] text-gray-500 uppercase">PT Form:</p>

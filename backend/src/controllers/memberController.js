@@ -38,10 +38,19 @@ async function getAllMembers(req, res) {
         (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
         (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
         gm.created_at,
+        m_pay.paymentMode,
+        m_pay.price,
+        m_pay.pricePaid,
+        m_pay.secondPaymentPaid,
         'members' as source
       FROM gym_members gm
       LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
                         OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+      LEFT JOIN (
+        SELECT userId, paymentMode, price, pricePaid, secondPaymentPaid
+        FROM memberships
+        WHERE id IN (SELECT MAX(id) FROM memberships GROUP BY userId)
+      ) m_pay ON m_pay.userId = u.id
       
       UNION ALL
       
@@ -76,6 +85,10 @@ async function getAllMembers(req, res) {
         0 AS workout_count,
         0 AS diet_count,
         u.created_at,
+        NULL as paymentMode,
+        NULL as price,
+        NULL as pricePaid,
+        NULL as secondPaymentPaid,
         'users' as source
       FROM users u
       WHERE u.role = 'user' AND NOT EXISTS (

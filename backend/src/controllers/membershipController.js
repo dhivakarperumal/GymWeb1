@@ -79,8 +79,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -90,6 +90,7 @@ async function createMembership(req, res) {
       userPhone || null,
       planId,
       planName,
+      price,
       actualPricePaid,
       actualSecondPaymentPaid,
       duration,

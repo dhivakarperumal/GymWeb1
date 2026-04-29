@@ -9,7 +9,7 @@ async function checkSchema() {
     database: 'gymwebsite_db'
   });
   
-  const [rows] = await connection.query('DESCRIBE gym_members');
+  const [rows] = await connection.query('DESCRIBE memberships');
   console.log(JSON.stringify(rows, null, 2));
   await connection.end();
 }

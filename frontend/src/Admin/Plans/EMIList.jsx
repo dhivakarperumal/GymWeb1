@@ -110,9 +110,11 @@ const EMIList = () => {
     const dataToExport = filteredEMIs.map((m, index) => {
       const plan = findPlanForMembership(m);
       const duration = parseDuration(m.duration) || 1;
-      const totalPrice = plan
-        ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
-        : parseDecimal(m.pricePaid) * duration;
+      const totalPrice = m.price 
+        ? parseDecimal(m.price)
+        : plan
+          ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
+          : parseDecimal(m.pricePaid) * duration;
       const initialPayment = parseDecimal(m.pricePaid);
       const secondPayment = parseDecimal(m.secondPaymentPaid);
       const balanceDue = Math.max(0, Number((totalPrice - initialPayment - secondPayment).toFixed(2)));
@@ -152,7 +154,7 @@ const EMIList = () => {
     return plans.find(
       (plan) =>
         normalizeText(plan.name) === normalizeText(membership.planName) &&
-        parseDuration(plan.duration) === Number(membership.duration),
+        parseDuration(plan.duration) === parseDuration(membership.duration),
     );
   };
 
@@ -163,9 +165,11 @@ const EMIList = () => {
 
     // Auto-fill remaining balance amount for 30-day payment plan
     const plan = findPlanForMembership(membership);
-    const totalPrice = plan
-      ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
-      : parseDecimal(membership.pricePaid) * parseDuration(membership.duration);
+    const totalPrice = membership.price
+      ? parseDecimal(membership.price)
+      : plan
+        ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
+        : parseDecimal(membership.pricePaid) * parseDuration(membership.duration);
     const currentPaid = parseDecimal(membership.pricePaid);
     const secondPayment = parseDecimal(membership.secondPaymentPaid);
     const remaining = totalPrice - currentPaid - secondPayment;
@@ -189,6 +193,7 @@ const EMIList = () => {
     const currentPaid = parseDecimal(selectedMembership.pricePaid);
     const currentSecondPayment = parseDecimal(selectedMembership.secondPaymentPaid);
     const totalPrice = (() => {
+      if (selectedMembership.price) return parseDecimal(selectedMembership.price);
       const plan = findPlanForMembership(selectedMembership);
       return plan
         ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
@@ -335,11 +340,13 @@ const EMIList = () => {
                   {paginatedEMIs.map((membership, idx) => {
                     const plan = findPlanForMembership(membership);
                     const duration = parseDuration(membership.duration) || 1;
-                    const totalPrice = plan
-                      ? parseDecimal(
-                          plan.finalPrice ?? plan.final_price ?? plan.price,
-                        )
-                      : parseDecimal(membership.pricePaid) * duration;
+                    const totalPrice = membership.price 
+                      ? parseDecimal(membership.price)
+                      : plan
+                        ? parseDecimal(
+                            plan.finalPrice ?? plan.final_price ?? plan.price,
+                          )
+                        : parseDecimal(membership.pricePaid) * duration;
                     const initialPayment = parseDecimal(membership.pricePaid);
                     const secondPayment = parseDecimal(membership.secondPaymentPaid);
                     const remainingDue = Math.max(0, Number(
@@ -440,9 +447,11 @@ const EMIList = () => {
               {paginatedEMIs.map((membership, idx) => {
                 const plan = findPlanForMembership(membership);
                 const duration = parseDuration(membership.duration) || 1;
-                const totalPrice = plan
-                  ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
-                  : parseDecimal(membership.pricePaid) * duration;
+                const totalPrice = membership.price 
+                  ? parseDecimal(membership.price)
+                  : plan
+                    ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
+                    : parseDecimal(membership.pricePaid) * duration;
                 const initialPayment = parseDecimal(membership.pricePaid);
                 const secondPayment = parseDecimal(membership.secondPaymentPaid);
                 const balanceDue = Math.max(0, Number((totalPrice - initialPayment - secondPayment).toFixed(2)));
@@ -696,12 +705,14 @@ const EMIList = () => {
                       ₹
                       {(() => {
                         const plan = findPlanForMembership(selectedMembership);
-                        const totalPrice = plan
-                          ? parseDecimal(
-                              plan.finalPrice ?? plan.final_price ?? plan.price,
-                            )
-                          : parseDecimal(selectedMembership.pricePaid) *
-                            parseDuration(selectedMembership.duration);
+                        const totalPrice = selectedMembership.price 
+                          ? parseDecimal(selectedMembership.price)
+                          : plan
+                            ? parseDecimal(
+                                plan.finalPrice ?? plan.final_price ?? plan.price,
+                              )
+                            : parseDecimal(selectedMembership.pricePaid) *
+                              parseDuration(selectedMembership.duration);
                         return (
                           totalPrice -
                           parseDecimal(selectedMembership.pricePaid)
