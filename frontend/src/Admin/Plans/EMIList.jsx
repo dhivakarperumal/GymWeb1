@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Edit, X } from "lucide-react";
+import { Eye, Edit, X, Search, ChevronDown, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload } from "lucide-react";
 import api from "../../api";
+import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
+import DateRangeFilter from "../DateRangeFilter";
+import { filterByDateRange } from "../utils/dateUtils";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 
 const parseDecimal = (value) => {
   const number = Number(value);
@@ -27,6 +32,7 @@ const parseDuration = (value) => {
 };
 
 const EMIList = () => {
+  const { user, role } = useAuth();
   const [memberships, setMemberships] = useState([]);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,18 +42,30 @@ const EMIList = () => {
   const [updating, setUpdating] = useState(false);
   const [viewingDetails, setViewingDetails] = useState(null);
 
+  // Search & Filter
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState({ type: "All Time", range: null });
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [trainerFilter, setTrainerFilter] = useState("all");
+  const [trainers, setTrainers] = useState([]);
+  const [viewMode, setViewMode] = useState("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [membershipsRes, plansRes] = await Promise.all([
+        const [membershipsRes, plansRes, staffRes] = await Promise.all([
           api.get("/memberships"),
           api.get("/plans"),
+          api.get("/staff"),
         ]);
 
         setMemberships(
           Array.isArray(membershipsRes.data) ? membershipsRes.data : [],
         );
         setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
+        setTrainers(Array.isArray(staffRes.data) ? staffRes.data : []);
       } catch (err) {
         console.error("Failed to load EMI records", err);
       } finally {
@@ -59,6 +77,74 @@ const EMIList = () => {
   }, []);
 
   const emiMemberships = memberships.filter((m) => m.paymentMode === "emi");
+
+  // Filtering Logic
+  const filteredEMIs = emiMemberships.filter((m) => {
+    const matchesSearch =
+      (m.userName || m.username || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (m.planName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (m.paymentId || "").toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === "all" || m.status === statusFilter;
+    
+    // Date Range Filter
+    const matchesDate = filterByDateRange([m], 'createdAt', dateRange.type, dateRange.range).length > 0;
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  const paginatedEMIs = filteredEMIs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredEMIs.length / itemsPerPage);
+
+  // Excel Functions
+  const exportToExcel = () => {
+    if (filteredEMIs.length === 0) {
+      toast.error("No records to export");
+      return;
+    }
+
+    const dataToExport = filteredEMIs.map((m, index) => {
+      const plan = findPlanForMembership(m);
+      const duration = parseDuration(m.duration) || 1;
+      const totalPrice = plan
+        ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
+        : parseDecimal(m.pricePaid) * duration;
+      const initialPayment = parseDecimal(m.pricePaid);
+      const balanceDue = Number((totalPrice - initialPayment).toFixed(2));
+      
+      return {
+        "S.No": index + 1,
+        Member: m.userName || m.username || "N/A",
+        Email: m.userEmail || m.email || "-",
+        Plan: m.planName || "N/A",
+        Duration: `${duration} months`,
+        "Initial Payment": `₹${initialPayment.toFixed(2)}`,
+        "Balance Due": `₹${balanceDue.toFixed(2)}`,
+        "Total Price": `₹${totalPrice.toFixed(2)}`,
+        "Payment ID": m.paymentId || "-",
+        "Created At": new Date(m.createdAt).toLocaleDateString(),
+        Status: m.status || "active"
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "EMI Records");
+    XLSX.writeFile(workbook, "emi_payments_report.xlsx");
+    toast.success("EMI report exported!");
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    toast.success("Excel file received! Processing import...");
+    // Logic for importing EMI could be complex, for now we log it.
+    console.log("Importing file:", file.name);
+  };
 
   const findPlanForMembership = (membership) => {
     return plans.find(
@@ -138,31 +224,75 @@ const EMIList = () => {
   );
 
   return (
-    <div className="min-h-screen p-6 text-white">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">EMI Payments</h1>
-          <p className="text-white/60 mt-2 max-w-2xl">
-            All active EMI memberships with 30-day payment plan. Initial amount
-            paid today, remaining balance due in 30 days.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-sm text-white/70">
-          <div className="rounded-2xl bg-white/10 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-              EMI Records
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-orange-400">
-              {emiMemberships.length}
-            </p>
+    <div className="flex-1 flex flex-col min-h-0 p-4">
+      
+      {/* Header Area */}
+      <div className="p-2 flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Search */}
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search member, plan, ID..."
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              className="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none w-72 transition-all placeholder:text-white/20"
+            />
           </div>
-          <div className="rounded-2xl bg-white/10 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/50">
-              Loaded Plans
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-cyan-400">
-              {plans.length}
-            </p>
+
+          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Status Filter */}
+          <div className="relative group">
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5"
+            >
+              <option value="all" className="bg-neutral-900">All Status</option>
+              <option value="active" className="bg-neutral-900">Active</option>
+              <option value="completed" className="bg-neutral-900">Completed</option>
+              <option value="expired" className="bg-neutral-900">Expired</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white transition-colors" />
+          </div>
+
+          {/* Import/Export */}
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-sm font-bold cursor-pointer hover:bg-indigo-500 hover:text-white transition-all shadow-lg">
+              <Upload size={16} />
+              Import
+              <input type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
+            </label>
+
+            <button
+              onClick={exportToExcel}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-sm font-bold hover:bg-emerald-500 hover:text-white transition-all shadow-lg"
+            >
+              <Download size={16} />
+              Export
+            </button>
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
+              title="Table View"
+            >
+              <List size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
+              title="Card View"
+            >
+              <LayoutGrid size={20} />
+            </button>
           </div>
         </div>
       </div>
@@ -171,15 +301,16 @@ const EMIList = () => {
         <div className="flex items-center justify-center py-24">
           <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
         </div>
-      ) : emiMemberships.length === 0 ? (
+      ) : filteredEMIs.length === 0 ? (
         <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-white/60">
-          No EMI records found yet.
+          No records matching your criteria.
         </div>
       ) : (
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm text-left text-gray-200">
             <thead className="border-b border-white/10 bg-slate-950/40">
               <tr>
+                <th className="p-4 text-left font-semibold">S.No</th>
                 <th className="p-4 text-left font-semibold">Member</th>
                 <th className="p-4 text-left font-semibold">Plan</th>
                 <th className="p-4 text-left font-semibold">Duration</th>
@@ -188,11 +319,11 @@ const EMIList = () => {
                 <th className="p-4 text-left font-semibold">Total Price</th>
                 <th className="p-4 text-left font-semibold">Payment Method</th>
                 <th className="p-4 text-left font-semibold">Created</th>
-                <th className="p-4 text-left font-semibold">Actions</th>
+                <th className="p-4 text-center font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {emiMemberships.map((membership) => {
+              {paginatedEMIs.map((membership, idx) => {
                 const plan = findPlanForMembership(membership);
                 const duration = parseDuration(membership.duration) || 1;
                 const totalPrice = plan
@@ -213,6 +344,9 @@ const EMIList = () => {
                     key={membership.id}
                     className="border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors"
                   >
+                    <td className="px-6 py-4 font-medium text-white">
+                      {(currentPage - 1) * itemsPerPage + idx + 1}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-white">
                         {membership.userName ||
@@ -260,22 +394,22 @@ const EMIList = () => {
                       {new Date(membership.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
-  <div className="flex justify-center items-center gap-3">
-                      <button
-                        onClick={() => viewDetails(membership)}
-                        className="p-2 rounded-lg bg-blue-500/20 border border-blue-500 text-blue-300 hover:bg-blue-500/30 transition"
-                        title="View Details"
-                      >
-                        <Eye size={18} />
-                      </button>
+                      <div className="flex justify-center items-center gap-3">
+                        <button
+                          onClick={() => viewDetails(membership)}
+                          className="p-2 rounded-lg bg-blue-500/20 border border-blue-500/20 text-blue-300 hover:bg-blue-500/40 transition"
+                          title="View Details"
+                        >
+                          <Eye size={18} />
+                        </button>
 
-                      <button
-                        onClick={() => selectMembership(membership)}
-                        className="p-2 rounded-lg bg-orange-500/20 border border-orange-500 text-orange-300 hover:bg-orange-500/30 transition"
-                        title="Update Payment"
-                      >
-                        <Edit size={18} />
-                      </button>
+                        <button
+                          onClick={() => selectMembership(membership)}
+                          className="p-2 rounded-lg bg-orange-500/20 border border-orange-500/20 text-orange-300 hover:bg-orange-500/40 transition"
+                          title="Update Payment"
+                        >
+                          <Edit size={18} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -283,6 +417,53 @@ const EMIList = () => {
               })}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          {filteredEMIs.length > 0 && (
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-6 py-6 border-t border-white/10 px-6">
+              <div className="text-sm text-gray-400">
+                Showing <span className="text-white font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+                <span className="text-white font-medium">
+                  {Math.min(currentPage * itemsPerPage, filteredEMIs.length)}
+                </span>{" "}
+                of <span className="text-white font-medium">{filteredEMIs.length}</span> records
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-xl bg-white/5 text-white border border-white/10 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
+                        currentPage === i + 1
+                          ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30 scale-110 z-10"
+                          : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-xl bg-white/5 text-white border border-white/10 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

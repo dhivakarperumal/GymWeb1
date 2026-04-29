@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X,
   ChevronLeft, ChevronRight, MessageSquare, Phone, Mail, Calendar,
-  User, MapPin, Target, Activity, RefreshCcw, Save, Briefcase, History, Edit2
+  User, MapPin, Target, Activity, RefreshCcw, Save, Briefcase, History, Edit2, ChevronDown
 } from "lucide-react";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
@@ -268,32 +268,38 @@ const FollowupEnquiry = () => {
             <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
             {/* Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-              className="py-2.5 px-4 bg-white/5 border border-orange-500/30 hover:border-orange-500/50 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all shadow-lg shadow-orange-500/5"
-            >
-              <option value="all" className="bg-[#1a1a1a]">All Status</option>
-              <option value="pending" className="bg-[#1a1a1a]">Pending</option>
-              <option value="followup" className="bg-[#1a1a1a]">Followup</option>
-              <option value="completed" className="bg-[#1a1a1a]">Completed</option>
-              <option value="cancelled" className="bg-[#1a1a1a]">Cancelled</option>
-            </select>
+            <div className="relative group">
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full"
+              >
+                <option value="all" className="bg-neutral-900">All Status</option>
+                <option value="pending" className="bg-neutral-900">Pending</option>
+                <option value="followup" className="bg-neutral-900">Followup</option>
+                <option value="completed" className="bg-neutral-900">Completed</option>
+                <option value="cancelled" className="bg-neutral-900">Cancelled</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white transition-colors" />
+            </div>
 
             {/* Staff Filter */}
             {role === 'admin' && (
-              <select
-                value={trainerFilter}
-                onChange={(e) => { setTrainerFilter(e.target.value); setCurrentPage(1); }}
-                className="py-2.5 px-4 bg-white/5 border border-orange-500/30 hover:border-orange-500/50 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all shadow-lg shadow-orange-500/5"
-              >
-                <option value="all" className="bg-[#1a1a1a]">All Staff</option>
-                {trainers.map(s => (
-                  <option key={s.id} value={s.username || s.name} className="bg-[#1a1a1a]">
-                    {s.name} ({s.role})
-                  </option>
-                ))}
-              </select>
+              <div className="relative group">
+                <select
+                  value={trainerFilter}
+                  onChange={(e) => { setTrainerFilter(e.target.value); setCurrentPage(1); }}
+                  className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full"
+                >
+                  <option value="all" className="bg-neutral-900">All Staff</option>
+                  {trainers.map(s => (
+                    <option key={s.id} value={s.username || s.name} className="bg-neutral-900">
+                      {s.name} ({s.role})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white transition-colors" />
+              </div>
             )}
 
             {/* View Toggle */}

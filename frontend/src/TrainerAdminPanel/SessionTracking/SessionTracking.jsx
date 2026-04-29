@@ -420,7 +420,7 @@ const SessionTracking = () => {
                     </div>
                 ) : (
                     /* TABLE VIEW */
-                    <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl animate-in fade-in duration-500">
+                    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-xl animate-in fade-in duration-500">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
