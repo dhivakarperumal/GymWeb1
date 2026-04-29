@@ -18,10 +18,27 @@ const config = {
 
 console.log("DB CONFIG:", {
   host: config.host,
+  port: config.port,
   database: config.database,
   user: config.user,
 });
 
 const pool = mysql.createPool(config);
+
+// Add error handling for the pool
+pool.on('error', (err) => {
+  console.error('❌ DB Pool Error:', err.message);
+  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+    console.error('  → Connection was closed by the server');
+  } else if (err.code === 'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR') {
+    console.error('  → Cannot enqueue, connection closed due to fatal error');
+  } else if (err.code === 'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR') {
+    console.error('  → Cannot enqueue, connection closed due to network error');
+  } else if (err.code === 'ER_ACCESS_DENIED_ERROR') {
+    console.error('  → Authentication failed - check DB credentials');
+  } else if (err.code === 'ER_NO_DB_ERROR') {
+    console.error('  → Database does not exist');
+  }
+});
 
 module.exports = pool;

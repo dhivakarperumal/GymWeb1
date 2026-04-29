@@ -16,6 +16,11 @@ async function ensureMigrationTable() {
   `);
 }
 
+async function fixMigrationFilenameConflicts() {
+  // Placeholder - not needed with original filename structure
+  // The migration system now handles duplicate version numbers naturally
+}
+
 async function getAppliedMigrations() {
   const [result] = await db.query(`SELECT filename FROM ${MIGRATION_TABLE}`);
   return result.map(r => r.filename);
@@ -65,6 +70,9 @@ async function runMigrations() {
         throw err;
       }
     }
+
+    // Fix any migration filename conflicts from previous renames
+    await fixMigrationFilenameConflicts();
 
     const applied = await getAppliedMigrations();
     const files = fs

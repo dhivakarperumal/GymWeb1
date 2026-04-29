@@ -67,8 +67,8 @@ app.use(
       }
       // optionally allow your production domain(s) here:
       const allowed = [
-        "https://yourproductiondomain.com",
-        "https://api.yourproductiondomain.com",
+        "https://dap.qtechx.com",
+        
       ];
       if (allowed.includes(origin)) {
         return callback(null, true);
@@ -131,10 +131,8 @@ app.use("/api/sessions", sessionRoutes);
 
 
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
+});
 
 module.exports = app;
