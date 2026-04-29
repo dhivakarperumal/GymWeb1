@@ -262,18 +262,22 @@ const FollowupEnquiry = () => {
                 className="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none w-72 transition-all placeholder:text-white/20"
               />
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
             {/* Status Filter */}
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-              className="py-2.5 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
+              className="py-2.5 px-4 bg-white/5 border border-orange-500/30 hover:border-orange-500/50 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all shadow-lg shadow-orange-500/5"
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="followup">Followup</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="all" className="bg-[#1a1a1a]">All Status</option>
+              <option value="pending" className="bg-[#1a1a1a]">Pending</option>
+              <option value="followup" className="bg-[#1a1a1a]">Followup</option>
+              <option value="completed" className="bg-[#1a1a1a]">Completed</option>
+              <option value="cancelled" className="bg-[#1a1a1a]">Cancelled</option>
             </select>
 
             {/* Staff Filter */}
@@ -281,20 +285,16 @@ const FollowupEnquiry = () => {
               <select
                 value={trainerFilter}
                 onChange={(e) => { setTrainerFilter(e.target.value); setCurrentPage(1); }}
-                className="py-2.5 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
+                className="py-2.5 px-4 bg-white/5 border border-orange-500/30 hover:border-orange-500/50 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all shadow-lg shadow-orange-500/5"
               >
-                <option value="all">All Staff</option>
+                <option value="all" className="bg-[#1a1a1a]">All Staff</option>
                 {trainers.map(s => (
-                  <option key={s.id} value={s.username || s.name} className="bg-neutral-900">
+                  <option key={s.id} value={s.username || s.name} className="bg-[#1a1a1a]">
                     {s.name} ({s.role})
                   </option>
                 ))}
               </select>
             )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
             {/* View Toggle */}
             <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
