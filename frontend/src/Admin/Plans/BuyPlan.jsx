@@ -450,6 +450,9 @@ Thank you for joining 💪
                 const seenPhones = new Set();
                 return members
                   .filter((m) => {
+                    // only gym members converted from enquiry should appear
+                    if (m.source !== "member") return false;
+
                     // 1. Skip if already has active plan
                     const hasPlan = m.status === "active" && m.plan;
                     if (hasPlan) return false;
