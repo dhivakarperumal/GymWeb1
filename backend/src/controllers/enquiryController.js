@@ -4,7 +4,17 @@ const enquiryController = {
     // Get all enquiries
     getAllEnquiries: async (req, res) => {
         try {
-            const [rows] = await pool.query('SELECT * FROM enquiries ORDER BY created_at DESC');
+            let query = 'SELECT * FROM enquiries';
+            const params = [];
+
+            if (req.query.email) {
+                query += ' WHERE email = ?';
+                params.push(req.query.email);
+            }
+
+            query += ' ORDER BY created_at DESC';
+            const [rows] = await pool.query(query, params);
+
             rows.forEach(row => {
                 if (row.consent_data && typeof row.consent_data === 'string') {
                     try {

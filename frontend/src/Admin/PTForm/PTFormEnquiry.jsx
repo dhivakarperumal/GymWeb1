@@ -45,14 +45,30 @@ const Enquiry = ({
     emergency_contact_phone_work: initialFormData?.emergency_contact_phone_work || "",
     fitness_goal: initialFormData?.fitness_goal || "",
     blood_group: initialFormData?.blood_group || "",
-    gender: initialFormData?.gender || ""
+    gender: initialFormData?.gender || "",
+    participant_name: initialFormData?.participant_name || "",
+    consent_agree: initialFormData?.consent_agree || false,
+    consent_signature: initialFormData?.consent_signature || "",
+    consent_date: initialFormData?.consent_date || "",
+    guardian_signature: initialFormData?.guardian_signature || "",
+    witness: initialFormData?.witness || ""
   });
 
   useEffect(() => {
     if (initialFormData && Object.keys(initialFormData).length > 0) {
+      const consentData = initialFormData.consent_data && typeof initialFormData.consent_data === 'string'
+        ? JSON.parse(initialFormData.consent_data)
+        : initialFormData.consent_data || {};
+
       setLocalFormData(prev => ({
         ...prev,
-        ...initialFormData
+        ...initialFormData,
+        participant_name: initialFormData.participant_name || consentData.participant_name || prev.participant_name,
+        consent_agree: initialFormData.consent_agree || consentData.agree || prev.consent_agree,
+        consent_signature: initialFormData.consent_signature || consentData.signature || prev.consent_signature,
+        consent_date: initialFormData.consent_date || consentData.date || prev.consent_date,
+        guardian_signature: initialFormData.guardian_signature || consentData.guardian_signature || prev.guardian_signature,
+        witness: initialFormData.witness || consentData.witness || prev.witness,
       }));
     }
   }, [initialFormData]);
@@ -470,6 +486,62 @@ const Enquiry = ({
                 />
               </div>
             </div>
+
+            {(localFormData.participant_name || localFormData.consent_signature || localFormData.consent_date) && (
+              <div className="space-y-4 p-6 rounded-2xl bg-slate-950/80 border border-white/10">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm">Informed Consent (User Submitted)</h3>
+                    <p className="text-white/60 text-sm">Auto-filled from the user enquiry consent submission.</p>
+                  </div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-300">
+                    {localFormData.consent_agree ? 'Agreed' : 'Not agreed'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Participant Name</label>
+                    <input
+                      type="text"
+                      value={localFormData.participant_name}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Consent Date</label>
+                    <input
+                      type="text"
+                      value={localFormData.consent_date}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">User Signature</label>
+                    <input
+                      type="text"
+                      value={localFormData.consent_signature}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Guardian / Witness</label>
+                    <input
+                      type="text"
+                      value={localFormData.guardian_signature || localFormData.witness}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-6">
               <button
