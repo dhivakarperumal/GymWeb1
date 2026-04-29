@@ -4,6 +4,7 @@ import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import dayjs from "dayjs";
+import toast from "react-hot-toast";
 
 const Enquiry = () => {
   const [enquiries, setEnquiries] = useState([]);
@@ -105,8 +106,10 @@ const Enquiry = () => {
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
         fitness_goal: "", blood_group: "", gender: "", termsAccepted: false
       });
+      toast.success(selectedEnquiry ? "Enquiry updated successfully" : "Enquiry created successfully");
     } catch (error) {
       console.error('Error saving enquiry:', error);
+      toast.error(error.response?.data?.error || "Failed to save enquiry");
     }
   };
 

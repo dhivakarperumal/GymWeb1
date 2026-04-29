@@ -178,7 +178,7 @@ const PTFormUser = () => {
       toast.success('Enquiry saved successfully.');
     } catch (err) {
       console.error('Enquiry submit failed', err);
-      toast.error('Failed to save enquiry.');
+      toast.error(err.response?.data?.error || 'Failed to save enquiry.');
     }
   };
 

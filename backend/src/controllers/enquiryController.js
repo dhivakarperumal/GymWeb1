@@ -71,6 +71,20 @@ const enquiryController = {
                 return res.status(400).json({ error: 'Name and email are required' });
             }
 
+            // Check for duplicate email or phone
+            const checkQuery = phone 
+                ? 'SELECT id FROM enquiries WHERE email = ? OR phone = ?'
+                : 'SELECT id FROM enquiries WHERE email = ?';
+            const checkParams = phone ? [email, phone] : [email];
+            
+            const [existing] = await pool.query(checkQuery, checkParams);
+
+            if (existing.length > 0) {
+                return res.status(400).json({ 
+                    error: 'An enquiry with this email or phone number already exists.' 
+                });
+            }
+
             const [result] = await pool.query(
                 `INSERT INTO enquiries (
                     name, email, phone, subject, message, location,
