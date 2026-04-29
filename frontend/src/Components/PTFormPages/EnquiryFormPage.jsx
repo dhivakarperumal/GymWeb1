@@ -199,22 +199,22 @@ const SelectField = ({ label, name, value, onChange, readOnly = false, gender = 
     >
       {gender ? (
         <>
-          <option value="">Select Gender</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
+          <option value="" className="text-black">Select Gender</option>
+          <option value="Male" className="text-black">Male</option>
+          <option value="Female" className="text-black">Female</option>
+          <option value="Other" className="text-black">Other</option>
         </>
       ) : (
         <>
-          <option value="">Select Blood Group</option>
-          <option value="A+">A+</option>
-          <option value="A-">A-</option>
-          <option value="B+">B+</option>
-          <option value="B-">B-</option>
-          <option value="O+">O+</option>
-          <option value="O-">O-</option>
-          <option value="AB+">AB+</option>
-          <option value="AB-">AB-</option>
+          <option value="" className="text-black">Select Blood Group</option>
+          <option value="A+" className="text-black">A+</option>
+          <option value="A-" className="text-black">A-</option>
+          <option value="B+" className="text-black">B+</option>
+          <option value="B-" className="text-black">B-</option>
+          <option value="O+" className="text-black">O+</option>
+          <option value="O-" className="text-black">O-</option>
+          <option value="AB+" className="text-black">AB+</option>
+          <option value="AB-" className="text-black">AB-</option>
         </>
       )}
     </select>

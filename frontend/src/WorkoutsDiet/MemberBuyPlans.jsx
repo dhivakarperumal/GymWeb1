@@ -96,7 +96,7 @@ const handleDelete = async (plan) => {
         ) : (
           <div className="grid md:grid-cols-2 gap-8 px-4">
             {plans.map((plan) => {
-              const price = Number(plan.pricePaid || 0);
+              const price = Number(plan.price || plan.pricePaid || 0);
               const start = new Date(plan.startDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
               const end = new Date(plan.endDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
               const isExpired = new Date(plan.endDate) < new Date();
@@ -132,9 +132,11 @@ const handleDelete = async (plan) => {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-white">₹{price.toLocaleString("en-IN")}</span>
-                      <span className="text-sm text-gray-400">/ {plan.duration}</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]">₹{price.toLocaleString("en-IN")}</span>
+                      {plan.duration && (
+                        <span className="text-sm text-gray-500 font-bold tracking-tight">/ {plan.duration}</span>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">

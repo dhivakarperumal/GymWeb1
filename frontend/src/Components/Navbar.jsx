@@ -192,7 +192,7 @@ const Navbar = () => {
               <img
                 src={logo}
                 alt="Power Gym"
-                className="h-15 w-auto object-contain"
+                className="h-16 w-auto object-contain"
               />
             </Link>
 
