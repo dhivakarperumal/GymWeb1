@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import api from "../../api";
+import { useAuth } from "../../PrivateRouter/AuthContext";
+import toast from "react-hot-toast";
 
 const SessionTracker = ({
   onNext,
@@ -6,7 +9,10 @@ const SessionTracker = ({
   formData: initialFormData,
   isFirstStep,
   isLastStep,
+  readOnly = false,
+  userMode = false,
 }) => {
+  const { user } = useAuth();
   const trainerName = localStorage.getItem('username') || localStorage.getItem('name') || "";
 
   const [localFormData, setLocalFormData] = useState({
@@ -36,7 +42,7 @@ const SessionTracker = ({
     // Auto-fill Client Sign if status becomes Completed
     if (field === "status") {
       if (value === "Completed") {
-        updatedSession.client_sign = initialFormData?.name || "";
+        updatedSession.client_sign = userMode ? (user?.username || user?.name || "") : (initialFormData?.name || "");
       } else {
         updatedSession.client_sign = "";
       }
@@ -46,9 +52,26 @@ const SessionTracker = ({
     setLocalFormData((prev) => ({ ...prev, sessions: newSessions }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onNext(localFormData);
+    if (userMode) {
+      // In user mode, update the PT form with approved sessions
+      try {
+        const payload = {
+          member_id: initialFormData.member_id,
+          user_id: initialFormData.u_id,
+          formData: { ...initialFormData, sessions: localFormData.sessions },
+          completed: true
+        };
+        await api.post(`/pt-forms`, payload);
+        toast.success("Sessions approved successfully!");
+      } catch (error) {
+        console.error("Error updating sessions:", error);
+        toast.error("Failed to approve sessions.");
+      }
+    } else {
+      onNext(localFormData);
+    }
   };
 
   return (
@@ -56,6 +79,7 @@ const SessionTracker = ({
       <div className="border-2 border-white/20 rounded-2xl p-8 bg-white/[0.02] shadow-xl">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-white uppercase tracking-widest">Session Tracker</h2>
+          {userMode && <p className="text-white/60 text-sm mt-2">Approve your workout sessions</p>}
           <div className="w-24 h-1 bg-orange-500 mx-auto mt-2 rounded-full"></div>
         </div>
 
@@ -73,7 +97,9 @@ const SessionTracker = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {localFormData.sessions.map((session, index) => (
+                {localFormData.sessions
+                  .filter(session => !userMode || (session.date && session.workout)) // In userMode, only show sessions with date and workout
+                  .map((session, index) => (
                   <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="p-0 border-r border-white/5 text-center bg-white/[0.01] font-bold text-white/40">
                       {session.session_no}
@@ -84,6 +110,7 @@ const SessionTracker = ({
                         value={session.date || ""}
                         onChange={(e) => handleSessionChange(index, "date", e.target.value)}
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center"
+                        readOnly={userMode}
                       />
                     </td>
                     <td className="p-0 border-r border-white/5">
@@ -93,17 +120,29 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "workout", e.target.value)}
                         placeholder="Describe the workout sessions..."
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors placeholder-white/10"
+                        readOnly={userMode}
                       />
                     </td>
                     <td className="p-4 border-r border-white/5 text-center">
                        <button
                          type="button"
-                         onClick={() => handleSessionChange(index, "status", session.status === "Completed" ? "Pending" : "Completed")}
+                         onClick={() => {
+                           if (userMode) {
+                             // In userMode, only allow approving (Pending to Completed)
+                             if (session.status === "Pending") {
+                               handleSessionChange(index, "status", "Completed");
+                             }
+                           } else {
+                             // In adminMode, toggle between Pending and Completed
+                             handleSessionChange(index, "status", session.status === "Completed" ? "Pending" : "Completed");
+                           }
+                         }}
                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border shadow-sm ${
                            session.status === "Completed" 
                            ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white" 
                            : "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500 hover:text-white"
                          }`}
+                         disabled={userMode && session.status === "Completed"}
                        >
                          {session.status || "Pending"}
                        </button>
@@ -137,18 +176,20 @@ const SessionTracker = ({
               DAP Fitness Studio - Official Session Records
             </p>
             <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={onPrevious}
-                className="flex-1 px-6 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs"
-              >
-                Previous
-              </button>
+              {!userMode && (
+                <button
+                  type="button"
+                  onClick={onPrevious}
+                  className="flex-1 px-6 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs"
+                >
+                  Previous
+                </button>
+              )}
               <button
                 type="submit"
                 className="flex-[2] px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs"
               >
-                {isLastStep ? "Complete Registration" : "Next Step"}
+                {userMode ? "Approve Sessions" : (isLastStep ? "Complete Registration" : "Next Step")}
               </button>
             </div>
           </div>

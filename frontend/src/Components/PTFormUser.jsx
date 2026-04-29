@@ -7,6 +7,7 @@ import HealthHistoryPage from './PTFormPages/HealthHistoryPage';
 import HealthHistory2Page from './PTFormPages/HealthHistory2Page';
 import FitnessScreening from '../Admin/PTForm/FitnessScreening';
 import FlexibilityAndMeasurements from '../Admin/PTForm/FlexibilityAndMeasurements';
+import SessionTracker from '../Admin/PTForm/SessionTracker';
 
 const PTFormUser = () => {
   const { user } = useAuth();
@@ -211,6 +212,7 @@ const PTFormUser = () => {
           { key: 'health2', label: 'Health History 2' },
           { key: 'fitness', label: 'Fitness Screening' },
           { key: 'flexibility', label: 'Flexibility & Measurements' },
+          { key: 'sessions', label: 'Session Tracker' },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -253,6 +255,18 @@ const PTFormUser = () => {
         <FlexibilityAndMeasurements
           formData={formData}
           readOnly
+        />
+      )}
+
+      {activeTab === 'sessions' && (
+        <SessionTracker
+          formData={formData}
+          onNext={() => {}}
+          onPrevious={() => {}}
+          isFirstStep={true}
+          isLastStep={true}
+          readOnly={false}
+          userMode={true}
         />
       )}
     </div>
