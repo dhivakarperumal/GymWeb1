@@ -4,6 +4,70 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 
+const TimeSelect = ({ label, value, onChange }) => {
+    // value is "HH:mm" (24h)
+    const timeVal = value || "12:00";
+    const [h, m] = timeVal.split(':');
+    let hour24 = parseInt(h);
+    const ampm = hour24 >= 12 ? "PM" : "AM";
+    const displayHour = hour24 % 12 || 12;
+
+    const updateTime = (newH24, newM) => {
+        onChange(`${String(newH24).padStart(2, '0')}:${String(newM).padStart(2, '0')}`);
+    };
+
+    return (
+        <div className="space-y-2">
+            <label className="text-xs font-bold text-white/40 uppercase tracking-widest">{label}</label>
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl p-1.5 focus-within:border-orange-500/50 focus-within:ring-2 focus-within:ring-orange-500/20 transition-all hover:bg-white/10">
+                <select 
+                    className="flex-1 bg-transparent border-none px-2 py-2 text-white outline-none cursor-pointer text-center text-sm font-bold appearance-none"
+                    value={displayHour}
+                    onChange={(e) => {
+                        let h24 = parseInt(e.target.value);
+                        if (ampm === "PM" && h24 < 12) h24 += 12;
+                        if (ampm === "AM" && h24 === 12) h24 = 0;
+                        updateTime(h24, m);
+                    }}
+                >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(hr => (
+                        <option key={hr} value={hr} className="bg-[#1a1a1a]">{hr}</option>
+                    ))}
+                </select>
+                
+                <span className="text-white/20 font-black">:</span>
+
+                <select 
+                    className="flex-1 bg-transparent border-none px-2 py-2 text-white outline-none cursor-pointer text-center text-sm font-bold appearance-none"
+                    value={parseInt(m)}
+                    onChange={(e) => updateTime(hour24, e.target.value)}
+                >
+                    {Array.from({ length: 12 }, (_, i) => i * 5).map(min => (
+                        <option key={min} value={min} className="bg-[#1a1a1a]">{String(min).padStart(2, '0')}</option>
+                    ))}
+                </select>
+
+                <div className="w-px h-6 bg-white/10 mx-1"></div>
+
+                <select 
+                    className="flex-1 bg-transparent border-none px-2 py-2 text-orange-500 outline-none cursor-pointer text-center text-[10px] font-black uppercase tracking-wider appearance-none"
+                    value={ampm}
+                    onChange={(e) => {
+                        const newAmpm = e.target.value;
+                        let h24 = displayHour;
+                        if (newAmpm === "PM" && h24 < 12) h24 += 12;
+                        if (newAmpm === "AM" && h24 === 12) h24 = 0;
+                        updateTime(h24, m);
+                    }}
+                >
+                    <option value="AM" className="bg-[#1a1a1a]">AM</option>
+                    <option value="PM" className="bg-[#1a1a1a]">PM</option>
+                </select>
+            </div>
+        </div>
+    );
+};
+
 const SessionTracking = () => {
     const { user } = useAuth();
     const trainerId = user?.id;
@@ -19,8 +83,8 @@ const SessionTracking = () => {
         memberId: "",
         memberName: "",
         sessionDate: new Date().toISOString().split('T')[0],
-        startTime: "",
-        endTime: "",
+        startTime: "09:00",
+        endTime: "10:00",
         sessionType: "Personal Training",
         workouts: [""],
         notes: ""
@@ -139,6 +203,15 @@ const SessionTracking = () => {
         }
     };
 
+    const formatTo12Hour = (time) => {
+        if (!time) return "--:--";
+        const [hours, minutes] = time.split(':');
+        let h = parseInt(hours);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${minutes} ${ampm}`;
+    };
+
     const filteredSessions = sessions.filter(s => 
         s.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.session_type?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -254,7 +327,9 @@ const SessionTracking = () => {
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2 text-white/60">
                                                         <Clock size={14} />
-                                                        <span className="text-xs">{session.start_time?.slice(0, 5)} - {session.end_time?.slice(0, 5)}</span>
+                                                        <span className="text-xs">
+                                                            {formatTo12Hour(session.start_time)} - {formatTo12Hour(session.end_time)}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-5">
@@ -355,27 +430,17 @@ const SessionTracking = () => {
                                 </div>
 
                                 {/* Times */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Start Time</label>
-                                    <input 
-                                        type="time" 
-                                        required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                                        value={form.startTime}
-                                        onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                                    />
-                                </div>
+                                <TimeSelect 
+                                    label="Start Time"
+                                    value={form.startTime}
+                                    onChange={(val) => setForm({ ...form, startTime: val })}
+                                />
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">End Time</label>
-                                    <input 
-                                        type="time" 
-                                        required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                                        value={form.endTime}
-                                        onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                                    />
-                                </div>
+                                <TimeSelect 
+                                    label="End Time"
+                                    value={form.endTime}
+                                    onChange={(val) => setForm({ ...form, endTime: val })}
+                                />
 
                                 {/* Workouts (Multiple) */}
                                 <div className="space-y-4 md:col-span-2 bg-white/5 p-4 rounded-2xl border border-white/5">

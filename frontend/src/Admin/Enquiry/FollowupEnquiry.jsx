@@ -673,10 +673,6 @@ const FollowupEnquiry = () => {
                           />
                           <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-red-500 font-bold">*</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-white/5 text-orange-500" />
-                          <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">SMS</span>
-                        </div>
                       </div>
                     </div>
 
