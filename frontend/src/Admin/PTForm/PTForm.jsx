@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 import dayjs from 'dayjs';
 import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
 import HealthHistory2 from './HealthHistory2';
-import InformedConsent from './InformedConsent';
 import FitnessScreening from './FitnessScreening';
 import FlexibilityAndMeasurements from './FlexibilityAndMeasurements';
 import SessionTracker from './SessionTracker';
@@ -17,6 +17,7 @@ const PTForm = () => {
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const memberId = searchParams.get("member_id");
   const role = localStorage.getItem('role') || 'admin';
 
@@ -56,20 +57,42 @@ const PTForm = () => {
           try {
             const ptRes = await api.get(`/pt-forms/${memberId}`);
             if (ptRes.data && ptRes.data.form_data) {
-              const savedData = typeof ptRes.data.form_data === 'string' 
-                ? JSON.parse(ptRes.data.form_data) 
+              const savedData = typeof ptRes.data.form_data === 'string'
+                ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;
-              
+
               setFormData(prev => ({
                 ...prev,
                 ...savedData
               }));
             }
-          } catch (ptErr) {
-            // It's okay if no PT form exists yet
-            console.log("No existing PT form found for this member");
+          } catch (err) {
+            console.log('No existing PT form found for this member');
           }
 
+          try {
+            const enquiryRes = await api.get('/enquiries', {
+              params: { email: data.email }
+            });
+            const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
+            const enquiry = enquiries[0];
+            if (enquiry) {
+              const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
+                ? JSON.parse(enquiry.consent_data)
+                : enquiry.consent_data || {};
+              setFormData(prev => ({
+                ...prev,
+                participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
+                consent_agree: consentData.agree || prev.consent_agree,
+                consent_signature: consentData.signature || prev.consent_signature,
+                consent_date: consentData.date || prev.consent_date,
+                guardian_signature: consentData.guardian_signature || prev.guardian_signature,
+                witness: consentData.witness || prev.witness,
+              }));
+            }
+          } catch (enqErr) {
+            console.log('No linked enquiry found for this member');
+          }
         } catch (err) {
           console.error("Failed to pre-fill member data", err);
         } finally {
@@ -87,7 +110,7 @@ const PTForm = () => {
     { id: 4, name: 'Fitness Screening', component: FitnessScreening },
     { id: 5, name: 'Flexibility & Measurements', component: FlexibilityAndMeasurements },
     { id: 6, name: 'Session Tracker', component: SessionTracker },
-    { id: 7, name: 'Informed Consent', component: InformedConsent }
+    
   ];
 
   const handleNext = async (stepData) => {
@@ -98,10 +121,16 @@ const PTForm = () => {
       setCurrentStep(currentStep + 1);
     } else {
       // Final Step Completed
+      const targetMemberId = memberId || updatedData.member_id;
+      if (!targetMemberId) {
+        toast.error('Please select a member before completing the PT form.');
+        return;
+      }
+
       setLoading(true);
       try {
         const payload = {
-          member_id: memberId || updatedData.member_id, // prioritize URL param
+          member_id: targetMemberId,
           user_id: updatedData.u_id || updatedData.user_id,
           formData: updatedData,
           completed: true
@@ -130,19 +159,76 @@ const PTForm = () => {
   };
 
   const handleMemberSelected = async (memberId) => {
-    setFormData(prev => ({ ...prev, member_id: memberId }));
-
+    setLoading(true);
     try {
-      const ptRes = await api.get(`/pt-forms/${memberId}`);
-      if (ptRes.data && ptRes.data.form_data) {
-        const savedData = typeof ptRes.data.form_data === 'string'
-          ? JSON.parse(ptRes.data.form_data)
-          : ptRes.data.form_data;
-        setFormData(prev => ({ ...prev, ...savedData }));
+      const res = await api.get(`/members/${memberId}`);
+      const data = res.data;
+      const memberPrefill = {
+        member_id: data.id,
+        u_id: data.u_id,
+        name: data.name || "",
+        email: data.email || data.user_email || "",
+        phone: data.phone || "",
+        location: data.location || "",
+        height: data.height || "",
+        weight: data.weight || "",
+        bmi: data.bmi || "",
+        dob: data.dob ? dayjs(data.dob).format('YYYY-MM-DD') : "",
+        age: data.age || "",
+        address: data.address || "",
+        employer: data.employer || "",
+        occupation: data.occupation || "",
+        emergency_contact_name: data.emergency_contact_name || "",
+        emergency_contact_relationship: data.emergency_contact_relationship || "",
+        emergency_contact_address: data.emergency_contact_address || "",
+        emergency_contact_phone_home: data.emergency_contact_phone_home || "",
+        emergency_contact_phone_work: data.emergency_contact_phone_work || "",
+        fitness_goal: data.fitness_goal || "",
+        blood_group: data.blood_group || "",
+        gender: data.gender || ""
+      };
+
+      setFormData(memberPrefill);
+
+      try {
+        const ptRes = await api.get(`/pt-forms/${memberId}`);
+        if (ptRes.data && ptRes.data.form_data) {
+          const savedData = typeof ptRes.data.form_data === 'string'
+            ? JSON.parse(ptRes.data.form_data)
+            : ptRes.data.form_data;
+          setFormData(prev => ({ ...prev, ...savedData }));
+        }
+      } catch (err) {
+        console.log('No saved PT form for selected member');
+      }
+
+      try {
+        const enquiryRes = await api.get('/enquiries', {
+          params: { email: memberPrefill.email }
+        });
+        const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
+        const enquiry = enquiries[0];
+        if (enquiry) {
+          const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
+            ? JSON.parse(enquiry.consent_data)
+            : enquiry.consent_data || {};
+          setFormData(prev => ({
+            ...prev,
+            participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
+            consent_agree: consentData.agree || prev.consent_agree,
+            consent_signature: consentData.signature || prev.consent_signature,
+            consent_date: consentData.date || prev.consent_date,
+            guardian_signature: consentData.guardian_signature || prev.guardian_signature,
+            witness: consentData.witness || prev.witness,
+          }));
+        }
+      } catch (enqErr) {
+        console.log('No linked enquiry found for selected member');
       }
     } catch (err) {
-      // no existing PT form yet
-      console.log('No saved PT form for selected member');
+      console.error('Failed to pre-fill member data on selection', err);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -6,6 +6,7 @@ const FlexibilityAndMeasurements = ({
   formData: initialFormData,
   isFirstStep,
   isLastStep,
+  readOnly = false,
 }) => {
   const [localFormData, setLocalFormData] = useState({
     flex_apley_test: initialFormData?.flex_apley_test || "",
@@ -42,6 +43,7 @@ const FlexibilityAndMeasurements = ({
   }, [initialFormData]);
 
   const handleChange = (e) => {
+    if (readOnly) return;
     const { name, value, type, checked } = e.target;
     if (type === "radio") {
       if (checked) {
@@ -100,6 +102,7 @@ const FlexibilityAndMeasurements = ({
                     value="Normal"
                     checked={localFormData.flex_apley_test === "Normal"}
                     onChange={handleChange}
+                    disabled={readOnly}
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Normal</span>
@@ -111,6 +114,7 @@ const FlexibilityAndMeasurements = ({
                     value="Restricted"
                     checked={localFormData.flex_apley_test === "Restricted"}
                     onChange={handleChange}
+                    disabled={readOnly}
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Restricted</span>
@@ -127,6 +131,7 @@ const FlexibilityAndMeasurements = ({
                   name="flex_ymca_val"
                   value={localFormData.flex_ymca_val}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-32 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Value"
                 />
@@ -139,6 +144,7 @@ const FlexibilityAndMeasurements = ({
                     value="Well"
                     checked={localFormData.flex_ymca_test === "Well"}
                     onChange={handleChange}
+                    disabled={readOnly}
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Well</span>
@@ -150,6 +156,7 @@ const FlexibilityAndMeasurements = ({
                     value="Average"
                     checked={localFormData.flex_ymca_test === "Average"}
                     onChange={handleChange}
+                    disabled={readOnly}
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Average</span>
@@ -166,6 +173,7 @@ const FlexibilityAndMeasurements = ({
                   name="flex_knee_val"
                   value={localFormData.flex_knee_val}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-32 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Value"
                 />
@@ -178,6 +186,7 @@ const FlexibilityAndMeasurements = ({
                     value="Normal"
                     checked={localFormData.flex_knee_test === "Normal"}
                     onChange={handleChange}
+                    disabled={readOnly}
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Normal</span>
@@ -189,6 +198,7 @@ const FlexibilityAndMeasurements = ({
                     value="Restricted"
                     checked={localFormData.flex_knee_test === "Restricted"}
                     onChange={handleChange}
+                    disabled={readOnly}
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Restricted</span>
@@ -262,6 +272,7 @@ const FlexibilityAndMeasurements = ({
                                 e.target.value
                               )
                             }
+                            disabled={readOnly}
                             className="w-full p-3 bg-transparent text-center text-white focus:outline-none focus:bg-white/10"
                           />
                         </td>
@@ -277,7 +288,8 @@ const FlexibilityAndMeasurements = ({
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex gap-3 pt-6">
+          {!readOnly && (
+            <div className="flex gap-3 pt-6">
             <button
               type="button"
               onClick={onPrevious}
@@ -299,6 +311,7 @@ const FlexibilityAndMeasurements = ({
               {isLastStep ? "Complete Registration" : "Next Step"}
             </button>
           </div>
+          )}
         </form>
       </div>
     </div>

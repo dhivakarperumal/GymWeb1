@@ -6,6 +6,7 @@ const FitnessScreening = ({
   formData: initialFormData,
   isFirstStep,
   isLastStep,
+  readOnly = false,
 }) => {
   const [localFormData, setLocalFormData] = useState({
     fs_height: initialFormData?.fs_height || "",
@@ -81,6 +82,7 @@ const FitnessScreening = ({
   }, [localFormData.fs_fat_percentage, initialFormData?.gender, isManualLevel]);
 
   const handleChange = (e) => {
+    if (readOnly) return;
     const { name, value, type, checked } = e.target;
     if (type === "radio") {
       if (checked) {
@@ -106,6 +108,7 @@ const FitnessScreening = ({
           name={`${namePrefix}_count`}
           value={localFormData[`${namePrefix}_count`]}
           onChange={handleChange}
+          disabled={readOnly}
           className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
           placeholder="Count/Value"
         />
@@ -118,6 +121,7 @@ const FitnessScreening = ({
             value="Superior"
             checked={localFormData[`${namePrefix}_level`] === "Superior"}
             onChange={handleChange}
+            disabled={readOnly}
             className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
           />
           <span className="text-white/80 text-sm">Superior</span>
@@ -129,6 +133,7 @@ const FitnessScreening = ({
             value="Good"
             checked={localFormData[`${namePrefix}_level`] === "Good"}
             onChange={handleChange}
+            disabled={readOnly}
             className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
           />
           <span className="text-white/80 text-sm">Good</span>
@@ -140,6 +145,7 @@ const FitnessScreening = ({
             value="Poor"
             checked={localFormData[`${namePrefix}_level`] === "Poor"}
             onChange={handleChange}
+            disabled={readOnly}
             className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
           />
           <span className="text-white/80 text-sm">Poor</span>
@@ -164,6 +170,7 @@ const FitnessScreening = ({
                   name="fs_height"
                   value={localFormData.fs_height}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -174,6 +181,7 @@ const FitnessScreening = ({
                   name="fs_weight"
                   value={localFormData.fs_weight}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -184,6 +192,7 @@ const FitnessScreening = ({
                   name="fs_resting_hr"
                   value={localFormData.fs_resting_hr}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -201,6 +210,7 @@ const FitnessScreening = ({
                   name="fs_fat_percentage"
                   value={localFormData.fs_fat_percentage}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -213,6 +223,7 @@ const FitnessScreening = ({
                       value={level}
                       checked={localFormData.fs_fat_level === level}
                       onChange={handleChange}
+                      disabled={readOnly}
                       className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                     />
                     <span className="text-white/80 text-sm">{level}</span>
@@ -233,6 +244,7 @@ const FitnessScreening = ({
                   name="fs_speed_km"
                   value={localFormData.fs_speed_km}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -243,6 +255,7 @@ const FitnessScreening = ({
                   name="fs_heart_rate"
                   value={localFormData.fs_heart_rate}
                   onChange={handleChange}
+                  disabled={readOnly}
                   className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -264,27 +277,28 @@ const FitnessScreening = ({
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex gap-3 pt-6">
-            <button
-              type="button"
-              onClick={onPrevious}
-              disabled={isFirstStep}
-              className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${isFirstStep
-                ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
-                : "bg-gray-700 hover:bg-gray-600 text-white"
-                }`}
-            >
-              Previous
-            </button>
+          {!readOnly && (
+            <div className="flex gap-3 pt-6">
+              <button
+                type="button"
+                onClick={onPrevious}
+                disabled={isFirstStep}
+                className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${isFirstStep
+                  ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-700 hover:bg-gray-600 text-white"
+                  }`}
+              >
+                Previous
+              </button>
 
-            
-            <button
-              type="submit"
-              className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
-            >
-              {isLastStep ? "Complete Registration" : "Next Step"}
-            </button>
-          </div>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
+              >
+                {isLastStep ? "Complete Registration" : "Next Step"}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
