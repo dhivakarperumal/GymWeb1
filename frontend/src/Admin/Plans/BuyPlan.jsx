@@ -721,7 +721,7 @@ Thank you for joining 💪
 
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} - {p.duration} months - ₹
+                  {p.name} - {p.duration} - ₹
                   {p.finalPrice ?? p.final_price}
                 </option>
               ))}
@@ -734,7 +734,7 @@ Thank you for joining 💪
                 {selectedPlan.name}
               </h3>
 
-              <p>Duration: {selectedPlan.duration} months</p>
+              <p>Duration: {selectedPlan.duration} </p>
 
               <p>
                 Price ₹
