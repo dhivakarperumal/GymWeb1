@@ -67,6 +67,7 @@ const pageInfo = {
   "/admin/addservice": { title: "Add Services", icon: Plus },
   "/admin/send-message": { title: "Bulk Messaging", icon: Send },
   "/admin/payments": { title: "Payments", icon: CreditCard },
+  "/admin/emi": { title: "EMI Payments", icon: CreditCard },
   "/admin/member-attendance": { title: "Member Attendance", icon: Users },
   "/admin/commenworkoutdiet": { title: "Workout & Diet", icon: HeartPulse },
   "/admin/users": { title: "Users", icon: Users },
