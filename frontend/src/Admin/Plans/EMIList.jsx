@@ -114,7 +114,8 @@ const EMIList = () => {
         ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
         : parseDecimal(m.pricePaid) * duration;
       const initialPayment = parseDecimal(m.pricePaid);
-      const balanceDue = Number((totalPrice - initialPayment).toFixed(2));
+      const secondPayment = parseDecimal(m.secondPaymentPaid);
+      const balanceDue = Number((totalPrice - initialPayment - secondPayment).toFixed(2));
       
       return {
         "S.No": index + 1,
@@ -123,6 +124,7 @@ const EMIList = () => {
         Plan: m.planName || "N/A",
         Duration: `${duration} months`,
         "Initial Payment": `₹${initialPayment.toFixed(2)}`,
+        "Second Payment": `₹${secondPayment.toFixed(2)}`,
         "Balance Due": `₹${balanceDue.toFixed(2)}`,
         "Total Price": `₹${totalPrice.toFixed(2)}`,
         "Payment ID": m.paymentId || "-",
@@ -165,7 +167,8 @@ const EMIList = () => {
       ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
       : parseDecimal(membership.pricePaid) * parseDuration(membership.duration);
     const currentPaid = parseDecimal(membership.pricePaid);
-    const remaining = totalPrice - currentPaid;
+    const secondPayment = parseDecimal(membership.secondPaymentPaid);
+    const remaining = totalPrice - currentPaid - secondPayment;
     const suggested = remaining > 0 ? remaining.toFixed(2) : "0.00";
     setUpdateAmount(suggested);
   };
@@ -184,20 +187,23 @@ const EMIList = () => {
     }
 
     const currentPaid = parseDecimal(selectedMembership.pricePaid);
-    const newPaid = Number((currentPaid + amount).toFixed(2));
-    const plan = findPlanForMembership(selectedMembership);
-    const totalPrice = plan
-      ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
-      : currentPaid;
+    const currentSecondPayment = parseDecimal(selectedMembership.secondPaymentPaid);
+    const totalPrice = (() => {
+      const plan = findPlanForMembership(selectedMembership);
+      return plan
+        ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
+        : currentPaid + currentSecondPayment;
+    })();
+    const newSecondPayment = Number((currentSecondPayment + amount).toFixed(2));
     const newStatus =
-      plan && newPaid >= totalPrice
+      newSecondPayment + currentPaid >= totalPrice
         ? "completed"
         : selectedMembership.status || "active";
 
     setUpdating(true);
     try {
       await api.put(`/memberships/${selectedMembership.id}`, {
-        pricePaid: newPaid,
+        secondPaymentPaid: newSecondPayment,
         paymentId: paymentReference || selectedMembership.paymentId,
         status: newStatus,
       });
@@ -318,9 +324,9 @@ const EMIList = () => {
                     <th className="px-6 py-4 border-b border-white/5">Plan</th>
                     <th className="px-6 py-4 border-b border-white/5">Duration</th>
                     <th className="px-6 py-4 border-b border-white/5">Initial Payment</th>
-                    <th className="px-6 py-4 border-b border-white/5">Next Payment</th>
+                    <th className="px-6 py-4 border-b border-white/5">Second Payment</th>
+                    <th className="px-6 py-4 border-b border-white/5">Remaining Due</th>
                     <th className="px-6 py-4 border-b border-white/5">Total Price</th>
-                    <th className="px-6 py-4 border-b border-white/5">Payment Method</th>
                     <th className="px-6 py-4 border-b border-white/5">Created</th>
                     <th className="px-6 py-4 border-b border-white/5 text-center">Actions</th>
                   </tr>
@@ -335,8 +341,9 @@ const EMIList = () => {
                         )
                       : parseDecimal(membership.pricePaid) * duration;
                     const initialPayment = parseDecimal(membership.pricePaid);
-                    const balanceDue = Number(
-                      (totalPrice - initialPayment).toFixed(2),
+                    const secondPayment = parseDecimal(membership.secondPaymentPaid);
+                    const remainingDue = Number(
+                      (totalPrice - initialPayment - secondPayment).toFixed(2),
                     );
                     const dueDate = new Date();
                     dueDate.setDate(dueDate.getDate() + 30);
@@ -374,24 +381,28 @@ const EMIList = () => {
                           <div className="text-xs text-white/50">Paid today</div>
                         </td>
                         <td className="px-6 py-4">
+                          <div className="font-semibold text-cyan-300">
+                            ₹{secondPayment.toFixed(2)}
+                          </div>
+                          <div className="text-xs text-white/50">Second payment</div>
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="font-semibold text-blue-400">
-                            ₹{balanceDue.toFixed(2)}
+                            {remainingDue <= 0 ? "₹0.00" : `₹${remainingDue.toFixed(2)}`}
                           </div>
                           <div className="text-xs text-white/50">
-                            Due{" "}
-                            {dueDate.toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                            })}
+                            {remainingDue <= 0
+                              ? "Completed"
+                              : `Due ${dueDate.toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                })}`}
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-semibold text-orange-400">
                             ₹{totalPrice.toFixed(2)}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 capitalize">
-                          {paymentMethodLabel}
                         </td>
                         <td className="px-6 py-4">
                           {new Date(membership.createdAt).toLocaleDateString()}
@@ -406,13 +417,15 @@ const EMIList = () => {
                               <Eye size={18} />
                             </button>
 
-                            <button
-                              onClick={() => selectMembership(membership)}
-                              className="p-2 rounded-lg bg-orange-500/20 border border-orange-500/20 text-orange-300 hover:bg-orange-500/40 transition"
-                              title="Update Payment"
-                            >
-                              <Edit size={18} />
-                            </button>
+                            {membership.status !== "completed" && (
+                              <button
+                                onClick={() => selectMembership(membership)}
+                                className="p-2 rounded-lg bg-orange-500/20 border border-orange-500/20 text-orange-300 hover:bg-orange-500/40 transition"
+                                title="Update Payment"
+                              >
+                                <Edit size={18} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -431,7 +444,8 @@ const EMIList = () => {
                   ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
                   : parseDecimal(membership.pricePaid) * duration;
                 const initialPayment = parseDecimal(membership.pricePaid);
-                const balanceDue = Number((totalPrice - initialPayment).toFixed(2));
+                const secondPayment = parseDecimal(membership.secondPaymentPaid);
+                const balanceDue = Number((totalPrice - initialPayment - secondPayment).toFixed(2));
                 const dueDate = new Date();
                 dueDate.setDate(dueDate.getDate() + 30);
 
@@ -470,13 +484,17 @@ const EMIList = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="bg-green-500/5 p-3 rounded-xl border border-green-500/10 text-center">
-                          <p className="text-[10px] text-green-500/60 uppercase font-black tracking-wider mb-1">Paid</p>
+                          <p className="text-[10px] text-green-500/60 uppercase font-black tracking-wider mb-1">Initial Paid</p>
                           <p className="text-base font-bold text-green-400">₹{initialPayment.toFixed(2)}</p>
                         </div>
+                        <div className="bg-cyan-500/5 p-3 rounded-xl border border-cyan-500/10 text-center">
+                          <p className="text-[10px] text-cyan-500/60 uppercase font-black tracking-wider mb-1">Second Paid</p>
+                          <p className="text-base font-bold text-cyan-300">₹{secondPayment.toFixed(2)}</p>
+                        </div>
                         <div className="bg-blue-500/5 p-3 rounded-xl border border-blue-500/10 text-center">
-                          <p className="text-[10px] text-blue-500/60 uppercase font-black tracking-wider mb-1">Due</p>
+                          <p className="text-[10px] text-blue-500/60 uppercase font-black tracking-wider mb-1">Remaining</p>
                           <p className="text-base font-bold text-blue-400">₹{balanceDue.toFixed(2)}</p>
                         </div>
                       </div>
@@ -494,12 +512,14 @@ const EMIList = () => {
                       >
                         <Eye size={14} /> Details
                       </button>
-                      <button
-                        onClick={() => selectMembership(membership)}
-                        className="flex-1 py-2.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 text-xs font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                      >
-                        <Edit size={14} /> Update
-                      </button>
+                      {membership.status !== "completed" && (
+                        <button
+                          onClick={() => selectMembership(membership)}
+                          className="flex-1 py-2.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 text-xs font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                        >
+                          <Edit size={14} /> Update
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
