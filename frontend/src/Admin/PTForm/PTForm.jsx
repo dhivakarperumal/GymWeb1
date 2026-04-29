@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 import dayjs from 'dayjs';
 import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
@@ -16,6 +17,7 @@ const PTForm = () => {
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const memberId = searchParams.get("member_id");
 
   useEffect(() => {

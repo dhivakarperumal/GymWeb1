@@ -45,6 +45,12 @@ const UserEnquiry = () => {
     blood_group: "",
     gender: "",
     termsAccepted: false,
+    participant_name: "",
+    consent_agree: false,
+    consent_signature: "",
+    consent_date: "",
+    guardian_signature: "",
+    witness: "",
     plan_name: "",
     plan_duration: "",
   });
@@ -59,6 +65,12 @@ const UserEnquiry = () => {
       }));
     }
   }, [prefilledPlan]);
+
+  useEffect(() => {
+    if (formData.name && !formData.participant_name) {
+      setFormData(prev => ({ ...prev, participant_name: formData.name }));
+    }
+  }, [formData.name, formData.participant_name]);
 
   useEffect(() => {
     if (formData.height && formData.weight) {
@@ -103,18 +115,27 @@ const UserEnquiry = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        consent_data: {
+          participant_name: formData.participant_name,
+          agree: formData.consent_agree,
+          signature: formData.consent_signature,
+          date: formData.consent_date,
+          guardian_signature: formData.guardian_signature,
+          witness: formData.witness,
+        },
+      };
+
       if (selectedEnquiry) {
-        // Update status
-        await api.put(`/enquiries/${selectedEnquiry.id}/status`, { status: formData.status });
+        await api.put(`/enquiries/${selectedEnquiry.id}`, payload);
       } else {
-        // Create new enquiry
-        await api.post('/enquiries', formData);
+        await api.post('/enquiries', payload);
       }
 
       toast.success(selectedEnquiry ? 'Enquiry updated!' : 'Thank you! Your enquiry has been submitted.');
 
       if (!selectedEnquiry) {
-        // Navigate home after new enquiry
         setTimeout(() => navigate("/"), 1500);
       } else {
         fetchEnquiries();
@@ -129,7 +150,8 @@ const UserEnquiry = () => {
         emergency_contact_relationship: "", emergency_contact_address: "",
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
         fitness_goal: "", blood_group: "", gender: "", termsAccepted: false,
-        plan_name: "", plan_duration: ""
+        participant_name: "", consent_agree: false, consent_signature: "", consent_date: "",
+        guardian_signature: "", witness: "", plan_name: "", plan_duration: ""
       });
     } catch (error) {
       console.error('Error saving enquiry:', error);
@@ -138,6 +160,12 @@ const UserEnquiry = () => {
   };
 
   const handleEdit = (enquiry) => {
+    const consentData = enquiry.consent_data
+      ? typeof enquiry.consent_data === 'string'
+        ? JSON.parse(enquiry.consent_data)
+        : enquiry.consent_data
+      : {};
+
     setSelectedEnquiry(enquiry);
     setFormData({
       name: enquiry.name,
@@ -164,7 +192,14 @@ const UserEnquiry = () => {
       gender: enquiry.gender || "",
       status: enquiry.status,
       plan_name: enquiry.plan_name || "",
-      plan_duration: enquiry.plan_duration || ""
+      plan_duration: enquiry.plan_duration || "",
+      participant_name: consentData.participant_name || enquiry.name || "",
+      consent_agree: consentData.agree || false,
+      consent_signature: consentData.signature || "",
+      consent_date: consentData.date || "",
+      guardian_signature: consentData.guardian_signature || "",
+      witness: consentData.witness || "",
+      termsAccepted: enquiry.terms_accepted === 1 || enquiry.termsAccepted || false,
     });
     setShowForm(true);
   };
@@ -366,23 +401,18 @@ const UserEnquiry = () => {
                   </div>
 
                   <div className="pt-6 border-t border-white/5">
-
-                   {/* Top Text */}
-                  <p className="text-sm text-gray-400 mb-3">
-                    Please read the <span className="text-orange-500 font-semibold">Terms & Conditions</span>
-                  </p>
+                    <p className="text-sm text-gray-400 mb-3">
+                      Please read the <span className="text-orange-500 font-semibold">Terms & Conditions</span>
+                    </p>
 
                     <button
                       type="button"
                       onClick={() => setShowConsent(!showConsent)}
-                      className="w-full flex items-center justify-between px-6 py-4
- bg-white/5 border border-white/10 rounded-2xl
- hover:bg-white/10 transition-all"
+                      className="w-full flex items-center justify-between px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all"
                     >
                       <span className="text-white font-bold tracking-wider">
                         INFORMED CONSENT FORM
                       </span>
-
                       <span className="text-orange-500 text-2xl">
                         {showConsent ? "−" : "+"}
                       </span>
@@ -390,106 +420,128 @@ const UserEnquiry = () => {
 
                     {showConsent && (
                       <div className="mt-5 p-8 rounded-2xl bg-white/5 border border-white/10 space-y-8">
-
-                        {/* Consent Intro */}
                         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                           <p className="uppercase text-sm text-orange-400 font-semibold mb-5">
-                            Please Read The Consent Information Below
+                            Please Fill In All Information Requested Below
                           </p>
 
+                          <div className="flex flex-wrap items-center gap-3 leading-8 text-white">
+                            <span>I</span>
+                            <input
+                              type="text"
+                              name="participant_name"
+                              value={formData.participant_name}
+                              onChange={(e) =>
+                                setFormData({ ...formData, participant_name: e.target.value })
+                              }
+                              placeholder="Full Name"
+                              className="min-w-[180px] bg-transparent border-b border-orange-400 px-2 py-1 text-white outline-none"
+                              required
+                            />
+                            <span>
+                              give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.
+                            </span>
+                          </div>
+
+                          <label className="flex items-center gap-3 mt-6">
+                            <input
+                              type="checkbox"
+                              name="consent_agree"
+                              checked={formData.consent_agree}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setFormData({
+                                  ...formData,
+                                  consent_agree: checked,
+                                  termsAccepted: checked,
+                                });
+                              }}
+                              className="w-5 h-5"
+                              required
+                            />
+                            <span className="text-white">I Agree</span>
+                          </label>
+                        </div>
+
+                        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                          <h3 className="text-orange-400 font-bold text-lg mb-4">BENEFITS</h3>
                           <p className="text-white/80 leading-8">
-                            I give my consent to participate in the physical fitness evaluation
-                            program conducted by DAP Unisex Fitness Studio.
+                            Participation in a regular program of physical activity has been shown to produce positive changes in a number of organ systems. These changes include increased work capacity, improved cardiovascular efficiency, increased muscular strength, flexibility, power and endurance.
                           </p>
                         </div>
 
-
-                        {/* Benefits */}
                         <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                          <h3 className="text-orange-400 font-bold text-lg mb-4">
-                            BENEFITS
-                          </h3>
-
+                          <h3 className="text-orange-400 font-bold text-lg mb-4">RISKS</h3>
                           <p className="text-white/80 leading-8">
-                            Participation in a regular program of physical activity has been
-                            shown to produce positive changes in a number of organ systems.
-                            These changes include increased work capacity, improved
-                            cardiovascular efficiency, increased muscular strength,
-                            flexibility, power and endurance.
+                            Exercise carries some risk to the musculoskeletal system (sprains, strains) and cardiorespiratory system (dizziness, discomfort in breathing, heart attack). I certify that I know of no medical problem that would increase my risk of illness or injury.
                           </p>
                         </div>
 
-
-                        {/* Risks */}
                         <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                          <h3 className="text-orange-400 font-bold text-lg mb-4">
-                            RISKS
-                          </h3>
-
-                          <p className="text-white/80 leading-8">
-                            Exercise carries some risk to the musculoskeletal
-                            system (sprains, strains) and cardiorespiratory system
-                            (dizziness, discomfort in breathing, heart attack).
-                            I certify that I know of no medical problem that would
-                            increase my risk of illness or injury.
-                          </p>
-                        </div>
-
-
-                        {/* Testing */}
-                        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                          <h3 className="text-orange-400 font-bold text-lg mb-4">
-                            TESTING AND EVALUATION RESULTS
-                          </h3>
-
+                          <h3 className="text-orange-400 font-bold text-lg mb-4">TESTING AND EVALUATION RESULTS</h3>
                           <p className="text-white/80 leading-8 mb-5">
-                            I understand I will undergo initial testing to determine
-                            my current physical fitness status including health inventory,
-                            body composition, treadmill testing, muscular fitness and
-                            flexibility screening.
+                            I understand I will undergo initial testing to determine my current physical fitness status including health inventory, body composition, treadmill testing, muscular fitness and flexibility screening.
                           </p>
-
                           <p className="text-white/80 leading-8 mb-5">
-                            My individual results will be made available only to me and
-                            are not intended to replace medical tests or physician services.
+                            My individual results will be made available only to me and are not intended to replace any medical test or physician services.
                           </p>
-
                           <p className="text-white/80 leading-8">
-                            By agreeing, I understand I am personally responsible for my
-                            actions during my tenure at DAP Unisex Fitness Studio.
+                            By signing this consent form, I understand I am personally responsible for my actions during my tenure at DAP Unisex Fitness Studio.
                           </p>
                         </div>
 
-
-                        {/* Policy */}
                         <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-5 text-orange-300 font-semibold">
-                          No Refund • No Transfer • No Extension • No Freezing
+                          * No Refund • No Transfer • No Extension • No Freezing
                         </div>
 
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block mb-2 text-orange-300">Signature</label>
+                            <input
+                              name="consent_signature"
+                              value={formData.consent_signature}
+                              onChange={(e) => setFormData({ ...formData, consent_signature: e.target.value })}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white"
+                              placeholder="Type signature"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block mb-2 text-orange-300">Date</label>
+                            <input
+                              type="date"
+                              name="consent_date"
+                              value={formData.consent_date}
+                              onChange={(e) => setFormData({ ...formData, consent_date: e.target.value })}
+                              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block mb-2 text-orange-300">Parent/Guardian Signature (if minor)</label>
+                          <input
+                            name="guardian_signature"
+                            value={formData.guardian_signature}
+                            onChange={(e) => setFormData({ ...formData, guardian_signature: e.target.value })}
+                            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white"
+                            placeholder="Guardian signature"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block mb-2 text-orange-300">Witness</label>
+                          <input
+                            name="witness"
+                            value={formData.witness}
+                            onChange={(e) => setFormData({ ...formData, witness: e.target.value })}
+                            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white"
+                            placeholder="Witness name"
+                          />
+                        </div>
                       </div>
                     )}
-
                   </div>
-
-                  {/* Agreement */}
-                  <label className="flex items-center gap-3 pt-4 border-t border-white/10">
-                    <input
-                      type="checkbox"
-                      required
-                      checked={formData.termsAccepted || false}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          termsAccepted: e.target.checked
-                        })
-                      }
-                      className="w-5 h-5"
-                    />
-
-                    <span className="text-gray-300">
-                      I have read and agree to the informed consent terms
-                    </span>
-                  </label>
                 </div>
 
                 {/* ACTION BUTTONS */}
