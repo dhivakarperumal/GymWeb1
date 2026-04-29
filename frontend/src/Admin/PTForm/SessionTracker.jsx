@@ -11,6 +11,7 @@ const SessionTracker = ({
   isLastStep,
   readOnly = false,
   userMode = false,
+  allowStatusEdit = false,
   onSaved = () => {},
 }) => {
   const { user } = useAuth();
@@ -37,7 +38,7 @@ const SessionTracker = ({
   }, [initialFormData]);
 
   const handleSessionChange = (index, field, value) => {
-    if (userMode && field === "client_sign") {
+    if (userMode && ['date', 'workout', 'trainer_sign', 'client_sign'].includes(field)) {
       return;
     }
 
@@ -114,6 +115,7 @@ const SessionTracker = ({
                         value={session.date || ""}
                         onChange={(e) => handleSessionChange(index, "date", e.target.value)}
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center"
+                        readOnly={userMode}
                       />
                     </td>
                     <td className="p-0 border-r border-white/5">
@@ -123,19 +125,21 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "workout", e.target.value)}
                         placeholder="Describe the workout sessions..."
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors placeholder-white/10"
+                        readOnly={userMode}
                       />
                     </td>
                     <td className="p-4 border-r border-white/5 text-center">
                        <button
                          type="button"
                          onClick={() => {
+                           const canChangeStatus = userMode || allowStatusEdit;
+                           if (!canChangeStatus) return;
+
                            if (userMode) {
-                             // In userMode, only allow approving (Pending to Completed)
                              if (session.status === "Pending") {
                                handleSessionChange(index, "status", "Completed");
                              }
                            } else {
-                             // In adminMode, toggle between Pending and Completed
                              handleSessionChange(index, "status", session.status === "Completed" ? "Pending" : "Completed");
                            }
                          }}
@@ -144,7 +148,7 @@ const SessionTracker = ({
                            ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white" 
                            : "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500 hover:text-white"
                          }`}
-                         disabled={userMode && session.status === "Completed"}
+                         disabled={(!userMode && !allowStatusEdit) || (userMode && session.status === "Completed")}
                        >
                          {session.status || "Pending"}
                        </button>
@@ -153,10 +157,9 @@ const SessionTracker = ({
                       <input
                         type="text"
                         value={session.client_sign || ""}
-                        onChange={(e) => handleSessionChange(index, "client_sign", e.target.value)}
                         placeholder="Sign/Initial"
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10"
-                        readOnly={userMode}
+                        readOnly
                       />
                     </td>
                     <td className="p-0">
