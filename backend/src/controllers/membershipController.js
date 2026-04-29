@@ -72,15 +72,26 @@ async function createMembership(req, res) {
       paymentMode,
       status,
       secondPaymentPaid,
+      paymentStatus,
     } = req.body;
 
     const actualPricePaid = pricePaid !== undefined ? pricePaid : price;
     const actualSecondPaymentPaid = secondPaymentPaid !== undefined ? secondPaymentPaid : 0;
 
+    // Auto-calculate payment status if not provided
+    let finalPaymentStatus = paymentStatus;
+    if (!finalPaymentStatus) {
+      const totalPaid = Number(actualPricePaid) + Number(actualSecondPaymentPaid);
+      const totalDue = Number(price);
+      if (totalPaid >= totalDue) finalPaymentStatus = 'Paid';
+      else if (totalPaid > 0) finalPaymentStatus = 'Partial';
+      else finalPaymentStatus = 'Pending';
+    }
+
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status, paymentStatus)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -99,6 +110,7 @@ async function createMembership(req, res) {
       paymentId || null,
       paymentMode || null,
       status || 'active',
+      finalPaymentStatus,
     ];
 
     const [result] = await db.query(query, values);
@@ -180,6 +192,7 @@ async function updateMembership(req, res) {
       "endDate",
       "duration",
       "planName",
+      "paymentStatus",
     ];
 
     const updates = [];
