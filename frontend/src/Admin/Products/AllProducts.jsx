@@ -234,8 +234,6 @@ const AllProducts = () => {
 
                 {/* PRODUCT INFO */}
                 <div className="space-y-1 text-center">
-                  <p className="text-orange-400 font-semibold text-sm">{p.id}</p>
-
                   <h3 className="text-white font-semibold text-md truncate">
                     {p.name}
                   </h3>
@@ -297,7 +295,6 @@ const AllProducts = () => {
                 <tr>
                   <th className="px-4 py-3">S.No</th>
                   <th className="px-4 py-3">Img</th>
-                  <th className="px-4 py-3">ID</th>
                   <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Category</th>
                   <th className="px-4 py-3">MRP</th>
@@ -320,10 +317,6 @@ const AllProducts = () => {
                         alt={p.name}
                         className="w-12 h-12 object-cover rounded-lg border border-white/10"
                       />
-                    </td>
-
-                    <td className="px-4 py-3 font-semibold text-orange-400">
-                      {p.id}
                     </td>
 
                     <td className="px-4 py-3 text-gray-200">{p.name}</td>
@@ -370,7 +363,7 @@ const AllProducts = () => {
 
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan="9" className="text-center py-6 text-gray-400">
+                    <td colSpan="8" className="text-center py-6 text-gray-400">
                       No products found
                     </td>
                   </tr>
