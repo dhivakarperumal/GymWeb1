@@ -311,6 +311,7 @@ Thank you for joining 💪
         planName: selectedPlan.name,
         price: planTotal,
         pricePaid: amountNow,
+        secondPaymentPaid: 0,
         duration: selectedPlan.duration,
         startDate: form.startDate,
         endDate: form.endDate,
