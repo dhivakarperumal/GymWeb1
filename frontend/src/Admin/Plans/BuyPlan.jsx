@@ -15,6 +15,7 @@ const BuyPlanadmin = () => {
   const [plans, setPlans] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
   const [trainers, setTrainers] = useState([]);
+  const [memberHistory, setMemberHistory] = useState([]);
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -415,8 +416,14 @@ Thank you for joining 💪
                 );
 
                 setSelectedUser(user);
-
+                
+                // FETCH HISTORY
                 if (user) {
+                  const uId = user.u_id || user.user_id || user.id;
+                  api.get(`/memberships/user/${uId}`)
+                    .then(res => setMemberHistory(Array.isArray(res.data) ? res.data : []))
+                    .catch(err => console.error("History fetch error:", err));
+
                   setForm((prev) => ({
                     ...prev,
                     phone: user.phone || "",
@@ -738,6 +745,42 @@ Thank you for joining 💪
               <p className="text-gray-300 text-sm mt-2">
                 {selectedPlan.description}
               </p>
+            </div>
+          )}
+
+          {/* MEMBER HISTORY */}
+          {selectedUser && (
+            <div className="mt-8">
+              <h2 className="text-xl mb-4 font-semibold text-orange-400 flex items-center gap-2">
+                <span className="w-2 h-6 bg-orange-500 rounded-full"></span>
+                Membership History
+              </h2>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {memberHistory.length === 0 ? (
+                  <p className="text-gray-500 text-sm italic p-4 bg-white/5 rounded-xl border border-white/5">No previous plan history found.</p>
+                ) : (
+                  memberHistory.map((h, i) => (
+                    <div key={h.id || i} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="font-bold text-white">{h.planName}</p>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${h.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                          {h.status || 'Past'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-400">
+                        <div>
+                          <p>Price: <span className="text-emerald-400 font-semibold">₹{h.price}</span></p>
+                          <p>Paid: ₹{h.pricePaid}</p>
+                        </div>
+                        <div className="text-right">
+                          <p>{new Date(h.startDate).toLocaleDateString()} -</p>
+                          <p>{new Date(h.endDate).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
         </div>

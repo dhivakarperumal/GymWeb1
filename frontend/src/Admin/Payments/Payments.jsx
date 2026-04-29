@@ -70,6 +70,7 @@ const Payments = () => {
           usersMap.get(uId).plans.push({
             id: m.id,
             planName: m.planName,
+            price: m.price || 0,
             pricePaid: m.pricePaid || 0,
             secondPaymentPaid: m.secondPaymentPaid || 0,
             startDate: m.startDate,
@@ -659,7 +660,7 @@ const Payments = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {paginatedPlans.map(({ member, plan }, index) => {
               const totalAmount =
-                plan.totalPrice || plan.planPrice || plan.pricePaid;
+                plan.price || plan.totalPrice || plan.planPrice || plan.pricePaid;
 
               return (
                 <div
@@ -777,13 +778,13 @@ const Payments = () => {
                     <th className="px-6 py-4 border-b border-white/5">Name</th>
                     <th className="px-6 py-4 border-b border-white/5">Plan</th>
                     <th className="px-6 py-4 border-b border-white/5">
+                      Total Amount
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5">
                       Initial Amount
                     </th>
                     <th className="px-6 py-4 border-b border-white/5">
                       Second Payment
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5">
-                      Total Amount
                     </th>
                     <th className="px-6 py-4 border-b border-white/5">
                       Start Date
@@ -805,7 +806,7 @@ const Payments = () => {
                 <tbody>
                   {paginatedPlans.map(({ member, plan }, index) => {
                     const totalAmount =
-                      plan.totalPrice || plan.planPrice || plan.pricePaid;
+                      plan.price || plan.totalPrice || plan.planPrice || plan.pricePaid;
 
                     return (
                       <tr
@@ -835,6 +836,11 @@ const Payments = () => {
                           {plan.planName}
                         </td>
                         <td className="px-6 py-4">
+                          <span className="text-orange-400 font-black">
+                            ₹{totalAmount}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
                           <span className="text-green-400 font-black">
                             ₹{plan.pricePaid}
                           </span>
@@ -843,11 +849,6 @@ const Payments = () => {
                         <td className="px-6 py-4">
                           <span className="text-cyan-300 font-black">
                             ₹{plan.secondPaymentPaid || 0}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-orange-400 font-black">
-                            ₹{totalAmount}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">
