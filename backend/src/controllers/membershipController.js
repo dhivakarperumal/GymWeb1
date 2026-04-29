@@ -71,14 +71,16 @@ async function createMembership(req, res) {
       paymentId,
       paymentMode,
       status,
+      secondPaymentPaid,
     } = req.body;
 
     const actualPricePaid = pricePaid !== undefined ? pricePaid : price;
+    const actualSecondPaymentPaid = secondPaymentPaid !== undefined ? secondPaymentPaid : 0;
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, pricePaid, duration, startDate, endDate, paymentId, paymentMode, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -89,6 +91,7 @@ async function createMembership(req, res) {
       planId,
       planName,
       actualPricePaid,
+      actualSecondPaymentPaid,
       duration,
       startDate,
       endDate,
@@ -169,6 +172,7 @@ async function updateMembership(req, res) {
     const allowedFields = [
       "status",
       "pricePaid",
+      "secondPaymentPaid",
       "paymentMode",
       "paymentId",
       "startDate",
