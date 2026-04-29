@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Users, CheckCircle, XCircle, AlertTriangle, Calendar } from "lucide-react";
+import {
+  Search,
+  Users,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Calendar,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 import { FaPrint } from "react-icons/fa";
 
@@ -64,6 +71,7 @@ const Payments = () => {
             id: m.id,
             planName: m.planName,
             pricePaid: m.pricePaid || 0,
+            secondPaymentPaid: m.secondPaymentPaid || 0,
             startDate: m.startDate,
             endDate: m.endDate,
             createdAt: m.createdAt,
@@ -124,7 +132,9 @@ const Payments = () => {
     if (!date) return false;
     const d = new Date(date);
     const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return (
+      d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    );
   };
 
   const isInCustomRange = (date) => {
@@ -145,8 +155,10 @@ const Payments = () => {
 
     try {
       // update via API
-      const res = await api.put(`${MEMBERSHIPS_API}/${planId}`, { status: newStatus });
-      
+      const res = await api.put(`${MEMBERSHIPS_API}/${planId}`, {
+        status: newStatus,
+      });
+
       if (res.status !== 200) {
         console.error("status update failed");
         alert("Update failed");
@@ -161,11 +173,16 @@ const Payments = () => {
                 ...m,
                 plans: m.plans.map((p) =>
                   p.id === planId
-                    ? { ...p, status: newStatus, paymentStatus: newStatus === "active" ? "Paid" : "Unpaid" }
-                    : p
+                    ? {
+                        ...p,
+                        status: newStatus,
+                        paymentStatus:
+                          newStatus === "active" ? "Paid" : "Unpaid",
+                      }
+                    : p,
                 ),
-              }
-        )
+              },
+        ),
       );
     } catch (err) {
       console.error(err);
@@ -173,17 +190,14 @@ const Payments = () => {
     }
   };
 
-
-
   const getRemainingDays = (endDate) => {
-
     if (!endDate) return "-";
 
     const end = new Date(endDate);
     const today = new Date();
 
-    end.setHours(0,0,0,0);
-    today.setHours(0,0,0,0);
+    end.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
 
     const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
 
@@ -191,9 +205,7 @@ const Payments = () => {
     if (diff === 0) return "Last Day";
 
     return `${diff} days`;
-
   };
-
 
   /* ================= PRINT RECEIPT ================= */
   const handlePrintReceipt = (member, plan) => {
@@ -214,11 +226,13 @@ const Payments = () => {
       </div>
     `;
 
-    const printWindow = window.open('', '_blank', 'width=600,height=600');
+    const printWindow = window.open("", "_blank", "width=600,height=600");
     if (printWindow) {
-      printWindow.document.write('<html><head><title>Print Receipt</title></head><body>');
+      printWindow.document.write(
+        "<html><head><title>Print Receipt</title></head><body>",
+      );
       printWindow.document.write(receiptContent);
-      printWindow.document.write('</body></html>');
+      printWindow.document.write("</body></html>");
       printWindow.document.close();
       printWindow.focus();
       setTimeout(() => {
@@ -236,10 +250,14 @@ const Payments = () => {
       // Date Filter for counts
       let passDate = true;
       if (dateFilter === "today" && !isToday(plan.createdAt)) passDate = false;
-      if (dateFilter === "yesterday" && !isYesterday(plan.createdAt)) passDate = false;
-      if (dateFilter === "this week" && !isThisWeek(plan.createdAt)) passDate = false;
-      if (dateFilter === "this month" && !isThisMonth(plan.createdAt)) passDate = false;
-      if (dateFilter === "custom" && !isInCustomRange(plan.createdAt)) passDate = false;
+      if (dateFilter === "yesterday" && !isYesterday(plan.createdAt))
+        passDate = false;
+      if (dateFilter === "this week" && !isThisWeek(plan.createdAt))
+        passDate = false;
+      if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
+        passDate = false;
+      if (dateFilter === "custom" && !isInCustomRange(plan.createdAt))
+        passDate = false;
 
       if (passDate) {
         allInitialPlans.push(plan);
@@ -269,15 +287,21 @@ const Payments = () => {
 
         // Status Filter
         if (filterType === "active" && plan.status !== "active") return false;
-        if (filterType === "inactive" && plan.status !== "inactive") return false;
-        if (filterType === "expiry" && !isExpiringPlan(plan.endDate)) return false;
+        if (filterType === "inactive" && plan.status !== "inactive")
+          return false;
+        if (filterType === "expiry" && !isExpiringPlan(plan.endDate))
+          return false;
 
         // Date Filter
         if (dateFilter === "today" && !isToday(plan.createdAt)) return false;
-        if (dateFilter === "yesterday" && !isYesterday(plan.createdAt)) return false;
-        if (dateFilter === "this week" && !isThisWeek(plan.createdAt)) return false;
-        if (dateFilter === "this month" && !isThisMonth(plan.createdAt)) return false;
-        if (dateFilter === "custom" && !isInCustomRange(plan.createdAt)) return false;
+        if (dateFilter === "yesterday" && !isYesterday(plan.createdAt))
+          return false;
+        if (dateFilter === "this week" && !isThisWeek(plan.createdAt))
+          return false;
+        if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
+          return false;
+        if (dateFilter === "custom" && !isInCustomRange(plan.createdAt))
+          return false;
 
         return true;
       }),
@@ -296,7 +320,7 @@ const Payments = () => {
 
   const paginatedPlans = allPlans.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   /* RESET PAGE ON SEARCH/FILTER */
@@ -308,21 +332,32 @@ const Payments = () => {
     if (!date) return "—";
     const d = new Date(date);
     if (isNaN(d.getTime())) return "—";
-    
+
     // Using local date parts to avoid timezone shifts
-    const day = d.getDate().toString().padStart(2, '0');
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     const month = months[d.getMonth()];
     const year = d.getFullYear();
-    
+
     return `${day} ${month} ${year}`;
   };
 
   const toggleRow = (id) => {
     setSelectedRows((prev) =>
-      prev.includes(id)
-        ? prev.filter((rowId) => rowId !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id],
     );
   };
 
@@ -364,7 +399,6 @@ const Payments = () => {
   };
 
   const excelDateToJSDate = (value) => {
-
     if (!value) return null;
 
     // If already string date
@@ -400,27 +434,23 @@ const Payments = () => {
       console.log("Imported Data:", jsonData);
 
       try {
-
         for (const row of jsonData) {
-
           await api.post(MEMBERS_API, {
-              name: row.Name,
-              username: row.Name,
-              phone: String(row.Mobile || ""),
-              email: row.Email,
-              plan: row.Plan,
-              amount: row.Amount,
-              joinDate: excelDateToJSDate(row["Start Date"]),
-              expiryDate: excelDateToJSDate(row["End Date"]),
-              status: row.Status || "active"
-            });
-
+            name: row.Name,
+            username: row.Name,
+            phone: String(row.Mobile || ""),
+            email: row.Email,
+            plan: row.Plan,
+            amount: row.Amount,
+            joinDate: excelDateToJSDate(row["Start Date"]),
+            expiryDate: excelDateToJSDate(row["End Date"]),
+            status: row.Status || "active",
+          });
         }
 
         alert("Excel imported successfully");
 
         window.location.reload();
-
       } catch (error) {
         console.error(error);
         alert("Import failed");
@@ -437,428 +467,483 @@ const Payments = () => {
           <div className="w-16 h-16 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
           <div className="absolute inset-0 bg-red-500/10 blur-xl rounded-full animate-pulse" />
         </div>
-        <p className="text-white/40 text-xs uppercase tracking-[0.4em] animate-pulse">Processing Transactions</p>
+        <p className="text-white/40 text-xs uppercase tracking-[0.4em] animate-pulse">
+          Processing Transactions
+        </p>
       </div>
     );
   }
 
   return (
     <>
-    <div className="min-h-screen p-4 md:p-8 text-white">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+      <div className="min-h-screen p-4 md:p-8 text-white">
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+          {/* Title */}
+          <h1 className="text-2xl md:text-3xl font-bold">Payment Details</h1>
 
-  {/* Title */}
-  <h1 className="text-2xl md:text-3xl font-bold">
-    Payment Details
-  </h1>
-
-  {/* Right Section */}
-  <div className="flex flex-wrap items-center gap-3 mb-5 ml-auto">
-
-    {/* Import Excel */}
-    <label className="px-4 py-2.5 bg-blue-500 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-600 transition">
-      Import Excel
-      <input
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={handleImport}
-        className="hidden"
-      />
-    </label>
-
-    {/* Export Excel */}
-    <button
-      onClick={exportToExcel}
-      className="px-4 py-2.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition"
-    >
-      Export Excel
-    </button>
-
-    {/* Toggle Buttons */}
-    <div className="flex items-center bg-[#2a2540] rounded-xl p-1">
-
-      <button
-        onClick={() => setViewType("table")}
-        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-          viewType === "table"
-            ? "bg-orange-500 text-white"
-            : "text-gray-300 hover:bg-white/10"
-        }`}
-      >
-        Table
-      </button>
-
-      <button
-        onClick={() => setViewType("card")}
-        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-          viewType === "card"
-            ? "bg-orange-500 text-white"
-            : "text-gray-300 hover:bg-white/10"
-        }`}
-      >
-        Card
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-      {/* SEARCH + FILTERS SAME ROW */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-        {/* LEFT → SEARCH */}
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-4 top-3 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Search by name, email, or plan..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20"
-          />
-        </div>
-
-        {/* RIGHT → FILTER BUTTONS */}
-        <div className="flex flex-wrap gap-4 md:justify-end items-center">
-          {/* Date Filters */}
-          <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
-            <div className="px-3 text-gray-400 border-r border-white/10 hidden lg:block">
-              <Calendar size={16} />
-            </div>
-            {["all", "today", "yesterday", "this week", "this month", "custom"].map((df) => (
-              <button
-                key={df}
-                onClick={() => setDateFilter(df)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${dateFilter === df
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-              >
-                {df.charAt(0).toUpperCase() + df.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {/* Custom Range Inputs */}
-          {dateFilter === "custom" && (
-            <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl p-1 animate-in slide-in-from-right-2 duration-300">
+          {/* Right Section */}
+          <div className="flex flex-wrap items-center gap-3 mb-5 ml-auto">
+            {/* Import Excel */}
+            <label className="px-4 py-2.5 bg-blue-500 text-white rounded-lg text-sm cursor-pointer hover:bg-blue-600 transition">
+              Import Excel
               <input
-                type="date"
-                value={customStart}
-                onChange={(e) => setCustomStart(e.target.value)}
-                className="bg-transparent border-none text-xs text-white focus:ring-0 px-2 py-1 cursor-pointer"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImport}
+                className="hidden"
               />
-              <span className="text-gray-500 text-xs">to</span>
-              <input
-                type="date"
-                value={customEnd}
-                onChange={(e) => setCustomEnd(e.target.value)}
-                className="bg-transparent border-none text-xs text-white focus:ring-0 px-2 py-1 cursor-pointer"
-              />
-            </div>
-          )}
+            </label>
 
-          {/* Status Filters */}
-          <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
-            {["all", "active", "inactive", "expiry"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${filterType === type
-                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-      </div>
-
-      {/* ================= SUMMARY CARDS ================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-400 mb-1">Total Plans</p>
-            <p className="text-2xl font-bold">{counts.all}</p>
-          </div>
-          <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl">
-            <Users size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-400 mb-1">Active</p>
-            <p className="text-2xl font-bold">{counts.active}</p>
-          </div>
-          <div className="p-3 bg-green-500/20 text-green-400 rounded-xl">
-            <CheckCircle size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-400 mb-1">Inactive</p>
-            <p className="text-2xl font-bold">{counts.inactive}</p>
-          </div>
-          <div className="p-3 bg-red-500/20 text-red-400 rounded-xl">
-            <XCircle size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-400 mb-1">Expiring Soon</p>
-            <p className="text-2xl font-bold">{counts.expiry}</p>
-          </div>
-          <div className="p-3 bg-yellow-500/20 text-yellow-400 rounded-xl">
-            <AlertTriangle size={24} />
-          </div>
-        </div>
-      </div>
-
-
-      {/* ================= GRID VIEW ================= */}
-      {viewType === "card" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {paginatedPlans.map(({ member, plan }, index) => (
-            <div
-              key={`${member.uid}_${plan.id}`}
-              className="relative bg-white/10 border border-white/20 rounded-xl p-6"
+            {/* Export Excel */}
+            <button
+              onClick={exportToExcel}
+              className="px-4 py-2.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition"
             >
-              <span
-                className={`absolute top-4 right-4 px-3 py-1 text-xs rounded-full border ${plan.status === "active"
-                  ? "bg-green-500/20 text-green-400 border-green-400/30"
-                  : "bg-gray-500/20 text-gray-300 border-gray-400/30"
-                  }`}
-              >
-                {plan.status === "active" ? "Active" : "Inactive"}
-              </span>
+              Export Excel
+            </button>
 
-              {/* <div>
+            {/* Toggle Buttons */}
+            <div className="flex items-center bg-[#2a2540] rounded-xl p-1">
+              <button
+                onClick={() => setViewType("table")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  viewType === "table"
+                    ? "bg-orange-500 text-white"
+                    : "text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                Table
+              </button>
+
+              <button
+                onClick={() => setViewType("card")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  viewType === "card"
+                    ? "bg-orange-500 text-white"
+                    : "text-gray-300 hover:bg-white/10"
+                }`}
+              >
+                Card
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* SEARCH + FILTERS SAME ROW */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* LEFT → SEARCH */}
+          <div className="relative w-full md:max-w-md">
+            <Search className="absolute left-4 top-3 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search by name, email, or plan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20"
+            />
+          </div>
+
+          {/* RIGHT → FILTER BUTTONS */}
+          <div className="flex flex-wrap gap-4 md:justify-end items-center">
+            {/* Date Filters */}
+            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
+              <div className="px-3 text-gray-400 border-r border-white/10 hidden lg:block">
+                <Calendar size={16} />
+              </div>
+              {[
+                "all",
+                "today",
+                "yesterday",
+                "this week",
+                "this month",
+                "custom",
+              ].map((df) => (
+                <button
+                  key={df}
+                  onClick={() => setDateFilter(df)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                    dateFilter === df
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {df.charAt(0).toUpperCase() + df.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Range Inputs */}
+            {dateFilter === "custom" && (
+              <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl p-1 animate-in slide-in-from-right-2 duration-300">
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="bg-transparent border-none text-xs text-white focus:ring-0 px-2 py-1 cursor-pointer"
+                />
+                <span className="text-gray-500 text-xs">to</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="bg-transparent border-none text-xs text-white focus:ring-0 px-2 py-1 cursor-pointer"
+                />
+              </div>
+            )}
+
+            {/* Status Filters */}
+            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
+              {["all", "active", "inactive", "expiry"].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(type)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
+                    filterType === type
+                      ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ================= SUMMARY CARDS ================= */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Total Plans</p>
+              <p className="text-2xl font-bold">{counts.all}</p>
+            </div>
+            <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl">
+              <Users size={24} />
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Active</p>
+              <p className="text-2xl font-bold">{counts.active}</p>
+            </div>
+            <div className="p-3 bg-green-500/20 text-green-400 rounded-xl">
+              <CheckCircle size={24} />
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Inactive</p>
+              <p className="text-2xl font-bold">{counts.inactive}</p>
+            </div>
+            <div className="p-3 bg-red-500/20 text-red-400 rounded-xl">
+              <XCircle size={24} />
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Expiring Soon</p>
+              <p className="text-2xl font-bold">{counts.expiry}</p>
+            </div>
+            <div className="p-3 bg-yellow-500/20 text-yellow-400 rounded-xl">
+              <AlertTriangle size={24} />
+            </div>
+          </div>
+        </div>
+
+        {/* ================= GRID VIEW ================= */}
+        {viewType === "card" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {paginatedPlans.map(({ member, plan }, index) => {
+              const totalAmount =
+                plan.totalPrice || plan.planPrice || plan.pricePaid;
+
+              return (
+                <div
+                  key={`${member.uid}_${plan.id}`}
+                  className="relative bg-white/10 border border-white/20 rounded-xl p-6"
+                >
+                  <span
+                    className={`absolute top-4 right-4 px-3 py-1 text-xs rounded-full border ${
+                      plan.status === "active"
+                        ? "bg-green-500/20 text-green-400 border-green-400/30"
+                        : "bg-gray-500/20 text-gray-300 border-gray-400/30"
+                    }`}
+                  >
+                    {plan.status === "active" ? "Active" : "Inactive"}
+                  </span>
+
+                  {/* <div>
                 {getSerialNumber(index)}
               </div> */}
 
-              <p className="text-lg font-semibold">
-                {member.username || "No Name"}
-              </p>
-              <p className="text-sm text-gray-300 mb-4">
-                {member.email}
-              </p>
+                  <p className="text-lg font-semibold">
+                    {member.username || "No Name"}
+                  </p>
+                  <p className="text-sm text-gray-300 mb-4">{member.email}</p>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-400">Plan</p>
-                  <p>{plan.planName}</p>
-                </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-400">Plan</p>
+                      <p>{plan.planName}</p>
+                    </div>
 
-                <div>
-                  <p className="text-gray-400">Amount</p>
-                  <p>₹ {plan.pricePaid}</p>
-                </div>
+                    <div>
+                      <p className="text-gray-400">Amount</p>
+                      <p>₹ {plan.pricePaid}</p>
+                    </div>
 
-                <div>
-                  <p className="text-gray-400">Start Date</p>
-                  <p className="whitespace-nowrap">{formatDate(plan.startDate)}</p>
-                </div>
+                    <div>
+                      <p className="text-gray-400">Start Date</p>
+                      <p className="whitespace-nowrap">
+                        {formatDate(plan.startDate)}
+                      </p>
+                    </div>
 
-                <div>
-                  <p className="text-gray-400">Remaining Days</p>
-                  <span
-                    className={`px-2 py-1 rounded text-xs ${
-                      getRemainingDays(plan.endDate) === "Expired"
-                        ? "bg-red-500/20 text-red-400"
-                        : isExpiringPlan(plan.endDate)
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-green-500/20 text-green-400"
-                    }`}
-                  >
-
-                    {getRemainingDays(plan.endDate)}
-
-                  </span>
-                </div>
-
-                <div>
-                  <p className="text-gray-400">End Date</p>
-                  <p className="whitespace-nowrap">{formatDate(plan.endDate)}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap justify-end gap-2">
-                <button
-                  onClick={() => handlePrintReceipt(member, plan)}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm transition"
-                >
-                  <FaPrint/>
-                </button>
-                {plan.status === "active" ? (
-                  <button
-                    onClick={() => handleStatusChange(member.uid, plan.id, "inactive")}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-sm transition"
-                  >
-                    Refund & Inactive
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleStatusChange(member.uid, plan.id, "active")}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-sm transition"
-                  >
-                    Mark Active
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-
-
-      {viewType === "table" && (
-        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-sm text-left text-gray-200 border-collapse">
-              <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border-b border-white/10 z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
-                <tr>
-                  <th className="px-6 py-4 border-b border-white/5">
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
-                    />
-                  </th>
-                  <th className="px-6 py-4 border-b border-white/5">S.No</th>
-                  <th className="px-6 py-4 border-b border-white/5">Name</th>
-                  <th className="px-6 py-4 border-b border-white/5">Plan</th>
-                  <th className="px-6 py-4 border-b border-white/5">Amount</th>
-                  <th className="px-6 py-4 border-b border-white/5">Start Date</th>
-                  <th className="px-6 py-4 border-b border-white/5">End Date</th>
-                  <th className="px-6 py-4 border-b border-white/5">Days Left</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-center">Status / Action</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-center">Receipt</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedPlans.map(({ member, plan }, index) => (
-                  <tr
-                    key={`${member.uid}_${plan.id}`}
-                    className="border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-all group"
-                  >
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(member.uid)}
-                        onChange={() => toggleRow(member.uid)}
-                        className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-6 py-4 font-bold text-white/40">
-                      {getSerialNumber(index)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-white group-hover:text-orange-400 transition-colors">
-                        {member.username}
-                      </div>
-                      <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">
-                        {member.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-white/80">{plan.planName}</td>
-                    <td className="px-6 py-4">
-                      <span className="text-orange-500 font-black">₹{plan.pricePaid}</span>
-                    </td>
-                    <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">{formatDate(plan.startDate)}</td>
-                    <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">{formatDate(plan.endDate)}</td>
-                    <td className="px-6 py-4">
+                    <div>
+                      <p className="text-gray-400">Remaining Days</p>
                       <span
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        className={`px-2 py-1 rounded text-xs ${
                           getRemainingDays(plan.endDate) === "Expired"
-                            ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                            ? "bg-red-500/20 text-red-400"
                             : isExpiringPlan(plan.endDate)
-                            ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                            : "bg-green-500/10 text-green-400 border border-green-500/20"
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-green-500/20 text-green-400"
                         }`}
                       >
                         {getRemainingDays(plan.endDate)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <button
-                          onClick={() => handleStatusChange(member.uid, plan.id, plan.status === 'active' ? 'inactive' : 'active')}
-                          className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
-                            plan.status === 'active' 
-                              ? 'bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white' 
-                              : 'bg-white/5 text-white/40 border-white/10 hover:bg-orange-500/20 hover:text-orange-400 hover:border-orange-500/30'
-                          }`}
-                        >
-                          {plan.status || 'Active'}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">End Date</p>
+                      <p className="whitespace-nowrap">
+                        {formatDate(plan.endDate)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap justify-end gap-2">
+                    <button
+                      onClick={() => handlePrintReceipt(member, plan)}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm transition"
+                    >
+                      <FaPrint />
+                    </button>
+                    {plan.status === "active" ? (
                       <button
-                        onClick={() => handlePrintReceipt(member, plan)}
-                        className="p-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg hover:bg-blue-500 hover:text-white transition-all inline-flex"
-                        title="Print Receipt"
+                        onClick={() =>
+                          handleStatusChange(member.uid, plan.id, "inactive")
+                        }
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-sm transition"
                       >
-                        <FaPrint size={14} />
+                        Refund & Inactive
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          handleStatusChange(member.uid, plan.id, "active")
+                        }
+                        className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-sm transition"
+                      >
+                        Mark Active
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ================= PAGINATION ================= */}
-      {totalPages > 1 && (
-        <div className="flex justify-end items-center gap-2 mt-8 flex-wrap">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            className="px-3 py-1 rounded bg-white/10 border border-white/20"
-            disabled={currentPage === 1}
-          >
-            Prev
-          </button>
+        {viewType === "table" && (
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1000px] text-sm text-left text-gray-200 border-collapse">
+                <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border-b border-white/10 z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
+                  <tr>
+                    <th className="px-6 py-4 border-b border-white/5">
+                      <input
+                        type="checkbox"
+                        checked={selectAll}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
+                      />
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5">S.No</th>
+                    <th className="px-6 py-4 border-b border-white/5">Name</th>
+                    <th className="px-6 py-4 border-b border-white/5">Plan</th>
+                    <th className="px-6 py-4 border-b border-white/5">
+                      Initial Amount
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5">
+                      Second Payment
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5">
+                      Total Amount
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5">
+                      Start Date
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5">
+                      End Date
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5">
+                      Days Left
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5 text-center">
+                      Status / Action
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5 text-center">
+                      Receipt
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedPlans.map(({ member, plan }, index) => {
+                    const totalAmount =
+                      plan.totalPrice || plan.planPrice || plan.pricePaid;
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-            (page) => (
+                    return (
+                      <tr
+                        key={`${member.uid}_${plan.id}`}
+                        className="border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-all group"
+                      >
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.includes(member.uid)}
+                            onChange={() => toggleRow(member.uid)}
+                            className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-6 py-4 font-bold text-white/40">
+                          {getSerialNumber(index)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-white group-hover:text-orange-400 transition-colors">
+                            {member.username}
+                          </div>
+                          <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">
+                            {member.email}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-white/80">
+                          {plan.planName}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-green-400 font-black">
+                            ₹{plan.pricePaid}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <span className="text-cyan-300 font-black">
+                            ₹{plan.secondPaymentPaid || 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-orange-400 font-black">
+                            ₹{totalAmount}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">
+                          {formatDate(plan.startDate)}
+                        </td>
+                        <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">
+                          {formatDate(plan.endDate)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              getRemainingDays(plan.endDate) === "Expired"
+                                ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                : isExpiringPlan(plan.endDate)
+                                  ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                                  : "bg-green-500/10 text-green-400 border border-green-500/20"
+                            }`}
+                          >
+                            {getRemainingDays(plan.endDate)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <button
+                              onClick={() =>
+                                handleStatusChange(
+                                  member.uid,
+                                  plan.id,
+                                  plan.status === "active"
+                                    ? "inactive"
+                                    : "active",
+                                )
+                              }
+                              className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
+                                plan.status === "active"
+                                  ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white"
+                                  : "bg-white/5 text-white/40 border-white/10 hover:bg-orange-500/20 hover:text-orange-400 hover:border-orange-500/30"
+                              }`}
+                            >
+                              {plan.status || "Active"}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() => handlePrintReceipt(member, plan)}
+                            className="p-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg hover:bg-blue-500 hover:text-white transition-all inline-flex"
+                            title="Print Receipt"
+                          >
+                            <FaPrint size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ================= PAGINATION ================= */}
+        {totalPages > 1 && (
+          <div className="flex justify-end items-center gap-2 mt-8 flex-wrap">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              className="px-3 py-1 rounded bg-white/10 border border-white/20"
+              disabled={currentPage === 1}
+            >
+              Prev
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded border ${currentPage === page
-                  ? "bg-orange-500 text-white border-orange-500"
-                  : "bg-white/10 border-white/20"
-                  }`}
+                className={`px-3 py-1 rounded border ${
+                  currentPage === page
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-white/10 border-white/20"
+                }`}
               >
                 {page}
               </button>
-            )
-          )}
+            ))}
 
-          <button
-            onClick={() =>
-              setCurrentPage((p) => Math.min(p + 1, totalPages))
-            }
-            className="px-3 py-1 rounded bg-white/10 border border-white/20"
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
-        </div>
-      )}
-    </div>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              className="px-3 py-1 rounded bg-white/10 border border-white/20"
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
     </>
   );
 };
