@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X } from "lucide-react";
 import api from "../api";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -22,6 +23,7 @@ const UserEnquiry = () => {
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
   const [showForm, setShowForm] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+  const [hasActivePlan, setHasActivePlan] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -55,6 +57,9 @@ const UserEnquiry = () => {
     plan_duration: "",
   });
   const [showConsent, setShowConsent] = useState(false);
+
+  const { user } = useAuth();
+  const userId = user?.id;
 
   useEffect(() => {
     if (prefilledPlan) {
@@ -97,6 +102,24 @@ const UserEnquiry = () => {
     fetchEnquiries();
   }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchPlans = async () => {
+      try {
+        const res = await api.get(`/memberships/user/${userId}`);
+        const list = Array.isArray(res.data) ? res.data : [];
+        const active = list.find((p) => p.status === "active");
+        setHasActivePlan(!!active);
+      } catch (err) {
+        console.error("Failed to fetch user plans for enquiry block", err);
+        setHasActivePlan(false);
+      }
+    };
+
+    fetchPlans();
+  }, [userId]);
+
   const fetchEnquiries = async () => {
     try {
       setError(null);
@@ -114,6 +137,10 @@ const UserEnquiry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (hasActivePlan && !selectedEnquiry) {
+      toast.error('You cannot submit another enquiry while an active plan is already running.');
+      return;
+    }
     if (!formData.consent_agree) {
       toast.error('Please agree to the informed consent before submitting your enquiry.');
       return;
@@ -245,6 +272,8 @@ const UserEnquiry = () => {
     }
   };
 
+  const isNewSubmissionBlocked = hasActivePlan && !selectedEnquiry;
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
@@ -321,6 +350,12 @@ const UserEnquiry = () => {
                     </div>
                     <h3 className="text-xl font-bold text-white uppercase tracking-widest">Personal Information</h3>
                   </div>
+
+                  {isNewSubmissionBlocked && (
+                    <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-100 mb-6">
+                      When you have an active plan, you cannot submit another enquiry.
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField label="Full Name" value={formData.name} onChange={(val) => setFormData({ ...formData, name: val })} required placeholder="e.g. John Doe" />
@@ -559,7 +594,8 @@ const UserEnquiry = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(234,88,12,0.3)] hover:shadow-[0_15px_40px_rgba(234,88,12,0.4)] active:scale-95 flex items-center justify-center gap-3"
+                    disabled={isNewSubmissionBlocked}
+                    className={`flex-[2] px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(234,88,12,0.3)] flex items-center justify-center gap-3 ${isNewSubmissionBlocked ? 'opacity-50 cursor-not-allowed bg-gray-700 from-gray-600 to-gray-700 shadow-none' : 'hover:from-orange-500 hover:to-red-500 hover:shadow-[0_15px_40px_rgba(234,88,12,0.4)] active:scale-95'}`}
                   >
                     {selectedEnquiry ? 'Update Enquiry' : 'Submit Enquiry'} <Plus className="w-5 h-5" />
                   </button>
