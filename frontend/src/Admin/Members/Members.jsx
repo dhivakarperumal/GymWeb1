@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api"
@@ -10,6 +10,8 @@ import { filterByDateRange } from "../utils/dateUtils";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
+
+import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 
 const Members = () => {
   const [searchParams] = useSearchParams();
@@ -31,6 +33,8 @@ const Members = () => {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("table"); // table, card
   const navigate = useNavigate();
+  const [ptViewMemberId, setPtViewMemberId] = useState(null);
+  const [isPtModalOpen, setIsPtModalOpen] = useState(false);
 
   // 🔄 FETCH MEMBERS
   const fetchMembers = async () => {
@@ -400,11 +404,21 @@ const Members = () => {
                       {!(m.plan && m.status === "active") ? (
                         <span className="text-white/30">-</span>
                       ) : m.pt_form_completed ? (
-                        <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1 text-emerald-500 font-bold">
                             <CheckCircle size={16} />
                             <span className="text-[10px] uppercase">Done</span>
                           </div>
+                          <button
+                            onClick={() => {
+                              setPtViewMemberId(m.id || m.member_id);
+                              setIsPtModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition shadow-sm"
+                            title="View PT Form"
+                          >
+                            <Eye size={14} />
+                          </button>
                         </div>
                       ) : (
                         <button
@@ -541,9 +555,21 @@ const Members = () => {
                     <div className="flex items-center gap-2 pt-1">
                       <p className="text-[10px] text-gray-500 uppercase">PT Form:</p>
                       {m.pt_form_completed ? (
-                        <span className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold">
-                          <CheckCircle size={12} /> COMPLETED
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold">
+                            <CheckCircle size={12} /> COMPLETED
+                          </span>
+                          <button
+                            onClick={() => {
+                              setPtViewMemberId(m.id || m.member_id);
+                              setIsPtModalOpen(true);
+                            }}
+                            className="p-1 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition"
+                            title="View PT Form"
+                          >
+                            <Eye size={12} />
+                          </button>
+                        </div>
                       ) : (
                         <button
                           onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
@@ -643,6 +669,63 @@ const Members = () => {
               <option value="20" className="bg-gray-900">20</option>
               <option value="50" className="bg-gray-900">50</option>
             </select>
+          </div>
+        </div>
+      )}
+
+      {/* 📄 PT FORM VIEW MODAL */}
+      {isPtModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1a1625] border border-white/10 w-full max-w-5xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-500/20 rounded-lg">
+                  <Calendar size={20} className="text-orange-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Personal Training Registration View</h3>
+                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{ptViewMemberId}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(`/admin/pt-form?member_id=${ptViewMemberId}`)}
+                  className="p-2 bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-white rounded-lg transition"
+                  title="Edit PT Form"
+                >
+                  <Pencil size={20} />
+                </button>
+                <button
+                  onClick={() => window.open(`/admin/pt-form/print/${ptViewMemberId}`, '_blank')}
+                  className="p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition"
+                  title="Open Print View"
+                >
+                  <Printer size={20} />
+                </button>
+                <button
+                  onClick={() => setIsPtModalOpen(false)}
+                  className="p-2 bg-white/5 hover:bg-red-500/20 hover:text-red-500 text-white rounded-lg transition"
+                >
+                  <Plus size={20} className="rotate-45" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content - Native Component View */}
+            <div className="flex-1 overflow-y-auto bg-gray-100/50 p-4 sm:p-8 custom-scrollbar">
+               <PTFormPreviewContent memberId={ptViewMemberId} />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white/5 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setIsPtModalOpen(false)}
+                className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl transition-all shadow-lg"
+              >
+                Close View
+              </button>
+            </div>
           </div>
         </div>
       )}

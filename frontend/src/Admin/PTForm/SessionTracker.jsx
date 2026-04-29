@@ -1,0 +1,135 @@
+import React, { useState, useEffect } from "react";
+
+const SessionTracker = ({
+  onNext,
+  onPrevious,
+  formData: initialFormData,
+  isFirstStep,
+  isLastStep,
+}) => {
+  const trainerName = localStorage.getItem('username') || localStorage.getItem('name') || "";
+
+  const [localFormData, setLocalFormData] = useState({
+    sessions: initialFormData?.sessions || Array(25).fill(null).map((_, i) => ({
+      session_no: i + 1,
+      date: "",
+      workout: "",
+      client_sign: "",
+      trainer_sign: trainerName,
+    }))
+  });
+
+  useEffect(() => {
+    if (initialFormData && initialFormData.sessions) {
+      setLocalFormData(prev => ({
+        ...prev,
+        sessions: initialFormData.sessions
+      }));
+    }
+  }, [initialFormData]);
+
+  const handleSessionChange = (index, field, value) => {
+    const newSessions = [...localFormData.sessions];
+    newSessions[index] = { ...newSessions[index], [field]: value };
+    setLocalFormData((prev) => ({ ...prev, sessions: newSessions }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onNext(localFormData);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="border-2 border-white/20 rounded-2xl p-8 bg-white/[0.02] shadow-xl">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white uppercase tracking-widest">Session Tracker</h2>
+          <div className="w-24 h-1 bg-orange-500 mx-auto mt-2 rounded-full"></div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="overflow-x-auto border border-white/10 rounded-xl shadow-2xl">
+            <table className="w-full border-collapse text-sm">
+              <thead className="bg-white/5 backdrop-blur-xl border-b border-white/10 text-white/60 uppercase text-[10px] tracking-[0.2em] font-black sticky top-0">
+                <tr>
+                  <th className="p-4 border-r border-white/5 w-20 text-center">Session. No</th>
+                  <th className="p-4 border-r border-white/5 w-40 text-center">Date</th>
+                  <th className="p-4 border-r border-white/5 text-left">Workout</th>
+                  <th className="p-4 border-r border-white/5 w-40 text-center">Client Sign</th>
+                  <th className="p-4 w-40 text-center">Trainer Sign</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {localFormData.sessions.map((session, index) => (
+                  <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="p-0 border-r border-white/5 text-center bg-white/[0.01] font-bold text-white/40">
+                      {session.session_no}
+                    </td>
+                    <td className="p-0 border-r border-white/5">
+                      <input
+                        type="date"
+                        value={session.date || ""}
+                        onChange={(e) => handleSessionChange(index, "date", e.target.value)}
+                        className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center"
+                      />
+                    </td>
+                    <td className="p-0 border-r border-white/5">
+                      <input
+                        type="text"
+                        value={session.workout || ""}
+                        onChange={(e) => handleSessionChange(index, "workout", e.target.value)}
+                        placeholder="Describe the workout sessions..."
+                        className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors placeholder-white/10"
+                      />
+                    </td>
+                    <td className="p-0 border-r border-white/5">
+                      <input
+                        type="text"
+                        value={session.client_sign || ""}
+                        onChange={(e) => handleSessionChange(index, "client_sign", e.target.value)}
+                        placeholder="Sign/Initial"
+                        className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10"
+                      />
+                    </td>
+                    <td className="p-0">
+                      <input
+                        type="text"
+                        value={session.trainer_sign || ""}
+                        onChange={(e) => handleSessionChange(index, "trainer_sign", e.target.value)}
+                        placeholder="Sign/Initial"
+                        className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="pt-6 border-t border-white/10 mt-8">
+            <p className="text-center text-white/20 text-[10px] uppercase tracking-[0.3em] font-bold mb-6">
+              DAP Fitness Studio - Official Session Records
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={onPrevious}
+                className="flex-1 px-6 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs"
+              >
+                Previous
+              </button>
+              <button
+                type="submit"
+                className="flex-[2] px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs"
+              >
+                {isLastStep ? "Complete Registration" : "Next Step"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default SessionTracker;

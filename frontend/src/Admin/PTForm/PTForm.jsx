@@ -9,6 +9,7 @@ import HealthHistory2 from './HealthHistory2';
 import InformedConsent from './InformedConsent';
 import FitnessScreening from './FitnessScreening';
 import FlexibilityAndMeasurements from './FlexibilityAndMeasurements';
+import SessionTracker from './SessionTracker';
 
 const PTForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -17,6 +18,7 @@ const PTForm = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const memberId = searchParams.get("member_id");
+  const role = localStorage.getItem('role') || 'admin';
 
   useEffect(() => {
     if (memberId) {
@@ -84,7 +86,8 @@ const PTForm = () => {
     { id: 3, name: 'Health History 2', component: HealthHistory2 },
     { id: 4, name: 'Fitness Screening', component: FitnessScreening },
     { id: 5, name: 'Flexibility & Measurements', component: FlexibilityAndMeasurements },
-    { id: 6, name: 'Informed Consent', component: InformedConsent }
+    { id: 6, name: 'Session Tracker', component: SessionTracker },
+    { id: 7, name: 'Informed Consent', component: InformedConsent }
   ];
 
   const handleNext = async (stepData) => {

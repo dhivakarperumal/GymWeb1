@@ -11,6 +11,9 @@ const PTFormPrint = () => {
   const [ptForm, setPtForm] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [searchParams] = useSearchParams();
+  const hideControls = searchParams.get('hideControls') === 'true';
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -37,7 +40,7 @@ const PTFormPrint = () => {
 
     window.addEventListener('afterprint', handleAfterPrint);
 
-    if (!loading && member && ptForm) {
+    if (!loading && member && ptForm && !hideControls) {
       const timer = setTimeout(() => {
         window.print();
       }, 800);
@@ -48,7 +51,7 @@ const PTFormPrint = () => {
     }
 
     return () => window.removeEventListener('afterprint', handleAfterPrint);
-  }, [loading, member, ptForm, navigate]);
+  }, [loading, member, ptForm, navigate, hideControls]);
 
   if (loading) return <div className="p-20 text-center">Loading form details...</div>;
   if (!member || !ptForm) return <div className="p-20 text-center">Form not found.</div>;
@@ -58,22 +61,24 @@ const PTFormPrint = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 sm:p-10 font-serif">
-      {/* Control Panel - Hidden when printing */}
-      <div className="fixed top-4 right-4 flex gap-3 print:hidden">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition"
-        >
-          <ChevronLeft size={18} /> Back
-        </button>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg shadow-lg transition"
-        >
-          <Printer size={18} /> Print Now
-        </button>
-      </div>
+    <div className={`min-h-screen bg-white text-black font-serif ${hideControls ? 'p-0' : 'p-4 sm:p-10'}`}>
+      {/* Control Panel - Hidden when printing or in modal */}
+      {!hideControls && (
+        <div className="fixed top-4 right-4 flex gap-3 print:hidden">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition"
+          >
+            <ChevronLeft size={18} /> Back
+          </button>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg shadow-lg transition"
+          >
+            <Printer size={18} /> Print Now
+          </button>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto border-2 border-black p-8">
         {/* Header */}
@@ -208,9 +213,37 @@ const PTFormPrint = () => {
           </table>
         </div>
 
-        {/* Section 5: Consent */}
-        <div className="mt-12 pt-8 border-t-2 border-black">
-          <h2 className="text-xl font-bold mb-4 uppercase">Informed Consent & Declaration</h2>
+        {/* Section 5: Session Tracker (User's requested part) */}
+        <div className="mb-6 page-break-before">
+          <h2 className="text-xl font-bold bg-gray-100 p-2 mb-4 border border-black uppercase text-center">Session Tracker</h2>
+          <table className="w-full border-collapse border border-black text-[9px]">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-black p-2 w-16">Session No.</th>
+                <th className="border border-black p-2 w-24">Date</th>
+                <th className="border border-black p-2">Workout</th>
+                <th className="border border-black p-2 w-32">Client sign</th>
+                <th className="border border-black p-2 w-32">Trainer sign</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(ptForm.sessions || Array(25).fill({})).map((session, i) => (
+                <tr key={i} className="h-8">
+                  <td className="border border-black p-1 text-center font-bold bg-gray-50">{i + 1}</td>
+                  <td className="border border-black p-1 text-center">{session.date ? dayjs(session.date).format('DD/MM/YYYY') : ""}</td>
+                  <td className="border border-black p-1">{session.workout || ""}</td>
+                  <td className="border border-black p-1 text-center">{session.client_sign || ""}</td>
+                  <td className="border border-black p-1 text-center">{session.trainer_sign || ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-[10px] font-bold text-center mt-2 uppercase tracking-widest">DAP Fitness Studio</p>
+        </div>
+
+        {/* Section 6: Consent */}
+        <div className="mt-12 pt-8 border-t-2 border-black page-break-before">
+          <h2 className="text-xl font-bold mb-4 uppercase text-center">Informed Consent & Declaration</h2>
           <p className="text-xs leading-relaxed italic">
             I, <span className="font-bold underline">{ptForm.participant_name}</span>, have given my consent to participate in the physical fitness evaluation program. I recognize that exercise carries some risk and I certify that I know of no medical problem that would increase my risk.
           </p>
