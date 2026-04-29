@@ -48,10 +48,6 @@ const Enquiry = ({
     gender: initialFormData?.gender || "",
     participant_name: initialFormData?.participant_name || "",
     consent_agree: initialFormData?.consent_agree || false,
-    consent_signature: initialFormData?.consent_signature || "",
-    consent_date: initialFormData?.consent_date || "",
-    guardian_signature: initialFormData?.guardian_signature || "",
-    witness: initialFormData?.witness || ""
   });
 
   useEffect(() => {
@@ -65,10 +61,6 @@ const Enquiry = ({
         ...initialFormData,
         participant_name: initialFormData.participant_name || consentData.participant_name || prev.participant_name,
         consent_agree: initialFormData.consent_agree || consentData.agree || prev.consent_agree,
-        consent_signature: initialFormData.consent_signature || consentData.signature || prev.consent_signature,
-        consent_date: initialFormData.consent_date || consentData.date || prev.consent_date,
-        guardian_signature: initialFormData.guardian_signature || consentData.guardian_signature || prev.guardian_signature,
-        witness: initialFormData.witness || consentData.witness || prev.witness,
       }));
     }
   }, [initialFormData]);
@@ -515,7 +507,7 @@ const Enquiry = ({
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-white/80 mb-1">Consent Date</label>
                     <input
                       type="date"
@@ -525,10 +517,10 @@ const Enquiry = ({
                       required
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
-                  </div>
+                  </div> */}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-1">Your Signature</label>
                     <input
@@ -552,7 +544,7 @@ const Enquiry = ({
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
-                </div>
+                </div> */}
 
                 <label className="flex items-center gap-3 mt-4">
                   <input
