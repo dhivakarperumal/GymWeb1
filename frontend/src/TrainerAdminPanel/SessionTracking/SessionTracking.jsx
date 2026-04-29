@@ -91,6 +91,7 @@ const SessionTracking = () => {
         startTime: "09:00",
         endTime: "10:00",
         sessionType: "Personal Training",
+        status: "Pending",
         workouts: [""],
         notes: ""
     });
@@ -113,6 +114,14 @@ const SessionTracking = () => {
         "Yoga",
         "Zumba"
     ].sort();
+
+    const statusOptions = [
+        "Pending",
+        "Completed",
+        "Cancelled",
+        "Missed",
+        "On-going"
+    ];
 
     useEffect(() => {
         if (trainerId) {
@@ -185,6 +194,7 @@ const SessionTracking = () => {
                 startTime: "09:00",
                 endTime: "10:00",
                 sessionType: "Personal Training",
+                status: "Pending",
                 workouts: [""],
                 notes: ""
             });
@@ -322,8 +332,20 @@ const SessionTracking = () => {
                                     </div>
 
                                     <div>
-                                        <h4 className="text-orange-400 font-black text-lg">{session.member_name}</h4>
-                                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-white/5 text-[9px] font-black uppercase tracking-widest border border-white/10 text-white/60">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-orange-400 font-black text-lg">{session.member_name}</h4>
+                                            {session.member_status === 'active' ? (
+                                                <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 text-[8px] font-black uppercase border border-green-500/20">
+                                                    Approved
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 text-[8px] font-black uppercase border border-red-500/20">
+                                                    Pending
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Trainer: {session.trainer_name || "N/A"}</p>
+                                        <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-white/5 text-[9px] font-black uppercase tracking-widest border border-white/10 text-white/60">
                                             {session.session_type}
                                         </span>
                                     </div>
@@ -365,6 +387,7 @@ const SessionTracking = () => {
                                     <tr className="bg-white/5 text-[10px] uppercase tracking-widest text-white/40 border-b border-white/10">
                                         <th className="px-6 py-4 font-semibold">Date</th>
                                         <th className="px-6 py-4 font-semibold">Member</th>
+                                        <th className="px-6 py-4 font-semibold">Trainer</th>
                                         <th className="px-6 py-4 font-semibold">Type</th>
                                         <th className="px-6 py-4 font-semibold">Duration</th>
                                         <th className="px-6 py-4 font-semibold">Workouts</th>
@@ -378,6 +401,8 @@ const SessionTracking = () => {
                                         try {
                                             workoutList = typeof session.workouts === 'string' ? JSON.parse(session.workouts) : session.workouts || [];
                                         } catch (e) { workoutList = []; }
+
+                                        const isApproved = session.member_status === 'active';
 
                                         return (
                                             <tr key={session.id} className="hover:bg-white/5 transition-colors group">
@@ -393,7 +418,21 @@ const SessionTracking = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <p className="font-semibold text-orange-400">{session.member_name}</p>
+                                                    <div className="flex flex-col gap-1">
+                                                        <p className="font-semibold text-orange-400 leading-tight">{session.member_name}</p>
+                                                        {isApproved ? (
+                                                            <span className="w-fit px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 text-[8px] font-black uppercase border border-green-500/20">
+                                                                Approved
+                                                            </span>
+                                                        ) : (
+                                                            <span className="w-fit px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[8px] font-black uppercase border border-red-500/20">
+                                                                Pending
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <p className="text-sm font-medium text-white/60">{session.trainer_name || "N/A"}</p>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <span className="px-3 py-1 rounded-full bg-white/10 text-[10px] font-bold uppercase border border-white/10">
@@ -502,6 +541,19 @@ const SessionTracking = () => {
                                         onChange={(e) => setForm({ ...form, sessionType: e.target.value })}
                                     >
                                         {sessionTypes.map(t => <option key={t} value={t} className="bg-[#1a1a1a]">{t}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Status */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Status</label>
+                                    <select 
+                                        required
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                                        value={form.status}
+                                        onChange={(e) => setForm({ ...form, status: e.target.value })}
+                                    >
+                                        {statusOptions.map(opt => <option key={opt} value={opt} className="bg-[#1a1a1a]">{opt}</option>)}
                                     </select>
                                 </div>
 

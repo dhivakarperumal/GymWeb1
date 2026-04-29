@@ -3,7 +3,12 @@ const db = require('../config/db');
 async function getSessions(req, res) {
     try {
         const { trainerUserId } = req.query;
-        let sql = 'SELECT * FROM trainer_sessions';
+        let sql = `
+            SELECT ts.*, s.name as trainer_name, gm.status as member_status
+            FROM trainer_sessions ts
+            LEFT JOIN staff s ON ts.trainer_id = s.id
+            LEFT JOIN gym_members gm ON (gm.id = ts.member_id OR gm.member_id = ts.member_id)
+        `;
         const params = [];
 
         if (trainerUserId) {
@@ -16,7 +21,7 @@ async function getSessions(req, res) {
                     [u.email, u.username]
                 );
                 if (staffRows.length > 0) {
-                    sql += ' WHERE trainer_id = ?';
+                    sql += ' WHERE ts.trainer_id = ?';
                     params.push(staffRows[0].id);
                 } else {
                     return res.json([]);
@@ -26,7 +31,7 @@ async function getSessions(req, res) {
             }
         }
 
-        sql += ' ORDER BY session_date DESC, start_time DESC';
+        sql += ' ORDER BY ts.session_date DESC, ts.start_time DESC';
         const [rows] = await db.query(sql, params);
         res.json(rows);
     } catch (err) {
@@ -37,7 +42,7 @@ async function getSessions(req, res) {
 
 async function createSession(req, res) {
     try {
-        const { trainerUserId, memberId, memberName, sessionDate, startTime, endTime, sessionType, workouts, notes } = req.body;
+        const { trainerUserId, memberId, memberName, sessionDate, startTime, endTime, sessionType, status, workouts, notes } = req.body;
 
         // Resolve trainer user id to staff id
         const [userRows] = await db.query('SELECT email, username FROM users WHERE id = ?', [trainerUserId]);
@@ -59,8 +64,8 @@ async function createSession(req, res) {
 
         const sql = `
             INSERT INTO trainer_sessions 
-            (trainer_id, member_id, member_name, session_date, start_time, end_time, session_type, workouts, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (trainer_id, member_id, member_name, session_date, start_time, end_time, session_type, status, workouts, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const params = [
             staffId, 
@@ -70,6 +75,7 @@ async function createSession(req, res) {
             startTime || null, 
             endTime || null, 
             sessionType, 
+            status || 'Pending',
             Array.isArray(workouts) ? JSON.stringify(workouts) : JSON.stringify([]), 
             notes || null
         ];
@@ -79,6 +85,46 @@ async function createSession(req, res) {
     } catch (err) {
         console.error('createSession error', err);
         res.status(500).json({ error: 'Failed to create session' });
+    }
+}
+
+async function updateSession(req, res) {
+    try {
+        const { id } = req.params;
+        const { memberId, memberName, sessionDate, startTime, endTime, sessionType, status, workouts, notes } = req.body;
+
+        const sql = `
+            UPDATE trainer_sessions SET 
+                member_id = ?, 
+                member_name = ?, 
+                session_date = ?, 
+                start_time = ?, 
+                end_time = ?, 
+                session_type = ?, 
+                status = ?,
+                workouts = ?, 
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `;
+        const params = [
+            memberId, 
+            memberName, 
+            sessionDate, 
+            startTime || null, 
+            endTime || null, 
+            sessionType, 
+            status || 'Pending',
+            Array.isArray(workouts) ? JSON.stringify(workouts) : JSON.stringify([]), 
+            notes || null,
+            id
+        ];
+
+        await db.query(sql, params);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('updateSession error', err);
+        res.status(500).json({ error: 'Failed to update session' });
     }
 }
 
