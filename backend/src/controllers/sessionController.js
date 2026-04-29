@@ -142,5 +142,6 @@ async function deleteSession(req, res) {
 module.exports = {
     getSessions,
     createSession,
+    updateSession,
     deleteSession
 };

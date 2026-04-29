@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Calendar, Clock, Activity, Trash2, X, CheckCircle2, Dumbbell, Minus } from "lucide-react";
+import { Plus, Search, Calendar, Clock, Activity, Trash2, X, CheckCircle2, Dumbbell, Minus, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
@@ -83,8 +83,9 @@ const SessionTracking = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [viewMode, setViewMode] = useState('table');
     const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
+    const [editingSession, setEditingSession] = useState(null);
 
-    const [form, setForm] = useState({
+    const initialForm = {
         memberId: "",
         memberName: "",
         sessionDate: new Date().toISOString().split('T')[0],
@@ -94,7 +95,36 @@ const SessionTracking = () => {
         status: "Pending",
         workouts: [""],
         notes: ""
-    });
+    };
+
+    const [form, setForm] = useState(initialForm);
+
+    const handleOpenAdd = () => {
+        setEditingSession(null);
+        setForm(initialForm);
+        setShowModal(true);
+    };
+
+    const handleEdit = (session) => {
+        let workoutList = [];
+        try {
+            workoutList = typeof session.workouts === 'string' ? JSON.parse(session.workouts) : session.workouts || [""];
+        } catch (e) { workoutList = [""]; }
+
+        setEditingSession(session);
+        setForm({
+            memberId: session.member_id,
+            memberName: session.member_name,
+            sessionDate: new Date(session.session_date).toISOString().split('T')[0],
+            startTime: session.start_time?.substring(0, 5) || "09:00",
+            endTime: session.end_time?.substring(0, 5) || "10:00",
+            sessionType: session.session_type,
+            status: session.status || "Pending",
+            workouts: workoutList.length > 0 ? workoutList : [""],
+            notes: session.notes || ""
+        });
+        setShowModal(true);
+    };
 
     const sessionTypes = [
         "Bodybuilding",
@@ -183,24 +213,22 @@ const SessionTracking = () => {
                 workouts: cleanWorkouts,
                 trainerUserId: trainerId
             };
-            await api.post('/sessions', payload);
-            toast.success("Session added successfully!");
+            
+            if (editingSession) {
+                await api.put(`/sessions/${editingSession.id}`, payload);
+                toast.success("Session updated successfully!");
+            } else {
+                await api.post('/sessions', payload);
+                toast.success("Session added successfully!");
+            }
+
             setShowModal(false);
             fetchSessions();
-            setForm({
-                memberId: "",
-                memberName: "",
-                sessionDate: new Date().toISOString().split('T')[0],
-                startTime: "09:00",
-                endTime: "10:00",
-                sessionType: "Personal Training",
-                status: "Pending",
-                workouts: [""],
-                notes: ""
-            });
+            setForm(initialForm);
+            setEditingSession(null);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to add session");
+            toast.error(editingSession ? "Failed to update session" : "Failed to add session");
         } finally {
             setSubmitting(false);
         }
@@ -282,7 +310,7 @@ const SessionTracking = () => {
                         <div className="h-8 w-px bg-white/10 mx-1 hidden lg:block"></div>
 
                         <button 
-                            onClick={() => setShowModal(true)}
+                            onClick={handleOpenAdd}
                             className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all text-sm whitespace-nowrap"
                         >
                             <Plus size={18} />
@@ -323,17 +351,29 @@ const SessionTracking = () => {
                                                 <p className="text-[10px] text-white/40 uppercase tracking-widest">{formatTo12Hour(session.start_time)}</p>
                                             </div>
                                         </div>
-                                        <button 
-                                            onClick={() => handleDelete(session.id)}
-                                            className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                            <button 
+                                                onClick={() => handleEdit(session)}
+                                                className="p-2 text-white/20 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-all"
+                                                title="Edit Session"
+                                            >
+                                                <Pencil size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDelete(session.id)}
+                                                className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                title="Delete Session"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div>
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-orange-400 font-black text-lg">{session.member_name}</h4>
+                                            <h4 className="text-orange-400 font-black text-lg">
+                                                {session.status === 'Completed' ? session.member_name : ""}
+                                            </h4>
                                             {session.member_status === 'active' ? (
                                                 <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 text-[8px] font-black uppercase border border-green-500/20">
                                                     Approved
@@ -385,18 +425,18 @@ const SessionTracking = () => {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-white/5 text-[10px] uppercase tracking-widest text-white/40 border-b border-white/10">
+                                        <th className="px-6 py-4 font-semibold">S.No</th>
                                         <th className="px-6 py-4 font-semibold">Date</th>
-                                        <th className="px-6 py-4 font-semibold">Member</th>
-                                        <th className="px-6 py-4 font-semibold">Trainer</th>
-                                        <th className="px-6 py-4 font-semibold">Type</th>
                                         <th className="px-6 py-4 font-semibold">Duration</th>
                                         <th className="px-6 py-4 font-semibold">Workouts</th>
-                                        <th className="px-6 py-4 font-semibold">Notes</th>
+                                        <th className="px-6 py-4 font-semibold">Member</th>
+                                        <th className="px-6 py-4 font-semibold">Status</th>
+                                        <th className="px-6 py-4 font-semibold">Trainer</th>
                                         <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {filteredSessions.map((session) => {
+                                    {filteredSessions.map((session, index) => {
                                         let workoutList = [];
                                         try {
                                             workoutList = typeof session.workouts === 'string' ? JSON.parse(session.workouts) : session.workouts || [];
@@ -407,37 +447,10 @@ const SessionTracking = () => {
                                         return (
                                             <tr key={session.id} className="hover:bg-white/5 transition-colors group">
                                                 <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
-                                                            <Calendar size={16} />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium">{new Date(session.session_date).toLocaleDateString()}</p>
-                                                            <p className="text-[10px] text-white/40">Created {new Date(session.created_at).toLocaleDateString()}</p>
-                                                        </div>
-                                                    </div>
+                                                    <span className="text-sm font-bold text-white/20">#{index + 1}</span>
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <div className="flex flex-col gap-1">
-                                                        <p className="font-semibold text-orange-400 leading-tight">{session.member_name}</p>
-                                                        {isApproved ? (
-                                                            <span className="w-fit px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 text-[8px] font-black uppercase border border-green-500/20">
-                                                                Approved
-                                                            </span>
-                                                        ) : (
-                                                            <span className="w-fit px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[8px] font-black uppercase border border-red-500/20">
-                                                                Pending
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <p className="text-sm font-medium text-white/60">{session.trainer_name || "N/A"}</p>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <span className="px-3 py-1 rounded-full bg-white/10 text-[10px] font-bold uppercase border border-white/10">
-                                                        {session.session_type}
-                                                    </span>
+                                                    <p className="text-xs font-medium text-white/70">{new Date(session.session_date).toLocaleDateString()}</p>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2 text-white/60">
@@ -456,18 +469,44 @@ const SessionTracking = () => {
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5 max-w-xs">
-                                                    <p className="text-xs text-white/40 truncate" title={session.notes}>
-                                                        {session.notes || "No notes"}
-                                                    </p>
+                                                <td className="px-6 py-5">
+                                                    <div className="flex flex-col gap-1">
+                                                        <p className="font-semibold text-orange-400 leading-tight">
+                                                            {session.status === 'Completed' ? session.member_name : " - "}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
+                                                        session.status === 'Completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                                        session.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                                        session.status === 'Cancelled' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                                        session.status === 'On-going' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                                        'bg-white/10 text-white/40 border-white/10'
+                                                    }`}>
+                                                        {session.status || 'Pending'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <p className="text-sm font-medium text-white/60">{session.trainer_name || "N/A"}</p>
                                                 </td>
                                                 <td className="px-6 py-5 text-right">
-                                                    <button 
-                                                        onClick={() => handleDelete(session.id)}
-                                                        className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <button 
+                                                            onClick={() => handleEdit(session)}
+                                                            className="p-2 text-white/20 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-all"
+                                                            title="Edit Session"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDelete(session.id)}
+                                                            className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                            title="Delete Session"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -483,16 +522,16 @@ const SessionTracking = () => {
             {showModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
                     <div 
-                        className="bg-[#1a1a1a] w-full max-w-2xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300"
+                        className="bg-neutral-900 w-full max-w-2xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
-                            <h2 className="text-xl font-bold">Record New Session</h2>
+                            <h2 className="text-xl font-bold">{editingSession ? "Edit Workout Session" : "Log New Workout Session"}</h2>
                             <button 
                                 onClick={() => setShowModal(false)}
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                className="p-2 hover:bg-white/10 rounded-xl transition-all"
                             >
-                                <X size={20} />
+                                <X size={24} />
                             </button>
                         </div>
 
