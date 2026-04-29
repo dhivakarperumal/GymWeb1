@@ -115,7 +115,7 @@ const EMIList = () => {
         : parseDecimal(m.pricePaid) * duration;
       const initialPayment = parseDecimal(m.pricePaid);
       const secondPayment = parseDecimal(m.secondPaymentPaid);
-      const balanceDue = Number((totalPrice - initialPayment - secondPayment).toFixed(2));
+      const balanceDue = Math.max(0, Number((totalPrice - initialPayment - secondPayment).toFixed(2)));
       
       return {
         "S.No": index + 1,
@@ -342,9 +342,9 @@ const EMIList = () => {
                       : parseDecimal(membership.pricePaid) * duration;
                     const initialPayment = parseDecimal(membership.pricePaid);
                     const secondPayment = parseDecimal(membership.secondPaymentPaid);
-                    const remainingDue = Number(
+                    const remainingDue = Math.max(0, Number(
                       (totalPrice - initialPayment - secondPayment).toFixed(2),
-                    );
+                    ));
                     const dueDate = new Date();
                     dueDate.setDate(dueDate.getDate() + 30);
                     const paymentMethodLabel = membership.paymentId || "N/A";
@@ -445,7 +445,7 @@ const EMIList = () => {
                   : parseDecimal(membership.pricePaid) * duration;
                 const initialPayment = parseDecimal(membership.pricePaid);
                 const secondPayment = parseDecimal(membership.secondPaymentPaid);
-                const balanceDue = Number((totalPrice - initialPayment - secondPayment).toFixed(2));
+                const balanceDue = Math.max(0, Number((totalPrice - initialPayment - secondPayment).toFixed(2)));
                 const dueDate = new Date();
                 dueDate.setDate(dueDate.getDate() + 30);
 

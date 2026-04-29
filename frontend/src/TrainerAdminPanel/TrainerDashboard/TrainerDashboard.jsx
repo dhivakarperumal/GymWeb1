@@ -5,9 +5,14 @@ import {
   FaDumbbell,
   FaClipboardList,
   FaCalendarCheck,
+  FaEye,
+  FaPencilAlt,
+  FaTimes,
+  FaPrint
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import PTFormPreviewContent from "../../Admin/PTForm/PTFormPreviewContent";
 
 import api from "../../api";
 
@@ -44,6 +49,8 @@ const TrainerDashboard = () => {
     workoutPlans: 0,
     dietPlans: 0,
   });
+
+  const [ptViewMember, setPtViewMember] = useState(null);
 
   /* ---------------- LOAD DASHBOARD DATA ---------------- */
   useEffect(() => {
@@ -246,16 +253,37 @@ const TrainerDashboard = () => {
                         </td>
 
                         <td className="px-4 py-4">
-                          <button
-                            onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
-                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all hover:scale-105 active:scale-95 ${
-                              m.ptFormCompleted 
-                                ? "bg-green-500/10 text-green-400 border-green-500/20" 
-                                : "bg-red-500/10 text-red-400 border-red-500/20"
-                            }`}
-                          >
-                            {m.ptFormCompleted ? "Completed" : "Pending"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
+                              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all hover:scale-105 active:scale-95 ${
+                                m.ptFormCompleted 
+                                  ? "bg-green-500/10 text-green-400 border-green-500/20" 
+                                  : "bg-red-500/10 text-red-400 border-red-500/20"
+                              }`}
+                            >
+                              {m.ptFormCompleted ? "Completed" : "Pending"}
+                            </button>
+                            
+                            {m.ptFormCompleted ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => setPtViewMember(m)}
+                                  className="p-1.5 text-blue-400 hover:bg-blue-400/20 rounded-lg transition-all"
+                                  title="View PT Form"
+                                >
+                                  <FaEye size={12} />
+                                </button>
+                                <button
+                                  onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
+                                  className="p-1.5 text-orange-400 hover:bg-orange-400/20 rounded-lg transition-all"
+                                  title="Edit PT Form"
+                                >
+                                  <FaPencilAlt size={12} />
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
                         </td>
 
                         <td className="px-4 py-4">
@@ -356,6 +384,50 @@ const TrainerDashboard = () => {
         </div>
 
       </div>
+
+      {/* PT FORM MODAL */}
+      {ptViewMember && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="bg-[#1a1a1a] w-full max-w-5xl h-[90vh] rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-orange-500/20 flex items-center justify-center text-orange-500">
+                  <FaClipboardList size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {ptViewMember.username || ptViewMember.user_name}'s PT Assessment
+                  </h2>
+                  <p className="text-xs text-white/40 uppercase tracking-widest">Digital Health & Fitness Record</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                   onClick={() => navigate(`/trainer/pt-form?member_id=${ptViewMember.gymMemberId}`)}
+                   className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-xl text-sm font-bold hover:bg-orange-500 hover:text-white transition-all"
+                >
+                  <FaPencilAlt size={14} /> Edit Form
+                </button>
+                <button
+                  onClick={() => setPtViewMember(null)}
+                  className="p-2 hover:bg-white/10 rounded-xl transition-all text-white/40 hover:text-white"
+                >
+                  <FaTimes size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-white/5">
+              <div className="max-w-4xl mx-auto bg-white rounded-3xl p-8 shadow-2xl">
+                <PTFormPreviewContent memberId={ptViewMember.gymMemberId} hideControls={true} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
