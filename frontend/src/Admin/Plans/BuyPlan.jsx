@@ -450,6 +450,9 @@ Thank you for joining 💪
                 const seenPhones = new Set();
                 return members
                   .filter((m) => {
+                    // only gym members converted from enquiry should appear
+                    if (m.source === "users") return false;
+
                     // 1. Skip if already has active plan
                     const hasPlan = m.status === "active" && m.plan;
                     if (hasPlan) return false;
@@ -721,7 +724,7 @@ Thank you for joining 💪
 
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} - {p.duration} months - ₹
+                  {p.name} - {p.duration} - ₹
                   {p.finalPrice ?? p.final_price}
                 </option>
               ))}
@@ -734,7 +737,7 @@ Thank you for joining 💪
                 {selectedPlan.name}
               </h3>
 
-              <p>Duration: {selectedPlan.duration} months</p>
+              <p>Duration: {selectedPlan.duration} </p>
 
               <p>
                 Price ₹

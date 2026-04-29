@@ -37,6 +37,9 @@ const FlexibilityAndMeasurements = ({
       setLocalFormData(prev => ({
         ...prev,
         ...initialFormData,
+        flex_apley_test: String(initialFormData.flex_apley_test || "").trim(),
+        flex_ymca_test: String(initialFormData.flex_ymca_test || "").trim(),
+        flex_knee_test: String(initialFormData.flex_knee_test || "").trim(),
         measurements: initialFormData.measurements || prev.measurements
       }));
     }
@@ -54,7 +57,10 @@ const FlexibilityAndMeasurements = ({
     }
   };
 
+  const normalizeValue = (value) => String(value || "").trim().toLowerCase();
+
   const handleMeasurementChange = (index, field, value) => {
+    if (readOnly) return;
     const newMeasurements = [...localFormData.measurements];
     newMeasurements[index] = { ...newMeasurements[index], [field]: value };
     setLocalFormData((prev) => ({ ...prev, measurements: newMeasurements }));
@@ -100,9 +106,9 @@ const FlexibilityAndMeasurements = ({
                     type="radio"
                     name="flex_apley_test"
                     value="Normal"
-                    checked={localFormData.flex_apley_test === "Normal"}
+                    checked={normalizeValue(localFormData.flex_apley_test) === "normal"}
                     onChange={handleChange}
-                    disabled={readOnly}
+                    
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Normal</span>
@@ -112,9 +118,9 @@ const FlexibilityAndMeasurements = ({
                     type="radio"
                     name="flex_apley_test"
                     value="Restricted"
-                    checked={localFormData.flex_apley_test === "Restricted"}
+                    checked={normalizeValue(localFormData.flex_apley_test) === "restricted"}
                     onChange={handleChange}
-                    disabled={readOnly}
+                    
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Restricted</span>
@@ -131,7 +137,7 @@ const FlexibilityAndMeasurements = ({
                   name="flex_ymca_val"
                   value={localFormData.flex_ymca_val}
                   onChange={handleChange}
-                  disabled={readOnly}
+                  
                   className="w-32 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Value"
                 />
@@ -142,9 +148,9 @@ const FlexibilityAndMeasurements = ({
                     type="radio"
                     name="flex_ymca_test"
                     value="Well"
-                    checked={localFormData.flex_ymca_test === "Well"}
+                    checked={normalizeValue(localFormData.flex_ymca_test) === "well"}
                     onChange={handleChange}
-                    disabled={readOnly}
+                    
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Well</span>
@@ -154,9 +160,9 @@ const FlexibilityAndMeasurements = ({
                     type="radio"
                     name="flex_ymca_test"
                     value="Average"
-                    checked={localFormData.flex_ymca_test === "Average"}
+                    checked={normalizeValue(localFormData.flex_ymca_test) === "average"}
                     onChange={handleChange}
-                    disabled={readOnly}
+                    
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Average</span>
@@ -173,7 +179,7 @@ const FlexibilityAndMeasurements = ({
                   name="flex_knee_val"
                   value={localFormData.flex_knee_val}
                   onChange={handleChange}
-                  disabled={readOnly}
+                  
                   className="w-32 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Value"
                 />
@@ -184,9 +190,9 @@ const FlexibilityAndMeasurements = ({
                     type="radio"
                     name="flex_knee_test"
                     value="Normal"
-                    checked={localFormData.flex_knee_test === "Normal"}
+                    checked={normalizeValue(localFormData.flex_knee_test) === "normal"}
                     onChange={handleChange}
-                    disabled={readOnly}
+                    
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Normal</span>
@@ -196,9 +202,9 @@ const FlexibilityAndMeasurements = ({
                     type="radio"
                     name="flex_knee_test"
                     value="Restricted"
-                    checked={localFormData.flex_knee_test === "Restricted"}
+                    checked={normalizeValue(localFormData.flex_knee_test) === "restricted"}
                     onChange={handleChange}
-                    disabled={readOnly}
+                    
                     className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
                   />
                   <span className="text-white/80 text-sm">Restricted</span>
@@ -272,7 +278,7 @@ const FlexibilityAndMeasurements = ({
                                 e.target.value
                               )
                             }
-                            disabled={readOnly}
+                            
                             className="w-full p-3 bg-transparent text-center text-white focus:outline-none focus:bg-white/10"
                           />
                         </td>

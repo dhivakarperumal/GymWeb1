@@ -113,11 +113,18 @@ const Header = ({ onMenuClick }) => {
           api.get('/memberships/today').catch(() => ({ data: [] }))
         ]);
 
+        const todayStr = new Date().toDateString();
+        const strictTodayRegs = (regsRes.data || []).filter(r => {
+          const d = r.createdAt || r.created_at;
+          if (!d) return false;
+          return new Date(d).toDateString() === todayStr;
+        });
+
         setAlerts({
           orders: ordersRes.data || [],
           lowStock: lowStockRes.data || [],
           expiring: expiringRes.data || [],
-          registrations: regsRes.data || [],
+          registrations: strictTodayRegs,
         });
       } catch (err) {
         console.error("Dashboard alerts error:", err);
