@@ -267,6 +267,7 @@ const PlanHistory = () => {
                 <th className="px-5 py-4 text-cyan-400">Second Paid</th>
                 <th className="px-5 py-4 text-blue-400">Remaining</th>
                 <th className="px-5 py-4">Mode</th>
+                <th className="px-5 py-4">Payment</th>
                 <th className="px-5 py-4">Start</th>
                 <th className="px-5 py-4">End</th>
                 <th className="px-5 py-4">Status</th>
@@ -278,6 +279,15 @@ const PlanHistory = () => {
                 const total = parseDecimal(m.price);
                 const paid = parseDecimal(m.pricePaid) + parseDecimal(m.secondPaymentPaid);
                 const remaining = Math.max(0, total - paid);
+                
+                // Payment Status Badge
+                const getPaymentStatusBadge = (status) => {
+                  if (status === "Paid") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
+                  if (status === "Pending") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20">Pending</span>;
+                  if (status === "Partial") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Partial</span>;
+                  return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20">{status || "—"}</span>;
+                };
+
                 return (
                   <tr key={m.id || idx} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-all">
                     <td className="px-5 py-4 text-white/30 font-bold">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
@@ -293,6 +303,7 @@ const PlanHistory = () => {
                       {remaining > 0 ? <span className="text-blue-400">₹{remaining.toFixed(2)}</span> : <span className="text-emerald-400 text-xs font-bold">✓ Cleared</span>}
                     </td>
                     <td className="px-5 py-4">{getPaymentBadge(m.paymentMode)}</td>
+                    <td className="px-5 py-4">{getPaymentStatusBadge(m.paymentStatus)}</td>
                     <td className="px-5 py-4 text-white/50 whitespace-nowrap">{formatDate(m.startDate)}</td>
                     <td className="px-5 py-4 text-white/50 whitespace-nowrap">{formatDate(m.endDate)}</td>
                     <td className="px-5 py-4">{getStatusBadge(m.status)}</td>

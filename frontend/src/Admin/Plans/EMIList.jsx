@@ -200,10 +200,8 @@ const EMIList = () => {
         : currentPaid + currentSecondPayment;
     })();
     const newSecondPayment = Number((currentSecondPayment + amount).toFixed(2));
-    const newStatus =
-      newSecondPayment + currentPaid >= totalPrice
-        ? "completed"
-        : selectedMembership.status || "active";
+    const newPaymentStatus =
+      newSecondPayment + currentPaid >= totalPrice ? "Paid" : "Partial";
 
     setUpdating(true);
     try {
@@ -211,6 +209,7 @@ const EMIList = () => {
         secondPaymentPaid: newSecondPayment,
         paymentId: paymentReference || selectedMembership.paymentId,
         status: newStatus,
+        paymentStatus: newPaymentStatus,
       });
 
       const res = await api.get("/memberships");
@@ -332,6 +331,7 @@ const EMIList = () => {
                     <th className="px-6 py-4 border-b border-white/5">Second Payment</th>
                     <th className="px-6 py-4 border-b border-white/5">Remaining Due</th>
                     <th className="px-6 py-4 border-b border-white/5">Created</th>
+                    <th className="px-6 py-4 border-b border-white/5">Payment</th>
                     <th className="px-6 py-4 border-b border-white/5 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -354,6 +354,13 @@ const EMIList = () => {
                     const dueDate = new Date();
                     dueDate.setDate(dueDate.getDate() + 30);
                     const paymentMethodLabel = membership.paymentId || "N/A";
+
+                    const getPaymentStatusBadge = (status) => {
+                      if (status === "Paid") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
+                      if (status === "Pending") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20">Pending</span>;
+                      if (status === "Partial") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Partial</span>;
+                      return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20">{status || "—"}</span>;
+                    };
 
                     return (
                       <tr
@@ -413,6 +420,9 @@ const EMIList = () => {
                           {new Date(membership.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4">
+                          {getPaymentStatusBadge(membership.paymentStatus)}
+                        </td>
+                        <td className="px-6 py-4">
                           <div className="flex justify-center items-center gap-3">
                             <button
                               onClick={() => viewDetails(membership)}
@@ -461,12 +471,19 @@ const EMIList = () => {
                     key={membership.id}
                     className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-orange-500/30 transition-all group relative overflow-hidden"
                   >
-                    <div className="absolute top-0 right-0 p-3">
+                    <div className="absolute top-0 right-0 p-3 flex flex-col gap-2 items-end">
                       <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
                         membership.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'
                       }`}>
                         {membership.status || 'Active'}
                       </span>
+                      {(() => {
+                        const status = membership.paymentStatus;
+                        if (status === "Paid") return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
+                        if (status === "Pending") return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20">Pending</span>;
+                        if (status === "Partial") return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Partial</span>;
+                        return null;
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-4 mb-6">

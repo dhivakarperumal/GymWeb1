@@ -317,6 +317,7 @@ Thank you for joining 💪
         startDate: form.startDate,
         endDate: form.endDate,
         paymentMode: paymentModeValue,
+        paymentStatus: isEMI ? "Pending" : "Paid",
         status: "active",
       };
 

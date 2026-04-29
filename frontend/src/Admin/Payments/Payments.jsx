@@ -77,7 +77,7 @@ const Payments = () => {
             endDate: m.endDate,
             createdAt: m.createdAt,
             status: m.status || "active",
-            paymentStatus: m.paymentId ? "Paid" : "Paid",
+            paymentStatus: m.paymentStatus || (m.pricePaid >= m.price ? "Paid" : "Pending"),
           });
         });
 
@@ -177,8 +177,6 @@ const Payments = () => {
                     ? {
                         ...p,
                         status: newStatus,
-                        paymentStatus:
-                          newStatus === "active" ? "Paid" : "Unpaid",
                       }
                     : p,
                 ),
@@ -667,15 +665,24 @@ const Payments = () => {
                   key={`${member.uid}_${plan.id}`}
                   className="relative bg-white/10 border border-white/20 rounded-xl p-6"
                 >
-                  <span
-                    className={`absolute top-4 right-4 px-3 py-1 text-xs rounded-full border ${
-                      plan.status === "active"
-                        ? "bg-green-500/20 text-green-400 border-green-400/30"
-                        : "bg-gray-500/20 text-gray-300 border-gray-400/30"
-                    }`}
-                  >
-                    {plan.status === "active" ? "Active" : "Inactive"}
-                  </span>
+                    <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                      <span
+                        className={`px-3 py-1 text-xs rounded-full border ${
+                          plan.status === "active"
+                            ? "bg-green-500/20 text-green-400 border-green-400/30"
+                            : "bg-gray-500/20 text-gray-300 border-gray-400/30"
+                        }`}
+                      >
+                        {plan.status === "active" ? "Active" : "Inactive"}
+                      </span>
+                      {(() => {
+                        const status = plan.paymentStatus;
+                        if (status === "Paid") return <span className="px-3 py-1 text-[10px] font-bold uppercase rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
+                        if (status === "Pending") return <span className="px-3 py-1 text-[10px] font-bold uppercase rounded-full bg-red-500/20 text-red-400 border border-red-500/20">Pending</span>;
+                        if (status === "Partial") return <span className="px-3 py-1 text-[10px] font-bold uppercase rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Partial</span>;
+                        return null;
+                      })()}
+                    </div>
 
                   {/* <div>
                 {getSerialNumber(index)}
@@ -799,6 +806,9 @@ const Payments = () => {
                       Days Left
                     </th>
                     <th className="px-6 py-4 border-b border-white/5 text-center">
+                      Payment
+                    </th>
+                    <th className="px-6 py-4 border-b border-white/5 text-center">
                       Status / Action
                     </th>
                     <th className="px-6 py-4 border-b border-white/5 text-center">
@@ -881,6 +891,15 @@ const Payments = () => {
                           >
                             {getRemainingDays(plan.endDate)}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {(() => {
+                            const status = plan.paymentStatus;
+                            if (status === "Paid") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
+                            if (status === "Pending") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20">Pending</span>;
+                            if (status === "Partial") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Partial</span>;
+                            return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20">{status || "—"}</span>;
+                          })()}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex flex-col items-center gap-2">
