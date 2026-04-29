@@ -72,6 +72,12 @@ const navItems = [
   label: "Followup Enquiry",
   icon: MessageSquare,
 },
+{
+  path: "/trainer/session-tracking",
+  label: "Session Tracking",
+  icon: CalendarCheck,
+},
+
  {
     path: "/trainer/overall-attendance",
     label: "Attendance",

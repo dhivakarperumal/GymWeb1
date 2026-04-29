@@ -90,6 +90,8 @@ const UpdateWeight = lazy(() => import("./TrainerAdminPanel/UpdateWeight/UpdateW
 const TrainerPricing = lazy(() => import("./TrainerAdminPanel/TrainerPricing/TrainerPricing.jsx"));
 const PTForm = lazy(() => import("./Admin/PTForm/PTForm.jsx"));
 const PTFormPrint = lazy(() => import("./Admin/PTForm/PTFormPrint.jsx"));
+const SessionTracking = lazy(() => import("./TrainerAdminPanel/SessionTracking/SessionTracking.jsx"));
+
 
 
 const router = createBrowserRouter([
@@ -237,7 +239,9 @@ const router = createBrowserRouter([
       { path: "pt-form/print/:id", element: <PTFormPrint /> },
       { path: "pricing", element: <TrainerPricing /> },
       { path: "followupenquriy", element: <FollowupEnquiry /> },
+      { path: "session-tracking", element: <SessionTracking /> },
     ],
+
   },
 
   //   { path: "/*", element: <NotFound /> },

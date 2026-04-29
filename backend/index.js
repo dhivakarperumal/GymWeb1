@@ -37,6 +37,8 @@ const checkinRoutes = require("./src/routes/checkinRoutes");
 const membershipRoutes = require("./src/routes/membershipRoutes");
 const ptFormRoutes = require("./src/routes/ptFormRoutes");
 const followupRoutes = require("./src/routes/followupRoutes");
+const sessionRoutes = require("./src/routes/sessionRoutes");
+
 
 
 
@@ -124,6 +126,8 @@ app.use("/api/send-message", messageRoutes);
 app.use("/api/memberships", membershipRoutes);
 app.use("/api/pt-forms", ptFormRoutes);
 app.use("/api/followups", followupRoutes);
+app.use("/api/sessions", sessionRoutes);
+
 
 
 const PORT = process.env.PORT || 5000;
