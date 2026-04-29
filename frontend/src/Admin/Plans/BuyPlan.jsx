@@ -376,7 +376,7 @@ Thank you for joining 💪
 
       alert("Plan assigned successfully");
 
-      sendWhatsApp();
+      // sendWhatsApp();
 
       navigate("/admin/members");
     } catch (err) {
