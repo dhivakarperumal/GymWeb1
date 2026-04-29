@@ -60,6 +60,7 @@ const FlexibilityAndMeasurements = ({
   const normalizeValue = (value) => String(value || "").trim().toLowerCase();
 
   const handleMeasurementChange = (index, field, value) => {
+    if (readOnly) return;
     const newMeasurements = [...localFormData.measurements];
     newMeasurements[index] = { ...newMeasurements[index], [field]: value };
     setLocalFormData((prev) => ({ ...prev, measurements: newMeasurements }));
