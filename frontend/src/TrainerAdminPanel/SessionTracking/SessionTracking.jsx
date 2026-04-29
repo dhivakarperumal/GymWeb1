@@ -3,6 +3,9 @@ import { Plus, Search, Calendar, Clock, Activity, Trash2, X, CheckCircle2, Dumbb
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
+import DateRangeFilter from "../../Admin/DateRangeFilter";
+import { filterByDateRange } from "../../Admin/utils/dateUtils";
+import dayjs from "dayjs";
 
 const TimeSelect = ({ label, value, onChange }) => {
     // value is "HH:mm" (24h)
@@ -78,6 +81,8 @@ const SessionTracking = () => {
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [viewMode, setViewMode] = useState('table');
+    const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
 
     const [form, setForm] = useState({
         memberId: "",
@@ -177,8 +182,8 @@ const SessionTracking = () => {
                 memberId: "",
                 memberName: "",
                 sessionDate: new Date().toISOString().split('T')[0],
-                startTime: "",
-                endTime: "",
+                startTime: "09:00",
+                endTime: "10:00",
                 sessionType: "Personal Training",
                 workouts: [""],
                 notes: ""
@@ -212,92 +217,163 @@ const SessionTracking = () => {
         return `${h}:${minutes} ${ampm}`;
     };
 
-    const filteredSessions = sessions.filter(s => 
-        s.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.session_type?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredSessions = sessions.filter(s => {
+        const matchesSearch = s.member_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             s.session_type?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (!matchesSearch) return false;
+        
+        return filterByDateRange([s], 'session_date', dateRange.type, dateRange.range).length > 0;
+    });
 
     return (
         <div className="min-h-screen p-4 lg:p-8 text-white bg-black/5">
             <div className="max-w-7xl mx-auto space-y-6">
                 
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-                            Session Tracking
-                        </h1>
-                        <p className="text-white/40 text-sm mt-1">Manage and track your member workout sessions</p>
-                    </div>
-                    
-                    <button 
-                        onClick={() => setShowModal(true)}
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
-                    >
-                        <Plus size={20} />
-                        Add New Session
-                    </button>
-                </div>
-
+              
                 {/* Filters & Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <div className="lg:col-span-3 relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={20} />
+                <div className="flex flex-col lg:flex-row gap-4 items-center pb-5 justify-between  p-0 rounded-2xl ">
+                    <div className="relative flex-1 w-full max-w-md">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
                         <input 
                             type="text" 
-                            placeholder="Search by member or session type..."
+                            placeholder="Search sessions..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                            className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all text-sm"
                         />
                     </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-                        <div>
-                            <p className="text-[10px] uppercase tracking-widest text-white/40">Total Sessions</p>
-                            <h3 className="text-2xl font-bold">{sessions.length}</h3>
+                    
+                    <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                        <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+                        
+                        {/* View Toggle */}
+                        <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white'}`}
+                                title="Table View"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('card')}
+                                className={`p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white'}`}
+                                title="Card View"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                                </svg>
+                            </button>
                         </div>
-                        <div className="p-3 bg-orange-500/20 rounded-xl text-orange-500">
-                            <Activity size={24} />
-                        </div>
+
+                        <div className="h-8 w-px bg-white/10 mx-1 hidden lg:block"></div>
+
+                        <button 
+                            onClick={() => setShowModal(true)}
+                            className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all text-sm whitespace-nowrap"
+                        >
+                            <Plus size={18} />
+                            Add Session
+                        </button>
                     </div>
                 </div>
 
-                {/* Sessions Table/Grid */}
-                <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-white/5 text-[10px] uppercase tracking-widest text-white/40 border-b border-white/10">
-                                    <th className="px-6 py-4 font-semibold">Date</th>
-                                    <th className="px-6 py-4 font-semibold">Member</th>
-                                    <th className="px-6 py-4 font-semibold">Type</th>
-                                    <th className="px-6 py-4 font-semibold">Duration</th>
-                                    <th className="px-6 py-4 font-semibold">Workouts</th>
-                                    <th className="px-6 py-4 font-semibold">Notes</th>
-                                    <th className="px-6 py-4 font-semibold text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan="7" className="px-6 py-20 text-center">
-                                            <div className="flex flex-col items-center gap-3">
-                                                <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                                                <p className="text-white/40 animate-pulse">Loading sessions...</p>
+                {/* Sessions Content */}
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-3">
+                        <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-white/40 animate-pulse">Loading sessions...</p>
+                    </div>
+                ) : filteredSessions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/20 bg-white/5 rounded-3xl border border-white/10">
+                        <Activity size={48} strokeWidth={1} />
+                        <p className="text-sm font-medium">No sessions found</p>
+                    </div>
+                ) : viewMode === 'card' ? (
+                    /* CARD VIEW */
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in duration-500">
+                        {filteredSessions.map((session) => {
+                            let workoutList = [];
+                            try {
+                                workoutList = typeof session.workouts === 'string' ? JSON.parse(session.workouts) : session.workouts || [];
+                            } catch (e) { workoutList = []; }
+
+                            return (
+                                <div key={session.id} className="group bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-orange-500/40 hover:bg-white/10 transition-all flex flex-col gap-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-500">
+                                                <Calendar size={20} />
                                             </div>
-                                        </td>
-                                    </tr>
-                                ) : filteredSessions.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="7" className="px-6 py-20 text-center">
-                                            <div className="flex flex-col items-center gap-2 text-white/20">
-                                                <Activity size={48} />
-                                                <p>No sessions found</p>
+                                            <div>
+                                                <p className="text-white font-bold">{new Date(session.session_date).toLocaleDateString()}</p>
+                                                <p className="text-[10px] text-white/40 uppercase tracking-widest">{formatTo12Hour(session.start_time)}</p>
                                             </div>
-                                        </td>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleDelete(session.id)}
+                                            className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-orange-400 font-black text-lg">{session.member_name}</h4>
+                                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-white/5 text-[9px] font-black uppercase tracking-widest border border-white/10 text-white/60">
+                                            {session.session_type}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="flex flex-wrap gap-1">
+                                            {workoutList.map((w, idx) => (
+                                                <span key={idx} className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 text-[10px] border border-orange-500/20 font-bold">
+                                                    {w}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        {session.notes && (
+                                            <p className="text-[11px] text-white/40 line-clamp-2 italic">
+                                                "{session.notes}"
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-white/30 text-[10px] font-bold">
+                                            <Clock size={12} />
+                                            {formatTo12Hour(session.start_time)} - {formatTo12Hour(session.end_time)}
+                                        </div>
+                                        <div className="text-[9px] text-white/20 font-black uppercase tracking-tighter">
+                                            ID: #S-{session.id}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    /* TABLE VIEW */
+                    <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-xl animate-in fade-in duration-500">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white/5 text-[10px] uppercase tracking-widest text-white/40 border-b border-white/10">
+                                        <th className="px-6 py-4 font-semibold">Date</th>
+                                        <th className="px-6 py-4 font-semibold">Member</th>
+                                        <th className="px-6 py-4 font-semibold">Type</th>
+                                        <th className="px-6 py-4 font-semibold">Duration</th>
+                                        <th className="px-6 py-4 font-semibold">Workouts</th>
+                                        <th className="px-6 py-4 font-semibold">Notes</th>
+                                        <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                     </tr>
-                                ) : (
-                                    filteredSessions.map((session) => {
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {filteredSessions.map((session) => {
                                         let workoutList = [];
                                         try {
                                             workoutList = typeof session.workouts === 'string' ? JSON.parse(session.workouts) : session.workouts || [];
@@ -356,12 +432,12 @@ const SessionTracking = () => {
                                                 </td>
                                             </tr>
                                         );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Add Session Modal */}
