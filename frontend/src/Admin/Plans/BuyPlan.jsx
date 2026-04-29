@@ -600,62 +600,84 @@ Thank you for joining 💪
           </div>
 
           {selectedPlan && paymentType === "emi" && isEMIAllowed && (
-            <div className="mb-4 p-4 rounded-lg bg-gray-900 border border-orange-500">
-              <h3 className="text-lg font-semibold text-white mb-4">EMI Breakdown</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-gray-300 text-sm">Total Plan Price</p>
-                  <p className="text-white font-semibold">₹{getSelectedPlanTotal()}</p>
+            <div className="mb-4 p-6 rounded-2xl bg-gradient-to-br from-orange-900/30 to-orange-900/10 border border-orange-500/50 shadow-lg shadow-orange-500/20">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full"></div>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">EMI Payment Plan</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 hover:border-orange-500/30 transition-all">
+                  <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">Total Plan Price</p>
+                  <p className="text-white font-bold text-2xl">₹{getSelectedPlanTotal()}</p>
+                  <p className="text-gray-500 text-xs mt-1">{getSelectedPlanDuration()} months duration</p>
                 </div>
-                <div>
-                  <p className="text-gray-300 text-sm">Plan Duration</p>
-                  <p className="text-white font-semibold">{getSelectedPlanDuration()} months</p>
-                </div>
-                <div>
-                  <p className="text-gray-300 text-sm">Monthly EMI Amount</p>
-                  <p className="text-white font-semibold">₹{getSelectedPlanEMI()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-300 text-sm">Total EMIs</p>
-                  <p className="text-white font-semibold">{getSelectedPlanDuration()}</p>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 hover:border-orange-500/30 transition-all">
+                  <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">Payment Method</p>
+                  <p className="text-orange-400 font-bold text-2xl">30-Day Plan</p>
+                  <p className="text-gray-500 text-xs mt-1">Pay balance in 30 days</p>
                 </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Initial Payment Amount</label>
-                <input
-                  type="number"
-                  value={initialPayment}
-                  onChange={(e) => setInitialPayment(e.target.value)}
-                  className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Enter initial payment"
-                />
+
+              <div className="mb-6">
+                <label className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-orange-500 text-white text-xs font-bold">1</span>
+                  Initial Payment Amount (Today)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-3 text-white font-semibold text-lg">₹</span>
+                  <input
+                    type="number"
+                    value={initialPayment}
+                    onChange={(e) => setInitialPayment(e.target.value)}
+                    className="w-full pl-8 pr-4 py-3 bg-gray-900/50 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10 hover:border-orange-500/50 transition-all"
+                    placeholder="Enter initial payment amount"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Amount to be collected today</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-gray-300 text-sm">Amount Collected Now</p>
-                  <p className="text-white font-semibold">₹{parseDecimal(initialPayment).toFixed(2)}</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-green-900/30 to-green-900/10 p-4 rounded-xl border border-green-500/30">
+                  <p className="text-green-400 text-xs uppercase tracking-wide font-semibold mb-1">Amount Collected Today</p>
+                  <p className="text-white font-bold text-xl">₹{parseDecimal(initialPayment).toFixed(2)}</p>
                 </div>
-                <div>
-                  <p className="text-gray-300 text-sm">Remaining Balance</p>
-                  <p className="text-white font-semibold">₹{(
-                    getSelectedPlanTotal() - parseDecimal(initialPayment)
-                  ).toFixed(2)}</p>
+                <div className="bg-gradient-to-br from-blue-900/30 to-blue-900/10 p-4 rounded-xl border border-blue-500/30">
+                  <p className="text-blue-400 text-xs uppercase tracking-wide font-semibold mb-1">Remaining Balance</p>
+                  <p className="text-white font-bold text-xl">₹{(getSelectedPlanTotal() - parseDecimal(initialPayment)).toFixed(2)}</p>
+                  <p className="text-blue-400 text-xs mt-1">Due in 30 days</p>
                 </div>
-                <div>
-                  <p className="text-gray-300 text-sm">Remaining EMIs</p>
-                  <p className="text-white font-semibold">{(() => {
-                    const remaining = getSelectedPlanTotal() - parseDecimal(initialPayment);
-                    const emi = getSelectedPlanEMI();
-                    return emi > 0 ? Math.ceil(remaining / emi) : 0;
-                  })()}</p>
+                <div className="bg-gradient-to-br from-purple-900/30 to-purple-900/10 p-4 rounded-xl border border-purple-500/30">
+                  <p className="text-purple-400 text-xs uppercase tracking-wide font-semibold mb-1">Due Date</p>
+                  <p className="text-white font-bold text-lg">
+                    {(() => {
+                      const dueDate = new Date();
+                      dueDate.setDate(dueDate.getDate() + 30);
+                      return dueDate.toLocaleDateString('en-IN', { 
+                        day: '2-digit', 
+                        month: 'short', 
+                        year: 'numeric' 
+                      });
+                    })()}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-gray-300 text-sm">Next EMI Amount (Suggested)</p>
-                  <p className="text-white font-semibold">₹{(() => {
-                    const remaining = getSelectedPlanTotal() - parseDecimal(initialPayment);
-                    const emi = getSelectedPlanEMI();
-                    return remaining > 0 ? Math.min(emi, remaining).toFixed(2) : '0.00';
-                  })()}</p>
+              </div>
+
+              <div className="bg-white/5 p-4 rounded-xl border border-white/10 border-dashed">
+                <p className="text-gray-400 text-xs uppercase tracking-wide font-semibold mb-2">📋 Payment Summary</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-400">Step 1: Pay Today</span>
+                    <span className="text-green-400 font-semibold">₹{parseDecimal(initialPayment).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-400">Step 2: Pay in 30 Days</span>
+                    <span className="text-blue-400 font-semibold">₹{(getSelectedPlanTotal() - parseDecimal(initialPayment)).toFixed(2)}</span>
+                  </div>
+                  <div className="border-t border-white/10 mt-2 pt-2 flex justify-between items-center text-sm font-bold">
+                    <span className="text-white">Total Amount</span>
+                    <span className="text-orange-400">₹{getSelectedPlanTotal()}</span>
+                  </div>
                 </div>
               </div>
             </div>
