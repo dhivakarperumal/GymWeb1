@@ -378,10 +378,10 @@ const Members = () => {
                 <th className="p-4 text-left font-medium">BMI</th>
                 <th className="p-4 text-left font-medium">PT Form</th>
                 <th className="p-4 text-left font-medium">Plan</th>
-                <th className="p-4 text-left font-medium text-emerald-400">Price</th>
+                
                 <th className="p-4 text-left font-medium">Type</th>
                 <th className="p-4 text-left font-medium">Payment</th>
-                <th className="p-4 text-left font-medium text-blue-400">Remaining</th>
+               
                 <th className="p-4 text-left font-medium">Actions</th>
               </tr>
             </thead>
@@ -444,11 +444,7 @@ const Members = () => {
                         {m.plan || m.role || "Member"}
                       </span>
                     </td>
-                    <td className="p-4">
-                      <span className="text-emerald-400 font-bold">
-                        {m.price ? `₹${m.price}` : "-"}
-                      </span>
-                    </td>
+                   
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${m.source === "users"
                         ? "bg-blue-500/20 text-blue-400"
@@ -470,15 +466,7 @@ const Members = () => {
                         <span className="text-white/20 text-xs">-</span>
                       )}
                     </td>
-                    <td className="p-4">
-                      {m.plan && m.paymentMode === 'emi' ? (
-                        <span className="text-blue-400 font-bold">
-                          ₹{Math.max(0, (Number(m.price || 0) - Number(m.pricePaid || 0) - Number(m.secondPaymentPaid || 0))).toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-white/20">-</span>
-                      )}
-                    </td>
+                   
                     <td className="p-4 flex gap-2">
 
                       <button
