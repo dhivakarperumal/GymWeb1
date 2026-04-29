@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import EnquiryFormPage from './PTFormPages/EnquiryFormPage';
 import HealthHistoryPage from './PTFormPages/HealthHistoryPage';
 import HealthHistory2Page from './PTFormPages/HealthHistory2Page';
+import FitnessScreening from '../Admin/PTForm/FitnessScreening';
+import FlexibilityAndMeasurements from '../Admin/PTForm/FlexibilityAndMeasurements';
 
 const PTFormUser = () => {
   const { user } = useAuth();
@@ -207,6 +209,8 @@ const PTFormUser = () => {
           { key: 'enquiry', label: 'Enquiry Form' },
           { key: 'health1', label: 'Health History' },
           { key: 'health2', label: 'Health History 2' },
+          { key: 'fitness', label: 'Fitness Screening' },
+          { key: 'flexibility', label: 'Flexibility & Measurements' },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -236,6 +240,20 @@ const PTFormUser = () => {
 
       {activeTab === 'health2' && (
         <HealthHistory2Page data={formData} onSubmit={handleHealthHistory2Submit} />
+      )}
+
+      {activeTab === 'fitness' && (
+        <FitnessScreening
+          formData={formData}
+          readOnly
+        />
+      )}
+
+      {activeTab === 'flexibility' && (
+        <FlexibilityAndMeasurements
+          formData={formData}
+          readOnly
+        />
       )}
     </div>
   );

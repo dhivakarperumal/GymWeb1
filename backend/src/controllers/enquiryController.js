@@ -4,7 +4,26 @@ const enquiryController = {
     // Get all enquiries
     getAllEnquiries: async (req, res) => {
         try {
-            const [rows] = await pool.query('SELECT * FROM enquiries ORDER BY created_at DESC');
+            let query = 'SELECT * FROM enquiries';
+            const params = [];
+
+            if (req.query.email) {
+                query += ' WHERE email = ?';
+                params.push(req.query.email);
+            }
+
+            query += ' ORDER BY created_at DESC';
+            const [rows] = await pool.query(query, params);
+
+            rows.forEach(row => {
+                if (row.consent_data && typeof row.consent_data === 'string') {
+                    try {
+                        row.consent_data = JSON.parse(row.consent_data);
+                    } catch (err) {
+                        console.warn('Failed to parse consent_data in enquiry row', err);
+                    }
+                }
+            });
             res.json(rows);
         } catch (error) {
             console.error('Error fetching enquiries:', error);
@@ -22,6 +41,14 @@ const enquiryController = {
                 return res.status(404).json({ error: 'Enquiry not found' });
             }
 
+            if (rows[0].consent_data && typeof rows[0].consent_data === 'string') {
+                try {
+                    rows[0].consent_data = JSON.parse(rows[0].consent_data);
+                } catch (err) {
+                    console.warn('Failed to parse consent_data for enquiry', err);
+                }
+            }
+
             res.json(rows[0]);
         } catch (error) {
             console.error('Error fetching enquiry:', error);
@@ -37,7 +64,7 @@ const enquiryController = {
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
                 fitness_goal, blood_group, height, weight, bmi, gender, termsAccepted,
-                plan_name, plan_duration
+                plan_name, plan_duration, consent_data
             } = req.body;
 
             if (!name || !email) {
@@ -50,8 +77,8 @@ const enquiryController = {
                     dob, age, address, employer, occupation,
                     emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                     emergency_contact_phone_home, emergency_contact_phone_work,
-                    fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted, consent_data
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     name, email, phone, subject || null, message || null, location || null,
                     dob || null, age || null, address || null, employer || null, occupation || null,
@@ -60,11 +87,19 @@ const enquiryController = {
                     fitness_goal || null, blood_group || null,
                     height || null, weight || null, bmi || null, gender || null,
                     plan_name || null, plan_duration || null,
-                    termsAccepted ? 1 : 0
+                    termsAccepted ? 1 : 0,
+                    consent_data ? JSON.stringify(consent_data) : null
                 ]
             );
 
             const [rows] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [result.insertId]);
+            if (rows[0] && rows[0].consent_data && typeof rows[0].consent_data === 'string') {
+                try {
+                    rows[0].consent_data = JSON.parse(rows[0].consent_data);
+                } catch (err) {
+                    console.warn('Failed to parse consent_data for created enquiry', err);
+                }
+            }
             res.status(201).json(rows[0]);
         } catch (error) {
             console.error('Error creating enquiry:', error);
@@ -81,7 +116,7 @@ const enquiryController = {
                 dob, age, address, employer, occupation,
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
-                fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, status, termsAccepted
+                fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, status, termsAccepted, consent_data
             } = req.body;
 
             const [result] = await pool.query(
@@ -90,7 +125,7 @@ const enquiryController = {
                     dob = ?, age = ?, address = ?, employer = ?, occupation = ?,
                     emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_address = ?,
                     emergency_contact_phone_home = ?, emergency_contact_phone_work = ?,
-                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?, terms_accepted = ?,
+                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?, terms_accepted = ?, consent_data = ?,
                     updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?`,
                 [
@@ -101,6 +136,7 @@ const enquiryController = {
                     fitness_goal || null, blood_group || null,
                     height || null, weight || null, bmi || null, gender || null, plan_name || null, plan_duration || null, status || 'pending',
                     termsAccepted ? 1 : 0,
+                    consent_data ? JSON.stringify(consent_data) : null,
                     id
                 ]
             );
@@ -110,6 +146,13 @@ const enquiryController = {
             }
 
             const [rows] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [id]);
+            if (rows[0] && rows[0].consent_data && typeof rows[0].consent_data === 'string') {
+                try {
+                    rows[0].consent_data = JSON.parse(rows[0].consent_data);
+                } catch (err) {
+                    console.warn('Failed to parse consent_data for updated enquiry', err);
+                }
+            }
             res.json(rows[0]);
         } catch (error) {
             console.error('Error updating enquiry:', error);
