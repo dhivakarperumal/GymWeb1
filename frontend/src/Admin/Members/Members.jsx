@@ -138,7 +138,9 @@ const Members = () => {
       "Join Date": m.join_date || "-",
       "Expiry Date": m.expiry_date || "-",
       Status: m.status || "active",
-      "Payment Status": m.paymentMode === 'emi' ? "Pending" : m.plan ? "Paid" : "N/A"
+      "Plan Price": m.price || "-",
+      "Payment Status": m.paymentMode === 'emi' ? "Pending" : m.plan ? "Paid" : "N/A",
+      "Remaining Amount": m.paymentMode === 'emi' ? (Number(m.price || 0) - Number(m.pricePaid || 0) - Number(m.secondPaymentPaid || 0)) : 0
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -376,6 +378,7 @@ const Members = () => {
                 <th className="p-4 text-left font-medium">BMI</th>
                 <th className="p-4 text-left font-medium">PT Form</th>
                 <th className="p-4 text-left font-medium">Plan</th>
+                <th className="p-4 text-left font-medium text-emerald-400">Price</th>
                 <th className="p-4 text-left font-medium">Type</th>
                 <th className="p-4 text-left font-medium">Payment</th>
                 <th className="p-4 text-left font-medium text-blue-400">Remaining</th>
@@ -439,6 +442,11 @@ const Members = () => {
                     <td className="p-4">
                       <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
                         {m.plan || m.role || "Member"}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-emerald-400 font-bold">
+                        {m.price ? `₹${m.price}` : "-"}
                       </span>
                     </td>
                     <td className="p-4">
@@ -570,6 +578,11 @@ const Members = () => {
                       <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
                         {m.plan || m.role || "Member"}
                       </span>
+                      {m.price && (
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
+                          ₹{m.price}
+                        </span>
+                      )}
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold ring-1 ${m.source === "users"
                         ? "bg-blue-500/20 text-blue-400 ring-blue-500/30"
                         : "bg-purple-500/20 text-purple-400 ring-purple-500/30"

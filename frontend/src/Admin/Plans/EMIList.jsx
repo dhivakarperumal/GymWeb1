@@ -327,11 +327,10 @@ const EMIList = () => {
                     <th className="px-6 py-4 border-b border-white/5">S.No</th>
                     <th className="px-6 py-4 border-b border-white/5">Member</th>
                     <th className="px-6 py-4 border-b border-white/5">Plan</th>
-                    <th className="px-6 py-4 border-b border-white/5">Duration</th>
+                    <th className="px-6 py-4 border-b border-white/5 ">Total Price</th>
                     <th className="px-6 py-4 border-b border-white/5">Initial Payment</th>
                     <th className="px-6 py-4 border-b border-white/5">Second Payment</th>
                     <th className="px-6 py-4 border-b border-white/5">Remaining Due</th>
-                    <th className="px-6 py-4 border-b border-white/5">Total Price</th>
                     <th className="px-6 py-4 border-b border-white/5">Created</th>
                     <th className="px-6 py-4 border-b border-white/5 text-center">Actions</th>
                   </tr>
@@ -380,7 +379,11 @@ const EMIList = () => {
                             {plan ? "Matched plan" : "Plan lookup not found"}
                           </div>
                         </td>
-                        <td className="px-6 py-4">{duration} months</td>
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-emerald-400">
+                            ₹{totalPrice.toFixed(2)}
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           <div className="font-semibold text-green-400">
                             ₹{initialPayment.toFixed(2)}
@@ -404,11 +407,6 @@ const EMIList = () => {
                                   day: "numeric",
                                   month: "short",
                                 })}`}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-orange-400">
-                            ₹{totalPrice.toFixed(2)}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -483,13 +481,9 @@ const EMIList = () => {
 
                     <div className="space-y-4 mb-6">
                       <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                        <div>
-                          <p className="text-[10px] text-white/40 uppercase font-black tracking-wider">Plan Details</p>
-                          <p className="text-sm font-semibold text-white">{membership.planName}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-white/40 uppercase font-black tracking-wider">Duration</p>
-                          <p className="text-sm font-semibold text-white">{duration} Months</p>
+                        <div className="w-full">
+                          <p className="text-[10px] text-white/40 uppercase font-black tracking-wider text-center sm:text-left">Plan Details</p>
+                          <p className="text-sm font-semibold text-white text-center sm:text-left">{membership.planName}</p>
                         </div>
                       </div>
 
