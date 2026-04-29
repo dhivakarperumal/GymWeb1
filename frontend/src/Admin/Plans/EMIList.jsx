@@ -200,8 +200,9 @@ const EMIList = () => {
         : currentPaid + currentSecondPayment;
     })();
     const newSecondPayment = Number((currentSecondPayment + amount).toFixed(2));
-    const newPaymentStatus =
-      newSecondPayment + currentPaid >= totalPrice ? "Paid" : "Partial";
+    const isFullyPaid = newSecondPayment + currentPaid >= totalPrice;
+    const newStatus = isFullyPaid ? "completed" : (selectedMembership.status || "active");
+    const newPaymentStatus = isFullyPaid ? "Paid" : "Partial";
 
     setUpdating(true);
     try {
