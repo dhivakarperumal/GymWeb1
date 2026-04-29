@@ -204,9 +204,9 @@ const SelectRow = ({ label, name, value, onChange }) => (
       onChange={onChange}
       className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
     >
-      <option value="">Select</option>
-      <option>Yes</option>
-      <option>No</option>
+      <option value="" className="text-black">Select</option>
+      <option className="text-black">Yes</option>
+      <option className="text-black">No</option>
     </select>
   </div>
 );
