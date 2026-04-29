@@ -286,6 +286,40 @@ const AddMember = () => {
             </div>
 
             <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Plan</label>
+              <input name="plan" value={form.plan} onChange={handleChange} placeholder="e.g. Monthly Pro" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Duration (Months)</label>
+              <input type="number" name="duration" value={form.duration} onChange={handleChange} placeholder="e.g. 3" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Expiry Date</label>
+              <div className="flex gap-2">
+                <input 
+                  type="date" 
+                  name="expiryDate" 
+                  value={form.expiryDate} 
+                  onChange={handleChange} 
+                  className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" 
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newExpiry = dayjs(form.expiryDate || dayjs()).add(5, 'day').format('YYYY-MM-DD');
+                    setForm(prev => ({ ...prev, expiryDate: newExpiry }));
+                    toast.success("Extended by 5 days");
+                  }}
+                  className="px-4 py-2 bg-orange-500/20 border border-orange-500/50 text-orange-400 rounded-lg text-xs font-bold hover:bg-orange-500 hover:text-white transition-all whitespace-nowrap"
+                >
+                  +5 Days
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
               <label className="text-sm font-medium text-white/70 ml-1">Status</label>
               <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500">
                 <option value="active" className="text-black">Active</option>

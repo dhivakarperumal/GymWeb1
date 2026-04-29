@@ -413,6 +413,69 @@ async function updateMember(req, res) {
       return res.status(404).json({ error: 'Member not found' });
     }
 
+    // Fetch the updated member to get user ID and sync memberships table
+    let sql;
+    let params;
+    if (isNum) {
+      sql = `
+        SELECT gm.*,
+               u.id AS u_id,
+               u.email AS user_email,
+               (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
+               (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
+        FROM gym_members gm
+        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+        WHERE gm.id = ?
+      `;
+      params = [idNum];
+    } else {
+      sql = `
+        SELECT gm.*,
+               u.id AS u_id,
+               u.email AS user_email,
+               (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
+               (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
+        FROM gym_members gm
+        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+        WHERE gm.member_id = ?
+      `;
+      params = [id];
+    }
+
+    const [rows] = await connection.query(sql, params);
+    const updatedMember = rows[0];
+
+    // SYNC with memberships table (history/tracking)
+    if (updatedMember && updatedMember.u_id) {
+      try {
+        await connection.query(
+          `UPDATE memberships 
+           SET endDate = ?, 
+               startDate = ?, 
+               duration = ?, 
+               planName = ?,
+               userName = ?,
+               userEmail = ?,
+               userPhone = ?
+           WHERE userId = ? 
+           ORDER BY createdAt DESC 
+           LIMIT 1`,
+          [
+            expiryDate || updatedMember.expiry_date,
+            joinDate || updatedMember.join_date,
+            numDuration || updatedMember.duration,
+            plan || updatedMember.plan,
+            name || updatedMember.name,
+            email || updatedMember.email,
+            phone || updatedMember.phone,
+            updatedMember.u_id
+          ]
+        );
+      } catch (syncErr) {
+        console.warn('updateMember: failed to sync memberships table', syncErr.message);
+      }
+    }
+
     // sync user info (email / mobile / username)
     try {
       const userFields = [];
@@ -451,39 +514,8 @@ async function updateMember(req, res) {
       // continue without fatal error
     }
 
-    // Fetch the updated member
-    // use the same enhanced lookup as getMemberById so caller receives counts/user_email
-    let sql;
-    let params;
-    if (isNum) {
-      sql = `
-        SELECT gm.*,
-               u.id AS u_id,
-               u.email AS user_email,
-               (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
-               (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
-        FROM gym_members gm
-        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        WHERE gm.id = ?
-      `;
-      params = [idNum];
-    } else {
-      sql = `
-        SELECT gm.*,
-               u.id AS u_id,
-               u.email AS user_email,
-               (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
-               (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
-        FROM gym_members gm
-        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        WHERE gm.member_id = ?
-      `;
-      params = [id];
-    }
-
-    const [rows] = await connection.query(sql, params);
     await connection.commit();
-    res.json(rows[0]);
+    res.json(updatedMember);
 
   } catch (err) {
     await connection.rollback();
