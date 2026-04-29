@@ -39,6 +39,8 @@ const FollowupEnquiry = () => {
 
   // Status filter
   const [statusFilter, setStatusFilter] = useState('all');
+  const [trainerFilter, setTrainerFilter] = useState('all');
+  const [trainers, setTrainers] = useState([]);
 
   // Form Data
   const [formData, setFormData] = useState({
@@ -64,7 +66,18 @@ const FollowupEnquiry = () => {
   useEffect(() => {
     fetchEnquiries();
     fetchPlans();
+    fetchTrainers();
   }, []);
+
+  const fetchTrainers = async () => {
+    try {
+      const res = await api.get("/staff");
+      // filter only those who might handle enquiries, or show all staff who have logged something
+      setTrainers(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching staff", err);
+    }
+  };
 
   const fetchPlans = async () => {
     try {
@@ -198,9 +211,14 @@ const FollowupEnquiry = () => {
       enquiry.organization?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
-    const matchesTrainer = role === 'admin' || enquiry.updated_by === user?.username;
+    const matchesAccess = role === 'admin' || enquiry.updated_by === user?.username;
+    
+    let matchesTrainer = true;
+    if (role === 'admin' && trainerFilter !== 'all') {
+      matchesTrainer = enquiry.updated_by === trainerFilter;
+    }
 
-    if (!matchesSearch || !matchesStatus || !matchesTrainer) return false;
+    if (!matchesSearch || !matchesStatus || !matchesAccess || !matchesTrainer) return false;
     return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
   });
 
@@ -257,6 +275,22 @@ const FollowupEnquiry = () => {
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>
+
+            {/* Staff Filter */}
+            {role === 'admin' && (
+              <select
+                value={trainerFilter}
+                onChange={(e) => { setTrainerFilter(e.target.value); setCurrentPage(1); }}
+                className="py-2.5 px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
+              >
+                <option value="all">All Staff</option>
+                {trainers.map(s => (
+                  <option key={s.id} value={s.username || s.name} className="bg-neutral-900">
+                    {s.name} ({s.role})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
