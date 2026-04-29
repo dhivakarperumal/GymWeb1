@@ -39,7 +39,7 @@ const Members = () => {
   // 🔄 FETCH MEMBERS
   const fetchMembers = async () => {
     if (cache.adminMembers) {
-      setMembers(cache.adminMembers);
+      setMembers(cache.adminMembers.filter((m) => m.source !== "users"));
     } else {
       setLoading(true);
     }
@@ -47,8 +47,9 @@ const Members = () => {
     try {
       const res = await api.get("/members");
       const data = Array.isArray(res.data) ? res.data : [];
-      setMembers(data);
-      cache.adminMembers = data;
+      const onlyGymMembers = data.filter((m) => m.source !== "users");
+      setMembers(onlyGymMembers);
+      cache.adminMembers = onlyGymMembers;
     } catch {
       if (!cache.adminMembers) toast.error("Failed to load members");
     } finally {
