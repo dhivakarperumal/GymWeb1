@@ -19,7 +19,6 @@ const PTForm = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const memberId = searchParams.get("member_id");
-  const role = localStorage.getItem('role') || 'admin';
 
   useEffect(() => {
     if (memberId) {
@@ -55,7 +54,20 @@ const PTForm = () => {
 
           // Also try to fetch existing PT Form data if any
           try {
-            const ptRes = await api.get(`/pt-forms/${memberId}`);
+            const [ptRes, assignRes] = await Promise.all([
+              api.get(`/pt-forms/${memberId}`).catch(() => ({ data: null })),
+              api.get('/assignments').catch(() => ({ data: [] }))
+            ]);
+
+            let trainerName = "";
+            if (assignRes.data) {
+              const myAssign = assignRes.data.find(a => 
+                String(a.gymMemberId) === String(memberId) || 
+                String(a.userId) === String(data.u_id)
+              );
+              if (myAssign) trainerName = myAssign.trainerName;
+            }
+
             if (ptRes.data && ptRes.data.form_data) {
               const savedData = typeof ptRes.data.form_data === 'string'
                 ? JSON.parse(ptRes.data.form_data)
@@ -63,11 +75,17 @@ const PTForm = () => {
 
               setFormData(prev => ({
                 ...prev,
-                ...savedData
+                ...savedData,
+                trainer_name_assigned: trainerName || savedData.trainer_name_assigned || ""
+              }));
+            } else {
+              setFormData(prev => ({
+                ...prev,
+                trainer_name_assigned: trainerName
               }));
             }
           } catch (err) {
-            console.log('No existing PT form found for this member');
+            console.log('Error fetching supplemental PT form data', err);
           }
 
           try {

@@ -40,8 +40,14 @@ async function savePTForm(req, res) {
         gender = COALESCE(?, gender),
         height = COALESCE(?, height),
         weight = COALESCE(?, weight),
-        bmi = COALESCE(?, bmi)
-       WHERE id = ?`,
+        bmi = COALESCE(?, bmi),
+        address = COALESCE(?, address),
+        dob = COALESCE(?, dob),
+        age = COALESCE(?, age),
+        occupation = COALESCE(?, occupation),
+        fitness_goal = COALESCE(?, fitness_goal),
+        blood_group = COALESCE(?, blood_group)
+       WHERE id = ? OR member_id = ?`,
       [
         completed ? 1 : 0,
         completed ? 1 : 0,
@@ -52,6 +58,13 @@ async function savePTForm(req, res) {
         formData.height || null,
         formData.weight || null,
         formData.bmi || null,
+        formData.address || null,
+        formData.dob || null,
+        formData.age || null,
+        formData.occupation || null,
+        formData.fitness_goal || null,
+        formData.blood_group || null,
+        member_id,
         member_id
       ]
     );

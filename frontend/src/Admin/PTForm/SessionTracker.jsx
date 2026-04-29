@@ -14,8 +14,9 @@ const SessionTracker = ({
       session_no: i + 1,
       date: "",
       workout: "",
+      status: "Pending",
       client_sign: "",
-      trainer_sign: trainerName,
+      trainer_sign: initialFormData?.trainer_name_assigned || trainerName,
     }))
   });
 
@@ -30,7 +31,18 @@ const SessionTracker = ({
 
   const handleSessionChange = (index, field, value) => {
     const newSessions = [...localFormData.sessions];
-    newSessions[index] = { ...newSessions[index], [field]: value };
+    const updatedSession = { ...newSessions[index], [field]: value };
+    
+    // Auto-fill Client Sign if status becomes Completed
+    if (field === "status") {
+      if (value === "Completed") {
+        updatedSession.client_sign = initialFormData?.name || "";
+      } else {
+        updatedSession.client_sign = "";
+      }
+    }
+
+    newSessions[index] = updatedSession;
     setLocalFormData((prev) => ({ ...prev, sessions: newSessions }));
   };
 
@@ -55,8 +67,9 @@ const SessionTracker = ({
                   <th className="p-4 border-r border-white/5 w-20 text-center">Session. No</th>
                   <th className="p-4 border-r border-white/5 w-40 text-center">Date</th>
                   <th className="p-4 border-r border-white/5 text-left">Workout</th>
-                  <th className="p-4 border-r border-white/5 w-40 text-center">Client Sign</th>
-                  <th className="p-4 w-40 text-center">Trainer Sign</th>
+                  <th className="p-4 border-r border-white/5 w-32 text-center">Status</th>
+                  <th className="p-4 border-r border-white/5 w-32 text-center">Client Sign</th>
+                  <th className="p-4 w-32 text-center">Trainer Sign</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -82,6 +95,19 @@ const SessionTracker = ({
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors placeholder-white/10"
                       />
                     </td>
+                    <td className="p-4 border-r border-white/5 text-center">
+                       <button
+                         type="button"
+                         onClick={() => handleSessionChange(index, "status", session.status === "Completed" ? "Pending" : "Completed")}
+                         className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border shadow-sm ${
+                           session.status === "Completed" 
+                           ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white" 
+                           : "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500 hover:text-white"
+                         }`}
+                       >
+                         {session.status || "Pending"}
+                       </button>
+                    </td>
                     <td className="p-0 border-r border-white/5">
                       <input
                         type="text"
@@ -97,7 +123,7 @@ const SessionTracker = ({
                         value={session.trainer_sign || ""}
                         onChange={(e) => handleSessionChange(index, "trainer_sign", e.target.value)}
                         placeholder="Sign/Initial"
-                        className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10"
+                        className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10 font-bold"
                       />
                     </td>
                   </tr>

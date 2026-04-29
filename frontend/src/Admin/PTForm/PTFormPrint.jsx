@@ -219,11 +219,12 @@ const PTFormPrint = () => {
           <table className="w-full border-collapse border border-black text-[9px]">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-black p-2 w-16">Session No.</th>
+                <th className="border border-black p-2 w-12">S.No.</th>
                 <th className="border border-black p-2 w-24">Date</th>
                 <th className="border border-black p-2">Workout</th>
-                <th className="border border-black p-2 w-32">Client sign</th>
-                <th className="border border-black p-2 w-32">Trainer sign</th>
+                <th className="border border-black p-2 w-20">Status</th>
+                <th className="border border-black p-2 w-28">Client sign</th>
+                <th className="border border-black p-2 w-28">Trainer sign</th>
               </tr>
             </thead>
             <tbody>
@@ -232,6 +233,7 @@ const PTFormPrint = () => {
                   <td className="border border-black p-1 text-center font-bold bg-gray-50">{i + 1}</td>
                   <td className="border border-black p-1 text-center">{session.date ? dayjs(session.date).format('DD/MM/YYYY') : ""}</td>
                   <td className="border border-black p-1">{session.workout || ""}</td>
+                  <td className="border border-black p-1 text-center text-[8px] font-bold uppercase">{session.status || "Pending"}</td>
                   <td className="border border-black p-1 text-center">{session.client_sign || ""}</td>
                   <td className="border border-black p-1 text-center">{session.trainer_sign || ""}</td>
                 </tr>

@@ -112,6 +112,7 @@ const PTFormPreviewContent = ({ memberId }) => {
                 <th className="border border-black p-1 w-10 text-center">S.No</th>
                 <th className="border border-black p-1 w-20 text-center">Date</th>
                 <th className="border border-black p-1">Workout</th>
+                <th className="border border-black p-1 w-16 text-center">Status</th>
                 <th className="border border-black p-1 w-24 text-center">Client</th>
                 <th className="border border-black p-1 w-24 text-center">Trainer</th>
               </tr>
@@ -122,6 +123,7 @@ const PTFormPreviewContent = ({ memberId }) => {
                   <td className="border border-black p-1 text-center bg-gray-50 font-bold">{i + 1}</td>
                   <td className="border border-black p-1 text-center">{session.date ? dayjs(session.date).format('DD/MM/YYYY') : ""}</td>
                   <td className="border border-black p-1">{session.workout || ""}</td>
+                  <td className="border border-black p-1 text-center text-[7px] font-bold uppercase">{session.status || "Pending"}</td>
                   <td className="border border-black p-1 text-center italic">{session.client_sign || ""}</td>
                   <td className="border border-black p-1 text-center font-bold">{session.trainer_sign || ""}</td>
                 </tr>
