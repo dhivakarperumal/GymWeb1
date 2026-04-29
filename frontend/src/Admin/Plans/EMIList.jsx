@@ -207,7 +207,7 @@ const EMIList = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-blue-400">₹{balanceDue.toFixed(2)}</div>
-                      <div className="text-xs text-white/50">{dueDate.toLocaleDateString('en-IN', { day: 'short', month: 'short' })}</div>
+                      <div className="text-xs text-white/50">{dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-semibold text-orange-400">₹{totalPrice.toFixed(2)}</div>
