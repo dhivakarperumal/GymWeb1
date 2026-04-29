@@ -58,8 +58,12 @@ const SessionTracker = ({
     setLocalFormData((prev) => ({ ...prev, sessions: newSessions }));
   };
 
+  const hasRequiredSessionFields = (session) => {
+    return String(session.date || "").trim() !== "" && String(session.workout || "").trim() !== "";
+  };
+
   const canApproveSession = (session) => {
-    return userMode && session.status === "Pending" && session.date && session.workout;
+    return userMode && session.status === "Pending" && hasRequiredSessionFields(session);
   };
 
   const handleSubmit = async (e) => {
