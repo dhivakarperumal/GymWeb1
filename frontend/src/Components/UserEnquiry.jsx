@@ -365,9 +365,6 @@ const UserEnquiry = () => {
                     <InputField label="Any Medical History or Notes?" value={formData.message} onChange={(val) => setFormData({ ...formData, message: val })} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
                   </div>
 
-                 
-
-
                   <div className="pt-6 border-t border-white/5">
 
                    {/* Top Text */}
