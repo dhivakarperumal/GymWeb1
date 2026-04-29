@@ -786,6 +786,9 @@ const Payments = () => {
                     <th className="px-6 py-4 border-b border-white/5">
                       Second Payment
                     </th>
+                    <th className="px-6 py-4 border-b border-white/5 text-blue-400">
+                      Remaining
+                    </th>
                     <th className="px-6 py-4 border-b border-white/5">
                       Start Date
                     </th>
@@ -807,6 +810,8 @@ const Payments = () => {
                   {paginatedPlans.map(({ member, plan }, index) => {
                     const totalAmount =
                       plan.price || plan.totalPrice || plan.planPrice || plan.pricePaid;
+                    const paidTotal = Number(plan.pricePaid || 0) + Number(plan.secondPaymentPaid || 0);
+                    const remainingAmount = Math.max(0, Number(totalAmount) - paidTotal);
 
                     return (
                       <tr
@@ -850,6 +855,13 @@ const Payments = () => {
                           <span className="text-cyan-300 font-black">
                             ₹{plan.secondPaymentPaid || 0}
                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {remainingAmount > 0 ? (
+                            <span className="text-blue-400 font-black">₹{remainingAmount.toFixed(2)}</span>
+                          ) : (
+                            <span className="text-white/20 text-xs">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">
                           {formatDate(plan.startDate)}
