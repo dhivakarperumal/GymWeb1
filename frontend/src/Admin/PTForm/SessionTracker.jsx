@@ -58,6 +58,10 @@ const SessionTracker = ({
     setLocalFormData((prev) => ({ ...prev, sessions: newSessions }));
   };
 
+  const canApproveSession = (session) => {
+    return userMode && session.status === "Pending" && session.date && session.workout;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (userMode) {
@@ -132,15 +136,8 @@ const SessionTracker = ({
                        <button
                          type="button"
                          onClick={() => {
-                           const canChangeStatus = userMode || allowStatusEdit;
-                           if (!canChangeStatus) return;
-
-                           if (userMode) {
-                             if (session.status === "Pending") {
-                               handleSessionChange(index, "status", "Completed");
-                             }
-                           } else {
-                             handleSessionChange(index, "status", session.status === "Completed" ? "Pending" : "Completed");
+                           if (canApproveSession(session)) {
+                             handleSessionChange(index, "status", "Completed");
                            }
                          }}
                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border shadow-sm ${
@@ -148,7 +145,7 @@ const SessionTracker = ({
                            ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white" 
                            : "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500 hover:text-white"
                          }`}
-                         disabled={(!userMode && !allowStatusEdit) || (userMode && session.status === "Completed")}
+                         disabled={!canApproveSession(session)}
                        >
                          {session.status || "Pending"}
                        </button>
