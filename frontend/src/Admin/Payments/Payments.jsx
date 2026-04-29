@@ -306,7 +306,16 @@ const Payments = () => {
 
   const formatDate = (date) => {
     if (!date) return "—";
-    return new Date(date).toISOString().split("T")[0];
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "—";
+    
+    // Using local date parts to avoid timezone shifts
+    const day = d.getDate().toString().padStart(2, '0');
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    
+    return `${day} ${month} ${year}`;
   };
 
   const toggleRow = (id) => {
@@ -712,105 +721,116 @@ const Payments = () => {
 
 
 
-      {/* ================= TABLE VIEW ================= */}
       {viewType === "table" && (
-        <div className="overflow-x-auto rounded-xl border border-white/10">
-          <table className="min-w-full text-sm text-left">
-            <thead className="bg-white/10 text-gray-300">
-              <tr>
-                <th className="px-4 py-4">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={toggleSelectAll}
-                  />
-                </th>
-                <th className="px-4 py-4">S.No</th>
-                <th className="px-4 py-4">Name</th>
-                <th className="px-4 py-4">Plan</th>
-                <th className="px-4 py-4">Amount</th>
-                <th className="px-4 py-4">Start Date</th>
-                <th className="px-4 py-4">End Date</th>
-                <th className="px-4 py-3">Days Left</th>
-                <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4">Action</th>
-                <th className="px-4 py-4">Printer</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedPlans.map(({ member, plan }, index) => (
-                <tr
-                  key={`${member.uid}_${plan.id}`}
-                  className="border-b border-white/10 hover:bg-white/5"
-                >
-                  <td className="px-4 py-4">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1000px] text-sm text-left text-gray-200 border-collapse">
+              <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border-b border-white/10 z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
+                <tr>
+                  <th className="px-6 py-4 border-b border-white/5">
                     <input
                       type="checkbox"
-                      checked={selectedRows.includes(member.uid)}
-                      onChange={() => toggleRow(member.uid)}
+                      checked={selectAll}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
                     />
-                  </td>
-                  <td className="px-4 py-4">{getSerialNumber(index)}</td>
-                  <td className="px-4 py-4">{member.username}</td>
-                 
-                  <td className="px-4 py-4">{plan.planName}</td>
-                  <td className="px-4 py-4">₹ {plan.pricePaid}</td>
-                  <td className="px-4 py-4 whitespace-nowrap">{formatDate(plan.startDate)}</td>
-                  <td className="px-4 py-4 whitespace-nowrap">{formatDate(plan.endDate)}</td>
-                   <td className="px-4 py-3">
-
-                  <span
-                    className={`px-2 py-1 rounded text-xs ${
-                      getRemainingDays(plan.endDate) === "Expired"
-                        ? "bg-red-500/20 text-red-400"
-                        : isExpiringPlan(plan.endDate)
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-green-500/20 text-green-400"
-                    }`}
-                  >
-
-                    {getRemainingDays(plan.endDate)}
-
-                  </span>
-
-                </td>
-                  <td className="px-4 py-4">
-                    {plan.status === "active"
-                      ? "Active"
-                      : "Inactive"}
-                  </td>
-                  <td className="px-4 py-4  items-center gap-2">
-			
-                    {plan.status === "active" ? (
-                      <button
-                        onClick={() => handleStatusChange(member.uid, plan.id, "inactive")}
-                        className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition whitespace-nowrap"
-                      >
-                       Togle Inactive
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleStatusChange(member.uid, plan.id, "active")}
-                        className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm transition whitespace-nowrap"
-                      >
-                        Mark Active
-                      </button>
-                    )}
-                  </td>
-
-                  <td className="px-4 py-4  gap-2">
-                    <button
-                      onClick={() => handlePrintReceipt(member, plan)}
-                      className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition whitespace-nowrap"
-                    >
-                      <FaPrint/>
-                    </button>
-                  </td>
+                  </th>
+                  <th className="px-6 py-4 border-b border-white/5">S.No</th>
+                  <th className="px-6 py-4 border-b border-white/5">Name</th>
+                  <th className="px-6 py-4 border-b border-white/5">Plan</th>
+                  <th className="px-6 py-4 border-b border-white/5">Amount</th>
+                  <th className="px-6 py-4 border-b border-white/5">Start Date</th>
+                  <th className="px-6 py-4 border-b border-white/5">End Date</th>
+                  <th className="px-6 py-4 border-b border-white/5">Days Left</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-center">Status</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-center">Action</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-center">Receipt</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedPlans.map(({ member, plan }, index) => (
+                  <tr
+                    key={`${member.uid}_${plan.id}`}
+                    className="border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-all group"
+                  >
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.includes(member.uid)}
+                        onChange={() => toggleRow(member.uid)}
+                        className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
+                      />
+                    </td>
+                    <td className="px-6 py-4 font-bold text-white/40">
+                      {getSerialNumber(index)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-white group-hover:text-orange-400 transition-colors">
+                        {member.username}
+                      </div>
+                      <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">
+                        {member.email}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-white/80">{plan.planName}</td>
+                    <td className="px-6 py-4">
+                      <span className="text-orange-500 font-black">₹{plan.pricePaid}</span>
+                    </td>
+                    <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">{formatDate(plan.startDate)}</td>
+                    <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">{formatDate(plan.endDate)}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          getRemainingDays(plan.endDate) === "Expired"
+                            ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                            : isExpiringPlan(plan.endDate)
+                            ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                            : "bg-green-500/10 text-green-400 border border-green-500/20"
+                        }`}
+                      >
+                        {getRemainingDays(plan.endDate)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
+                        plan.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-white/10 text-white/40'
+                      }`}>
+                        {plan.status || 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {plan.status === "active" ? (
+                        <button
+                          onClick={() => handleStatusChange(member.uid, plan.id, "inactive")}
+                          className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all"
+                        >
+                          Deactivate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleStatusChange(member.uid, plan.id, "active")}
+                          className="px-3 py-1.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg text-[10px] font-black uppercase hover:bg-green-500 hover:text-white transition-all"
+                        >
+                          Activate
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handlePrintReceipt(member, plan)}
+                        className="p-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg hover:bg-blue-500 hover:text-white transition-all inline-flex"
+                        title="Print Receipt"
+                      >
+                        <FaPrint size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+      )}
       )}
 
       {/* ================= PAGINATION ================= */}

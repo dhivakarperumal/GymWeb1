@@ -90,6 +90,8 @@ const AddMember = () => {
     }
   }, [id, isEdit, location.search]);
 
+  const [extensionDays, setExtensionDays] = useState(5);
+
   // 📏 BMI
   useEffect(() => {
     if (form.height && form.weight) {
@@ -305,17 +307,27 @@ const AddMember = () => {
                   onChange={handleChange} 
                   className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" 
                 />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newExpiry = dayjs(form.expiryDate || dayjs()).add(5, 'day').format('YYYY-MM-DD');
-                    setForm(prev => ({ ...prev, expiryDate: newExpiry }));
-                    toast.success("Extended by 5 days");
-                  }}
-                  className="px-4 py-2 bg-orange-500/20 border border-orange-500/50 text-orange-400 rounded-lg text-xs font-bold hover:bg-orange-500 hover:text-white transition-all whitespace-nowrap"
-                >
-                  +5 Days
-                </button>
+                <div className="flex gap-1">
+                  <input
+                    type="number"
+                    value={extensionDays}
+                    onChange={(e) => setExtensionDays(Number(e.target.value))}
+                    className="w-16 rounded-lg bg-white/5 border border-white/10 px-2 py-3 text-white text-center focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Days"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const days = Number(extensionDays) || 0;
+                      const newExpiry = dayjs(form.expiryDate || dayjs()).add(days, 'day').format('YYYY-MM-DD');
+                      setForm(prev => ({ ...prev, expiryDate: newExpiry }));
+                      toast.success(`Extended by ${days} days`);
+                    }}
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-all whitespace-nowrap"
+                  >
+                    Extend
+                  </button>
+                </div>
               </div>
             </div>
 
