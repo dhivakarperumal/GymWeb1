@@ -10,7 +10,7 @@ export default function PricingCard({
       data-aos="fade-up"
       data-aos-delay={index * 120}
       className="
-        bg-black/80 h-[500px] md:h-[475px] border border-red-500/60 rounded-2xl
+        bg-black/80 h-[430px] md:h-[430px] border border-red-500/60 rounded-2xl
         p-8 flex flex-col
         shadow-[0_0_25px_rgba(255,0,0,0.15)]
         hover:shadow-red-600/40 transition
@@ -78,7 +78,7 @@ export default function PricingCard({
       </div>
 
       {/* TRAINER INCLUDED */}
-      <div className="mb-4">
+      {/* <div className="mb-4">
         {service.trainerIncluded ? (
           <span className="inline-block px-4 py-1 text-xs font-semibold rounded-full bg-green-600/20 text-green-400 border border-green-500/40">
             TRAINER INCLUDED
@@ -88,7 +88,7 @@ export default function PricingCard({
             TRAINER NOT INCLUDED
           </span>
         )}
-      </div>
+      </div> */}
 
       {/* FACILITIES */}
       <ul className="text-sm text-white/75 flex-grow">
