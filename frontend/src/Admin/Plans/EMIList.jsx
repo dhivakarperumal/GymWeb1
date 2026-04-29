@@ -327,7 +327,7 @@ const EMIList = () => {
                     <th className="px-6 py-4 border-b border-white/5">S.No</th>
                     <th className="px-6 py-4 border-b border-white/5">Member</th>
                     <th className="px-6 py-4 border-b border-white/5">Plan</th>
-                    <th className="px-6 py-4 border-b border-white/5 ">Total Price</th>
+                    <th className="px-6 py-4 border-b border-white/5">Total Price</th>
                     <th className="px-6 py-4 border-b border-white/5">Initial Payment</th>
                     <th className="px-6 py-4 border-b border-white/5">Second Payment</th>
                     <th className="px-6 py-4 border-b border-white/5">Remaining Due</th>
