@@ -742,8 +742,7 @@ const Payments = () => {
                   <th className="px-6 py-4 border-b border-white/5">Start Date</th>
                   <th className="px-6 py-4 border-b border-white/5">End Date</th>
                   <th className="px-6 py-4 border-b border-white/5">Days Left</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-center">Status</th>
-                  <th className="px-6 py-4 border-b border-white/5 text-center">Action</th>
+                  <th className="px-6 py-4 border-b border-white/5 text-center">Status / Action</th>
                   <th className="px-6 py-4 border-b border-white/5 text-center">Receipt</th>
                 </tr>
               </thead>
@@ -792,28 +791,19 @@ const Payments = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
-                        plan.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-white/10 text-white/40'
-                      }`}>
-                        {plan.status || 'Active'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {plan.status === "active" ? (
+                      <div className="flex flex-col items-center gap-2">
                         <button
-                          onClick={() => handleStatusChange(member.uid, plan.id, "inactive")}
-                          className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all"
+                          onClick={() => handleStatusChange(member.uid, plan.id, plan.status === 'active' ? 'inactive' : 'active')}
+                          className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
+                            plan.status === 'active' 
+                              ? 'bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white' 
+                              : 'bg-white/5 text-white/40 border-white/10 hover:bg-orange-500/20 hover:text-orange-400 hover:border-orange-500/30'
+                          }`}
                         >
-                          Deactivate
+                          {plan.status || 'Active'}
                         </button>
-                      ) : (
-                        <button
-                          onClick={() => handleStatusChange(member.uid, plan.id, "active")}
-                          className="px-3 py-1.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg text-[10px] font-black uppercase hover:bg-green-500 hover:text-white transition-all"
-                        >
-                          Activate
-                        </button>
-                      )}
+                        
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button
@@ -830,7 +820,6 @@ const Payments = () => {
             </table>
           </div>
         </div>
-      )}
       )}
 
       {/* ================= PAGINATION ================= */}
