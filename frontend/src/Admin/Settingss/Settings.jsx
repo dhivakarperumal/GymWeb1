@@ -155,7 +155,7 @@ const Settings = () => {
 
         <SettingCard
           icon={<FaHistory />}
-          title="Plan Complete History"
+          title="Plan History"
           desc="View full membership plan purchase history — all plans, payments, and balances across all members."
           path="/admin/plan-history"
         />

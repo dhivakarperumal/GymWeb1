@@ -162,8 +162,8 @@ const PlanHistory = () => {
           <ArrowLeft size={18} />
         </button>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Plan Completed History</h1>
-          <p className="text-white/40 text-sm">All expired & completed membership plans across all members</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Plan History</h1>
+          <p className="text-white/40 text-sm">Detailed history of all member plans and payments</p>
         </div>
         <button
           onClick={exportToExcel}

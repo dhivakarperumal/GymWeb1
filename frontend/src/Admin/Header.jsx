@@ -72,6 +72,7 @@ const pageInfo = {
   "/admin/commenworkoutdiet": { title: "Workout & Diet", icon: HeartPulse },
   "/admin/users": { title: "Users", icon: Users },
   "/admin/pt-form": { title: "Personal Training Form", icon: HeartPulse },
+  "/admin/plan-history": { title: "Plan History", icon: Clock },
 };
 
 const Header = ({ onMenuClick }) => {
