@@ -117,10 +117,16 @@ const PTForm = () => {
       setCurrentStep(currentStep + 1);
     } else {
       // Final Step Completed
+      const targetMemberId = memberId || updatedData.member_id;
+      if (!targetMemberId) {
+        toast.error('Please select a member before completing the PT form.');
+        return;
+      }
+
       setLoading(true);
       try {
         const payload = {
-          member_id: memberId || updatedData.member_id, // prioritize URL param
+          member_id: targetMemberId,
           user_id: updatedData.u_id || updatedData.user_id,
           formData: updatedData,
           completed: true

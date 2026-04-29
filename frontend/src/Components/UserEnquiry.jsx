@@ -114,6 +114,10 @@ const UserEnquiry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.consent_agree) {
+      toast.error('Please agree to the informed consent before submitting your enquiry.');
+      return;
+    }
     try {
       const payload = {
         ...formData,

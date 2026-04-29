@@ -487,61 +487,90 @@ const Enquiry = ({
               </div>
             </div>
 
-            {(localFormData.participant_name || localFormData.consent_signature || localFormData.consent_date) && (
-              <div className="space-y-4 p-6 rounded-2xl bg-slate-950/80 border border-white/10">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm">Informed Consent (User Submitted)</h3>
-                    <p className="text-white/60 text-sm">Auto-filled from the user enquiry consent submission.</p>
-                  </div>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-300">
-                    {localFormData.consent_agree ? 'Agreed' : 'Not agreed'}
-                  </span>
+            <div className="space-y-4 p-6 rounded-2xl bg-slate-950/80 border border-white/10">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                  <Users className="w-5 h-5 text-orange-500" />
                 </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white uppercase tracking-widest">Informed Consent</h3>
+                  <p className="text-white/60 text-sm">Please complete the consent form before moving to the next step.</p>
+                </div>
+              </div>
 
+              <div className="space-y-4">
+                <p className="text-white/80 leading-7">
+                  I <strong>{localFormData.participant_name || '__________'}</strong> give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-1">Participant Name</label>
                     <input
                       type="text"
+                      name="participant_name"
                       value={localFormData.participant_name}
-                      readOnly
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                      onChange={(e) => setLocalFormData(prev => ({ ...prev, participant_name: e.target.value }))}
+                      placeholder="Full Name"
+                      required
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-1">Consent Date</label>
                     <input
-                      type="text"
+                      type="date"
+                      name="consent_date"
                       value={localFormData.consent_date}
-                      readOnly
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                      onChange={(e) => setLocalFormData(prev => ({ ...prev, consent_date: e.target.value }))}
+                      required
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1">User Signature</label>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Your Signature</label>
                     <input
                       type="text"
+                      name="consent_signature"
                       value={localFormData.consent_signature}
-                      readOnly
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                      onChange={(e) => setLocalFormData(prev => ({ ...prev, consent_signature: e.target.value }))}
+                      placeholder="Type your name"
+                      required
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1">Guardian / Witness</label>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Witness / Guardian</label>
                     <input
                       type="text"
-                      value={localFormData.guardian_signature || localFormData.witness}
-                      readOnly
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                      name="witness"
+                      value={localFormData.witness}
+                      onChange={(e) => setLocalFormData(prev => ({ ...prev, witness: e.target.value }))}
+                      placeholder="Witness name"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
+
+                <label className="flex items-center gap-3 mt-4">
+                  <input
+                    type="checkbox"
+                    name="consent_agree"
+                    checked={localFormData.consent_agree}
+                    onChange={(e) => setLocalFormData(prev => ({ ...prev, consent_agree: e.target.checked }))}
+                    className="w-5 h-5 text-orange-500 bg-slate-800 border border-white/10 rounded"
+                    required
+                  />
+                  <span className="text-white">I have read and agree to the informed consent above.</span>
+                </label>
+
+                <div className="text-sm text-red-400">
+                  {localFormData.consent_agree ? '' : 'You must check the box to proceed.'}
+                </div>
               </div>
-            )}
+            </div>
 
             <div className="flex gap-3 pt-6">
               <button
