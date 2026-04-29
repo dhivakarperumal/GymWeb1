@@ -184,7 +184,7 @@ const AddMember = () => {
       navigate("/admin/members");
     } catch (err) {
       console.error(err);
-      toast.error("Server error");
+      toast.error(err.response?.data?.message || err.response?.data?.error || "Server error");
     }
 
     setLoading(false);

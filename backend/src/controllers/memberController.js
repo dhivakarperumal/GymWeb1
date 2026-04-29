@@ -211,15 +211,26 @@ async function createMember(req, res) {
       return res.status(400).json({ message: "Name and phone are required" });
     }
 
-    // duplicate phone check
-    const [existing] = await connection.query(
-      "SELECT * FROM gym_members WHERE phone = ?",
-      [phone]
+    // duplicate phone or email check in gym_members
+    const [existingMember] = await connection.query(
+      "SELECT id FROM gym_members WHERE phone = ? OR (email = ? AND email IS NOT NULL AND email != '')",
+      [phone, email]
     );
 
-    if (existing.length > 0) {
+    if (existingMember.length > 0) {
       await connection.rollback();
-      return res.status(400).json({ message: "Phone already exists" });
+      return res.status(400).json({ message: "A member with this phone or email already exists" });
+    }
+
+    // Check users table to avoid conflict with existing user accounts
+    const [existingUser] = await connection.query(
+      "SELECT id FROM users WHERE mobile = ? OR (email = ? AND email IS NOT NULL AND email != '')",
+      [phone, email]
+    );
+
+    if (existingUser.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({ message: "A user account with this phone or email already exists" });
     }
 
     // Parse numeric fields early so they can be used in insert loop
