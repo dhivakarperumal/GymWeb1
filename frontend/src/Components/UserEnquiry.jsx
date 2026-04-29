@@ -494,7 +494,7 @@ const UserEnquiry = () => {
                           * No Refund • No Transfer • No Extension • No Freezing
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
+                        {/* <div className="grid md:grid-cols-2 gap-6">
                           <div>
                             <label className="block mb-2 text-orange-300">Signature</label>
                             <input
@@ -538,7 +538,7 @@ const UserEnquiry = () => {
                             className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white"
                             placeholder="Witness name"
                           />
-                        </div>
+                        </div> */}
                       </div>
                     )}
                   </div>
