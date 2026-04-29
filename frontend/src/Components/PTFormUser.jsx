@@ -267,6 +267,7 @@ const PTFormUser = () => {
           isLastStep={true}
           readOnly={false}
           userMode={true}
+          onSaved={(updated) => setFormData(updated)}
         />
       )}
     </div>

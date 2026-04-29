@@ -11,6 +11,7 @@ const SessionTracker = ({
   isLastStep,
   readOnly = false,
   userMode = false,
+  onSaved = () => {},
 }) => {
   const { user } = useAuth();
   const trainerName = localStorage.getItem('username') || localStorage.getItem('name') || "";
@@ -36,6 +37,10 @@ const SessionTracker = ({
   }, [initialFormData]);
 
   const handleSessionChange = (index, field, value) => {
+    if (userMode && field === "client_sign") {
+      return;
+    }
+
     const newSessions = [...localFormData.sessions];
     const updatedSession = { ...newSessions[index], [field]: value };
     
@@ -65,6 +70,7 @@ const SessionTracker = ({
         };
         await api.post(`/pt-forms`, payload);
         toast.success("Sessions approved successfully!");
+        onSaved({ ...initialFormData, sessions: localFormData.sessions });
       } catch (error) {
         console.error("Error updating sessions:", error);
         toast.error("Failed to approve sessions.");
@@ -97,9 +103,7 @@ const SessionTracker = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {localFormData.sessions
-                  .filter(session => !userMode || (session.date && session.workout)) // In userMode, only show sessions with date and workout
-                  .map((session, index) => (
+                {localFormData.sessions.map((session, index) => (
                   <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="p-0 border-r border-white/5 text-center bg-white/[0.01] font-bold text-white/40">
                       {session.session_no}
@@ -110,7 +114,6 @@ const SessionTracker = ({
                         value={session.date || ""}
                         onChange={(e) => handleSessionChange(index, "date", e.target.value)}
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center"
-                        readOnly={userMode}
                       />
                     </td>
                     <td className="p-0 border-r border-white/5">
@@ -120,7 +123,6 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "workout", e.target.value)}
                         placeholder="Describe the workout sessions..."
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors placeholder-white/10"
-                        readOnly={userMode}
                       />
                     </td>
                     <td className="p-4 border-r border-white/5 text-center">
@@ -154,6 +156,7 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "client_sign", e.target.value)}
                         placeholder="Sign/Initial"
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10"
+                        readOnly={userMode}
                       />
                     </td>
                     <td className="p-0">
@@ -163,6 +166,7 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "trainer_sign", e.target.value)}
                         placeholder="Sign/Initial"
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10 font-bold"
+                        readOnly={userMode}
                       />
                     </td>
                   </tr>
