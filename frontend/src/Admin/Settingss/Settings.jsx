@@ -7,6 +7,7 @@ import {
   FaDumbbell,
   FaChartBar,
   FaHeartbeat,
+  FaHistory,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -150,6 +151,13 @@ const Settings = () => {
           title="Workout & Diet Plans"
           desc="Manage common workout routines and diet plans for members."
           path="/admin/commenworkoutdiet"
+        />
+
+        <SettingCard
+          icon={<FaHistory />}
+          title="Plan Complete History"
+          desc="View full membership plan purchase history — all plans, payments, and balances across all members."
+          path="/admin/plan-history"
         />
 
      

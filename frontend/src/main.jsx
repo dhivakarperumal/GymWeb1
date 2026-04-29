@@ -72,6 +72,7 @@ const ProductDetail = lazy(() => import("./Admin/Products/ProductDetail.jsx"));
 const MemberAttendance = lazy(() => import("./Admin/Staff/Memberattendance.jsx"));
 const BuyPlanadmin = lazy(() => import("./Admin/Plans/BuyPlan.jsx"));
 const EMIList = lazy(() => import("./Admin/Plans/EMIList.jsx"));
+const PlanHistory = lazy(() => import("./Admin/Plans/PlanHistory.jsx"));
 
 // Trainer Admin Panel
 const TrainerAdminPanel = lazy(() => import("./TrainerAdminPanel/TrainerAdminPanel.jsx"));
@@ -198,6 +199,7 @@ const router = createBrowserRouter([
       { path: "pt-form/print/:id", element: <PTFormPrint /> },
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
       { path: "emi", element: <EMIList /> },
+      { path: "plan-history", element: <PlanHistory /> },
 
     ],
   },
