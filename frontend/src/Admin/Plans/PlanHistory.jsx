@@ -146,9 +146,9 @@ const PlanHistory = () => {
   };
 
   const getStatusBadge = (status) => {
-    if (status === "active") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-500/20 text-green-400 border border-green-500/20"><CheckCircle2 size={10}/> Active</span>;
-    if (status === "inactive") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20"><XCircle size={10}/> Inactive</span>;
-    return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20"><Clock size={10}/> {status || "—"}</span>;
+    if (status === "active") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-500/20 text-green-400 border border-green-500/20"><CheckCircle2 size={10} /> Active</span>;
+    if (status === "inactive") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20"><XCircle size={10} /> Inactive</span>;
+    return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20"><Clock size={10} /> {status || "—"}</span>;
   };
 
   return (
@@ -176,10 +176,10 @@ const PlanHistory = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Total Plans", value: filtered.length, color: "blue", icon: <LayoutList size={20}/> },
-          { label: "Active Plans", value: activeCount, color: "green", icon: <CheckCircle2 size={20}/> },
-          { label: "Total Revenue", value: `₹${totalRevenue.toFixed(2)}`, color: "orange", icon: <IndianRupee size={20}/> },
-          { label: "Remaining Due", value: `₹${totalRemaining.toFixed(2)}`, color: totalRemaining > 0 ? "red" : "emerald", icon: <Clock size={20}/> },
+          { label: "Total Plans", value: filtered.length, color: "blue", icon: <LayoutList size={20} /> },
+          { label: "Active Plans", value: activeCount, color: "green", icon: <CheckCircle2 size={20} /> },
+          { label: "Total Revenue", value: `₹${totalRevenue.toFixed(2)}`, color: "orange", icon: <IndianRupee size={20} /> },
+          { label: "Remaining Due", value: `₹${totalRemaining.toFixed(2)}`, color: totalRemaining > 0 ? "red" : "emerald", icon: <Clock size={20} /> },
         ].map((stat, i) => (
           <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
             <div>
@@ -239,8 +239,8 @@ const PlanHistory = () => {
 
         {/* View Toggle */}
         <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
-          <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-orange-500 text-white" : "text-white/40 hover:text-white"}`}><LayoutList size={16}/></button>
-          <button onClick={() => setViewMode("card")} className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-orange-500 text-white" : "text-white/40 hover:text-white"}`}><LayoutGrid size={16}/></button>
+          <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-orange-500 text-white" : "text-white/40 hover:text-white"}`}><LayoutList size={16} /></button>
+          <button onClick={() => setViewMode("card")} className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-orange-500 text-white" : "text-white/40 hover:text-white"}`}><LayoutGrid size={16} /></button>
         </div>
       </div>
 
@@ -337,7 +337,7 @@ const PlanHistory = () => {
                   </div>
                 </div>
                 <div className="flex justify-between text-[10px] text-white/30">
-                  <span className="flex items-center gap-1"><Calendar size={10}/> {formatDate(m.startDate)}</span>
+                  <span className="flex items-center gap-1"><Calendar size={10} /> {formatDate(m.startDate)}</span>
                   <span>→ {formatDate(m.endDate)}</span>
                 </div>
               </div>
