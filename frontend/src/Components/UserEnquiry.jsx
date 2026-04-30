@@ -59,6 +59,7 @@ const UserEnquiry = () => {
   const [showConsent, setShowConsent] = useState(false);
 
   const { user } = useAuth();
+  // console.log("USER DATA 👉", user);
   const userId = user?.id;
 
   useEffect(() => {
@@ -71,11 +72,6 @@ const UserEnquiry = () => {
     }
   }, [prefilledPlan]);
 
-  useEffect(() => {
-    if (formData.name && !formData.participant_name) {
-      setFormData(prev => ({ ...prev, participant_name: formData.name }));
-    }
-  }, [formData.name, formData.participant_name]);
 
   useEffect(() => {
     if (formData.height && formData.weight) {
@@ -119,6 +115,16 @@ const UserEnquiry = () => {
 
     fetchPlans();
   }, [userId]);
+
+  useEffect(() => {
+  if (user?.username) {
+    setFormData(prev => ({
+      ...prev,
+      name: user.username,
+      participant_name: user.username
+    }));
+  }
+}, [user]);
 
   const fetchEnquiries = async () => {
     try {
