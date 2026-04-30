@@ -484,7 +484,7 @@ const AddDietPlans = () => {
         if (failCount > 0) {
           toast.error(`Failed for ${failCount} member(s)`);
         }
-        
+
         if (successCount > 0) {
           setTimeout(() => navigate("/trainer/alladddietplans"), 1200);
         }
@@ -551,9 +551,27 @@ const AddDietPlans = () => {
     <div className="min-h-screen p-6 text-white">
       <div className="max-w-6xl mx-auto bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6">
 
-        <h2 className="text-2xl font-bold mb-6">
-          {id ? "Edit Diet Plan" : "Create Custom Diet Plan"}
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">
+            {id ? "Edit Diet Plan" : "Create Custom Diet Plan"}
+          </h2>
+
+          <div className="flex flex-col items-end gap-1">
+            <label className="text-[10px] text-white/50">
+              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal.
+            </label>
+
+            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
+              {importing ? "Importing..." : "Import Excel"}
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImportExcel}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -565,7 +583,7 @@ const AddDietPlans = () => {
                   <Users size={18} className="text-emerald-400" />
                   Select Members ({selected.size} / {members.length})
                 </label>
-                <div 
+                <div
                   onClick={selectAll}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5"
                 >
@@ -619,9 +637,8 @@ const AddDietPlans = () => {
                       <div
                         key={m.id}
                         onClick={() => toggleOne(m.id)}
-                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${
-                          isSelected ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/5 hover:bg-white/10"
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${isSelected ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/5 hover:bg-white/10"
+                          }`}
                       >
                         {isSelected ? (
                           <CheckSquare size={18} className="text-emerald-400 shrink-0" />
@@ -630,7 +647,7 @@ const AddDietPlans = () => {
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate flex items-center gap-2">
-                            {m.name} 
+                            {m.name}
                             {m.weight && <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">({m.weight}kg)</span>}
                           </p>
                           <p className="text-[10px] text-white/40 truncate">
@@ -718,21 +735,7 @@ const AddDietPlans = () => {
               </div>
             </div>
 
-            <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Import Diet From Excel</label>
-              <label className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
-                {importing ? "Importing..." : "Import Excel"}
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleImportExcel}
-                  className="hidden"
-                />
-              </label>
-              <p className="text-[10px] text-white/40">
-                Excel must include columns: Day, Meal, Time, Food, Qty, Kcal.
-              </p>
-            </div>
+
           </div>
 
           {/* DAYS */}
