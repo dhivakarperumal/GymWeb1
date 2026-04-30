@@ -15,7 +15,6 @@
 //   Shoulders: [
 //     "Shoulder Press",
 //     "Lateral Raises",
-//     "Arnold Press",
 //   ],
 //   Legs: [
 //     "Squats",
