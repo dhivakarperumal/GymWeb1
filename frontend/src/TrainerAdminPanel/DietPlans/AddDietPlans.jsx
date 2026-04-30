@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
@@ -30,17 +31,17 @@ const AddDietPlans = () => {
 
   const trainerId = Number(user?.id || 0);
   const trainerName = user?.username || "";
-  const trainerEmail = user?.email || "";
 
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [allAssignments, setAllAssignments] = useState([]);
+  const [_, setAllAssignments] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const [form, setForm] = useState({
     memberId: "",
@@ -249,6 +250,156 @@ const AddDietPlans = () => {
     toast.success("Day 1 copied to all days");
   };
 
+  const normalizeString = (value) => {
+    return String(value || "").trim();
+  };
+
+  const getRowValue = (row, keys) => {
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(row, key)) {
+        const value = row[key];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+          return String(value).trim();
+        }
+      }
+    }
+
+    const lowerMap = Object.fromEntries(
+      Object.keys(row).map((key) => [key.toLowerCase(), row[key]])
+    );
+
+    for (const key of keys) {
+      const lowerKey = key.toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(lowerMap, lowerKey)) {
+        const value = lowerMap[lowerKey];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+          return String(value).trim();
+        }
+      }
+    }
+
+    return "";
+  };
+
+  const parseDayNumber = (value) => {
+    const raw = normalizeString(value);
+    if (!raw) return null;
+
+    const found = raw.match(/\d+/);
+    if (found) {
+      return Number(found[0]);
+    }
+
+    const numeric = Number(raw);
+    return Number.isFinite(numeric) ? numeric : null;
+  };
+
+  const normalizeMeal = (value) => {
+    const raw = normalizeString(value).toLowerCase();
+    if (!raw) return "";
+
+    const found = meals.find((meal) => meal.toLowerCase() === raw);
+    if (found) return found;
+
+    for (const meal of meals) {
+      if (raw.startsWith(meal.toLowerCase())) {
+        return meal;
+      }
+    }
+
+    if (raw.includes("breakfast")) return "Breakfast";
+    if (raw.includes("lunch")) return "Lunch";
+    if (raw.includes("dinner")) return "Dinner";
+    if (raw.includes("evening")) return "Evening";
+    if (raw.includes("morning")) return "Morning";
+
+    return "";
+  };
+
+  const handleImportExcel = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+      if (!rows || rows.length === 0) {
+        toast.error("Excel file is empty or invalid.");
+        return;
+      }
+
+      const parsedDays = {};
+      let rowsParsed = 0;
+
+      rows.forEach((row) => {
+        const dayRaw = getRowValue(row, ["Day", "Day Number", "Day No", "DayNo", "Day#", "day"]);
+        const mealRaw = getRowValue(row, ["Meal", "Meal Name", "Meal Type", "MealType", "meal"]);
+        const dayNumber = parseDayNumber(dayRaw) || 1;
+        const mealName = normalizeMeal(mealRaw);
+        const time = getRowValue(row, ["Time", "Timing", "Meal Time", "MealTime", "time"]);
+        const food = getRowValue(row, ["Food", "Food Item", "FoodItem", "Item", "Description", "food"]);
+        const quantity = getRowValue(row, ["Qty", "Quantity", "QTY", "Serving", "quantity"]);
+        const calories = getRowValue(row, ["Kcal", "Calories", "Cal", "Energy", "calories"]);
+
+        if (!mealName) {
+          return;
+        }
+
+        const dayKey = `Day${dayNumber}`;
+        if (!parsedDays[dayKey]) {
+          parsedDays[dayKey] = generateSingleDay();
+        }
+
+        parsedDays[dayKey][mealName] = {
+          food,
+          quantity,
+          calories,
+          time,
+        };
+
+        rowsParsed += 1;
+      });
+
+      const dayKeys = Object.keys(parsedDays).sort(
+        (a, b) => Number(a.replace("Day", "")) - Number(b.replace("Day", ""))
+      );
+
+      if (dayKeys.length === 0 || rowsParsed === 0) {
+        toast.error("No valid diet rows found. Use columns like Day, Meal, Time, Food, Qty, Kcal.");
+        return;
+      }
+
+      const newDays = {};
+      dayKeys.forEach((dayKey) => {
+        newDays[dayKey] = {
+          ...generateSingleDay(),
+          ...parsedDays[dayKey],
+        };
+      });
+
+      setForm((prev) => ({
+        ...prev,
+        days: newDays,
+        duration: dayKeys.length,
+      }));
+
+      toast.success(`Imported diet plan for ${dayKeys.length} day(s)`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to import Excel. Please check the file format.");
+    } finally {
+      setImporting(false);
+      if (event.target) {
+        event.target.value = "";
+      }
+    }
+  };
+
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -333,7 +484,7 @@ const AddDietPlans = () => {
         if (failCount > 0) {
           toast.error(`Failed for ${failCount} member(s)`);
         }
-        
+
         if (successCount > 0) {
           setTimeout(() => navigate("/trainer/alladddietplans"), 1200);
         }
@@ -400,9 +551,27 @@ const AddDietPlans = () => {
     <div className="min-h-screen p-6 text-white">
       <div className="max-w-6xl mx-auto bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6">
 
-        <h2 className="text-2xl font-bold mb-6">
-          {id ? "Edit Diet Plan" : "Create Custom Diet Plan"}
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">
+            {id ? "Edit Diet Plan" : "Create Custom Diet Plan"}
+          </h2>
+
+          <div className="flex flex-col items-end gap-1">
+            <label className="text-[10px] text-white/50">
+              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal.
+            </label>
+
+            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
+              {importing ? "Importing..." : "Import Excel"}
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImportExcel}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -414,7 +583,7 @@ const AddDietPlans = () => {
                   <Users size={18} className="text-emerald-400" />
                   Select Members ({selected.size} / {members.length})
                 </label>
-                <div 
+                <div
                   onClick={selectAll}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5"
                 >
@@ -468,9 +637,8 @@ const AddDietPlans = () => {
                       <div
                         key={m.id}
                         onClick={() => toggleOne(m.id)}
-                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${
-                          isSelected ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/5 hover:bg-white/10"
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${isSelected ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/5 hover:bg-white/10"
+                          }`}
                       >
                         {isSelected ? (
                           <CheckSquare size={18} className="text-emerald-400 shrink-0" />
@@ -479,7 +647,7 @@ const AddDietPlans = () => {
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate flex items-center gap-2">
-                            {m.name} 
+                            {m.name}
                             {m.weight && <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">({m.weight}kg)</span>}
                           </p>
                           <p className="text-[10px] text-white/40 truncate">
@@ -566,6 +734,8 @@ const AddDietPlans = () => {
                 </div>
               </div>
             </div>
+
+
           </div>
 
           {/* DAYS */}
