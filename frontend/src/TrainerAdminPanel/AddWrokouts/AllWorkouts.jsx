@@ -469,7 +469,17 @@ const AllWorkouts = () => {
                               <div className="bg-orange-500 text-black rounded-xl p-4 w-full">
                                 <ul className="text-xs text-left space-y-1">
                                   {exercises.map((ex, i) => (
-                                    <li key={i}>• {ex}</li>
+                                    <li key={i} className="flex flex-col mb-1 last:mb-0">
+                                      <span className="font-bold uppercase tracking-tighter">
+                                        • {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
+                                      </span>
+                                      {typeof ex === 'object' && (
+                                        <span className="opacity-60 ml-3 text-[10px]">
+                                          {ex.sets && `${ex.sets} Sets`} {ex.count && `• ${ex.count}`}
+                                          {ex.time && ` • ${ex.time}`}
+                                        </span>
+                                      )}
+                                    </li>
                                   ))}
                                 </ul>
                               </div>
@@ -507,7 +517,17 @@ const AllWorkouts = () => {
                               {slot.exercises ? (
                                 <ul className="text-xs text-gray-200 mt-1 space-y-1">
                                   {slot.exercises.map((ex, i) => (
-                                    <li key={i}>• {ex}</li>
+                                    <li key={i} className="flex flex-col mb-1 last:mb-0 border-b border-white/5 pb-1">
+                                      <span className="font-bold text-orange-400">
+                                        • {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
+                                      </span>
+                                      {typeof ex === 'object' && (
+                                        <span className="text-gray-400 ml-3 text-[10px]">
+                                          {ex.sets && `${ex.sets} Sets`} {ex.count && `• ${ex.count}`}
+                                          {ex.time && ` • ${ex.time}`}
+                                        </span>
+                                      )}
+                                    </li>
                                   ))}
                                 </ul>
                               ) : (

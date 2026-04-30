@@ -326,45 +326,70 @@ const AddWorkout = () => {
 
         const newSelected = new Set(selected);
         let matchCount = 0;
+        const importedDays = {};
 
         jsonData.forEach((row, index) => {
-          // Auto-fill form from the first valid row if fields exist
+          // 1. Auto-fill Metadata from first row
           if (index === 0) {
-            const level = row.Level || row.level;
-            const category = row.Category || row.category;
-            const goal = row.Goal || row.goal;
-            const duration = row.Duration || row["Duration (Weeks)"] || row.duration;
+            const level = row.Level || row.level || row["Training Level"];
+            const category = row.Category || row.category || row["Training Category"];
+            const goal = row.Goal || row.goal || row["Workout Goal"];
+            const duration = row.Duration || row["Duration (Weeks)"] || row.duration || row["Weeks"];
 
             if (level || category || goal || duration) {
               setForm(prev => ({
                 ...prev,
-                ...(level && { level }),
+                ...(level && { level: level.charAt(0).toUpperCase() + level.slice(1).toLowerCase() }),
                 ...(category && { category }),
                 ...(goal && { goal }),
-                ...(duration && { durationWeeks: duration }),
+                ...(duration && { durationWeeks: String(duration) }),
               }));
             }
           }
 
-          const name = (row.MemberName || row["Member Name"] || row.name || "").toString().toLowerCase();
-          const mobile = (row.Mobile || row.Phone || row.mobile || "").toString();
+          // 2. Build Exercises Structure
+          const dayKey = row.Day || row.day || "Day1";
+          if (!importedDays[dayKey]) importedDays[dayKey] = [];
+          
+          const exercise = {
+            time: row.Time || row.time || "",
+            type: row.Type || row.type || "Weight Training",
+            name: row["Exercise Name"] || row.exercise || row.name || "",
+            sets: row.Sets || row.sets || "",
+            count: row.Count || row.count || row.Reps || row.reps || "",
+            media: row.Media || row.media || "",
+            mediaType: "url"
+          };
+          
+          if (exercise.name) {
+            importedDays[dayKey].push(exercise);
+          }
 
-          const match = members.find(m => 
-            (name && m.name.toLowerCase().includes(name)) || 
-            (mobile && m.mobile.includes(mobile))
-          );
+          // 3. Match Members
+          const nameInput = (row["Member Name"] || row.MemberName || row.name || "").toString().trim().toLowerCase();
+          const mobileInput = (row.Mobile || row.Phone || row.mobile || "").toString().trim();
 
-          if (match) {
+          const match = members.find(m => {
+            const mName = (m.name || "").toLowerCase();
+            const mMobile = (m.mobile || "");
+            return (nameInput && mName === nameInput) || (mobileInput && mMobile === mobileInput);
+          });
+
+          if (match && !newSelected.has(match.id)) {
             newSelected.add(match.id);
             matchCount++;
           }
         });
 
+        if (Object.keys(importedDays).length > 0) {
+          setDays(importedDays);
+        }
+
         setSelected(newSelected);
-        if (matchCount > 0) {
-          toast.success(`Successfully matched and selected ${matchCount} members from Excel`);
+        if (matchCount > 0 || Object.keys(importedDays).length > 0) {
+          toast.success(`Imported ${matchCount} members and full workout schedule! 🏋️‍♂️`);
         } else {
-          toast.error("No matching members found in Excel");
+          toast.error("No valid data found in Excel.");
         }
       } catch (err) {
         console.error(err);
@@ -375,14 +400,47 @@ const AddWorkout = () => {
   };
 
   const downloadExcelTemplate = () => {
-    const template = [
-      { "Member Name": "John Doe", "Mobile": "9876543210" },
-      { "Member Name": "Jane Smith", "Mobile": "8887776665" }
-    ];
+    // If we have members, create a row for each. Otherwise use samples.
+    let template = [];
+    
+    if (members && members.length > 0) {
+      template = members.map(m => ({
+        "Member Name": m.name || "",
+        "Mobile": m.mobile || "",
+        "Training Level": "Beginner",
+        "Training Category": "Weight Training",
+        "Workout Goal": "General Fitness",
+        "Duration (Weeks)": "12",
+        "Day": "Day1",
+        "Time": "10:00",
+        "Type": "Weight Training",
+        "Exercise Name": "Example Exercise",
+        "Sets": "3",
+        "Count": "12",
+        "Media": ""
+      }));
+    } else {
+      // Fallback to 10-day sample if no members loaded
+      template = [
+        { "Member Name": "Sakthivel", "Mobile": "9876543210", "Training Level": "Beginner", "Training Category": "Weight Training", "Workout Goal": "Muscle Gain", "Duration (Weeks)": "12", "Day": "Day1", "Time": "10:00", "Type": "Weight Training", "Exercise Name": "Bench Press", "Sets": "3", "Count": "12", "Media": "" },
+        { "Member Name": "Sakthivel", "Mobile": "9876543210", "Day": "Day2", "Time": "10:00", "Type": "Cardio", "Exercise Name": "Running", "Sets": "1", "Count": "20 mins", "Media": "" },
+        { "Member Name": "Nishanth", "Mobile": "8887776665", "Day": "Day1", "Time": "10:00", "Type": "HIIT", "Exercise Name": "Burpees", "Sets": "4", "Count": "20", "Media": "" }
+      ];
+    }
+
     const ws = XLSX.utils.json_to_sheet(template);
+    
+    // Set column widths
+    const wscols = [
+      {wch: 15}, {wch: 12}, {wch: 15}, {wch: 18}, {wch: 18}, {wch: 15},
+      {wch: 10}, {wch: 10}, {wch: 15}, {wch: 20}, {wch: 8}, {wch: 12}, {wch: 20}
+    ];
+    ws['!cols'] = wscols;
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.writeFile(wb, "Member_Import_Template.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Member_Workout_List");
+    XLSX.writeFile(wb, "Gym_Member_Workout_Template.xlsx");
+    toast.success(`${members.length > 0 ? `Exported ${members.length} members!` : "Sample template downloaded!"} 📥`);
   };
 
 
