@@ -1,19 +1,23 @@
-const { createLogger, format, transports } = require('winston');
+/**
+ * Simple logger utility to provide consistent logging across the backend.
+ * Uses console.log and console.error with basic formatting.
+ */
 
-const { combine, timestamp, errors, splat, printf, json, colorize } = format;
-const isProd = process.env.NODE_ENV === 'production';
-
-const devFormat = printf(({ timestamp, level, message, stack }) => {
-  const msg = stack || message;
-  return `${timestamp} [${level}]: ${msg}`;
-});
-
-const logger = createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: isProd
-    ? combine(timestamp(), errors({ stack: true }), splat(), json())
-    : combine(colorize(), timestamp(), errors({ stack: true }), splat(), devFormat),
-  transports: [new transports.Console()],
-});
+const logger = {
+  info: (message, ...args) => {
+    console.log(`[INFO] ${new Date().toISOString()}: ${message}`, ...args);
+  },
+  error: (message, ...args) => {
+    console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, ...args);
+  },
+  warn: (message, ...args) => {
+    console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+  },
+  debug: (message, ...args) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
+    }
+  }
+};
 
 module.exports = logger;
