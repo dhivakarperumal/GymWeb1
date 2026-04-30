@@ -11,22 +11,14 @@ async function register(req, res) {
   }
 
   try {
-    const checks = ['email = ?', 'mobile = ?'];
-    const params = [email, mobile];
-    if (username) {
-      checks.push('username = ?');
-      params.push(username);
-    }
-
     const [existing] = await pool.query(
-      `SELECT email, mobile, username FROM users WHERE ${checks.join(' OR ')}`,
-      params
+      `SELECT email, mobile FROM users WHERE email = ? OR mobile = ?`,
+      [email, mobile]
     );
 
     if (existing.length > 0) {
       const emailExists = existing.some((u) => u.email === email);
       const mobileExists = existing.some((u) => u.mobile === mobile);
-      const usernameExists = username && existing.some((u) => u.username === username);
 
       let message = 'A user with this email or mobile already exists';
       if (emailExists && mobileExists) {
@@ -35,7 +27,7 @@ async function register(req, res) {
         message = 'Email already exists';
       } else if (mobileExists) {
         message = 'Mobile number already exists';
-      } 
+      }
       return res.status(400).json({ message });
     }
 
@@ -62,8 +54,6 @@ async function register(req, res) {
         message = 'Email already exists';
       } else if (duplicateKey.includes('mobile')) {
         message = 'Mobile number already exists';
-      } else if (duplicateKey.includes('username')) {
-        message = 'Username already exists';
       }
       return res.status(400).json({ message });
     }
