@@ -6,11 +6,39 @@ const logger = require('../config/logger');
 // register a new user
 async function register(req, res) {
   const { username, email, mobile, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: 'email and password are required' });
+  if (!email || !password || !mobile) {
+    return res.status(400).json({ message: 'email, mobile and password are required' });
   }
 
   try {
+    const checks = ['email = ?', 'mobile = ?'];
+    const params = [email, mobile];
+    if (username) {
+      checks.push('username = ?');
+      params.push(username);
+    }
+
+    const [existing] = await pool.query(
+      `SELECT email, mobile, username FROM users WHERE ${checks.join(' OR ')}`,
+      params
+    );
+
+    if (existing.length > 0) {
+      const emailExists = existing.some((u) => u.email === email);
+      const mobileExists = existing.some((u) => u.mobile === mobile);
+      const usernameExists = username && existing.some((u) => u.username === username);
+
+      let message = 'A user with this email or mobile already exists';
+      if (emailExists && mobileExists) {
+        message = 'Email and mobile number already exist';
+      } else if (emailExists) {
+        message = 'Email already exists';
+      } else if (mobileExists) {
+        message = 'Mobile number already exists';
+      } 
+      return res.status(400).json({ message });
+    }
+
     const hashed = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
       `INSERT INTO users (email, password_hash, role, username, mobile)
@@ -27,9 +55,17 @@ async function register(req, res) {
     };
     return res.status(201).json({ user });
   } catch (err) {
-    // unique violation (ER_DUP_ENTRY) covers both email and username uniquely constrained
     if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ message: 'Email or username already exists' });
+      const duplicateKey = /for key '(.*?)'/.exec(err.message)?.[1] || '';
+      let message = 'Email or mobile already exists';
+      if (duplicateKey.includes('email')) {
+        message = 'Email already exists';
+      } else if (duplicateKey.includes('mobile')) {
+        message = 'Mobile number already exists';
+      } else if (duplicateKey.includes('username')) {
+        message = 'Username already exists';
+      }
+      return res.status(400).json({ message });
     }
 
     logger.error('register error: %O', err);
