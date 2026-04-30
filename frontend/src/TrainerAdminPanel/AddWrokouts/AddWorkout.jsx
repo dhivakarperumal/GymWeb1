@@ -5,7 +5,8 @@ import imageCompression from "browser-image-compression";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
 import api from "../../api";
-import { Search, Users, CheckSquare, Square, X, RefreshCw } from "lucide-react";
+import { Search, Users, CheckSquare, Square, X, RefreshCw, FileText, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 const inputClass =
   "w-full bg-black/40 border border-white/20 rounded-lg px-3 py-3.5 text-white text-sm";
@@ -22,7 +23,7 @@ const workoutTypes = [
 ];
 
 const AddWorkout = () => {
-    const { user } = useAuth();
+  const { user } = useAuth();
   // ensure numeric comparison for trainer id
   const trainerId = user ? Number(user.id) : undefined;
   const trainerName = user?.username || "Trainer";
@@ -40,13 +41,15 @@ const AddWorkout = () => {
     memberEmail: "",
     memberMobile: "",
     level: "Beginner",
+    category: "Weight Training",
+    goal: "",
     durationWeeks: "",
   });
 
   const [days, setDays] = useState({
     Day1: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", media: "", mediaType: "url" }],
   });
-  
+
   // For debugging - show all assignments
   const [allAssignments, setAllAssignments] = useState([]);
   const [search, setSearch] = useState("");
@@ -106,6 +109,8 @@ const AddWorkout = () => {
           memberId: data.member_id,
           memberName: data.member_name,
           level: data.level,
+          category: data.category || "Weight Training",
+          goal: data.goal || "",
           durationWeeks: data.duration_weeks,
         });
         setDays(data.days || { Day1: [{ time: "", name: "" }] });
@@ -182,6 +187,8 @@ const AddWorkout = () => {
           memberEmail: form.memberEmail,
           memberMobile: form.memberMobile,
           level: form.level,
+          category: form.category,
+          goal: form.goal,
           durationWeeks: Number(form.durationWeeks),
           days,
           status: "active",
@@ -205,6 +212,8 @@ const AddWorkout = () => {
               memberEmail: m.email,
               memberMobile: m.mobile,
               level: form.level,
+              category: form.category,
+              goal: form.goal,
               durationWeeks: Number(form.durationWeeks),
               days,
               status: "active",
@@ -223,7 +232,7 @@ const AddWorkout = () => {
         if (failCount > 0) {
           toast.error(`Failed to create for ${failCount} member(s)`);
         }
-        
+
         if (successCount > 0) {
           navigate("/trainer/alladdworkouts");
         }
@@ -300,12 +309,87 @@ const AddWorkout = () => {
       toast.error("Upload failed");
     }
   };
+  
+  /* ---------------- EXCEL IMPORT ---------------- */
+  const handleExcelImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        const newSelected = new Set(selected);
+        let matchCount = 0;
+
+        jsonData.forEach((row, index) => {
+          // Auto-fill form from the first valid row if fields exist
+          if (index === 0) {
+            const level = row.Level || row.level;
+            const category = row.Category || row.category;
+            const goal = row.Goal || row.goal;
+            const duration = row.Duration || row["Duration (Weeks)"] || row.duration;
+
+            if (level || category || goal || duration) {
+              setForm(prev => ({
+                ...prev,
+                ...(level && { level }),
+                ...(category && { category }),
+                ...(goal && { goal }),
+                ...(duration && { durationWeeks: duration }),
+              }));
+            }
+          }
+
+          const name = (row.MemberName || row["Member Name"] || row.name || "").toString().toLowerCase();
+          const mobile = (row.Mobile || row.Phone || row.mobile || "").toString();
+
+          const match = members.find(m => 
+            (name && m.name.toLowerCase().includes(name)) || 
+            (mobile && m.mobile.includes(mobile))
+          );
+
+          if (match) {
+            newSelected.add(match.id);
+            matchCount++;
+          }
+        });
+
+        setSelected(newSelected);
+        if (matchCount > 0) {
+          toast.success(`Successfully matched and selected ${matchCount} members from Excel`);
+        } else {
+          toast.error("No matching members found in Excel");
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to read Excel file");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const downloadExcelTemplate = () => {
+    const template = [
+      { "Member Name": "John Doe", "Mobile": "9876543210" },
+      { "Member Name": "Jane Smith", "Mobile": "8887776665" }
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "Member_Import_Template.xlsx");
+  };
 
 
   return (
     <div className="min-h-screen p-6 text-white">
-      
-      
+
+
 
       <div className="max-w-6xl mx-auto bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6">
 
@@ -338,52 +422,76 @@ const AddWorkout = () => {
                   />
                 </div>
                 {search && filteredMembers.length > 0 && (
-                   <div className="absolute z-50 w-full mt-1 bg-[#1a1a2e] border border-white/20 rounded-lg shadow-2xl overflow-hidden backdrop-blur-xl max-h-60 overflow-y-auto custom-scrollbar">
-                     {filteredMembers.map(m => (
-                       <button
-                         key={m.id}
-                         type="button"
-                         onClick={() => {
-                           toggleOne(m.id);
-                           setSearch("");
-                         }}
-                         className="w-full px-4 py-3 text-left hover:bg-orange-500/10 border-b border-white/5 last:border-0 transition-colors group"
-                       >
-                         <div className="font-bold text-white group-hover:text-orange-400 text-sm">{m.name}</div>
-                         <div className="text-[10px] text-white/40 flex gap-2 uppercase tracking-tight">
-                           <span>{m.mobile || 'No Phone'}</span>
-                           <span>•</span>
-                           <span>{m.email || 'No Email'}</span>
-                           {m.planName && (
-                             <>
-                               <span>•</span>
-                               <span className="text-orange-500/60">{m.planName}</span>
-                             </>
-                           )}
-                         </div>
-                       </button>
-                     ))}
-                   </div>
+                  <div className="absolute z-50 w-full mt-1 bg-[#1a1a2e] border border-white/20 rounded-lg shadow-2xl overflow-hidden backdrop-blur-xl max-h-60 overflow-y-auto custom-scrollbar">
+                    {filteredMembers.map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          toggleOne(m.id);
+                          setSearch("");
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-orange-500/10 border-b border-white/5 last:border-0 transition-colors group"
+                      >
+                        <div className="font-bold text-white group-hover:text-orange-400 text-sm">{m.name}</div>
+                        <div className="text-[10px] text-white/40 flex gap-2 uppercase tracking-tight">
+                          <span>{m.mobile || 'No Phone'}</span>
+                          <span>•</span>
+                          <span>{m.email || 'No Email'}</span>
+                          {m.planName && (
+                            <>
+                              <span>•</span>
+                              <span className="text-orange-500/60">{m.planName}</span>
+                            </>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <label className="text-sm font-semibold flex items-center gap-2">
                   <Users size={18} className="text-orange-400" />
                   Select Members ({selected.size} / {members.length})
                 </label>
-                <div 
-                  onClick={selectAll}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5"
-                >
-                  {allSelected ? (
-                    <CheckSquare size={16} className="text-orange-400" />
-                  ) : (
-                    <Square size={16} className="text-white/20" />
-                  )}
-                  <span className="text-xs font-medium text-white/70">
-                    {allSelected ? "Deselect All" : "Select All"}
-                  </span>
+                
+                <div className="flex items-center gap-2">
+                  <div 
+                    onClick={selectAll}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5"
+                  >
+                    {allSelected ? (
+                      <CheckSquare size={16} className="text-orange-400" />
+                    ) : (
+                      <Square size={16} className="text-white/20" />
+                    )}
+                    <span className="text-xs font-medium text-white/70">
+                      {allSelected ? "Deselect All" : "Select All"}
+                    </span>
+                  </div>
+
+                  {/* Excel Import Button */}
+                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 cursor-pointer transition border border-indigo-500/20">
+                    <FileText size={16} />
+                    <span className="text-xs font-bold uppercase tracking-tight">Import Excel</span>
+                    <input 
+                      type="file" 
+                      accept=".xlsx, .xls" 
+                      className="hidden" 
+                      onChange={handleExcelImport}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={downloadExcelTemplate}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition border border-white/5"
+                    title="Download Template"
+                  >
+                    <Download size={16} />
+                  </button>
                 </div>
               </div>
 
@@ -405,9 +513,8 @@ const AddWorkout = () => {
                       <div
                         key={m.id}
                         onClick={() => toggleOne(m.id)}
-                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${
-                          isSelected ? "bg-orange-500/20 border-orange-500/50" : "bg-white/5 border-white/5 hover:bg-white/10"
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${isSelected ? "bg-orange-500/20 border-orange-500/50" : "bg-white/5 border-white/5 hover:bg-white/10"
+                          }`}
                       >
                         {isSelected ? (
                           <CheckSquare size={18} className="text-orange-400 shrink-0" />
@@ -471,6 +578,34 @@ const AddWorkout = () => {
                     ...form,
                     durationWeeks: e.target.value,
                   })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-white/50 ml-1">Training Category</label>
+              <select
+                className={inputClass}
+                value={form.category}
+                onChange={(e) =>
+                  setForm({ ...form, category: e.target.value })
+                }
+              >
+                <option>Weight Training</option>
+                <option>Cardio</option>
+                <option>Yoga</option>
+                <option>HIIT</option>
+                <option>Zumba</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-white/50 ml-1">Workout Goal</label>
+              <input
+                className={inputClass}
+                placeholder="e.g. Weight Loss, Muscle Gain"
+                value={form.goal}
+                onChange={(e) =>
+                  setForm({ ...form, goal: e.target.value })
                 }
               />
             </div>
@@ -599,7 +734,7 @@ const AddWorkout = () => {
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           />
                           <div className={inputClass + " flex items-center justify-center border-dashed border-2 hover:border-orange-500/50 transition"}>
-                             <span className="text-white/40 text-xs">Click to upload Image or Video (Max 20MB for video)</span>
+                            <span className="text-white/40 text-xs">Click to upload Image or Video (Max 20MB for video)</span>
                           </div>
                         </div>
                       )}
@@ -610,7 +745,7 @@ const AddWorkout = () => {
                   {item.media && (
                     <div className="mt-2 space-y-2">
                       <div className="flex items-center justify-between">
-                         <div className="text-[10px] text-orange-400 flex items-center gap-2">
+                        <div className="text-[10px] text-orange-400 flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
                           Media attached
                         </div>
@@ -622,7 +757,7 @@ const AddWorkout = () => {
                           Clear Media
                         </button>
                       </div>
-                      
+
                       <div className="relative w-full aspect-video max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20">
                         {item.media.startsWith('data:video') || item.media.match(/\.(mp4|webm|ogg)$/i) || item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
                           item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
