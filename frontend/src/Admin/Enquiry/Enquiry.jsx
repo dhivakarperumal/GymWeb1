@@ -267,6 +267,7 @@ const Enquiry = () => {
     try {
       const memberData = {
         name: enquiry.name,
+        username: enquiry.name,
         email: enquiry.email,
         phone: enquiry.phone || null,
         address: enquiry.address || enquiry.location || null,
