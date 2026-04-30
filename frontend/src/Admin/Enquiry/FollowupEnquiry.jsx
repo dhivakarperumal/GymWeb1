@@ -3,13 +3,16 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X,
   ChevronLeft, ChevronRight, MessageSquare, Phone, Mail, Calendar,
-  User, MapPin, Target, Activity, RefreshCcw, Save, Briefcase, History, Edit2, ChevronDown
+  User, MapPin, Target, Activity, RefreshCcw, Save, Briefcase, History, Edit2, ChevronDown,
+  FileText, Download
 } from "lucide-react";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import dayjs from "dayjs";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 
 const FollowupEnquiry = () => {
   const navigate = useNavigate();
@@ -203,6 +206,88 @@ const FollowupEnquiry = () => {
     });
   };
 
+  /* ---------------- EXCEL IMPORT ---------------- */
+  const handleExcelImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setLoading(true);
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const row of jsonData) {
+          const payload = {
+            name: row.Name || row["Lead Name"] || row.name || "",
+            email: row.Email || row.email || "",
+            phone: (row.Phone || row.Mobile || row.phone || "").toString(),
+            subject: row.Subject || "General Inquiry",
+            message: row.Message || row.Notes || "",
+            gender: row.Gender || "",
+            dob: row.DOB || row["Date of Birth"] || "",
+            organization: row.Organization || row.Company || "",
+            status: (row.Status || "pending").toLowerCase(),
+            plan_name: row.Plan || row["Plan Name"] || "",
+            referred_by: row["Referred By"] || row.Referral || "",
+            updated_by: user?.username || "Admin"
+          };
+
+          if (!payload.name || !payload.phone) {
+            failCount++;
+            continue;
+          }
+
+          try {
+            await api.post("/followups", payload);
+            successCount++;
+          } catch (err) {
+            failCount++;
+          }
+        }
+
+        toast.success(`Successfully imported ${successCount} leads!`);
+        if (failCount > 0) toast.error(`${failCount} leads failed to import.`);
+        fetchEnquiries();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to read Excel file");
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const downloadExcelTemplate = () => {
+    const template = [
+      {
+        "Lead Name": "John Doe",
+        "Phone": "9876543210",
+        "Email": "john@example.com",
+        "Organization": "ABC Corp",
+        "Status": "pending",
+        "Plan": "6 Months Pro Plan",
+        "Gender": "Male",
+        "DOB": "1995-05-15",
+        "Message": "Interested in strength training",
+        "Referred By": "Social Media"
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leads_Template");
+    XLSX.writeFile(wb, "Followup_Enquiry_Template.xlsx");
+    toast.success("Template Downloaded!");
+  };
+
   // Filters
   const filteredEnquiries = enquiries.filter(enquiry => {
     const matchesSearch =
@@ -220,7 +305,7 @@ const FollowupEnquiry = () => {
 
     if (!matchesSearch || !matchesStatus || !matchesAccess || !matchesTrainer) return false;
     return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
-  });
+  }).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   // Pagination
   const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
@@ -317,6 +402,27 @@ const FollowupEnquiry = () => {
                 title="Card View"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+              </button>
+            </div>
+
+            {/* Excel Actions */}
+            <div className="flex items-center gap-2">
+              <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2" title="Import from Excel">
+                <FileText size={18} />
+                <span className="text-xs font-black uppercase tracking-widest hidden lg:block">Import</span>
+                <input 
+                  type="file" 
+                  accept=".xlsx, .xls" 
+                  className="hidden" 
+                  onChange={handleExcelImport}
+                />
+              </label>
+              <button
+                onClick={downloadExcelTemplate}
+                className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all"
+                title="Download Template"
+              >
+                <Download size={18} />
               </button>
             </div>
 

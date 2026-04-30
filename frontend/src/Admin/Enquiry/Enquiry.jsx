@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X, ChevronLeft, ChevronRight, FileText, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
@@ -143,7 +144,6 @@ const Enquiry = () => {
     });
     setShowForm(true);
   };
-
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this enquiry?')) {
       try {
@@ -153,6 +153,104 @@ const Enquiry = () => {
         console.error('Error deleting enquiry:', error);
       }
     }
+  };
+
+  /* ---------------- EXCEL IMPORT ---------------- */
+  const handleExcelImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setLoading(true);
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const row of jsonData) {
+          const payload = {
+            name: row.Name || row["Customer Name"] || row.name || "",
+            email: row.Email || row.email || "",
+            phone: (row.Phone || row.Mobile || row.phone || "").toString(),
+            subject: row.Subject || "Inquiry",
+            message: row.Message || row.Notes || "",
+            height: row.Height || "",
+            weight: row.Weight || "",
+            bmi: row.BMI || "",
+            dob: row.DOB || row["Date of Birth"] || "",
+            age: row.Age || "",
+            address: row.Address || "",
+            employer: row.Employer || "",
+            occupation: row.Occupation || "",
+            emergency_contact_name: row["Emergency Contact Name"] || "",
+            emergency_contact_relationship: row["Emergency Relationship"] || "",
+            emergency_contact_address: row["Emergency Address"] || "",
+            emergency_contact_phone_home: (row["Emergency Home Phone"] || "").toString(),
+            emergency_contact_phone_work: (row["Emergency Work Phone"] || "").toString(),
+            fitness_goal: row["Fitness Goal"] || "",
+            blood_group: row["Blood Group"] || "",
+            gender: row.Gender || "",
+            status: "pending",
+            termsAccepted: true
+          };
+
+          if (!payload.name || !payload.phone) {
+            failCount++;
+            continue;
+          }
+
+          try {
+            await api.post('/enquiries', payload);
+            successCount++;
+          } catch (err) {
+            failCount++;
+          }
+        }
+
+        toast.success(`Successfully imported ${successCount} enquiries!`);
+        if (failCount > 0) toast.error(`${failCount} enquiries failed to import.`);
+        fetchEnquiries();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to read Excel file");
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const downloadExcelTemplate = () => {
+    const template = [
+      {
+        "Customer Name": "Jane Doe",
+        "Phone": "9876543211",
+        "Email": "jane@example.com",
+        "Gender": "Female",
+        "Date of Birth": "1998-10-20",
+        "Address": "456 Fitness Ave, New York",
+        "Height": "165",
+        "Weight": "60",
+        "Fitness Goal": "Weight Loss & Toning",
+        "Emergency Contact Name": "John Doe",
+        "Emergency Relationship": "Spouse",
+        "Emergency Home Phone": "9998887776",
+        "Blood Group": "A+",
+        "Employer": "Tech Global",
+        "Occupation": "Designer"
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Enquiry_Template");
+    XLSX.writeFile(wb, "Gym_Enquiry_Import_Template.xlsx");
+    toast.success("Enquiry Template Downloaded!");
   };
 
   const updateStatus = async (id, status) => {
@@ -215,7 +313,7 @@ const Enquiry = () => {
 
     // 2. Date Range Filter
     return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
-  });
+  }).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   // Pagination logic
   const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
@@ -268,6 +366,27 @@ const Enquiry = () => {
     <div className="space-y-6">
       <div className="flex justify-end items-center mb-4">
         <div className="flex items-center gap-3">
+          {/* Excel Import Actions */}
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 px-4 py-3 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all shadow-lg" title="Import from Excel">
+              <FileText className="w-4 h-4" />
+              <span className="text-sm font-bold hidden sm:inline">Import Excel</span>
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                className="hidden" 
+                onChange={handleExcelImport}
+              />
+            </label>
+            <button
+              onClick={downloadExcelTemplate}
+              className="p-3 bg-white/10 border border-white/20 text-white/60 hover:text-white rounded-xl transition-all shadow-lg"
+              title="Download Template"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          </div>
+
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:scale-105 transition-all outline-none"

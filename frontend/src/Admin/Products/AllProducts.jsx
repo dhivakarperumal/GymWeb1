@@ -7,7 +7,10 @@ import {
   Plus,
   LayoutGrid,
   Table as TableIcon,
+  FileText,
+  Download
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 
 import api from "../../api";
@@ -91,19 +94,104 @@ const AllProducts = () => {
   }, []);
 
   /* ================= DELETE PRODUCT ================= */
-
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
 
     try {
-      const res = await api.delete(`${API}/${id}`);
-
+      await api.delete(`${API}/${id}`);
       toast.success("Product deleted");
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       console.error(err);
       toast.error("Delete failed");
     }
+  };
+
+  /* ================= EXCEL IMPORT ================= */
+
+  const handleExcelImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setLoading(true);
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const row of jsonData) {
+          const payload = {
+            name: row.Name || row["Product Name"] || "",
+            category: row.Category || "General",
+            subcategory: row.Subcategory || "",
+            mrp: Number(row.MRP || row.mrp || 0),
+            offerPrice: Number(row["Offer Price"] || row.offerPrice || row.price || 0),
+            description: row.Description || "",
+            stock: {}, // Initialize as empty for standard products
+            images: [], // Images usually need manual upload or URLs
+            ratings: row.Rating || 5,
+            status: "active"
+          };
+
+          if (!payload.name) {
+            failCount++;
+            continue;
+          }
+
+          try {
+            await api.post(API, payload);
+            successCount++;
+          } catch (err) {
+            failCount++;
+          }
+        }
+
+        toast.success(`Successfully imported ${successCount} products!`);
+        if (failCount > 0) toast.error(`${failCount} products failed to import.`);
+        loadProducts();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to read Excel file");
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const downloadExcelTemplate = () => {
+    const template = [
+      {
+        "Product Name": "Organic Protein Powder",
+        "Category": "Food",
+        "Subcategory": "Supplements",
+        "MRP": 2500,
+        "Offer Price": 1999,
+        "Description": "High quality whey protein",
+        "Rating": 5
+      },
+      {
+        "Product Name": "Gym T-Shirt Blue",
+        "Category": "Dress",
+        "Subcategory": "Mens Wear",
+        "MRP": 800,
+        "Offer Price": 599,
+        "Description": "Dry-fit breathable fabric",
+        "Rating": 4.5
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Products_Template");
+    XLSX.writeFile(wb, "Product_Import_Template.xlsx");
+    toast.success("Product Template Downloaded!");
   };
 
   /* ================= FILTER ================= */
@@ -159,6 +247,27 @@ const AllProducts = () => {
                   }`}
               >
                 <LayoutGrid size={16} /> Card
+              </button>
+            </div>
+
+            {/* EXCEL ACTIONS */}
+            <div className="flex items-center gap-2">
+              <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2" title="Import from Excel">
+                <FileText size={18} />
+                <span className="text-xs font-black uppercase tracking-widest hidden lg:block">Import</span>
+                <input 
+                  type="file" 
+                  accept=".xlsx, .xls" 
+                  className="hidden" 
+                  onChange={handleExcelImport}
+                />
+              </label>
+              <button
+                onClick={downloadExcelTemplate}
+                className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all"
+                title="Download Template"
+              >
+                <Download size={18} />
               </button>
             </div>
 

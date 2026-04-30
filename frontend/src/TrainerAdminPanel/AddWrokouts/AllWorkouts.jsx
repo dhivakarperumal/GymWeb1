@@ -123,79 +123,6 @@ const AllWorkouts = () => {
     toast.success("Workouts exported successfully");
   };
 
-  /* ---------------- IMPORT FROM EXCEL ---------------- */
-  const handleImport = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        setLoading(true);
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        let successCount = 0;
-        for (const row of jsonData) {
-          const memberId = row.MemberId || row["Member ID"] || row.member_id;
-          if (!memberId) continue;
-
-          const payload = {
-            trainerId,
-            trainerName: user?.username || "Trainer",
-            memberId: String(memberId),
-            memberName: row.MemberName || row["Member Name"] || "Member",
-            level: row.Level || "Beginner",
-            category: row.Category || "Weight Training",
-            goal: row.Goal || "",
-            durationWeeks: Number(row.Duration || row["Duration (Weeks)"] || 4),
-            days: {}, // Default empty program
-            status: "active",
-          };
-
-          await api.post("/workouts", payload);
-          successCount++;
-        }
-
-        if (successCount > 0) {
-          toast.success(`Successfully imported ${successCount} workout(s)`);
-          // Refresh list
-          window.location.reload();
-        } else {
-          toast.error("No valid data found in Excel");
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error("Import failed. Check file format.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  /* ---------------- DOWNLOAD TEMPLATE ---------------- */
-  const downloadTemplate = () => {
-    const templateData = [
-      {
-        "MemberId": "101",
-        "MemberName": "Sample Member",
-        "Level": "Beginner",
-        "Category": "Weight Training",
-        "Goal": "Strength",
-        "Duration (Weeks)": 12
-      }
-    ];
-
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
-    XLSX.writeFile(workbook, "Workout_Import_Template.xlsx");
-    toast.success("Template downloaded");
-  };
 
   /* ---------------- RESET WEEK WHEN MODAL OPENS ---------------- */
   useEffect(() => {
@@ -257,14 +184,6 @@ const AllWorkouts = () => {
     ))}
   </select>
 
-  {/* Import/Export */}
-  <div className="flex gap-2 w-full sm:w-auto">
-    <label className="flex-1 sm:flex-none px-4 py-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-sm font-bold cursor-pointer hover:bg-indigo-500 hover:text-white transition text-center flex items-center justify-center">
-      Import
-      <input type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
-    </label>
-    
-  </div>
 
   {/* Add Button */}
   <button
@@ -469,7 +388,17 @@ const AllWorkouts = () => {
                               <div className="bg-orange-500 text-black rounded-xl p-4 w-full">
                                 <ul className="text-xs text-left space-y-1">
                                   {exercises.map((ex, i) => (
-                                    <li key={i}>• {ex}</li>
+                                    <li key={i} className="flex flex-col mb-1 last:mb-0">
+                                      <span className="font-bold uppercase tracking-tighter">
+                                        • {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
+                                      </span>
+                                      {typeof ex === 'object' && (
+                                        <span className="opacity-60 ml-3 text-[10px]">
+                                          {ex.sets && `${ex.sets} Sets`} {ex.count && `• ${ex.count}`}
+                                          {ex.time && ` • ${ex.time}`}
+                                        </span>
+                                      )}
+                                    </li>
                                   ))}
                                 </ul>
                               </div>
@@ -507,7 +436,17 @@ const AllWorkouts = () => {
                               {slot.exercises ? (
                                 <ul className="text-xs text-gray-200 mt-1 space-y-1">
                                   {slot.exercises.map((ex, i) => (
-                                    <li key={i}>• {ex}</li>
+                                    <li key={i} className="flex flex-col mb-1 last:mb-0 border-b border-white/5 pb-1">
+                                      <span className="font-bold text-orange-400">
+                                        • {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
+                                      </span>
+                                      {typeof ex === 'object' && (
+                                        <span className="text-gray-400 ml-3 text-[10px]">
+                                          {ex.sets && `${ex.sets} Sets`} {ex.count && `• ${ex.count}`}
+                                          {ex.time && ` • ${ex.time}`}
+                                        </span>
+                                      )}
+                                    </li>
                                   ))}
                                 </ul>
                               ) : (
