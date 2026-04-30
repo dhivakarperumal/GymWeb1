@@ -93,6 +93,17 @@ const Enquiry = () => {
         // Update full enquiry
         await api.put(`/enquiries/${selectedEnquiry.id}`, formData);
       } else {
+        // Check for duplicates before creating new enquiry
+        const isDuplicate = enquiries.some(e => 
+          (formData.email && e.email?.toLowerCase() === formData.email.toLowerCase()) || 
+          (formData.phone && e.phone === formData.phone)
+        );
+
+        if (isDuplicate) {
+          toast.error("An enquiry with this email or phone already exists.");
+          return;
+        }
+
         // Create new enquiry
         await api.post('/enquiries', formData);
       }
