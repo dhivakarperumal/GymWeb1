@@ -11,7 +11,13 @@ import {
   FaTimesCircle,
   FaThLarge,
   FaList,
+  FaDownload,
+  FaUpload,
+  FaFileExcel
 } from "react-icons/fa";
+import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
+import dayjs from "dayjs";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
@@ -276,6 +282,110 @@ const AllOrders = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  /* ================= IMPORT / EXPORT ================= */
+
+  const exportOrders = () => {
+    const dataToExport = filteredOrders.map(o => ({
+      "Order ID": formatOrderId(o.order_id),
+      "Member": o.shipping?.name || o.pickup?.name || "-",
+      "Phone": o.shipping?.phone || o.pickup?.phone || "-",
+      "Amount": Number(o.total),
+      "Payment": o.paymentStatus,
+      "Status": formatStatusLabel(o.status),
+      "Date": new Date(o.createdAt).toLocaleString(),
+      "Order Type": o.orderType
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orders");
+    XLSX.writeFile(wb, `Gym_Orders_${dayjs().format("YYYY-MM-DD")}.xlsx`);
+    toast.success("Orders Exported!");
+  };
+
+  const handleExcelImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setLoading(true);
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const row of jsonData) {
+          const payload = {
+            member_id: row.MemberID || row["Member ID"],
+            total: Number(row.Amount || row.Total || 0),
+            payment_status: row.Payment || "pending",
+            payment_method: row.Method || "Cash",
+            status: normalizeStatus(row.Status || "OrderPlaced"),
+            items: [], // Complex items usually need individual setup
+            shipping: {
+              name: row.Name || row.Member || "",
+              phone: row.Phone || "",
+              address: row.Address || "Offline Order"
+            },
+            order_type: row.Type || "pickup"
+          };
+
+          if (!payload.total || !payload.shipping.name) {
+            failCount++;
+            continue;
+          }
+
+          try {
+            await api.post("/orders", payload);
+            successCount++;
+          } catch (err) {
+            failCount++;
+          }
+        }
+
+        toast.success(`Successfully imported ${successCount} orders!`);
+        if (failCount > 0) toast.error(`${failCount} orders failed to import.`);
+        
+        // Refresh
+        const res = await api.get("/orders");
+        setOrders(res.data.map(o => ({...o, orderId: o.order_id, createdAt: o.created_at})));
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to read Excel file");
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const downloadOrderTemplate = () => {
+    const template = [
+      {
+        "Member ID": "MEM001",
+        "Member": "John Doe",
+        "Phone": "9876543210",
+        "Amount": 1500,
+        "Payment": "paid",
+        "Method": "Cash",
+        "Status": "Delivered",
+        "Type": "pickup",
+        "Address": "Gym Office"
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Order_Template");
+    XLSX.writeFile(wb, "Offline_Order_Template.xlsx");
+    toast.success("Template Downloaded!");
   };
 
 
@@ -572,10 +682,10 @@ ${items
       </div>
 
       {/* ================= FILTER BAR ================= */}
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 flex flex-col lg:flex-row gap-3 justify-between">
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-3 flex flex-wrap items-center gap-3">
 
         {/* SEARCH */}
-        <div className="relative w-full lg:w-1/3">
+        <div className="relative w-full lg:w-[220px]">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
           <input
             placeholder="Search Order ID or Member"
@@ -585,8 +695,7 @@ ${items
           />
         </div>
 
-        {/* FILTERS */}
-        <div className="flex flex-wrap gap-2 items-center">
+        {/* FILTERS & ACTIONS */}
           <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
           <select
@@ -624,6 +733,29 @@ ${items
             <FaTruck /> Delivery Only
           </button>
 
+          {/* EXCEL ACTIONS */}
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+            <button
+              onClick={exportOrders}
+              className="px-3 py-1.5 hover:bg-white/10 text-white rounded-lg transition-all flex items-center gap-2 text-xs"
+              title="Export Current List"
+            >
+              <FaDownload className="text-emerald-400" /> Export
+            </button>
+            <div className="w-[1px] h-4 bg-white/10 mx-1" />
+            <label className="px-3 py-1.5 hover:bg-white/10 text-white rounded-lg cursor-pointer transition-all flex items-center gap-2 text-xs" title="Import Offline Orders">
+              <FaUpload className="text-blue-400" /> Import
+              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleExcelImport} />
+            </label>
+            <button
+              onClick={downloadOrderTemplate}
+              className="p-2 hover:bg-white/10 text-white/40 hover:text-white rounded-lg transition-all"
+              title="Download Import Template"
+            >
+              <FaFileExcel />
+            </button>
+          </div>
+
           {/* VIEW TOGGLE */}
           <div className="flex border border-white/20 rounded-xl overflow-hidden">
             <button
@@ -641,7 +773,6 @@ ${items
               <FaThLarge />
             </button>
           </div>
-        </div>
       </div>
 
       {/* ================= TABLE VIEW ================= */}
