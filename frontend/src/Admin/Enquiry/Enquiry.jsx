@@ -205,6 +205,17 @@ const Enquiry = () => {
             continue;
           }
 
+          // Check for duplicates in existing enquiries list
+          const isDuplicate = enquiries.some(e => 
+            (payload.email && e.email?.toLowerCase() === payload.email.toLowerCase()) || 
+            (payload.phone && e.phone === payload.phone)
+          );
+
+          if (isDuplicate) {
+            failCount++;
+            continue;
+          }
+
           try {
             await api.post('/enquiries', payload);
             successCount++;

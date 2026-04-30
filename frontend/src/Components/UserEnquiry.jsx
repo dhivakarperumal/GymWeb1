@@ -137,6 +137,21 @@ const UserEnquiry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check for duplicates (only if it's a NEW enquiry, not an update)
+    if (!selectedEnquiry) {
+      const duplicate = enquiries.find(
+        (enq) => 
+          (formData.email && enq.email?.toLowerCase() === formData.email.toLowerCase()) || 
+          (formData.phone && enq.phone === formData.phone)
+      );
+
+      if (duplicate) {
+        toast.error(`An enquiry with this ${duplicate.email?.toLowerCase() === formData.email.toLowerCase() ? 'email' : 'phone number'} already exists.`);
+        return;
+      }
+    }
+
     if (hasActivePlan && !selectedEnquiry) {
       toast.error('You cannot submit another enquiry while an active plan is already running.');
       return;
