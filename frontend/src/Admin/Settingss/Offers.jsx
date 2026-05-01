@@ -265,7 +265,7 @@ const Offers = () => {
             <h3 className="text-xl font-black text-white mb-2">No Campaigns Found</h3>
           </div>
         ) : viewMode === "table" ? (
-          <div className="flex-1 overflow-y-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
+          <div className="overflow-y-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 bg-white/5 backdrop-blur-xl z-10 border-b border-white/10">
                 <tr className="text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
