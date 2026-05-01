@@ -79,6 +79,7 @@ const Header = ({ onMenuClick }) => {
   const [activeDropdown, setActiveDropdown] = useState(null); // 'profile', 'notifications', 'orders', 'stock', 'expiry'
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef(null);
 
   const [alerts, setAlerts] = useState({
     orders: [],
@@ -138,6 +139,20 @@ const Header = ({ onMenuClick }) => {
 
     const interval = setInterval(fetchAllAlerts, 5 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const totalAlerts =
@@ -219,7 +234,7 @@ const Header = ({ onMenuClick }) => {
             <PageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
             {currentPageTitle}
           </h1>
-          
+
         </div>
 
         {/* RIGHT */}
@@ -228,6 +243,7 @@ const Header = ({ onMenuClick }) => {
           {/* TODAY ORDERS ICON */}
           <div className="relative">
             <button
+              ref={dropdownRef}
               onClick={() => toggleDropdown('orders')}
               className={`p-2 rounded-xl transition relative ${activeDropdown === 'orders' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Today's Orders"
@@ -491,7 +507,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
                 content = (
                   <>
                     <p className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors uppercase">{item.name || item.username || "New Member"}</p>
-                     <p className="text-[10px] text-gray-500 mt-0.5">Joined at: {new Date(item.createdAt || item.created_at).toLocaleTimeString()}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Joined at: {new Date(item.createdAt || item.created_at).toLocaleTimeString()}</p>
                     <span className="inline-block mt-2 px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase">New Registration</span>
                   </>
                 );
