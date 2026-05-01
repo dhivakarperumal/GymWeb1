@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Phone, Mail, Target, History, Clock } from "lucide-react";
+import { X, Phone, Mail, Target, History, Clock, ChevronDown } from "lucide-react";
 import api from "../api";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
@@ -122,7 +122,7 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+    <div className="followup-modal-root fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
       <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl w-full max-w-6xl max-h-[93vh] overflow-hidden shadow-2xl flex flex-col relative">
         <div className="p-2 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -198,16 +198,19 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
 
               <div className="grid grid-cols-3 items-center gap-4">
                 <label className="text-xs font-bold text-white/60">Gender</label>
-                <select
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none appearance-none"
-                >
-                  <option value="">[SELECT]</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+                <div className="col-span-2 relative group">
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    className="w-full py-2.5 pl-4 pr-10 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="">[SELECT]</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none group-hover:text-white transition-colors" />
+                </div>
               </div>
 
               <div className="grid grid-cols-3 items-center gap-4">
@@ -298,39 +301,45 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
 
               <div className="grid grid-cols-3 items-center gap-4">
                 <label className="text-xs font-bold text-white/60">Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none appearance-none"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="followup">Followup</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+                <div className="col-span-2 relative group">
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full py-2.5 pl-4 pr-10 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="followup">Followup</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none group-hover:text-white transition-colors" />
+                </div>
               </div>
 
               <div className="grid grid-cols-3 items-center gap-4">
                 <label className="text-xs font-bold text-white/60">Plan</label>
-                <select
-                  value={formData.plan_name}
-                  onChange={(e) => {
-                    const selectedPlan = plans.find((p) => p.name === e.target.value);
-                    setFormData({
-                      ...formData,
-                      plan_name: e.target.value,
-                      plan_price: selectedPlan ? (selectedPlan.finalPrice || selectedPlan.price) : "",
-                    });
-                  }}
-                  className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none appearance-none"
-                >
-                  <option value="">[SELECT PLAN]</option>
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.name}>
-                      {plan.name} - ₹{plan.finalPrice || plan.price}
-                    </option>
-                  ))}
-                </select>
+                <div className="col-span-2 relative group">
+                  <select
+                    value={formData.plan_name}
+                    onChange={(e) => {
+                      const selectedPlan = plans.find((p) => p.name === e.target.value);
+                      setFormData({
+                        ...formData,
+                        plan_name: e.target.value,
+                        plan_price: selectedPlan ? (selectedPlan.finalPrice || selectedPlan.price) : "",
+                      });
+                    }}
+                    className="w-full py-2.5 pl-4 pr-10 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="">[SELECT PLAN]</option>
+                    {plans.map((plan) => (
+                      <option key={plan.id} value={plan.name}>
+                        {plan.name} - ₹{plan.finalPrice || plan.price}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none group-hover:text-white transition-colors" />
+                </div>
               </div>
 
               <div className="grid grid-cols-3 items-center gap-4">
