@@ -73,6 +73,7 @@ const pageInfo = {
   "/admin/users": { title: "Users", icon: Users },
   "/admin/pt-form": { title: "Personal Training Form", icon: HeartPulse },
   "/admin/plan-history": { title: "Plan History", icon: Clock },
+  "/admin/expiry-members": { title: "Plan Expiry Details", icon: Clock },
 };
 
 const Header = ({ onMenuClick }) => {
