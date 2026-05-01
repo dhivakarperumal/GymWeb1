@@ -92,6 +92,19 @@ textarea:-webkit-autofill:focus {
   color: #ffffff;
 }
 
+.followup-modal-root select,
+.followup-modal-root select option,
+.followup-modal-root [role="option"] {
+  background-color: #111827;
+  color: #ffffff;
+}
+
+.followup-modal-root select option:hover,
+.followup-modal-root select option:checked {
+  background-color: #111827;
+  color: #ffffff;
+}
+
 /* Responsive page title utility used across admin pages */
 .page-title {
   font-weight: 700;
