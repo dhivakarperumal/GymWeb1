@@ -11,12 +11,12 @@ async function getAllOffers(req, res) {
 }
 
 async function createOffer(req, res) {
-  const { offer_name, offer_type, target_id, discount_percentage, description, offer_image, active } = req.body;
+  const { offer_name, offer_type, target_id, discount_percentage, description, offer_image, active, start_date, end_date, promo_type, contact } = req.body;
   try {
     const [result] = await db.query(
-      `INSERT INTO offers (offer_name, offer_type, target_id, discount_percentage, description, offer_image, active)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [offer_name, offer_type, target_id, discount_percentage, description, offer_image, active !== false ? 1 : 0]
+      `INSERT INTO offers (offer_name, offer_type, target_id, discount_percentage, description, offer_image, active, start_date, end_date, promo_type, contact)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [offer_name, offer_type, target_id, discount_percentage, description, offer_image, active !== false ? 1 : 0, start_date, end_date, promo_type, contact]
     );
     res.json({ id: result.insertId, ...req.body });
   } catch (err) {
@@ -27,12 +27,12 @@ async function createOffer(req, res) {
 
 async function updateOffer(req, res) {
   const { id } = req.params;
-  const { offer_name, offer_type, target_id, discount_percentage, description, offer_image, active } = req.body;
+  const { offer_name, offer_type, target_id, discount_percentage, description, offer_image, active, start_date, end_date, promo_type, contact } = req.body;
   try {
     await db.query(
-      `UPDATE offers SET offer_name=?, offer_type=?, target_id=?, discount_percentage=?, description=?, offer_image=?, active=?
+      `UPDATE offers SET offer_name=?, offer_type=?, target_id=?, discount_percentage=?, description=?, offer_image=?, active=?, start_date=?, end_date=?, promo_type=?, contact=?
        WHERE id=?`,
-      [offer_name, offer_type, target_id, discount_percentage, description, offer_image, active ? 1 : 0, id]
+      [offer_name, offer_type, target_id, discount_percentage, description, offer_image, active ? 1 : 0, start_date, end_date, promo_type, contact, id]
     );
     res.json({ success: true });
   } catch (err) {
