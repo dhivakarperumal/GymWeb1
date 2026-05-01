@@ -33,16 +33,30 @@ const MemberDetails = () => {
       // 1. Fetch Member Basic Info
       const res = await api.get(`/members/${id}`);
       const memberData = res.data;
-      setMember(memberData);
-
+      
       // 2. Fetch Additional Data in parallel
       if (memberData) {
-        const [workoutRes, dietRes, assignRes, staffRes] = await Promise.all([
+        const userId = memberData.u_id || memberData.user_id || memberData.id;
+        const [workoutRes, dietRes, assignRes, staffRes, membershipRes] = await Promise.all([
           api.get("/workouts").catch(() => ({ data: [] })),
           api.get("/diet-plans").catch(() => ({ data: [] })),
           api.get("/assignments").catch(() => ({ data: [] })),
-          api.get("/staff").catch(() => ({ data: [] }))
+          api.get("/staff").catch(() => ({ data: [] })),
+          api.get(`/memberships/user/${userId}`).catch(() => ({ data: [] }))
         ]);
+
+        // Get latest membership price if available
+        const userMemberships = Array.isArray(membershipRes.data) ? membershipRes.data : [];
+        const activeMembership = userMemberships.find(m => m.status === 'active') || userMemberships[0];
+        
+        const enhancedMember = {
+          ...memberData,
+          price: activeMembership?.price || memberData.price,
+          pricePaid: activeMembership?.pricePaid || 0,
+          secondPaymentPaid: activeMembership?.secondPaymentPaid || 0,
+          payment_status: activeMembership?.paymentStatus || memberData.payment_status
+        };
+        setMember(enhancedMember);
 
         // Filter Workouts
         const myWorkouts = (Array.isArray(workoutRes.data) ? workoutRes.data : [])
@@ -234,12 +248,45 @@ const MemberDetails = () => {
             <div className="lg:col-span-2 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
-                  <h3 className="text-sm font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-4">Membership</h3>
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <h3 className="text-sm font-black text-white/20 uppercase tracking-widest">Membership</h3>
+                    {member.payment_status && (
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        member.payment_status === 'Paid' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+                      }`}>
+                        {member.payment_status}
+                      </span>
+                    )}
+                  </div>
                   <div className="space-y-4">
                     <InfoRow icon={<CreditCard size={18} className="text-orange-500" />} label="Plan" value={member.plan || 'No Active Plan'} />
                     <InfoRow icon={<Calendar size={18} className="text-orange-500" />} label="Joined" value={member.join_date ? dayjs(member.join_date).format('MMM DD, YYYY') : 'N/A'} />
                     <InfoRow icon={<Clock size={18} className="text-orange-500" />} label="Expiry" value={member.expiry_date ? dayjs(member.expiry_date).format('MMM DD, YYYY') : 'N/A'} />
-                    <InfoRow icon={<CreditCard size={18} className="text-orange-500" />} label="Price" value={member.price ? `₹${member.price}` : 'N/A'} />
+                    
+                    <div className="pt-4 border-t border-white/5 space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-white/40">Total Price</span>
+                        <span className="text-white font-bold">₹{member.price || '0'}</span>
+                      </div>
+                      {member.pricePaid > 0 && (
+                        <div className="flex justify-between items-center text-sm text-emerald-400/80">
+                          <span className="text-white/40">Initial Paid</span>
+                          <span className="font-bold">₹{member.pricePaid}</span>
+                        </div>
+                      )}
+                      {member.secondPaymentPaid > 0 && (
+                        <div className="flex justify-between items-center text-sm text-cyan-400/80">
+                          <span className="text-white/40">Second Paid</span>
+                          <span className="font-bold">₹{member.secondPaymentPaid}</span>
+                        </div>
+                      )}
+                      {member.price > (member.pricePaid || 0) + (member.secondPaymentPaid || 0) && (
+                        <div className="flex justify-between items-center text-sm text-orange-400">
+                          <span className="text-white/40">Remaining</span>
+                          <span className="font-bold">₹{member.price - (member.pricePaid || 0) - (member.secondPaymentPaid || 0)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
