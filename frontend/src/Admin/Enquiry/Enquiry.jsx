@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X, ChevronLeft, ChevronRight, FileText, Download } from "lucide-react";
+import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock,ChevronDown, Users, X, ChevronLeft, ChevronRight, FileText, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
@@ -18,6 +18,7 @@ const Enquiry = () => {
   const itemsPerPage = 10;
   const [showForm, setShowForm] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+  const [viewMode, setViewMode] = useState('table');
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -386,204 +387,318 @@ const Enquiry = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end items-center mb-4">
-        <div className="flex items-center gap-3">
-          {/* Excel Import Actions */}
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 px-4 py-3 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all shadow-lg" title="Import from Excel">
-              <FileText className="w-4 h-4" />
-              <span className="text-sm font-bold hidden sm:inline">Import Excel</span>
-              <input 
-                type="file" 
-                accept=".xlsx, .xls" 
-                className="hidden" 
-                onChange={handleExcelImport}
-              />
-            </label>
-            <button
-              onClick={downloadExcelTemplate}
-              className="p-3 bg-white/10 border border-white/20 text-white/60 hover:text-white rounded-xl transition-all shadow-lg"
-              title="Download Template"
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Header Area */}
+      <div className="p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+          {/* Search */}
+          <div className="relative group w-full lg:w-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search enquiries..."
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              className="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none w-full lg:w-72 transition-all placeholder:text-white/20"
+            />
+          </div>
+          
+          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+        </div>
+
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          {/* Status Filter */}
+          <div className="relative group flex-1 sm:flex-none">
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[140px]"
             >
-              <Download className="w-4 h-4" />
+              <option value="all" className="bg-neutral-900">All Status</option>
+              <option value="pending" className="bg-neutral-900">Pending</option>
+              <option value="completed" className="bg-neutral-900">Completed</option>
+              <option value="cancelled" className="bg-neutral-900">Cancelled</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
+          </div>
+
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white'}`}
+              title="Table View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white'}`}
+              title="Card View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto">
+          <div className="flex items-center gap-2">
+            <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2 shadow-lg" title="Import from Excel">
+              <FileText size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden xl:block">Import</span>
+              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleExcelImport} />
+            </label>
+            <button onClick={downloadExcelTemplate} className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all shadow-lg" title="Download Template">
+              <Download size={16} />
             </button>
           </div>
 
           <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:scale-105 transition-all outline-none"
+            onClick={() => { setSelectedEnquiry(null); setShowForm(true); }}
+            className="flex-1 lg:flex-none px-5 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold text-xs shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add Enquiry
+            Add New
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search enquiries..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all shadow-sm"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
-         
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-white/5">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">S No</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Customer</th>
-
-                <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-white/60 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/30">
-              {paginatedEnquiries && paginatedEnquiries.length > 0 ? (
-                paginatedEnquiries.map((enquiry,ind) => (
-                <tr key={enquiry.id} className="hover:bg-white/5">
-                   <td className="px-6 py-4">
-                    <div className="text-sm text-white">{ startIndex + ind + 1 }</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <div className="text-sm font-medium text-white">{enquiry.name}</div>
-                      <div className="text-sm text-white/60">{enquiry.email}</div>
+      <div className="flex-1 flex flex-col min-h-0 p-2 overflow-hidden">
+        {/* MOBILE VIEW (Always Cards one-by-one) */}
+        <div className="lg:hidden flex-1 overflow-y-auto custom-scrollbar pb-20">
+          {paginatedEnquiries.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              {paginatedEnquiries.map((enquiry) => (
+                <div
+                  key={enquiry.id}
+                  onClick={() => handleEdit(enquiry)}
+                  className="bg-white/5 border border-white/10 rounded-2xl p-4 active:scale-[0.98] transition-all flex flex-col gap-3 shadow-xl"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center text-white font-black text-sm">
+                        {enquiry.name?.charAt(0)?.toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-white font-black text-sm">{enquiry.name}</p>
+                        <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">{enquiry.location || 'Direct Lead'}</p>
+                      </div>
                     </div>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-white">{enquiry.location || 'Not specified'}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(enquiry.status)}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(enquiry.status)}`}>
                       {getStatusIcon(enquiry.status)}
                       {enquiry.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-white/60">
-                    {new Date(enquiry.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(enquiry)}
-                        className="p-1 text-white/60 hover:text-white hover:bg-white/10 rounded"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      {enquiry.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleMoveToMembers(enquiry)}
-                            className="p-1 text-blue-400 hover:text-blue-300 hover:bg-white/10 rounded"
-                            title="Move to members"
-                          >
-                            <Users className="w-4 h-4" />
-                          </button>
+                  </div>
 
-                          <button
-                            onClick={() => updateStatus(enquiry.id, 'cancelled')}
-                            className="p-1 text-red-400 hover:text-red-300 hover:bg-white/10 rounded"
-                            title="Cancel enquiry"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                      <button
-                        onClick={() => handleDelete(enquiry.id)}
-                        className="p-1 text-red-400 hover:text-red-300 hover:bg-white/10 rounded"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                    <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
+                      <Users size={10} className="text-orange-500" /> {enquiry.phone || 'N/A'}
                     </div>
-                  </td>
-                </tr>
-              ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-white/60">
-                    No enquiries found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
+                      <Clock size={10} className="text-orange-500" /> {dayjs(enquiry.created_at).format('DD/MM/YY')}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/20">
+              <Users size={48} strokeWidth={1} />
+              <p className="text-sm font-medium">No records found</p>
+            </div>
+          )}
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-white/5 border-t border-white/10 gap-4">
-            <div className="text-sm text-white/60 order-2 sm:order-1">
-              Showing <span className="text-white font-medium">{startIndex + 1}</span> to <span className="text-white font-medium">{Math.min(startIndex + itemsPerPage, filteredEnquiries.length)}</span> of <span className="text-white font-medium">{filteredEnquiries.length}</span> results
+        {/* DESKTOP VIEW (Toggleable) */}
+        <div className="hidden lg:flex flex-1 flex-col min-h-0">
+          {viewMode === 'card' ? (
+            <div className="flex-1 mt-8 overflow-y-auto custom-scrollbar">
+              {paginatedEnquiries.length > 0 ? (
+                <div className="grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                  {paginatedEnquiries.map((enquiry) => (
+                    <div
+                      key={enquiry.id}
+                      className="group bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-orange-500/40 hover:bg-white/10 transition-all cursor-pointer flex flex-col gap-3"
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center text-white font-black text-sm shadow-lg">
+                          {enquiry.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(enquiry.status)}`}>
+                          {getStatusIcon(enquiry.status)}
+                          {enquiry.status}
+                        </span>
+                      </div>
+
+                      {/* Card Body */}
+                      <div>
+                        <p className="text-white font-black text-sm group-hover:text-orange-400 transition-colors">{enquiry.name}</p>
+                        <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-0.5 truncate">
+                          {enquiry.email || 'No Email'}
+                        </p>
+                        <p className="text-white/30 text-[10px] font-bold mt-1">
+                          {enquiry.location || 'Direct Lead'}
+                        </p>
+                      </div>
+
+                      {/* Card Actions */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-white/5 mt-auto">
+                        <button
+                          onClick={() => handleEdit(enquiry)}
+                          className="flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg bg-white/5 border border-white/10 text-white/50 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all"
+                        >
+                          Edit
+                        </button>
+                        {enquiry.status === 'pending' && (
+                          <button
+                            onClick={() => handleMoveToMembers(enquiry)}
+                            className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
+                            title="Move to Members"
+                          >
+                            <Users size={12} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(enquiry.id)}
+                          className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/20">
+                  <Users size={48} strokeWidth={1} />
+                  <p className="text-sm font-medium">No records found</p>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2 order-1 sm:order-2">
+          ) : (
+            /* TABLE VIEW */
+            <div className="flex-1 mt-8 overflow-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl custom-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-white/10 backdrop-blur-md z-10 text-white/40 uppercase text-[9px] tracking-[0.1em] font-black border-b border-white/5">
+                  <tr>
+                    <th className="px-3 py-5 border-b border-white/5 w-12 text-center">S.No</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Customer</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Mobile</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Location</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Status</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Date</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {paginatedEnquiries.length > 0 ? (
+                    paginatedEnquiries.map((enquiry, ind) => (
+                      <tr
+                        key={enquiry.id}
+                        className="group hover:bg-white/5 transition-all cursor-pointer"
+                        onClick={() => handleEdit(enquiry)}
+                      >
+                        <td className="px-3 py-4 text-[10px] font-bold text-white/40 text-center">
+                          {startIndex + ind + 1}
+                        </td>
+                        <td className="px-3 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-white font-bold text-sm group-hover:text-orange-400 transition-colors truncate max-w-[150px]">
+                              {enquiry.name}
+                            </span>
+                            <span className="text-white/30 text-[9px] font-bold uppercase tracking-tight truncate max-w-[150px]">
+                              {enquiry.email || 'No Email'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-4">
+                          <span className="text-white/60 text-xs font-bold">
+                            {enquiry.phone || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-4 text-[10px] font-bold text-white/40 truncate max-w-[120px]">
+                          {enquiry.location || 'Direct Lead'}
+                        </td>
+                        <td className="px-3 py-4">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold ${getStatusColor(enquiry.status)}`}>
+                            {getStatusIcon(enquiry.status)}
+                            {enquiry.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-4 text-[9px] text-white/40 font-bold">
+                          {dayjs(enquiry.created_at).format('DD/MM/YY')}
+                        </td>
+                        <td className="px-3 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(enquiry)}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            {enquiry.status === 'pending' && (
+                              <button
+                                onClick={() => handleMoveToMembers(enquiry)}
+                                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
+                                title="Move to Members"
+                              >
+                                <Users size={14} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDelete(enquiry.id)}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan="7" className="py-20 text-center text-white/20 font-bold">No records found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Footer / Pagination */}
+        {filteredEnquiries.length > 0 && (
+          <div className="p-3 border-t border-white/5 bg-white/5 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between mt-auto rounded-b-xl gap-4">
+            <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
+              Showing {paginatedEnquiries.length} of {filteredEnquiries.length} entries
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg bg-white/10 text-white disabled:opacity-50 hover:bg-white/20 transition-all border border-white/10"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-orange-500 hover:border-orange-500/50 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              
-              <div className="flex items-center gap-1">
-                {[...Array(totalPages)].map((_, i) => {
-                  // Only show current, first, last, and surrounding pages if many
-                  if (
-                    totalPages > 7 &&
-                    i + 1 !== 1 &&
-                    i + 1 !== totalPages &&
-                    Math.abs(currentPage - (i + 1)) > 1
-                  ) {
-                    if (Math.abs(currentPage - (i + 1)) === 2) return <span key={i} className="text-white/30 px-1">...</span>;
-                    return null;
-                  }
 
-                  return (
-                    <button
-                      key={i + 1}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-all border ${
-                        currentPage === i + 1
-                          ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/20"
-                          : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-8 h-8 rounded-lg border transition-all text-[10px] font-black ${
+                      currentPage === i + 1
+                        ? "bg-orange-500 border-orange-500 text-white"
+                        : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
               </div>
 
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg bg-white/10 text-white disabled:opacity-50 hover:bg-white/20 transition-all border border-white/10"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-orange-500 hover:border-orange-500/50 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
