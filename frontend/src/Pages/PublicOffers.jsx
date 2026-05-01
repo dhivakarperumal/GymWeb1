@@ -25,7 +25,7 @@ const PublicOffers = ({ offerType }) => {
         const [offersRes, plansRes, productsRes] = await Promise.all([
           api.get("/offers"),
           api.get("/plans"),
-          api.get("/products"),
+          api.get("/products?status=active"),
         ]);
         setOffers(offersRes.data);
         setPlans(plansRes.data);
@@ -45,6 +45,11 @@ const PublicOffers = ({ offerType }) => {
     const list = o.offer_type === "plan" ? plans : products;
     return list.find((t) => t.id == o.target_id);
   };
+
+  const displayedOffers = filtered.filter((o) => {
+    if (o.offer_type !== "product") return true;
+    return Boolean(getTarget(o));
+  });
 
   return (
     <div className="bg-black text-white">
@@ -68,7 +73,7 @@ const PublicOffers = ({ offerType }) => {
               Loading Offers…
             </p>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : displayedOffers.length === 0 ? (
           /* EMPTY STATE */
           <div className="flex flex-col items-center justify-center py-32 gap-4 text-center">
             <div className="text-6xl opacity-20">🏷️</div>
@@ -84,7 +89,7 @@ const PublicOffers = ({ offerType }) => {
         ) : (
           /* OFFERS GRID */
           <section className="py-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filtered.map((o, index) => {
+            {displayedOffers.map((o, index) => {
               const target = getTarget(o);
               const daysLeft = o.end_date ? dayjs(o.end_date).diff(dayjs(), "day") : null;
               const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
@@ -199,7 +204,7 @@ const PublicOffers = ({ offerType }) => {
         )}
 
         {/* BOTTOM CTA — same pattern as Pricing.jsx */}
-        {!loading && filtered.length > 0 && (
+        {!loading && displayedOffers.length > 0 && (
           <section className="py-20 text-center border-t border-red-500/20">
             <h2 className="text-3xl font-bold mb-6">
               {isPlan ? "Ready to Start Your Fitness Journey?" : "Upgrade Your Workout Gear Today"}
