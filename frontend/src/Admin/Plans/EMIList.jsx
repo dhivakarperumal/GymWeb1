@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Edit, X, Search, ChevronDown, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload } from "lucide-react";
+import { Eye, Edit, X, Search, ChevronDown, CreditCard,Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload } from "lucide-react";
 import api from "../../api";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
@@ -326,6 +326,7 @@ const EMIList = () => {
                   <tr>
                     <th className="px-6 py-4 border-b border-white/5">S.No</th>
                     <th className="px-6 py-4 border-b border-white/5">Member</th>
+                    <th className="px-6 py-4 border-b border-white/5">Phone</th>
                     <th className="px-6 py-4 border-b border-white/5">Plan</th>
                     <th className="px-6 py-4 border-b border-white/5">Total Price</th>
                     <th className="px-6 py-4 border-b border-white/5">Initial Payment</th>
@@ -372,20 +373,15 @@ const EMIList = () => {
                           {(currentPage - 1) * itemsPerPage + idx + 1}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="font-semibold text-white">
-                            {membership.userName ||
-                              membership.username ||
-                              "Unknown"}
+                          <div className="font-bold text-white group-hover:text-orange-400 transition-colors">
+                            {membership.userName || membership.username || "Unknown"}
                           </div>
-                          <div className="text-[11px] text-white/50">
-                            {membership.userEmail || membership.email || "-"}
-                          </div>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-orange-400">
+                          {membership.mobile || membership.phone || "N/A"}
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-semibold">{membership.planName}</div>
-                          <div className="text-[11px] text-white/50">
-                            {plan ? "Matched plan" : "Plan lookup not found"}
-                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-semibold text-emerald-400">
@@ -423,7 +419,7 @@ const EMIList = () => {
                         <td className="px-6 py-4">
                           {getPaymentStatusBadge(membership.paymentStatus)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <div className="flex justify-center items-center gap-3">
                             <button
                               onClick={() => viewDetails(membership)}
@@ -433,13 +429,14 @@ const EMIList = () => {
                               <Eye size={18} />
                             </button>
 
-                            {membership.status !== "completed" && (
+                            {membership.paymentStatus !== "Paid" && (
                               <button
                                 onClick={() => selectMembership(membership)}
-                                className="p-2 rounded-lg bg-orange-500/20 border border-orange-500/20 text-orange-300 hover:bg-orange-500/40 transition"
-                                title="Update Payment"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 font-bold text-xs whitespace-nowrap"
+                                title="Process Remaining Payment"
                               >
-                                <Edit size={18} />
+                                <CreditCard size={14} />
+                                Pay 
                               </button>
                             )}
                           </div>
@@ -493,7 +490,9 @@ const EMIList = () => {
                       </div>
                       <div>
                         <h3 className="font-bold text-white line-clamp-1">{membership.userName || membership.username || "Unknown"}</h3>
-                        <p className="text-xs text-white/40">{membership.userEmail || membership.email || "-"}</p>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <p className="text-[11px] text-orange-400 font-bold flex items-center gap-1.5"><Phone size={12} />{membership.mobile || membership.phone || "N/A"}</p>
+                        </div>
                       </div>
                     </div>
 
@@ -533,12 +532,12 @@ const EMIList = () => {
                       >
                         <Eye size={14} /> Details
                       </button>
-                      {membership.status !== "completed" && (
+                      {membership.paymentStatus !== "Paid" && (
                         <button
                           onClick={() => selectMembership(membership)}
-                          className="flex-1 py-2.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 text-xs font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                          className="flex-2 py-2.5 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 text-xs"
                         >
-                          <Edit size={14} /> Update
+                          <CreditCard size={14} /> Pay ₹{balanceDue.toFixed(0)}
                         </button>
                       )}
                     </div>
