@@ -183,7 +183,12 @@ const Offers = () => {
               <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className="text-2xl font-black tracking-tight">Marketing Offers</h2>
+            <h2 className="text-2xl font-black tracking-tight">
+              Marketing Offers
+              <span className="ml-3 text-sm font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
+                {type === "plan" ? "Plans" : "Products"}
+              </span>
+            </h2>
             <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mt-0.5">Campaign & Discount Management</p>
           </div>
         </div>
@@ -197,23 +202,10 @@ const Offers = () => {
       </div>
 
       {/* FILTERS BAR */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center bg-white/5 p-3 rounded-2xl border border-white/10 backdrop-blur-xl">
-        <div className="lg:col-span-3 flex bg-black/40 p-1 rounded-xl border border-white/5 shadow-inner">
-          <button 
-            onClick={() => { setType("plan"); setCurrentPage(1); }}
-            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${type === "plan" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white"}`}
-          >
-            Plans
-          </button>
-          <button 
-            onClick={() => { setType("product"); setCurrentPage(1); }}
-            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${type === "product" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white"}`}
-          >
-            Products
-          </button>
-        </div>
+      <div className="flex flex-wrap items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10 backdrop-blur-xl">
 
-        <div className="lg:col-span-4 relative group">
+        {/* SEARCH — left */}
+        <div className="relative group w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
           <input 
             type="text" 
@@ -224,32 +216,37 @@ const Offers = () => {
           />
         </div>
 
-        <div className="lg:col-span-3 relative group">
-          <select 
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-            className="w-full bg-transparent border border-white/10 rounded-xl pl-4 pr-10 py-2.5 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all text-sm appearance-none cursor-pointer"
-          >
-            <option value="all" className="bg-neutral-900">All Status</option>
-            <option value="active" className="bg-neutral-900">Active Only</option>
-            <option value="inactive" className="bg-neutral-900">Inactive Only</option>
-          </select>
-          <MoreHorizontal className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
-        </div>
+        {/* RIGHT CONTROLS */}
+        <div className="flex items-center gap-3 ml-auto">
+          {/* STATUS FILTER */}
+          <div className="relative group">
+            <select 
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-white/5 border border-white/10 rounded-xl pl-4 pr-10 py-2.5 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all text-sm appearance-none cursor-pointer"
+            >
+              <option value="all" className="bg-neutral-900">All Status</option>
+              <option value="active" className="bg-neutral-900">Active Only</option>
+              <option value="inactive" className="bg-neutral-900">Inactive Only</option>
+            </select>
+            <MoreHorizontal className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+          </div>
 
-        <div className="lg:col-span-2 flex justify-end gap-2 p-1 bg-black/20 rounded-xl border border-white/5">
-          <button 
-            onClick={() => setViewMode("table")}
-            className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white"}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-          </button>
-          <button 
-            onClick={() => setViewMode("card")}
-            className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white"}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-          </button>
+          {/* VIEW TOGGLE */}
+          <div className="flex gap-2 p-1 bg-black/20 rounded-xl border border-white/5">
+            <button 
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white"}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+            </button>
+            <button 
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-orange-500 text-white shadow-lg" : "text-white/40 hover:text-white"}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            </button>
+          </div>
         </div>
       </div>
 
