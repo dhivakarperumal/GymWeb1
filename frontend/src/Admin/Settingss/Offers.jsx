@@ -79,8 +79,12 @@ const Offers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.offer_name || !form.target_id) {
+    if (!form.offer_name || !form.target_id || !form.contact) {
       toast.error("Please fill all required fields");
+      return;
+    }
+    if (form.contact.length !== 10) {
+      toast.error("Contact number must be exactly 10 digits");
       return;
     }
     try {
@@ -423,21 +427,21 @@ const Offers = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="space-y-6">
                   <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-widest border-b border-orange-500/20 pb-2">1. Core Identity</h4>
-                  <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Campaign Name</label><input type="text" required value={form.offer_name} onChange={(e) => setForm({...form, offer_name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-orange-500/50 outline-none text-sm font-bold" /></div>
+                  <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Campaign Name <span className="text-red-500">*</span></label><input type="text" required value={form.offer_name} onChange={(e) => setForm({...form, offer_name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-orange-500/50 outline-none text-sm font-bold" /></div>
                   <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Offer Type</label><select value={form.promo_type} onChange={(e) => setForm({...form, promo_type: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-sm font-bold appearance-none bg-neutral-900"><option value="discount">Direct Discount</option><option value="free">Free Months / Items</option><option value="combo">Combo Package</option></select></div>
-                  <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Contact / Support</label><input type="text" value={form.contact} onChange={(e) => setForm({...form, contact: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-orange-500/50 outline-none text-sm font-bold" /></div>
+                  <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Contact / Support <span className="text-red-500">*</span></label><input type="text" value={form.contact} onChange={(e) => setForm({...form, contact: e.target.value.replace(/\D/g, '').slice(0, 10)})} maxLength={10} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-orange-500/50 outline-none text-sm font-bold" placeholder="10-digit number" /></div>
                 </div>
 
                 <div className="space-y-6">
                   <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-widest border-b border-orange-500/20 pb-2">2. Targets & Rules</h4>
-                  <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Target {type === "plan" ? "Plan" : "Product"}</label><select required value={form.target_id} onChange={(e) => setForm({...form, target_id: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-sm font-bold appearance-none bg-neutral-900"><option value="">Select Target...</option>{targets.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}</select></div>
+                  <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Target {type === "plan" ? "Plan" : "Product"} <span className="text-red-500">*</span></label><select required value={form.target_id} onChange={(e) => setForm({...form, target_id: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-sm font-bold appearance-none bg-neutral-900"><option value="">Select Target...</option>{targets.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}</select></div>
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Discount %</label><input type="number" required value={form.discount_percentage} onChange={(e) => setForm({...form, discount_percentage: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-orange-500/50 outline-none text-sm font-black text-orange-500" /></div>
                     <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Status</label><select value={form.active} onChange={(e) => setForm({...form, active: parseInt(e.target.value)})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-sm font-bold appearance-none bg-neutral-900"><option value={1}>Active</option><option value={0}>Draft</option></select></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Start Date</label><input type="date" required value={form.start_date} onChange={(e) => setForm({...form, start_date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-xs font-bold" /></div>
-                    <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">End Date</label><input type="date" required value={form.end_date} onChange={(e) => setForm({...form, end_date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-xs font-bold" /></div>
+                    <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">Start Date <span className="text-red-500">*</span></label><input type="date" required value={form.start_date} onChange={(e) => setForm({...form, start_date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-xs font-bold" /></div>
+                    <div><label className="text-[10px] font-black text-white/40 uppercase mb-2 block">End Date <span className="text-red-500">*</span></label><input type="date" required value={form.end_date} onChange={(e) => setForm({...form, end_date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none text-xs font-bold" /></div>
                   </div>
                 </div>
 
