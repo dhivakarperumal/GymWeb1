@@ -44,7 +44,12 @@ async function createProduct(req, res) {
 
 async function listProducts(req, res) {
   try {
-    const [rows] = await db.query('SELECT * FROM products ORDER BY id DESC');
+    const { status } = req.query;
+    const query = status
+      ? 'SELECT * FROM products WHERE status = ? ORDER BY id DESC'
+      : 'SELECT * FROM products ORDER BY id DESC';
+    const params = status ? [status] : [];
+    const [rows] = await db.query(query, params);
     res.json(rows.map(parseProduct));
   } catch (err) {
     console.error('listProducts error', err);
