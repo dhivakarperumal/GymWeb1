@@ -38,6 +38,7 @@ const membershipRoutes = require("./src/routes/membershipRoutes");
 const ptFormRoutes = require("./src/routes/ptFormRoutes");
 const followupRoutes = require("./src/routes/followupRoutes");
 const sessionRoutes = require("./src/routes/sessionRoutes");
+const offerRoutes = require("./src/routes/offerRoutes");
 
 
 
@@ -127,6 +128,7 @@ app.use("/api/memberships", membershipRoutes);
 app.use("/api/pt-forms", ptFormRoutes);
 app.use("/api/followups", followupRoutes);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/offers", offerRoutes);
 
 
 
@@ -135,4 +137,5 @@ app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
 });
 
+// Triggering migration run...
 module.exports = app;

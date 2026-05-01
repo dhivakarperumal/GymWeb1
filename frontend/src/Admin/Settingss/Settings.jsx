@@ -168,6 +168,13 @@ const Settings = () => {
           path="/admin/expiry-members"
         />
 
+        <SettingCard
+          icon={<FaStar />}
+          title="Marketing Offers"
+          desc="Manage promotional offers and discounts for plans and products."
+          path="/admin/settings/offers"
+        />
+
      
 
       </div>
