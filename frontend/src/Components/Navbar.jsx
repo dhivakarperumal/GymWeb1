@@ -76,7 +76,9 @@ const Navbar = () => {
 
   const [open, setOpen] = useState(false);
   const [showCategory, setShowCategory] = useState(false);
+  const [showOffers, setShowOffers] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
+
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarView, setSidebarView] = useState("menu"); // menu | categories | subcategories
@@ -234,11 +236,53 @@ const Navbar = () => {
                 Pricing
               </NavLink>
 
+              {/* OFFERS DROPDOWN */}
+              <div className="relative">
+                <button
+                  onMouseEnter={() => { setShowOffers(true); setShowCategory(false); }}
+                  onClick={() => { setShowOffers(!showOffers); setShowCategory(false); }}
+                  className="flex items-center gap-1 cursor-pointer"
+                >
+                  Offers <ChevronDown size={16} />
+                </button>
+
+                {showOffers && (
+                  <div
+                    onMouseLeave={() => setShowOffers(false)}
+                    className="absolute top-full mt-4 w-56 bg-white text-black rounded-xl shadow-xl overflow-hidden"
+                  >
+                    <NavLink
+                      to="/offers/plans"
+                      className={({ isActive }) =>
+                        `block px-5 py-3 cursor-pointer ${isActive
+                          ? "bg-gray-200 font-semibold"
+                          : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      Plan Offers
+                    </NavLink>
+                    <NavLink
+                      to="/offers/products"
+                      className={({ isActive }) =>
+                        `block px-5 py-3 cursor-pointer ${isActive
+                          ? "bg-gray-200 font-semibold"
+                          : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      Product Offers
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+
+
               {/* MORE DROPDOWN */}
               <div className="relative" ref={categoryRef}>
                 <button
-                  onMouseEnter={() => setShowCategory(true)}
-                  onClick={() => setShowCategory(!showCategory)}
+                  onMouseEnter={() => { setShowCategory(true); setShowOffers(false); }}
+                  onClick={() => { setShowCategory(!showCategory); setShowOffers(false); }}
                   className="flex items-center gap-1 cursor-pointer"
                 >
                   More <ChevronDown size={16} />
@@ -479,6 +523,8 @@ const Navbar = () => {
                 { name: "Trainers", path: "/trainers" },
                 { name: "Pricing", path: "/pricing" },
                 { name: "Products", path: "/products" },
+                { name: "Plan Offers 📋", path: "/offers/plans" },
+                { name: "Product Offers 📦", path: "/offers/products" },
 
                 ...(showCalendar
                   ? [{ name: "Calendar", path: "/calendar" }]
