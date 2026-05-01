@@ -221,36 +221,36 @@ const Header = ({ onMenuClick }) => {
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
 
         {/* LEFT */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 flex-1">
           <button
             onClick={onMenuClick}
             className="lg:hidden p-2 rounded-xl 
             bg-white/10 hover:bg-white/20 
             text-white transition"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
 
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold 
-            text-white tracking-wide truncate flex items-center gap-2">
-            <PageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
+          <h1 className="text-lg sm:text-xl  lg:text-2xl font-semibold 
+  text-white tracking-wide hidden  md:flex items-center gap-2 whitespace-nowrap">
+            <PageIcon className="w-4 h-4 sm:w-5 sm:h-5  text-orange-500" />
             {currentPageTitle}
           </h1>
 
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-2" ref={dropdownRef}>
+        <div className="flex items-center gap-2 shrink-0" ref={dropdownRef}>
 
           {/* TODAY ORDERS ICON */}
           <div className="relative">
             <button
-              
+
               onClick={() => toggleDropdown('orders')}
               className={`p-2 rounded-xl transition relative ${activeDropdown === 'orders' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Today's Orders"
             >
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               {alerts.orders.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
                   {alerts.orders.length}
@@ -276,7 +276,7 @@ const Header = ({ onMenuClick }) => {
               className={`p-2 rounded-xl transition relative ${activeDropdown === 'stock' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Low Stock Alerts"
             >
-              <Package className="w-5 h-5" />
+              <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               {alerts.lowStock.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
                   {alerts.lowStock.length}
@@ -302,7 +302,7 @@ const Header = ({ onMenuClick }) => {
               className={`p-2 rounded-xl transition relative ${activeDropdown === 'expiry' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Expiring Memberships"
             >
-              <Clock className="w-5 h-5" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               {alerts.expiring.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
                   {alerts.expiring.length}
@@ -330,7 +330,7 @@ const Header = ({ onMenuClick }) => {
               className={`p-2 rounded-xl transition relative ${activeDropdown === 'members' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="New Members Today"
             >
-              <User className="w-5 h-5" />
+              <User className="w-4 h-4 sm:w-5 sm:h-5" />
               {alerts.registrations.length > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
                   {alerts.registrations.length}
@@ -354,18 +354,18 @@ const Header = ({ onMenuClick }) => {
             onClick={() => setShowSearch(p => !p)}
             className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition"
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* PROFILE */}
           <div className="relative">
             <button
               onClick={() => toggleDropdown('profile')}
-              className="flex items-center gap-3 px-3 py-1.5 
+              className="flex items-center gap-3 px-2 md:px-3 py-1 md:py-1.5 
               rounded-2xl bg-white/10 hover:bg-white/20 
               transition"
             >
-              <div className="w-9 h-9 rounded-full 
+              <div className="w-7 h-7 sm:w-9 sm:w-9 rounded-full 
                 bg-gradient-to-br from-cyan-500 to-sky-600
                 flex items-center justify-center text-white font-semibold">
                 {userName.charAt(0).toUpperCase()}
