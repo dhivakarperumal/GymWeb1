@@ -221,7 +221,7 @@ const Header = ({ onMenuClick }) => {
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
 
         {/* LEFT */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 flex-1">
           <button
             onClick={onMenuClick}
             className="lg:hidden p-2 rounded-xl 
@@ -231,8 +231,8 @@ const Header = ({ onMenuClick }) => {
             <Menu className="w-6 h-6" />
           </button>
 
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold 
-            text-white tracking-wide truncate flex items-center gap-2">
+<h1 className="text-lg sm:text-xl lg:text-2xl font-semibold 
+  text-white tracking-wide flex items-center gap-2 whitespace-nowrap">
             <PageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
             {currentPageTitle}
           </h1>
@@ -240,7 +240,7 @@ const Header = ({ onMenuClick }) => {
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-2" ref={dropdownRef}>
+        <div className="flex items-center gap-2 shrink-0" ref={dropdownRef}>
 
           {/* TODAY ORDERS ICON */}
           <div className="relative">
