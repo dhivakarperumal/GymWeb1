@@ -59,7 +59,7 @@ const FollowupEnquiry = () => {
   });
 
   const [followupFormData, setFollowupFormData] = useState({
-    followup_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+    interaction_date: dayjs().format('YYYY-MM-DDTHH:mm'),
     notes: "",
     status: "pending",
     next_followup_date: ""
@@ -179,7 +179,7 @@ const FollowupEnquiry = () => {
         ...followupFormData
       });
       setFollowupFormData({
-        followup_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+        interaction_date: dayjs().format('YYYY-MM-DDTHH:mm'),
         notes: "",
         status: "pending",
         next_followup_date: ""
@@ -200,7 +200,7 @@ const FollowupEnquiry = () => {
       relationship: "", emergency_contact_address: "",
       phone_home: "", phone_work: "",
       fitness_goal: "", blood_group: "", gender: "", status: "pending",
-      plan_name: "", plan_duration: "",
+      plan_name: "", plan_duration: "", plan_price: "",
       reg_no: "", organization: "", website: "", best_time_to_reach: "",
       updated_by: user?.username || "Admin", referred_by: ""
     });
@@ -296,16 +296,18 @@ const FollowupEnquiry = () => {
       enquiry.organization?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
-    const matchesAccess = role === 'admin' || enquiry.updated_by === user?.username;
+    const isAdmin = role && role.toLowerCase().includes('admin');
+    const matchesAccess = isAdmin || !enquiry.updated_by || enquiry.updated_by === user?.username;
 
     let matchesTrainer = true;
-    if (role === 'admin' && trainerFilter !== 'all') {
-      matchesTrainer = enquiry.updated_by === trainerFilter;
+    if (isAdmin && trainerFilter !== 'all') {
+      matchesTrainer = (enquiry.updated_by || 'Admin') === trainerFilter;
     }
 
     if (!matchesSearch || !matchesStatus || !matchesAccess || !matchesTrainer) return false;
+    if (dateRange.type === 'All Time') return true;
     return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
-  }).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   // Pagination
   const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage);
@@ -473,6 +475,12 @@ const FollowupEnquiry = () => {
                         <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-0.5">
                           {enquiry.organization || enquiry.employer || 'Direct Lead'}
                         </p>
+                        {enquiry.plan_name && (
+                          <div className="mt-2 flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2 py-1 w-fit">
+                            <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">{enquiry.plan_name}</span>
+                            {enquiry.plan_price && <span className="text-[10px] font-black text-white/60 border-l border-white/10 pl-2">₹{enquiry.plan_price}</span>}
+                          </div>
+                        )}
                       </div>
 
                       {/* Card Footer */}
@@ -523,6 +531,7 @@ const FollowupEnquiry = () => {
                     <th className="px-6 py-4 border-b border-white/5 text-left">Name</th>
                     <th className="px-6 py-4 border-b border-white/5 text-left">Mobile</th>
                     <th className="px-6 py-4 border-b border-white/5 text-left">Organization</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-left">Plan Info</th>
                     <th className="px-6 py-4 border-b border-white/5 text-left">Status</th>
                     <th className="px-6 py-4 border-b border-white/5 text-left">Created</th>
                     <th className="px-6 py-4 border-b border-white/5 text-left">Handled By</th>
@@ -563,6 +572,16 @@ const FollowupEnquiry = () => {
                         </td>
                         <td className="px-6 py-4 text-xs font-bold text-white/60">
                           {enquiry.organization || enquiry.employer || 'Direct Lead'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {enquiry.plan_name ? (
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-white/80">{enquiry.plan_name}</span>
+                              {enquiry.plan_price && <span className="text-[10px] font-black text-orange-500 mt-0.5">₹{enquiry.plan_price}</span>}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-white/20 italic">No Plan</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           {getStatusBadge(enquiry.status)}
@@ -925,13 +944,13 @@ const FollowupEnquiry = () => {
                       <div className="lg:col-span-1 bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
                         <h4 className="text-sm font-bold text-white/60 uppercase tracking-widest mb-4">Log New Activity</h4>
                         <form onSubmit={handleAddFollowup} className="space-y-4">
-                          <div>
-                            <label className="text-[10px] font-bold text-white/40 uppercase mb-1 block">Activity Date</label>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Activity Date</label>
                             <input
                               type="datetime-local"
-                              value={followupFormData.followup_date}
-                              onChange={(e) => setFollowupFormData({ ...followupFormData, followup_date: e.target.value })}
-                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none"
+                              value={followupFormData.interaction_date}
+                              onChange={(e) => setFollowupFormData({ ...followupFormData, interaction_date: e.target.value })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50 transition-all"
                             />
                           </div>
                           <div>
@@ -988,7 +1007,7 @@ const FollowupEnquiry = () => {
                               <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
-                                    {dayjs(f.followup_date).format('MMM DD, YYYY - HH:mm')}
+                                    {dayjs(f.interaction_date).format('MMM DD, YYYY - HH:mm')}
                                   </span>
                                   <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${f.status === 'completed' ? 'border-green-500/50 text-green-500' :
                                       f.status === 'cancelled' ? 'border-red-500/50 text-red-500' :
