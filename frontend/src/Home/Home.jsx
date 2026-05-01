@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css";
@@ -5,19 +6,16 @@ import "swiper/css/navigation";
 import BmiCalculator from "../Components/BmiCalculator";
 import TrainerSwiper from "../Components/TrainerSwiper";
 import About from "../Components/About";
-// import AOS from "aos";
-// import "aos/dist/aos.css";
-// import { useEffect } from "react";
 import FacilitiesSwiper from "../Components/FacilitiesSwiper";
 import PricingSwiper from "../Components/PricingSwiper";
 import ProductSwiper from "../Components/ProductSwiper";
 import ServiceSwiper from "../Components/ServicesSwiper";
-import { useNavigate } from "react-router-dom";
+import FollowupEnquiryModal from "../Components/FollowupEnquiryModal";
 
 
 
 export default function Home() {
-  const navigate = useNavigate();
+  const [showFollowupModal, setShowFollowupModal] = useState(false);
 
   const slides = [
     {
@@ -109,7 +107,7 @@ export default function Home() {
                   </h1>
 
                   <button
-                    onClick={() => navigate(item.route)}
+                    onClick={() => setShowFollowupModal(true)}
                     className="cursor-pointer backdrop-blur-md bg-red-500/90 hover:bg-red-600 transition px-12 py-4 rounded-full tracking-widest shadow-xl"
                   >
                     {item.button}
@@ -141,6 +139,7 @@ export default function Home() {
       <div>
         <ServiceSwiper />
       </div>
+      <FollowupEnquiryModal visible={showFollowupModal} onClose={() => setShowFollowupModal(false)} />
     </>
   );
 }
