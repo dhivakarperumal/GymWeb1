@@ -193,7 +193,7 @@ const TrainerDashboard = () => {
           <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden">
 
             {/* DESKTOP TABLE */}
-            <div className="hidden sm:block">
+            <div className="hidden sm:block overflow-x-auto custom-scrollbar">
               <table className="min-w-[640px] w-full text-sm text-gray-200">
 
                 <thead className="bg-white/20">
