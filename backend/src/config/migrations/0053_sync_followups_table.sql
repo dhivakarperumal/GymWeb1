@@ -1,0 +1,24 @@
+-- Migration 0053: Sync followups table columns (Atomic Statements)
+ALTER TABLE followups ADD COLUMN emergency_contact_name VARCHAR(255) NULL;
+ALTER TABLE followups ADD COLUMN emergency_contact_relationship VARCHAR(100) NULL;
+ALTER TABLE followups ADD COLUMN emergency_contact_address TEXT NULL;
+ALTER TABLE followups ADD COLUMN emergency_contact_phone_home VARCHAR(20) NULL;
+ALTER TABLE followups ADD COLUMN emergency_contact_phone_work VARCHAR(20) NULL;
+ALTER TABLE followups ADD COLUMN fitness_goal TEXT NULL;
+ALTER TABLE followups ADD COLUMN blood_group VARCHAR(10) NULL;
+ALTER TABLE followups ADD COLUMN height VARCHAR(20) NULL;
+ALTER TABLE followups ADD COLUMN weight VARCHAR(20) NULL;
+ALTER TABLE followups ADD COLUMN bmi VARCHAR(20) NULL;
+ALTER TABLE followups ADD COLUMN gender VARCHAR(20) NULL;
+ALTER TABLE followups ADD COLUMN plan_name VARCHAR(255) NULL;
+ALTER TABLE followups ADD COLUMN plan_duration VARCHAR(100) NULL;
+ALTER TABLE followups ADD COLUMN plan_price DECIMAL(10, 2) NULL;
+ALTER TABLE followups ADD COLUMN status VARCHAR(50) DEFAULT 'pending';
+ALTER TABLE followups ADD COLUMN reg_no VARCHAR(100) NULL;
+ALTER TABLE followups ADD COLUMN organization VARCHAR(255) NULL;
+ALTER TABLE followups ADD COLUMN website VARCHAR(255) NULL;
+ALTER TABLE followups ADD COLUMN best_time_to_reach VARCHAR(255) NULL;
+ALTER TABLE followups ADD COLUMN referred_by VARCHAR(255) NULL;
+ALTER TABLE followups ADD COLUMN updated_by VARCHAR(255) DEFAULT 'Admin';
+ALTER TABLE followups ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE followups ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;

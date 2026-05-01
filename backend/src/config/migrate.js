@@ -33,7 +33,17 @@ async function runMigrations() {
         const statements = sql.split(';').map(s => s.trim()).filter(s => s.length > 0);
         
         for (const statement of statements) {
-          await db.query(statement);
+          try {
+            await db.query(statement);
+          } catch (err) {
+            // Ignore duplicate column/index or missing drop targets
+            const ignoredErrors = ['ER_DUP_KEYNAME', 'ER_DUP_FIELDNAME', 'ER_CANT_DROP_FIELD_OR_KEY'];
+            if (ignoredErrors.includes(err.code)) {
+              console.log(`  ℹ️ Skipping: ${err.message}`);
+            } else {
+              throw err;
+            }
+          }
         }
 
         await db.query('INSERT INTO migrations (migration_name) VALUES (?)', [file]);

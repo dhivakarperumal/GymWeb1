@@ -523,24 +523,24 @@ const FollowupEnquiry = () => {
             </div>
           ) : (
             /* TABLE VIEW */
-            <div className="flex-1 mt-5 overflow-y-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden custom-scrollbar">
+            <div className="flex-1 mt-5 overflow-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl custom-scrollbar">
               <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border border-white/10  overflow-hidden z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
+                <thead className="sticky top-0 bg-white/10 backdrop-blur-md z-10 text-white/40 uppercase text-[9px] tracking-[0.1em] font-black border-b border-white/5">
                   <tr>
-                    <th className="px-6 py-4 border-b border-white/5 w-16">S No</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-left">Name</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-left">Mobile</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-left">Organization</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-left">Plan Info</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-left">Status</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-left">Created</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-left">Handled By</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-right">Actions</th>
+                    <th className="px-3 py-5 border-b border-white/5 w-12 text-center">S.No</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Name</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Mobile</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Organization</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Plan</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Status</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Date</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Staff</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {loading ? (
-                    <tr><td colSpan="5" className="py-20 text-center"><div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
+                    <tr><td colSpan="5" className="py-30 text-center"><div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
                   ) : paginatedEnquiries.length > 0 ? (
                     paginatedEnquiries.map((enquiry) => (
                       <tr
@@ -551,56 +551,49 @@ const FollowupEnquiry = () => {
                           setShowForm(true);
                         }}
                       >
-                        <td className="px-6 py-4 text-xs font-bold text-white/40">
+                        <td className="px-3 py-4 text-[10px] font-bold text-white/40 text-center">
                           {(currentPage - 1) * itemsPerPage + paginatedEnquiries.indexOf(enquiry) + 1}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-4">
                           <div className="flex flex-col">
-                            <span className="text-white font-bold text-base group-hover:text-orange-400 transition-colors">
+                            <span className="text-white font-bold text-sm group-hover:text-orange-400 transition-colors truncate max-w-[150px]">
                               {enquiry.name}
                             </span>
-                            <span className="flex items-center gap-1 text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
-                              <Mail size={10} /> {enquiry.email || 'No Email'}
+                            <span className="flex items-center gap-1 text-white/30 text-[9px] font-bold uppercase tracking-tight truncate max-w-[150px]">
+                              {enquiry.email || 'No Email'}
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="flex items-center gap-2 text-white/60 text-sm font-bold">
-                            <Phone size={12} className="text-orange-500" />
+                        <td className="px-3 py-4">
+                          <span className="flex items-center gap-1 text-white/60 text-xs font-bold">
                             {enquiry.phone || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-xs font-bold text-white/60">
-                          {enquiry.organization || enquiry.employer || 'Direct Lead'}
+                        <td className="px-3 py-4 text-[10px] font-bold text-white/40 truncate max-w-[100px]">
+                          {enquiry.organization || enquiry.employer || 'Direct'}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-4">
                           {enquiry.plan_name ? (
                             <div className="flex flex-col">
-                              <span className="text-xs font-bold text-white/80">{enquiry.plan_name}</span>
-                              {enquiry.plan_price && <span className="text-[10px] font-black text-orange-500 mt-0.5">₹{enquiry.plan_price}</span>}
+                              <span className="text-[10px] font-bold text-white/70 truncate max-w-[120px]">{enquiry.plan_name}</span>
+                              {enquiry.plan_price && <span className="text-[9px] font-black text-orange-500">₹{enquiry.plan_price}</span>}
                             </div>
                           ) : (
-                            <span className="text-xs text-white/20 italic">No Plan</span>
+                            <span className="text-[10px] text-white/20 italic">No Plan</span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-4">
                           {getStatusBadge(enquiry.status)}
                         </td>
-                        <td className="px-6 py-4 text-[10px] text-white/40 font-bold">
-                          {dayjs(enquiry.created_at).format('MMM DD, YYYY')}
+                        <td className="px-3 py-4 text-[9px] text-white/40 font-bold">
+                          {dayjs(enquiry.created_at).format('DD/MM/YY')}
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                          
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-white/60">{enquiry.updated_by || 'Admin'}</span>
-                              <span className="text-[9px] text-white/30 font-bold uppercase italic">
-                                {enquiry.updated_by ? `(${getStaffRole(enquiry.updated_by)})` : '(Admin)'}
-                              </span>
-                            </div>
+                        <td className="px-3 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-white/60 truncate max-w-[80px]">{enquiry.updated_by || 'Admin'}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-3 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
@@ -642,29 +635,41 @@ const FollowupEnquiry = () => {
             </div>
           )} {/* End table view ternary */}
 
-          {/* Footer / Pagination — only shown when records exceed 10 */}
-          {totalPages > 1 && (
-            <div className="p-4 border-t border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between mt-auto">
+          {/* Footer / Pagination */}
+          {filteredEnquiries.length > 0 && (
+            <div className="p-3 border-t border-white/5 bg-white/5 backdrop-blur-xl flex items-center justify-between mt-auto rounded-b-xl">
               <div className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
                 Showing {paginatedEnquiries.length} of {filteredEnquiries.length} entries
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-orange-500 hover:border-orange-500/50 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] text-white font-black uppercase tracking-[0.1em]">
-                  Page {currentPage} / {totalPages}
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-8 h-8 rounded-lg border transition-all text-[10px] font-black ${
+                        currentPage === i + 1
+                          ? "bg-orange-500 border-orange-500 text-white"
+                          : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
                 </div>
 
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-orange-500 hover:border-orange-500/50 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -841,15 +846,13 @@ const FollowupEnquiry = () => {
                       />
                     </div>
 
-
-
                     <div className="grid grid-cols-3 items-center gap-4">
                       <label className="text-xs font-bold text-white/60">Mobile</label>
                       <div className="col-span-2 flex items-center gap-4">
                         <div className="flex-1 relative">
                           <input
                             type="tel"
-                            value={formData.phone}
+                            value={formData.phone || ""}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             placeholder="Secondary contact..."
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
@@ -859,12 +862,10 @@ const FollowupEnquiry = () => {
                       </div>
                     </div>
 
-
-
                     <div className="grid grid-cols-3 items-center gap-4">
                       <label className="text-xs font-bold text-white/60">Status</label>
                       <select
-                        value={formData.status}
+                        value={formData.status || "pending"}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none appearance-none"
                       >
@@ -878,7 +879,7 @@ const FollowupEnquiry = () => {
                     <div className="grid grid-cols-3 items-center gap-4">
                       <label className="text-xs font-bold text-white/60">Plan</label>
                       <select
-                        value={formData.plan_name}
+                        value={formData.plan_name || ""}
                         onChange={(e) => {
                           const selectedPlan = plans.find(p => p.name === e.target.value);
                           setFormData({
