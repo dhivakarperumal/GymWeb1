@@ -297,7 +297,7 @@ const FollowupEnquiry = () => {
 
     const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
     const matchesAccess = role === 'admin' || enquiry.updated_by === user?.username;
-    
+
     let matchesTrainer = true;
     if (role === 'admin' && trainerFilter !== 'all') {
       matchesTrainer = enquiry.updated_by === trainerFilter;
@@ -410,10 +410,10 @@ const FollowupEnquiry = () => {
               <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2" title="Import from Excel">
                 <FileText size={18} />
                 <span className="text-xs font-black uppercase tracking-widest hidden lg:block">Import</span>
-                <input 
-                  type="file" 
-                  accept=".xlsx, .xls" 
-                  className="hidden" 
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  className="hidden"
                   onChange={handleExcelImport}
                 />
               </label>
@@ -972,11 +972,10 @@ const FollowupEnquiry = () => {
                                   <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
                                     {dayjs(f.followup_date).format('MMM DD, YYYY - HH:mm')}
                                   </span>
-                                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${
-                                    f.status === 'completed' ? 'border-green-500/50 text-green-500' : 
-                                    f.status === 'cancelled' ? 'border-red-500/50 text-red-500' :
-                                    'border-blue-500/50 text-blue-500'
-                                  }`}>
+                                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${f.status === 'completed' ? 'border-green-500/50 text-green-500' :
+                                      f.status === 'cancelled' ? 'border-red-500/50 text-red-500' :
+                                        'border-blue-500/50 text-blue-500'
+                                    }`}>
                                     {f.status}
                                   </span>
                                 </div>

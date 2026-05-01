@@ -321,10 +321,10 @@ const Navbar = () => {
 
               <button
                 onClick={() => navigate("/userenquiry")}
-                className="hidden md:flex items-center px-5 py-2 rounded-full 
-  bg-red-500 hover:bg-red-600 text-white font-semibold transition"
+                className="hidden md:flex items-center px-6 py-2.5 rounded-full 
+  bg-red-500 hover:bg-red-600 text-white font-bold tracking-wide transition-all shadow-lg active:scale-95"
               >
-                Enquire Now
+                Join Now
               </button>
 
               {/* CART */}
@@ -499,6 +499,25 @@ const Navbar = () => {
                 </Link>
               ))}
             </nav>
+
+            {/* MOBILE JOIN NOW */}
+            <div className="mt-auto p-5 border-t border-white/10">
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  navigate("/userenquiry");
+                }}
+                className="
+                  w-full py-4 rounded-2xl
+                  bg-red-500 hover:bg-red-600
+                  text-white font-black uppercase tracking-widest
+                  shadow-lg
+                  active:scale-[0.98] transition-all
+                "
+              >
+                Join Now
+              </button>
+            </div>
           </div>
         </>
       )}
