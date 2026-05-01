@@ -77,6 +77,7 @@ const MemberDetails = lazy(() => import("./Admin/Members/MemberDetails.jsx"));
 const ExpiryMembers = lazy(() => import("./Admin/Members/ExpiryMembers.jsx"));
 const Offers = lazy(() => import("./Admin/Settingss/Offers.jsx"));
 const PublicOffers = lazy(() => import("./Pages/PublicOffers.jsx"));
+const PublicProductOffers = lazy(() => import("./Pages/PublicProductOffers.jsx"));
 
 
 // Trainer Admin Panel
@@ -126,7 +127,7 @@ const router = createBrowserRouter([
       { path: "/userenquiry", element: <UserEnquiry /> },
       { path: "/ptformuser", element: <PTFormUser /> },
       { path: "/offers/plans", element: <PublicOffers offerType="plan" /> },
-      { path: "/offers/products", element: <PublicOffers offerType="product" /> },
+      { path: "/offers/products", element: <PublicProductOffers /> },
     ]
   },
 
