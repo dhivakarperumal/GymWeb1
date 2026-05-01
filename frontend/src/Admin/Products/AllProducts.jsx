@@ -333,12 +333,17 @@ const AllProducts = () => {
                    hover:bg-white/10 transition backdrop-blur-lg"
               >
                 {/* IMAGE */}
-                <div className="flex justify-center mb-3">
+                <div className="flex justify-center mb-3 relative">
                   <img
                     src={getImage(p)}
                     alt={p.name}
                     className="w-28 h-28 object-cover rounded-lg border border-white/10"
                   />
+                  <div className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase shadow-lg border border-white/10 ${p.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+                      {p.status || 'Active'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* PRODUCT INFO */}
@@ -410,6 +415,7 @@ const AllProducts = () => {
                   <th className="px-4 py-3">Offer Price</th>
                   <th className="px-4 py-3">Rating</th>
                   <th className="px-4 py-3 text-center">Actions</th>
+                  <th className="px-4 py-3 text-center">Status</th>
                 </tr>
               </thead>
 
@@ -441,15 +447,12 @@ const AllProducts = () => {
                     </td>
 
                     <td className="px-4 py-3 text-gray-200">₹{getMrp(p)}</td>
-
                     <td className="px-4 py-3 font-semibold text-green-400">
                       ₹{getOfferPrice(p)}
                     </td>
-
                     <td className="px-4 py-3 text-gray-200">
                       ⭐ {p.ratings || 0}
                     </td>
-
                     <td className="px-4 py-3 flex justify-center gap-2">
                       <button
                         onClick={() =>
@@ -466,6 +469,11 @@ const AllProducts = () => {
                       >
                         <Trash2 size={14} />
                       </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${p.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                        {p.status || 'Active'}
+                      </span>
                     </td>
                   </tr>
                 ))}

@@ -17,18 +17,19 @@ async function createProduct(req, res) {
   try {
     const {
       name, category, subcategory, description, ratings,
-      weight, size, gender, mrp, offer, offerPrice, stock, images
+      weight, size, gender, mrp, offer, offerPrice, stock, images, status
     } = req.body;
 
     const [result] = await db.query(
       `INSERT INTO products
       (name, category, subcategory, description, ratings, weight, size, gender,
-       mrp, offer, offer_price, stock, images)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       mrp, offer, offer_price, stock, images, status)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         name, category, subcategory, description, ratings,
         JSON.stringify(weight || []), JSON.stringify(size || []), JSON.stringify(gender || []), 
-        mrp, offer, offerPrice, JSON.stringify(stock || {}), JSON.stringify(images || [])
+        mrp, offer, offerPrice, JSON.stringify(stock || {}), JSON.stringify(images || []),
+        status || 'active'
       ]
     );
 
@@ -86,7 +87,7 @@ async function updateProduct(req, res) {
     const idNum = parseInt(id, 10);
     
     const data = req.body;
-    const allowedFields = ['name', 'category', 'subcategory', 'description', 'ratings', 'weight', 'size', 'gender', 'mrp', 'offer', 'offer_price', 'offerPrice', 'stock', 'images'];
+    const allowedFields = ['name', 'category', 'subcategory', 'description', 'ratings', 'weight', 'size', 'gender', 'mrp', 'offer', 'offer_price', 'offerPrice', 'stock', 'images', 'status'];
     const fields = [];
     const values = [];
     

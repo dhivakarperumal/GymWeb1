@@ -426,7 +426,7 @@ const AddEditStaff = () => {
      <div className="">
               <div>
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate("/admin/staff")}
                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
                 >
                   <FaArrowLeft /> Back
@@ -725,7 +725,7 @@ const AddEditStaff = () => {
 
         {/* ACTIONS */}
         <div className="col-span-2 flex justify-end gap-4 mt-6">
-          <button type="button" onClick={() => navigate(-1)}
+          <button type="button" onClick={() => navigate("/admin/staff")}
             className="border border-orange-400 px-6 py-2 rounded">
             Cancel
           </button>

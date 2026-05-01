@@ -8,6 +8,7 @@ import {
   FaChartBar,
   FaHeartbeat,
   FaHistory,
+  FaClock,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -158,6 +159,13 @@ const Settings = () => {
           title="Plan History"
           desc="View full membership plan purchase history — all plans, payments, and balances across all members."
           path="/admin/plan-history"
+        />
+
+        <SettingCard
+          icon={<FaClock />}
+          title="Plan Expiry Details"
+          desc="Track members with upcoming plan expirations and follow up for renewals."
+          path="/admin/expiry-members"
         />
 
      

@@ -415,9 +415,9 @@ const Staffs = () => {
   ))}
 </div>
       {totalPages > 1 && (
-        <div className="flex justify-between items-center px-4 py-4 bg-white ">
+        <div className="flex justify-between items-center px-6 py-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
 
-          <span className="text-sm text-gray-500">
+          <span className="text-xs font-black uppercase tracking-widest text-white/30">
             Page {currentPage} of {totalPages}
           </span>
 
@@ -425,10 +425,10 @@ const Staffs = () => {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(p => p - 1)}
-              className={`px-3 py-1 rounded-lg border
+              className={`px-4 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all
           ${currentPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white hover:bg-gray-100"}`}
+                  ? "bg-white/5 text-white/20 border-white/5 cursor-not-allowed"
+                  : "bg-white/10 text-white border-white/20 hover:bg-white/20"}`}
             >
               Prev
             </button>
@@ -437,10 +437,10 @@ const Staffs = () => {
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded-lg border
+                className={`w-10 h-10 rounded-xl border text-xs font-bold transition-all
             ${currentPage === i + 1
-                    ? "bg-blue-600 text-white"
-                    : "bg-white hover:bg-gray-100"}`}
+                    ? "bg-orange-500 text-white border-orange-400 shadow-lg shadow-orange-500/20"
+                    : "bg-white/10 text-white border-white/20 hover:bg-white/20"}`}
               >
                 {i + 1}
               </button>
@@ -449,10 +449,10 @@ const Staffs = () => {
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(p => p + 1)}
-              className={`px-3 py-1 rounded-lg border
+              className={`px-4 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all
           ${currentPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white hover:bg-gray-100"}`}
+                  ? "bg-white/5 text-white/20 border-white/5 cursor-not-allowed"
+                  : "bg-white/10 text-white border-white/20 hover:bg-white/20"}`}
             >
               Next
             </button>

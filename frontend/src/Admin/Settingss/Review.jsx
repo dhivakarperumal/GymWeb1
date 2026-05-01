@@ -165,7 +165,7 @@ const ReviewsSettings = () => {
 
       {/* HEADER */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate("/admin/settings")}
         className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
       >
         <FaArrowLeft /> Back

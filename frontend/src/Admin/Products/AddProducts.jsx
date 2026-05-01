@@ -43,6 +43,7 @@ const initialForm = {
   offerPrice: 0,
   stock: {},
   images: [],
+  status: "active",
 };
 
 const AddProducts = () => {
@@ -566,6 +567,32 @@ const AddProducts = () => {
           )}
         </div>
 
+
+        {/* STATUS TOGGLE */}
+        <div className="col-span-2 mb-6 border-t border-white/5 pt-6 flex items-center justify-between">
+          <div>
+            <h4 className="text-sm font-bold text-white mb-1">Product Availability</h4>
+            <p className="text-xs text-white/40">Enable or disable this product from the public store</p>
+          </div>
+          <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-4">
+            <span className={`text-xs font-black uppercase tracking-widest ${form.status === 'active' ? 'text-emerald-500' : 'text-white/40'}`}>
+              {form.status === 'active' ? 'Enabled' : 'Disabled'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, status: p.status === 'active' ? 'disabled' : 'active' }))}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 focus:outline-none shadow-inner ${
+                form.status === 'active' ? 'bg-emerald-500/20 border-emerald-500/50' : 'bg-white/10 border-white/20'
+              } border`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                  form.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
 
         {/* SUBMIT */}
         <div className="col-span-2 flex justify-end">
