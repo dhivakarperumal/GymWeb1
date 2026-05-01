@@ -79,6 +79,7 @@ const Header = ({ onMenuClick }) => {
   const [activeDropdown, setActiveDropdown] = useState(null); // 'profile', 'notifications', 'orders', 'stock', 'expiry'
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef(null);
 
   const [alerts, setAlerts] = useState({
     orders: [],
@@ -138,6 +139,20 @@ const Header = ({ onMenuClick }) => {
 
     const interval = setInterval(fetchAllAlerts, 5 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const totalAlerts =
@@ -219,15 +234,16 @@ const Header = ({ onMenuClick }) => {
             <PageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
             {currentPageTitle}
           </h1>
-          
+
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" ref={dropdownRef}>
 
           {/* TODAY ORDERS ICON */}
           <div className="relative">
             <button
+              
               onClick={() => toggleDropdown('orders')}
               className={`p-2 rounded-xl transition relative ${activeDropdown === 'orders' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Today's Orders"
@@ -370,10 +386,10 @@ const Header = ({ onMenuClick }) => {
 
             {activeDropdown === 'profile' && (
               <>
-                <div
+                {/* <div
                   onClick={() => setActiveDropdown(null)}
                   className="fixed inset-0 z-40"
-                />
+                /> */}
 
                 <div className="absolute right-0 mt-4 w-52
                   bg-gray-900 backdrop-blur-xl
@@ -452,7 +468,7 @@ const Header = ({ onMenuClick }) => {
 
 const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
   <>
-    <div onClick={onClose} className="fixed inset-0 z-40" />
+    {/* <div onClick={onClose} className="fixed inset-0 z-40" /> */}
     <div className="absolute right-0 mt-4 w-80 max-h-[450px] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
       <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -491,7 +507,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
                 content = (
                   <>
                     <p className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors uppercase">{item.name || item.username || "New Member"}</p>
-                     <p className="text-[10px] text-gray-500 mt-0.5">Joined at: {new Date(item.createdAt || item.created_at).toLocaleTimeString()}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Joined at: {new Date(item.createdAt || item.created_at).toLocaleTimeString()}</p>
                     <span className="inline-block mt-2 px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase">New Registration</span>
                   </>
                 );
