@@ -342,30 +342,30 @@ const FollowupEnquiry = () => {
       <div className="flex-1 flex flex-col min-h-0">
 
         {/* Header Area */}
-        <div className="p-2 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
             {/* Search */}
-            <div className="relative group">
+            <div className="relative group w-full lg:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Search name, phone, company..."
+                placeholder="Search leads..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none w-72 transition-all placeholder:text-white/20"
+                className="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none w-full lg:w-72 transition-all placeholder:text-white/20"
               />
             </div>
+            
+            <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
           </div>
 
-          <div className="flex items-center gap-3">
-            <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
-
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 w-full lg:w-auto">
             {/* Status Filter */}
-            <div className="relative group">
+            <div className="relative group flex-1 sm:flex-none">
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full"
+                className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[120px]"
               >
                 <option value="all" className="bg-neutral-900">All Status</option>
                 <option value="pending" className="bg-neutral-900">Pending</option>
@@ -373,73 +373,65 @@ const FollowupEnquiry = () => {
                 <option value="completed" className="bg-neutral-900">Completed</option>
                 <option value="cancelled" className="bg-neutral-900">Cancelled</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white transition-colors" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
             </div>
 
             {/* Staff Filter */}
             {role === 'admin' && (
-              <div className="relative group">
+              <div className="relative group flex-1 sm:flex-none">
                 <select
                   value={trainerFilter}
                   onChange={(e) => { setTrainerFilter(e.target.value); setCurrentPage(1); }}
-                  className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full"
+                  className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[120px]"
                 >
                   <option value="all" className="bg-neutral-900">All Staff</option>
                   {trainers.map(s => (
                     <option key={s.id} value={s.username || s.name} className="bg-neutral-900">
-                      {s.name} ({s.role})
+                      {s.name}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white transition-colors" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
               </div>
             )}
+          </div>
 
-            {/* View Toggle */}
-            <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
-                title="Table View"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-              </button>
-              <button
-                onClick={() => setViewMode('card')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
-                title="Card View"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
-              </button>
-            </div>
-
-            {/* Excel Actions */}
+          <div className="flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto mt-2 lg:mt-0">
             <div className="flex items-center gap-2">
-              <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2" title="Import from Excel">
-                <FileText size={18} />
-                <span className="text-xs font-black uppercase tracking-widest hidden lg:block">Import</span>
-                <input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  className="hidden"
-                  onChange={handleExcelImport}
-                />
-              </label>
-              <button
-                onClick={downloadExcelTemplate}
-                className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all"
-                title="Download Template"
-              >
-                <Download size={18} />
-              </button>
+              {/* View Toggle */}
+              <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white'}`}
+                  title="Table View"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                </button>
+                <button
+                  onClick={() => setViewMode('card')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/40 hover:text-white'}`}
+                  title="Card View"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+                </button>
+              </div>
+
+              {/* Excel Actions */}
+              <div className="flex items-center gap-2">
+                <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2" title="Import from Excel">
+                  <FileText size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden xl:block">Import</span>
+                  <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleExcelImport} />
+                </label>
+                <button onClick={downloadExcelTemplate} className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all" title="Download Template">
+                  <Download size={16} />
+                </button>
+              </div>
             </div>
 
             <button
-              onClick={() => {
-                setSelectedEnquiry(null);
-                setShowForm(true);
-              }}
-              className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+              onClick={() => { setSelectedEnquiry(null); setShowForm(true); }}
+              className="flex-1 lg:flex-none px-5 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold text-xs shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add New
@@ -447,9 +439,60 @@ const FollowupEnquiry = () => {
           </div>
         </div>
 
-        <div className="flex flex-col h-full gap-4 animate-in fade-in duration-500 p-2">
+        <div className="flex-1 flex flex-col min-h-0 p-2 overflow-hidden">
 
-          {/* CARD VIEW */}
+          {/* MOBILE VIEW (Always Cards one-by-one) */}
+          <div className="lg:hidden flex-1 overflow-y-auto custom-scrollbar pb-20">
+            {paginatedEnquiries.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {paginatedEnquiries.map((enquiry) => (
+                  <div
+                    key={enquiry.id}
+                    onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
+                    className="bg-white/5 border border-white/10 rounded-2xl p-4 active:scale-[0.98] transition-all flex flex-col gap-3 shadow-xl"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center text-white font-black text-sm">
+                          {enquiry.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-white font-black text-sm">{enquiry.name}</p>
+                          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">{enquiry.organization || 'Direct'}</p>
+                        </div>
+                      </div>
+                      {getStatusBadge(enquiry.status)}
+                    </div>
+
+                    {enquiry.plan_name && (
+                      <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 flex items-center justify-between">
+                        <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">{enquiry.plan_name}</span>
+                        {enquiry.plan_price && <span className="text-[10px] font-black text-white/60">₹{enquiry.plan_price}</span>}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                      <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
+                        <Phone size={10} className="text-orange-500" /> {enquiry.phone || 'N/A'}
+                      </div>
+                      <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
+                        <Calendar size={10} className="text-orange-500" /> {dayjs(enquiry.created_at).format('DD/MM/YY')}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/20">
+                <History size={48} strokeWidth={1} />
+                <p className="text-sm font-medium">No records found</p>
+              </div>
+            )}
+          </div>
+
+          {/* DESKTOP VIEW (Toggleable) */}
+          <div className="hidden lg:flex flex-1 flex-col min-h-0">
+            {/* CARD VIEW */}
           {viewMode === 'card' ? (
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {paginatedEnquiries.length > 0 ? (
@@ -634,6 +677,7 @@ const FollowupEnquiry = () => {
               </table>
             </div>
           )} {/* End table view ternary */}
+          </div>
 
           {/* Footer / Pagination */}
           {filteredEnquiries.length > 0 && (
