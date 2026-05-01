@@ -64,6 +64,7 @@ const pageInfo = {
   "/admin/settings/usermanagement": { title: "Usermanagement", icon: UserRound },
   "/admin/settings/reviews": { title: "Review", icon: MessageSquare },
   "/admin/settings/servicelist": { title: "Services Lists", icon: ClipboardList },
+  "/admin/settings/offers": { title: "Marketing Offers", icon: ShoppingBag },
   "/admin/addservice": { title: "Add Services", icon: Plus },
   "/admin/send-message": { title: "Bulk Messaging", icon: Send },
   "/admin/payments": { title: "Payments", icon: CreditCard },
