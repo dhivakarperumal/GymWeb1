@@ -32,7 +32,7 @@ export default function PublicProductOffers() {
       <PageHeader
         title="Product Offers"
         subtitle="Browse all active products available now."
-        bgImage="https://images.unsplash.com/photo-1518203161762-50a724d1cd44?auto=format&fit=crop&w=1600&q=80"
+        bgImage="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1600&q=80"
       />
 
       <PageContainer>
