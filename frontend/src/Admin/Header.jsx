@@ -512,7 +512,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
                   </>
                 );
               } else if (type === 'expiry') {
-                link = "/admin/members";
+                link = "/admin/expiry-members";
                 const daysLeft = Math.ceil((new Date(item.endDate) - new Date()) / (1000 * 60 * 60 * 24));
                 content = (
                   <>
@@ -546,7 +546,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
           <div className="p-10 text-center text-gray-500 text-xs">No active alerts for this category</div>
         )}
       </div>
-      <Link to={type === 'orders' ? "/admin/orders" : type === 'stock' ? "/admin/products" : "/admin/members"} onClick={onClose} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
+      <Link to={type === 'orders' ? "/admin/orders" : type === 'stock' ? "/admin/products" : "/admin/expiry-members"} onClick={onClose} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
         View All Records
       </Link>
     </div>
