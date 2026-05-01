@@ -163,9 +163,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="text-lg font-semibold text-white">Gym Admin</h1>
+              <h1 className="text-lg font-semibold text-white">Trainer Panel</h1>
               <p className="text-xs text-white/60 truncate">
-                Welcome {userProfile?.displayName?.split(" ")[0] || "Admin"}
+                Welcome {userProfile?.displayName?.split(" ")[0] || "Trainer"}
               </p>
             </div>
           )}
