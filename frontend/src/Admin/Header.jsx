@@ -73,6 +73,7 @@ const pageInfo = {
   "/admin/users": { title: "Users", icon: Users },
   "/admin/pt-form": { title: "Personal Training Form", icon: HeartPulse },
   "/admin/plan-history": { title: "Plan History", icon: Clock },
+  "/admin/expiry-members": { title: "Plan Expiry Details", icon: Clock },
 };
 
 const Header = ({ onMenuClick }) => {
@@ -238,12 +239,12 @@ const Header = ({ onMenuClick }) => {
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" ref={dropdownRef}>
 
           {/* TODAY ORDERS ICON */}
           <div className="relative">
             <button
-              ref={dropdownRef}
+              
               onClick={() => toggleDropdown('orders')}
               className={`p-2 rounded-xl transition relative ${activeDropdown === 'orders' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Today's Orders"
@@ -386,10 +387,10 @@ const Header = ({ onMenuClick }) => {
 
             {activeDropdown === 'profile' && (
               <>
-                <div
+                {/* <div
                   onClick={() => setActiveDropdown(null)}
                   className="fixed inset-0 z-40"
-                />
+                /> */}
 
                 <div className="absolute right-0 mt-4 w-52
                   bg-gray-900 backdrop-blur-xl
@@ -468,7 +469,7 @@ const Header = ({ onMenuClick }) => {
 
 const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
   <>
-    <div onClick={onClose} className="fixed inset-0 z-40" />
+    {/* <div onClick={onClose} className="fixed inset-0 z-40" /> */}
     <div className="absolute right-0 mt-4 w-80 max-h-[450px] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
       <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -512,7 +513,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
                   </>
                 );
               } else if (type === 'expiry') {
-                link = "/admin/members";
+                link = "/admin/expiry-members";
                 const daysLeft = Math.ceil((new Date(item.endDate) - new Date()) / (1000 * 60 * 60 * 24));
                 content = (
                   <>
@@ -546,7 +547,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
           <div className="p-10 text-center text-gray-500 text-xs">No active alerts for this category</div>
         )}
       </div>
-      <Link to={type === 'orders' ? "/admin/orders" : type === 'stock' ? "/admin/products" : "/admin/members"} onClick={onClose} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
+      <Link to={type === 'orders' ? "/admin/orders" : type === 'stock' ? "/admin/products" : "/admin/expiry-members"} onClick={onClose} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
         View All Records
       </Link>
     </div>
