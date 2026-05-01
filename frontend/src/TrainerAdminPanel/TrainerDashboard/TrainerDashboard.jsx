@@ -10,6 +10,7 @@ import {
   FaTimes,
   FaPrint
 } from "react-icons/fa";
+import { BarChart3, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import PTFormPreviewContent from "../../Admin/PTForm/PTFormPreviewContent";
