@@ -328,6 +328,12 @@ const FollowupEnquiry = () => {
     );
   };
 
+  const getStaffRole = (username) => {
+    if (!username || username === 'Admin') return 'Admin';
+    const staff = trainers.find(s => (s.username || s.name) === username);
+    return staff ? staff.role : '';
+  };
+
   return (
     <>
       {/* Main Container */}
@@ -477,8 +483,8 @@ const FollowupEnquiry = () => {
                         <span className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
                           <Mail size={10} className="text-orange-500" /> {enquiry.email || 'N/A'}
                         </span>
-                        <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest mt-1">
-                          {dayjs(enquiry.created_at).format('MMM DD, YYYY')}
+                        <span className="flex items-center gap-2 text-white/30 text-[9px] font-bold uppercase tracking-widest mt-1">
+                          {dayjs(enquiry.created_at).format('MMM DD, YYYY')} • By {enquiry.updated_by || 'Admin'} ({getStaffRole(enquiry.updated_by)})
                         </span>
                       </div>
 
@@ -519,6 +525,7 @@ const FollowupEnquiry = () => {
                     <th className="px-6 py-4 border-b border-white/5 text-left">Organization</th>
                     <th className="px-6 py-4 border-b border-white/5 text-left">Status</th>
                     <th className="px-6 py-4 border-b border-white/5 text-left">Created</th>
+                    <th className="px-6 py-4 border-b border-white/5 text-left">Handled By</th>
                     <th className="px-6 py-4 border-b border-white/5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -562,6 +569,17 @@ const FollowupEnquiry = () => {
                         </td>
                         <td className="px-6 py-4 text-[10px] text-white/40 font-bold">
                           {dayjs(enquiry.created_at).format('MMM DD, YYYY')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                          
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-white/60">{enquiry.updated_by || 'Admin'}</span>
+                              <span className="text-[9px] text-white/30 font-bold uppercase italic">
+                                {enquiry.updated_by ? `(${getStaffRole(enquiry.updated_by)})` : '(Admin)'}
+                              </span>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
