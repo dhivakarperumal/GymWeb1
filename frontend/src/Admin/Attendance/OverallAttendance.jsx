@@ -1,7 +1,8 @@
 
 
 import { useEffect, useState, useMemo } from "react";
-import { Search, Download, Users, CheckCircle, XCircle, MapPin, Calendar, RefreshCcw, Save, Check, Clock } from "lucide-react";
+import { Search, Download, Users, CheckCircle, XCircle, MapPin, Calendar, RefreshCcw, Save, Check, Clock, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import api from "../../api";
@@ -33,6 +34,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const OverallAttendance = () => {
+  const navigate = useNavigate();
   const [attendanceData, setAttendanceData] = useState([]);
   const [staffMembers, setStaffMembers] = useState([]);
   const [attendanceStates, setAttendanceStates] = useState({}); // { staffId: boolean }
@@ -252,13 +254,22 @@ const OverallAttendance = () => {
     <div className="min-h-screen p-6 text-white space-y-8 bg-transparent">
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white/5 p-8 rounded-[2.5rem] border border-white/10 backdrop-blur-xl shadow-2xl">
-        <div>
-          <h1 className="text-4xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent italic">
-            TRAINER ATTENDANCE
-          </h1>
-          <p className="text-gray-400 mt-2 flex items-center gap-2 font-medium">
-            <Users className="w-5 h-5 text-orange-500" /> Trainer Management • {staffMembers.length} Active Trainers
-          </p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/admin/settings")}
+            className="p-3 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-all text-white"
+            title="Back to Settings"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <div>
+            <h1 className="text-4xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent italic">
+              TRAINER ATTENDANCE
+            </h1>
+            <p className="text-gray-400 mt-2 flex items-center gap-2 font-medium">
+              <Users className="w-5 h-5 text-orange-500" /> Trainer Management • {staffMembers.length} Active Trainers
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter 

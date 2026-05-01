@@ -360,16 +360,33 @@ const PlanHistory = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
-          <button onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} disabled={currentPage === 1}
-            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm disabled:opacity-30 hover:bg-white/10 transition-all">Prev</button>
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest disabled:opacity-30 hover:bg-white/10 transition-all"
+          >
+            Prev
+          </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button key={page} onClick={() => setCurrentPage(page)}
-              className={`px-4 py-2 rounded-xl border text-sm transition-all ${currentPage === page ? "bg-orange-500 text-white border-orange-500" : "bg-white/5 border-white/10 hover:bg-white/10"}`}>
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`w-10 h-10 rounded-xl border text-xs font-bold transition-all ${
+                currentPage === page
+                  ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20"
+                  : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            >
               {page}
             </button>
           ))}
-          <button onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm disabled:opacity-30 hover:bg-white/10 transition-all">Next</button>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest disabled:opacity-30 hover:bg-white/10 transition-all"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
