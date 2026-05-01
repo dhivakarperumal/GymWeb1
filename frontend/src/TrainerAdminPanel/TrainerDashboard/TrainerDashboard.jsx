@@ -13,6 +13,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import PTFormPreviewContent from "../../Admin/PTForm/PTFormPreviewContent";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  BarChart, Bar, Legend, Cell, PieChart, Pie
+} from "recharts";
 
 import api from "../../api";
 
@@ -51,6 +55,8 @@ const TrainerDashboard = () => {
   });
 
   const [ptViewMember, setPtViewMember] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   /* ---------------- LOAD DASHBOARD DATA ---------------- */
   useEffect(() => {
@@ -146,6 +152,12 @@ const TrainerDashboard = () => {
 
   /* ---------------- LOADING ---------------- */
 
+  const totalPages = Math.ceil(assignedMembers.length / itemsPerPage);
+  const paginatedMembers = assignedMembers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   /* ---------------- UI ---------------- */
   return (
     <div className="min-h-screen p-6 text-white">
@@ -184,6 +196,107 @@ const TrainerDashboard = () => {
 
         </div>
 
+        {/* CHARTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* BAR CHART: Activity Overview */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] rounded-full" />
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xs font-black uppercase tracking-widest text-white/50">Activity Overview</h3>
+              <div className="p-2 bg-white/5 rounded-lg border border-white/10"><BarChart3 size={16} className="text-orange-400" /></div>
+            </div>
+            
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={[
+                  { name: "Workouts", count: stats.workoutPlans, fill: "#a855f7" },
+                  { name: "Diets", count: stats.dietPlans, fill: "#f97316" },
+                  { name: "Check-ins", count: stats.todayCheckins, fill: "#10b981" }
+                ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorWorkout" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#a855f7" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#a855f7" stopOpacity={0.2} />
+                    </linearGradient>
+                    <linearGradient id="colorDiet" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f97316" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#f97316" stopOpacity={0.2} />
+                    </linearGradient>
+                    <linearGradient id="colorCheckin" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.2} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                  <XAxis dataKey="name" stroke="#ffffff50" fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#ffffff50" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} dx={-10} />
+                  <RechartsTooltip 
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.02)' }} 
+                    contentStyle={{ backgroundColor: 'rgba(10,10,10,0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', fontSize: '12px', fontWeight: 'bold' }} 
+                  />
+                  <Bar dataKey="count" radius={[8, 8, 8, 8]} barSize={40}>
+                    {
+                      [
+                        { name: "Workouts", fill: "url(#colorWorkout)" },
+                        { name: "Diets", fill: "url(#colorDiet)" },
+                        { name: "Check-ins", fill: "url(#colorCheckin)" }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))
+                    }
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* PIE CHART: PT Form Completion */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full" />
+             <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xs font-black uppercase tracking-widest text-white/50">PT Form Status</h3>
+              <div className="p-2 bg-white/5 rounded-lg border border-white/10"><Activity size={16} className="text-blue-400" /></div>
+            </div>
+
+            <div className="h-64 relative">
+              {/* Inner Label for Donut */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-4">
+                <span className="text-3xl font-black text-white">{assignedMembers.length}</span>
+                <span className="text-[9px] uppercase tracking-widest text-white/40">Total</span>
+              </div>
+
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Completed", value: assignedMembers.filter(m => m.ptFormCompleted).length },
+                      { name: "Pending", value: assignedMembers.filter(m => !m.ptFormCompleted).length }
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={90}
+                    paddingAngle={8}
+                    dataKey="value"
+                    stroke="none"
+                    cornerRadius={10}
+                  >
+                    <Cell fill="#10b981" />
+                    <Cell fill="#ef4444" />
+                  </Pie>
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: 'rgba(10,10,10,0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', fontSize: '12px', fontWeight: 'bold' }} 
+                  />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }} 
+                    iconType="circle" 
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
         {/* ASSIGNED MEMBERS TABLE */}
         <div>
           <h3 className="text-sm uppercase tracking-widest text-gray-300 mb-4">
@@ -218,13 +331,13 @@ const TrainerDashboard = () => {
                       </td>
                     </tr>
                   ) : (
-                    assignedMembers.map((m, ind) => (
+                    paginatedMembers.map((m, ind) => (
                       <tr
                         key={m.id || ind}
                         className="border-b border-white/10 hover:bg-white/5"
                       >
 
-                        <td className="px-4 py-4">{ind + 1}</td>
+                        <td className="px-4 py-4">{(currentPage - 1) * itemsPerPage + ind + 1}</td>
 
                         <td className="px-4 py-4">
                           {m.username || m.user_name || "No Name"}
@@ -308,7 +421,7 @@ const TrainerDashboard = () => {
                   No members assigned
                 </div>
               ) : (
-                assignedMembers.map((m, ind) => (
+                paginatedMembers.map((m, ind) => (
 
                   <div
                     key={m.id || ind}
@@ -366,7 +479,7 @@ const TrainerDashboard = () => {
                         </span>
 
                         <div className="text-xs text-gray-400 mt-2">
-                          #{ind + 1}
+                          #{(currentPage - 1) * itemsPerPage + ind + 1}
                         </div>
 
                       </div>
@@ -381,6 +494,48 @@ const TrainerDashboard = () => {
             </div>
 
           </div>
+
+          {/* PAGINATION CONTROLS */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 px-2">
+              <span className="text-xs text-gray-400 uppercase tracking-widest">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, assignedMembers.length)} of {assignedMembers.length} entries
+              </span>
+              <div className="flex gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 hover:bg-white/10"
+                >
+                  Prev
+                </button>
+                
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === i + 1 
+                          ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" 
+                          : "hover:bg-white/10 text-white/60"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 hover:bg-white/10"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
