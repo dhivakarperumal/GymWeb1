@@ -89,6 +89,20 @@ const Enquiry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (!formData.phone || formData.phone.length !== 10) {
+      toast.error("A valid 10-digit phone number is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     try {
       if (selectedEnquiry) {
         // Update full enquiry
@@ -189,7 +203,7 @@ const Enquiry = () => {
           const payload = {
             name: row.Name || row["Customer Name"] || row.name || "",
             email: row.Email || row.email || "",
-            phone: (row.Phone || row.Mobile || row.phone || "").toString(),
+            phone: (row.Phone || row.Mobile || row.phone || "").toString().replace(/\D/g, '').slice(0, 10),
             subject: row.Subject || "Inquiry",
             message: row.Message || row.Notes || "",
             height: row.Height || "",
@@ -203,8 +217,8 @@ const Enquiry = () => {
             emergency_contact_name: row["Emergency Contact Name"] || "",
             emergency_contact_relationship: row["Emergency Relationship"] || "",
             emergency_contact_address: row["Emergency Address"] || "",
-            emergency_contact_phone_home: (row["Emergency Home Phone"] || "").toString(),
-            emergency_contact_phone_work: (row["Emergency Work Phone"] || "").toString(),
+            emergency_contact_phone_home: (row["Emergency Home Phone"] || "").toString().replace(/\D/g, '').slice(0, 10),
+            emergency_contact_phone_work: (row["Emergency Work Phone"] || "").toString().replace(/\D/g, '').slice(0, 10),
             fitness_goal: row["Fitness Goal"] || "",
             blood_group: row["Blood Group"] || "",
             gender: row.Gender || "",
@@ -742,7 +756,7 @@ const Enquiry = () => {
                 <h3 className="text-orange-500 font-bold border-b border-white/10 pb-1">Personal Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1">Name</label>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Name <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       value={formData.name}
@@ -753,7 +767,7 @@ const Enquiry = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Email <span className="text-red-500">*</span></label>
                     <input
                       type="email"
                       value={formData.email}
@@ -765,12 +779,13 @@ const Enquiry = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/80 mb-1">Phone</label>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Phone <span className="text-red-500">*</span></label>
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      placeholder="e.g., +91 98765 43210"
+                      onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                      maxLength={10}
+                      placeholder="e.g., 9876543210"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -897,8 +912,9 @@ const Enquiry = () => {
                     <input
                       type="tel"
                       value={formData.emergency_contact_phone_home}
-                      onChange={(e) => setFormData({...formData, emergency_contact_phone_home: e.target.value})}
-                      placeholder="e.g., +91 98765 43210"
+                      onChange={(e) => setFormData({...formData, emergency_contact_phone_home: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                      maxLength={10}
+                      placeholder="e.g., 9876543210"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -907,8 +923,9 @@ const Enquiry = () => {
                     <input
                       type="tel"
                       value={formData.emergency_contact_phone_work}
-                      onChange={(e) => setFormData({...formData, emergency_contact_phone_work: e.target.value})}
-                      placeholder="e.g., +91 98765 43210"
+                      onChange={(e) => setFormData({...formData, emergency_contact_phone_work: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                      maxLength={10}
+                      placeholder="e.g., 9876543210"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>

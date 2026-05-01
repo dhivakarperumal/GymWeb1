@@ -155,7 +155,20 @@ const FollowupEnquiry = () => {
   };
 
   const handleSubmitEnquiry = async (e) => {
-    if (e) e.preventDefault();
+    if (!formData.name.trim()) {
+      alert("Name is required");
+      return;
+    }
+    if (!formData.phone || formData.phone.length !== 10) {
+      alert("A valid 10-digit phone number is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
     try {
       if (selectedEnquiry && selectedEnquiry.id) {
         await api.put(`/followups/${selectedEnquiry.id}`, formData);
@@ -228,7 +241,7 @@ const FollowupEnquiry = () => {
           const payload = {
             name: row.Name || row["Lead Name"] || row.name || "",
             email: row.Email || row.email || "",
-            phone: (row.Phone || row.Mobile || row.phone || "").toString(),
+            phone: (row.Phone || row.Mobile || row.phone || "").toString().replace(/\D/g, '').slice(0, 10),
             subject: row.Subject || "General Inquiry",
             message: row.Message || row.Notes || "",
             gender: row.Gender || "",
@@ -835,8 +848,9 @@ const FollowupEnquiry = () => {
                       <input
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="e.g., +91 9876543210"
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                        maxLength={10}
+                        placeholder="e.g., 9876543210"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                       />
                     </div>
@@ -897,7 +911,8 @@ const FollowupEnquiry = () => {
                           <input
                             type="tel"
                             value={formData.phone || ""}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                            maxLength={10}
                             placeholder="Secondary contact..."
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                           />

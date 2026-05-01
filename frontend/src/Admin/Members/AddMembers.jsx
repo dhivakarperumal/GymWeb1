@@ -124,7 +124,8 @@ const AddMember = () => {
       const uname = value.split('@')[0];
       setForm(prev => ({ ...prev, email: value, username: uname }));
     } else if (name === 'phone') {
-      setForm(prev => ({ ...prev, phone: value, password: value }));
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setForm(prev => ({ ...prev, phone: numericValue, password: numericValue }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -155,8 +156,24 @@ const AddMember = () => {
   // 💾 SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    if (!form.name.trim()) {
+      toast.error("Name is required");
+      setLoading(false);
+      return;
+    }
+    if (!form.phone || form.phone.length !== 10) {
+      toast.error("A valid 10-digit phone number is required");
+      setLoading(false);
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (form.email && !emailRegex.test(form.email)) {
+      toast.error("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
 
+    setLoading(true);
     try {
       const payload = {
         ...form,
@@ -212,7 +229,7 @@ const AddMember = () => {
           <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-5">
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70 ml-1">Full Name</label>
+              <label className="text-sm font-medium text-white/70 ml-1">Full Name <span className="text-red-500">*</span></label>
               <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. John Doe" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
             </div>
 
@@ -222,12 +239,12 @@ const AddMember = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70 ml-1">Phone Number</label>
-              <input name="phone" value={form.phone} onChange={handleChange} placeholder="e.g. +91 9876543210" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              <label className="text-sm font-medium text-white/70 ml-1">Phone Number <span className="text-red-500">*</span></label>
+              <input name="phone" value={form.phone} onChange={handleChange} maxLength={10} placeholder="e.g. 9876543210" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70 ml-1">Email Address</label>
+              <label className="text-sm font-medium text-white/70 ml-1">Email Address <span className="text-red-500">*</span></label>
               <input name="email" value={form.email} onChange={handleChange} placeholder="e.g. john@example.com" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
             </div>
 
