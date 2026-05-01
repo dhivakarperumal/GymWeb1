@@ -59,7 +59,73 @@ export default function PublicProductOffers() {
             {products.map((product, index) => {
               const id = product.id ?? product.product_id;
               if (!id) return null;
-              return <ProductCard key={id} product={product} index={index} />;
+
+              return (
+                <div
+                  key={id}
+                  className="bg-black/80 border border-red-500/60 rounded-2xl overflow-hidden flex flex-col shadow-[0_0_25px_rgba(255,0,0,0.12)] hover:shadow-red-600/40 transition group"
+                >
+                  {/* IMAGE */}
+                  <div className="relative h-48 overflow-hidden">
+                    {product.images?.[0] ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-red-900/20 flex items-center justify-center text-5xl opacity-30">
+                        📦
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+
+                    {/* 🔥 OFFER BADGE */}
+                    {product.offer > 0 && (
+                      <div className="absolute bottom-4 left-4">
+                        <span className="bg-red-600 text-white text-xl font-extrabold px-4 py-1.5 rounded-xl shadow-[0_0_18px_rgba(255,0,0,0.6)]">
+                          {product.offer}% OFF
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CONTENT */}
+                  <div className="p-6 flex flex-col flex-1">
+                    <h3 className="text-xl font-bold text-red-500 mb-2">
+                      {product.name}
+                    </h3>
+
+                    <p className="text-white/60 text-sm mb-4 flex-1">
+                      {product.description}
+                    </p>
+
+                    {/* PRICE */}
+                    <div className="mb-5">
+                      {product.offer > 0 ? (
+                        <>
+                          <p className="text-white/40 line-through text-sm">
+                            ₹{product.mrp}
+                          </p>
+                          <p className="text-2xl font-bold text-red-500">
+                            ₹{product.offer_price}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-2xl font-bold text-white">
+                          ₹{product.mrp}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* CTA */}
+                    <button className="mt-auto py-3 rounded-full text-sm font-semibold tracking-widest bg-red-600 hover:bg-red-700 transition">
+                      BUY NOW
+                    </button>
+                  </div>
+                </div>
+              );
             })}
           </div>
         )}
