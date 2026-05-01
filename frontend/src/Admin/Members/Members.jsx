@@ -454,7 +454,13 @@ const Members = () => {
                     </td>
                    
                     <td className="p-4 flex gap-2">
-
+                      <button
+                        onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
+                        className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
+                        title="View Details"
+                      >
+                        <Eye size={16} />
+                      </button>
                       <button
                         onClick={() => {
                           if (m.source === "users") {
@@ -516,8 +522,15 @@ const Members = () => {
                           <Printer size={14} />
                         </button>
                       )}
-                      <button
-                        onClick={() => {
+                        <button
+                          onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
+                          className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
+                          title="View Details"
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          onClick={() => {
                           if (m.source === "users") {
                             navigate(`/admin/addmembers?user_id=${m.u_id}`);
                           } else {

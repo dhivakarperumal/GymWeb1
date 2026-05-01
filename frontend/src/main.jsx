@@ -73,6 +73,7 @@ const MemberAttendance = lazy(() => import("./Admin/Staff/Memberattendance.jsx")
 const BuyPlanadmin = lazy(() => import("./Admin/Plans/BuyPlan.jsx"));
 const EMIList = lazy(() => import("./Admin/Plans/EMIList.jsx"));
 const PlanHistory = lazy(() => import("./Admin/Plans/PlanHistory.jsx"));
+const MemberDetails = lazy(() => import("./Admin/Members/MemberDetails.jsx"));
 
 // Trainer Admin Panel
 const TrainerAdminPanel = lazy(() => import("./TrainerAdminPanel/TrainerAdminPanel.jsx"));
@@ -146,6 +147,7 @@ const router = createBrowserRouter([
       { path: "orders", element: <AllOrders /> },
       { path: "orders/:id", element: <OrderDetails /> },
       { path: "members", element: <Members /> },
+      { path: "member-details/:id", element: <MemberDetails /> },
       { path: "addmembers", element: <AddMember /> },
       { path: "addmembers/:id", element: <AddMember /> },
       { path: "send-message", element: <SendMessage /> },
