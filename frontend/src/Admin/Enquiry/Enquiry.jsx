@@ -390,23 +390,24 @@ const Enquiry = () => {
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header Area */}
       <div className="p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          {/* Search */}
-          <div className="relative group w-full lg:w-auto">
+        {/* Left Side: Search Only */}
+        <div className="flex items-center w-full lg:w-auto">
+          <div className="relative group w-full lg:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
             <input
               type="text"
               placeholder="Search enquiries..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none w-full lg:w-72 transition-all placeholder:text-white/20"
+              className="pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none w-full transition-all placeholder:text-white/20"
             />
           </div>
-          
-          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
         </div>
 
-        <div className="flex items-center gap-3 w-full lg:w-auto">
+        {/* Right Side: Filters and Actions */}
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+
           {/* Status Filter */}
           <div className="relative group flex-1 sm:flex-none">
             <select
@@ -438,27 +439,27 @@ const Enquiry = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
             </button>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-2">
-            <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2 shadow-lg" title="Import from Excel">
-              <FileText size={16} />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden xl:block">Import</span>
-              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleExcelImport} />
-            </label>
-            <button onClick={downloadExcelTemplate} className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all shadow-lg" title="Download Template">
-              <Download size={16} />
+          <div className="flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto">
+            <div className="flex items-center gap-2">
+              <label className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-xl cursor-pointer transition-all flex items-center gap-2 shadow-lg" title="Import from Excel">
+                <FileText size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden xl:block">Import</span>
+                <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleExcelImport} />
+              </label>
+              <button onClick={downloadExcelTemplate} className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all shadow-lg" title="Download Template">
+                <Download size={16} />
+              </button>
+            </div>
+
+            <button
+              onClick={() => { setSelectedEnquiry(null); setShowForm(true); }}
+              className="flex-1 lg:flex-none px-5 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold text-xs shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add New
             </button>
           </div>
-
-          <button
-            onClick={() => { setSelectedEnquiry(null); setShowForm(true); }}
-            className="flex-1 lg:flex-none px-5 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold text-xs shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add New
-          </button>
         </div>
       </div>
 
