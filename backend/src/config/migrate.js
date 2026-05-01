@@ -39,7 +39,16 @@ async function runMigrations() {
       try {
         await connection.beginTransaction();
         for (const statement of statements) {
-          await connection.query(statement);
+          try {
+            await connection.query(statement);
+          } catch (err) {
+            // Ignore "Duplicate key name" error (1061)
+            if (err.errno === 1061 || err.code === 'ER_DUP_KEYNAME') {
+              console.warn(`  → Skipping redundant index: ${err.message.split("'")[1]}`);
+            } else {
+              throw err;
+            }
+          }
         }
         await connection.query('INSERT INTO _migrations (filename) VALUES (?)', [file]);
         await connection.commit();

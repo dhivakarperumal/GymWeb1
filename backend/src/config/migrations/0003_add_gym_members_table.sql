@@ -22,5 +22,4 @@ CREATE TABLE IF NOT EXISTS gym_members (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_gym_members_phone ON gym_members(phone);
-CREATE INDEX idx_gym_members_member_id ON gym_members(member_id);
+
