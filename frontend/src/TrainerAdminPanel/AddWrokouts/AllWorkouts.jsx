@@ -312,6 +312,22 @@ const AllWorkouts = () => {
             >
 
               {/* HEADER & NAV */}
+              {(() => {
+                // Calculate dynamic time slots for THIS specific workout
+                const times = new Set();
+                const workoutDays = selectedWorkout.days || {};
+                Object.values(workoutDays).forEach(dayEx => {
+                  if (Array.isArray(dayEx)) {
+                    dayEx.forEach(ex => {
+                      if (ex.time) times.add(ex.time);
+                    });
+                  }
+                });
+                const dynamicTimeSlots = Array.from(times).sort();
+                if (dynamicTimeSlots.length === 0) dynamicTimeSlots.push("06:00 - 08:00");
+
+                return (
+                  <>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6">
                   <div>
@@ -366,10 +382,8 @@ const AllWorkouts = () => {
                         {day}
                       </div>
                     ))}
-                  </div>
-
-                  {/* TABLE BODY */}
-                  {timeSlots.map((time, timeIndex) => (
+                  </div>                  {/* TABLE BODY */}
+                  {dynamicTimeSlots.map((time) => (
                     <div
                       key={time}
                       className="grid grid-cols-8 border-b border-white/5 text-center hover:bg-white/[0.02] transition-colors"
@@ -382,16 +396,19 @@ const AllWorkouts = () => {
                         const dayOffset = (selectedWeek - 1) * 7;
                         const dayKey = `Day${dayOffset + dayIndex + 1}`;
 
-                        const exercises =
+                        const allDayExercises =
                           selectedWorkout.weeks?.[`Week${selectedWeek}`]?.[dayKey] ||
-                          selectedWorkout.days?.[dayKey];
+                          selectedWorkout.days?.[dayKey] || [];
+                        
+                        // Only show exercises that match THIS time slot
+                        const exercises = allDayExercises.filter(ex => (ex.time === time) || (!ex.time && dynamicTimeSlots.indexOf(time) === 0));
 
                         return (
                           <div
                             key={dayName}
                             className="p-3 border-r border-white/5 flex items-start justify-center min-h-[120px]"
                           >
-                            {timeIndex === 0 && exercises && exercises.length > 0 ? (
+                            {exercises.length > 0 ? (
                               <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/5 border border-orange-500/30 rounded-2xl p-4 w-full shadow-lg">
                                 <ul className="text-xs text-left space-y-3">
                                   {exercises.map((ex, i) => (
@@ -406,7 +423,6 @@ const AllWorkouts = () => {
                                         <div className="flex flex-wrap gap-x-2 gap-y-1 ml-3.5 mt-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">
                                           {ex.sets && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.sets} Sets</span>}
                                           {ex.count && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.count}</span>}
-                                          {ex.time && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.time}</span>}
                                         </div>
                                       )}
                                     </li>
@@ -430,12 +446,9 @@ const AllWorkouts = () => {
                     const dayOffset = (selectedWeek - 1) * 7;
                     const dayKey = `Day${dayOffset + dayIndex + 1}`;
 
-                    const exercisesBySlot = timeSlots.map((time, tIdx) => {
-                      const exercises =
-                        selectedWorkout.weeks?.[`Week${selectedWeek}`]?.[dayKey] ||
-                        selectedWorkout.days?.[dayKey];
-                      return { time, exercises: exercises || null };
-                    });
+                    const allDayExercises =
+                      selectedWorkout.weeks?.[`Week${selectedWeek}`]?.[dayKey] ||
+                      selectedWorkout.days?.[dayKey] || [];
 
                     return (
                       <div key={dayName} className="bg-gray-900 border border-gray-700 rounded-lg p-3">
@@ -444,12 +457,15 @@ const AllWorkouts = () => {
                         </div>
 
                         <div className="space-y-2">
-                          {exercisesBySlot.map((slot, idx) => (
-                            <div key={idx} className="p-2 bg-white/5 rounded">
-                              <div className="text-xs text-gray-300 font-medium">{slot.time}</div>
-                              {slot.exercises ? (
+                          {dynamicTimeSlots.map((time, idx) => {
+                            const exercises = allDayExercises.filter(ex => (ex.time === time) || (!ex.time && dynamicTimeSlots.indexOf(time) === 0));
+                            if (exercises.length === 0) return null;
+
+                            return (
+                              <div key={idx} className="p-2 bg-white/5 rounded">
+                                <div className="text-xs text-gray-300 font-medium">{time}</div>
                                 <ul className="text-xs text-gray-200 mt-1 space-y-1">
-                                  {slot.exercises.map((ex, i) => (
+                                  {exercises.map((ex, i) => (
                                     <li key={i} className="flex flex-col mb-1 last:mb-0 border-b border-white/5 pb-1">
                                       <span className="font-bold text-orange-400">
                                         • {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
@@ -457,17 +473,14 @@ const AllWorkouts = () => {
                                       {typeof ex === 'object' && (
                                         <span className="text-gray-400 ml-3 text-[10px]">
                                           {ex.sets && `${ex.sets} Sets`} {ex.count && `• ${ex.count}`}
-                                          {ex.time && ` • ${ex.time}`}
                                         </span>
                                       )}
                                     </li>
                                   ))}
                                 </ul>
-                              ) : (
-                                <div className="text-xs text-gray-500 mt-1">-</div>
-                              )}
-                            </div>
-                          ))}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -475,6 +488,9 @@ const AllWorkouts = () => {
                 </div>
 
               </div>
+              </>
+              );
+              })()}
             </div>
           </div>
         )}
