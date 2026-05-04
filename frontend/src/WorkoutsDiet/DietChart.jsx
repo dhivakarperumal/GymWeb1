@@ -128,43 +128,68 @@ const DietChart = () => {
       {/* MEALS */}
       <div className="grid md:grid-cols-2 gap-4">
 
-        {Object.entries(meals).map(([meal, value]) => (
-          <div
-            key={meal}
-            className="bg-gray-900/50 backdrop-blur-md rounded-xl p-5 border border-red-500/20 hover:border-red-500/40 transition-all group"
-          >
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-red-500 text-xs font-bold uppercase tracking-wider">
-                {meal}
-              </h3>
-              {value.time && (
-                <span className="text-[10px] bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded-full font-medium">
-                  {format12h(value.time)}
-                </span>
-              )}
-            </div>
+        {Object.entries(meals).map(([meal, value]) => {
+          const mealItems = value.items || [];
+          const totalCalories = mealItems.reduce((sum, item) => {
+            return sum + (parseInt(item.calories) || 0);
+          }, 0);
 
-            <div className="space-y-1">
-              <p className="text-white text-sm font-medium group-hover:text-red-400 transition-colors">
-                {value.food || "No food item"}
-              </p>
-              {value.quantity && (
-                <p className="text-white/40 text-[11px]">
-                  Quantity: <span className="text-white/60">{value.quantity}</span>
-                </p>
-              )}
-            </div>
-
-            {value.calories && (
-              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                <span className="text-[10px] text-white/30 uppercase tracking-tighter">Energy</span>
-                <span className="text-xs font-semibold text-emerald-400">
-                  {value.calories} <span className="text-[10px] opacity-70">kcal</span>
-                </span>
+          return (
+            <div
+              key={meal}
+              className="bg-gray-900/50 backdrop-blur-md rounded-xl overflow-hidden border border-red-500/20 hover:border-red-500/40 transition-all group"
+            >
+              {/* MEAL HEADER */}
+              <div className="flex justify-between items-center bg-black/40 px-5 py-3 border-b border-red-500/20">
+                <h3 className="text-red-500 text-xs font-bold uppercase tracking-wider">
+                  {meal}
+                </h3>
+                {value.time && (
+                  <span className="text-[10px] bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded-full font-medium">
+                    {format12h(value.time)}
+                  </span>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* MEAL ITEMS */}
+              <div className="px-5 py-4 space-y-3">
+                {mealItems.length > 0 ? (
+                  <>
+                    {mealItems.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-start gap-2 pb-2 border-b border-white/5 last:border-0 last:pb-0">
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-medium group-hover:text-red-400 transition-colors">
+                            {item.food}
+                          </p>
+                          <p className="text-white/40 text-[11px] mt-1">
+                            Qty: <span className="text-white/60">{item.quantity}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-semibold text-emerald-400 whitespace-nowrap">
+                            {item.calories} <span className="text-[10px] opacity-70">kcal</span>
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* TOTAL CALORIES */}
+                    {mealItems.length > 1 && (
+                      <div className="mt-3 pt-3 border-t border-red-500/20 flex items-center justify-between">
+                        <span className="text-[10px] text-white/30 uppercase tracking-tighter font-semibold">Total</span>
+                        <span className="text-xs font-bold text-red-500">
+                          {totalCalories} <span className="text-[10px] opacity-70">kcal</span>
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-white text-sm">No food item</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
 
       </div>
     </div>
