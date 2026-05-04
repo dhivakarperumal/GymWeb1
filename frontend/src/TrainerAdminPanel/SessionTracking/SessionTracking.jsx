@@ -156,7 +156,7 @@ const SessionTracking = () => {
   });
 
   return (
-    <div className="min-h-screen text-white p-6">
+    <div className="min-h-screen text-white p-4">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
@@ -175,7 +175,7 @@ const SessionTracking = () => {
           )}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl">
             <div className="flex items-center justify-between gap-4">
               <div>
