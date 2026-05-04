@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Edit, X, Search, ChevronDown, CreditCard,Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload } from "lucide-react";
+import { Eye, Edit, X, Search, ChevronDown, CreditCard, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload, Phone } from "lucide-react";
 import api from "../../api";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
@@ -186,7 +186,7 @@ const EMIList = () => {
 
     const amount = parseDecimal(updateAmount);
     if (amount <= 0) {
-      alert("Enter a valid payment amount");
+      toast.error("Enter a valid payment amount");
       return;
     }
 
@@ -218,10 +218,10 @@ const EMIList = () => {
       setSelectedMembership(null);
       setUpdateAmount("");
       setPaymentReference("");
-      alert("EMI payment details updated");
+      toast.success("EMI payment details updated");
     } catch (err) {
       console.error("Failed to update membership payment:", err);
-      alert("Unable to save payment update");
+      toast.error("Unable to save payment update");
     } finally {
       setUpdating(false);
     }
