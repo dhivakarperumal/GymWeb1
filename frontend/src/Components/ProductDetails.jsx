@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import PageContainer from "./PageContainer";
@@ -21,8 +21,12 @@ const makeImageUrl = (img) => {
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const userId = user?.id;
+
+  // Check if user came from meal plan
+  const fromMealPlan = location.state?.fromMealPlan || new URLSearchParams(location.search).get('category') === 'Food';
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -451,6 +455,7 @@ export default function ProductDetails() {
                         weight: selectedWeight || null,
                         category: product.category,
                       },
+                      fromMealPlan: fromMealPlan,
                     },
                   })
                 }

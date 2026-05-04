@@ -110,7 +110,7 @@ export default function Products() {
                 return null;
               }
 
-              return <ProductCard key={id} product={p} index={index} />;
+              return <ProductCard key={id} product={p} index={index} fromMealPlan={categoryFilter === 'Food'} />;
             })}
           </div>
         )}

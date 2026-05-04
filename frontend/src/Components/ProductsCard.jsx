@@ -51,13 +51,13 @@ const getProductPricing = (product) => {
   return null;
 };
 
-export default function ProductCard({ product, index = 0 }) {
+export default function ProductCard({ product, index = 0, fromMealPlan = false }) {
   const navigate = useNavigate();
 
   const pricing = getProductPricing(product);
 
   const goToDetails = () => {
-    navigate(`/products/${product.id}`);
+    navigate(`/products/${product.id}`, { state: { fromMealPlan } });
   };
 
   return (
