@@ -19,11 +19,14 @@ const weekDays = [
 ];
 
 const timeSlots = [
-  { label: "06:00-08:00", key: "Morning" },
-  { label: "08:00-10:00", key: "Breakfast" },
-  { label: "12:00-14:00", key: "Lunch" },
-  { label: "16:00-18:00", key: "Evening" },
-  { label: "20:00-22:00", key: "Dinner" },
+  { label: "Early-morning", key: "Early-morning" },
+  { label: "Breakfast", key: "Breakfast" },
+  { label: "Mid-morning", key: "Mid-morning" },
+  { label: "Lunch", key: "Lunch" },
+  { label: "Evening", key: "Evening" },
+  { label: "Dinner", key: "Dinner" },
+  { label: "Pre-workout", key: "Pre-workout" },
+  { label: "Post-workout", key: "Post-workout" },
 ];
 
 const AllDietPlans = () => {
@@ -268,10 +271,10 @@ const AllDietPlans = () => {
               {/* TABLE */}
               <div className="border border-gray-700 rounded-xl overflow-hidden">
 
-                <div className="grid grid-cols-6 bg-black text-center font-semibold border-b border-gray-700">
+                <div className="grid grid-cols-9 bg-black text-center font-semibold border-b border-gray-700 text-[10px]">
                   <div className="p-4 border-r border-gray-700">DAY</div>
                   {timeSlots.map((t) => (
-                    <div key={t.label} className="p-4 border-r border-gray-700">
+                    <div key={t.label} className="p-4 border-r border-gray-700 uppercase">
                       {t.label}
                     </div>
                   ))}
@@ -286,20 +289,46 @@ const AllDietPlans = () => {
                   return (
                     <div
                       key={dayName}
-                      className="grid grid-cols-6 border-b border-gray-800 text-center"
+                      className="grid grid-cols-9 border-b border-gray-800 text-center text-xs"
                     >
-                      <div className="p-4 border-r border-gray-800 font-semibold">
+                      <div className="p-4 border-r border-gray-800 font-semibold bg-white/5 flex items-center justify-center">
                         {dayName}
                       </div>
 
-                      {timeSlots.map((t) => (
-                        <div
-                          key={t.label}
-                          className="p-4 border-r border-gray-800"
-                        >
-                          {dayData?.[t.key] || "-"}
-                        </div>
-                      ))}
+                      {timeSlots.map((t) => {
+                        const mealData = dayData?.[t.key];
+                        // Handle new structure {time, items} or old structure string/obj
+                        let items = [];
+                        let time = "";
+
+                        if (mealData) {
+                          if (mealData.items) {
+                            items = mealData.items;
+                            time = mealData.time;
+                          } else if (typeof mealData === "string") {
+                            items = [{ food: mealData }];
+                          } else {
+                            items = [{ food: mealData.food, quantity: mealData.quantity }];
+                            time = mealData.time;
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={t.label}
+                            className="p-2 border-r border-gray-800 flex flex-col gap-1 overflow-y-auto max-h-32"
+                          >
+                            {time && <div className="text-[10px] text-emerald-400 font-bold">{time}</div>}
+                            {items.map((it, i) => (
+                              <div key={i} className="text-[10px] leading-tight">
+                                <span className="font-medium text-white">{it.food}</span>
+                                {it.quantity && <span className="text-gray-400 block">({it.quantity})</span>}
+                              </div>
+                            ))}
+                            {items.length === 0 && <span className="text-gray-600">-</span>}
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })}
