@@ -374,6 +374,7 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
                         ...formData,
                         plan_name: e.target.value,
                         plan_price: selectedPlan ? (selectedPlan.finalPrice || selectedPlan.price) : "",
+                        plan_duration: selectedPlan ? (selectedPlan.duration_days || selectedPlan.duration || 0) : 0,
                       });
                     }}
                     className="w-full py-2.5 pl-4 pr-10 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
