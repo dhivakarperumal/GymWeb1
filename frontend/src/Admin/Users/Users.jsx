@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import {
   FaUsers,
@@ -27,7 +20,6 @@ const Users = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-
   useEffect(() => {
     loadUsers();
   }, []);
@@ -35,8 +27,13 @@ const Users = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const snap = await getDocs(collection(db, "users"));
-      setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const res = await api.get("/users");
+      // Backend returns array of user objects
+      const data = res.data.map(u => ({
+        ...u,
+        active: u.status === 'active' || u.active === 1 || u.active === true // handle different possible formats
+      }));
+      setUsers(data);
     } catch (err) {
       console.error("Error loading users:", err);
       toast.error("Failed to load users");
@@ -47,7 +44,7 @@ const Users = () => {
 
   const updateRole = async (id, role) => {
     try {
-      await updateDoc(doc(db, "users", id), { role });
+      await api.put(`/users/${id}`, { role });
       toast.success("Role updated successfully");
       loadUsers();
     } catch (err) {
@@ -58,7 +55,8 @@ const Users = () => {
 
   const toggleStatus = async (id, active) => {
     try {
-      await updateDoc(doc(db, "users", id), { active: !active });
+      // Backend might need a status or active field
+      await api.put(`/users/${id}`, { active: !active });
       toast.success("User status updated");
       loadUsers();
     } catch (err) {
@@ -70,7 +68,7 @@ const Users = () => {
   const deleteUser = async (id) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await deleteDoc(doc(db, "users", id));
+        await api.delete(`/users/${id}`);
         toast.success("User deleted successfully");
         loadUsers();
       } catch (err) {

@@ -44,6 +44,8 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        profileName: user?.username || user?.name || user?.displayName,
+        email: user?.email,
         role,
         login,
         logout,

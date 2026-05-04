@@ -170,7 +170,9 @@ const Header = ({ onMenuClick }) => {
   const handleLogout = async () => {
     try {
       logout();
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);

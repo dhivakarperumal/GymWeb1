@@ -3,8 +3,12 @@ import { X, Phone, Mail, Target, History, Clock, ChevronDown } from "lucide-reac
 import api from "../api";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
+import { useAuth } from "../PrivateRouter/AuthContext";
 
 const FollowupEnquiryModal = ({ visible, onClose }) => {
+  const { profileName } = useAuth();
+  const currentUserName = profileName || "Admin";
+
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
   const [createdAt, setCreatedAt] = useState(dayjs());
@@ -37,7 +41,7 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
     organization: "",
     website: "",
     best_time_to_reach: "",
-    updated_by: "Website Lead",
+    updated_by: currentUserName,
     referred_by: "",
     trainer_id: "",
     trainer_name: "",
@@ -107,7 +111,7 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
       organization: "",
       website: "",
       best_time_to_reach: "",
-      updated_by: "Website Lead",
+      updated_by: currentUserName,
       referred_by: "",
       trainer_id: "",
       trainer_name: "",

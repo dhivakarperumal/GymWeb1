@@ -449,8 +449,13 @@ const AddEditStaff = () => {
         {/* USERNAME */}
         <div>
           <label className="text-sm font-medium">Username (Auto from Email)</label>
-          <input name="username" placeholder="Auto-populated from email" value={form.username} onChange={handleChange}
-            className={`${inputClass} ${errors.username ? "border-red-500 focus:ring-red-500" : ""}`} disabled readOnly />
+          <input 
+            name="username" 
+            placeholder="Username" 
+            value={form.username} 
+            onChange={handleChange}
+            className={`${inputClass} ${errors.username ? "border-red-500 focus:ring-red-500" : ""}`} 
+          />
           <ErrorText field="username" />
         </div>
 
@@ -466,12 +471,19 @@ const AddEditStaff = () => {
         {!isEdit && (
           <div>
             <label className="text-sm font-medium">
-              Password <span className="text-xs text-gray-300">(set equal to phone number)</span>
+              Login Password <span className="text-xs text-gray-300">(defaults to phone number)</span>
             </label>
-            <input type="password" name="password" value={form.password}
-              onChange={handleChange} placeholder="Auto-populated from phone"
-              className={`${inputClass} ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`} disabled readOnly />
-            <p className="text-xs text-gray-400 mt-1">Login credentials for the staff account will use this value.</p>
+            <div className="relative">
+              <input 
+                type="text" 
+                name="password" 
+                value={form.password}
+                onChange={handleChange} 
+                placeholder="Enter password"
+                className={`${inputClass} ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`} 
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">This will be the password for the staff account.</p>
             <ErrorText field="password" />
           </div>
         )}
