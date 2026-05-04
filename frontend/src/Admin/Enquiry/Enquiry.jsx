@@ -614,9 +614,9 @@ const Enquiry = () => {
             </div>
           ) : (
             /* TABLE VIEW */
-            <div className="flex-1 mt-8 overflow-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl custom-scrollbar">
-              <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 bg-white/10 backdrop-blur-md z-10 text-white/40 uppercase text-[9px] tracking-[0.1em] font-black border-b border-white/5">
+            <div className="backdrop-blur-xl bg-white/5 mt-5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
+          <table className="w-full min-w-[700px] text-sm text-gray-200">
+            <thead className="border-b border-white/10">
                   <tr>
                     <th className="px-3 py-5 border-b border-white/5 w-12 text-center">S.No</th>
                     <th className="px-3 py-5 border-b border-white/5 text-left">Customer</th>

@@ -379,7 +379,7 @@ const Members = () => {
                 <th className="p-4 text-left font-medium">BMI</th>
                 <th className="p-4 text-left font-medium">PT Form</th>
                 <th className="p-4 text-left font-medium">Plan</th>
-                
+
                 <th className="p-4 text-left font-medium">Type</th>
                 <th className="p-4 text-left font-medium">Actions</th>
               </tr>
@@ -443,7 +443,7 @@ const Members = () => {
                         {m.plan || m.role || "Member"}
                       </span>
                     </td>
-                   
+
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${m.source === "users"
                         ? "bg-blue-500/20 text-blue-400"
@@ -452,7 +452,7 @@ const Members = () => {
                         {m.source === "users" ? "User" : "Gym Member"}
                       </span>
                     </td>
-                   
+
                     <td className="p-4 flex gap-2">
                       <button
                         onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
@@ -522,15 +522,15 @@ const Members = () => {
                           <Printer size={14} />
                         </button>
                       )}
-                        <button
-                          onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
-                          className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
-                          title="View Details"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={() => {
+                      <button
+                        onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
+                        className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
+                        title="View Details"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => {
                           if (m.source === "users") {
                             navigate(`/admin/addmembers?user_id=${m.u_id}`);
                           } else {
@@ -740,7 +740,7 @@ const Members = () => {
 
             {/* Modal Content - Native Component View */}
             <div className="flex-1 overflow-y-auto bg-gray-100/50 p-4 sm:p-8 custom-scrollbar">
-               <PTFormPreviewContent memberId={ptViewMemberId} />
+              <PTFormPreviewContent memberId={ptViewMemberId} />
             </div>
 
             {/* Modal Footer */}
