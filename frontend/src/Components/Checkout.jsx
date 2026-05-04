@@ -94,16 +94,20 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [orderType, setOrderType] = useState("DELIVERY");
 
+  // Check if user came from meal plan (forces restrictions)
+  const fromMealPlan = location.state?.fromMealPlan || false;
+
   // Check if any item is food category
   const hasFoodItems = items.some(item => item.category === 'Food');
 
-  // For food items, force CASH payment and SHOP pickup
+  // For meal plan purchases, force CASH payment and SHOP pickup
+  // For regular purchases with food items, allow user choice
   useEffect(() => {
-    if (hasFoodItems) {
+    if (fromMealPlan && hasFoodItems) {
       setPaymentMethod("CASH");
       setOrderType("PICKUP");
     }
-  }, [hasFoodItems]);
+  }, [fromMealPlan, hasFoodItems]);
 
   const [shipping, setShipping] = useState({
     name: "",
@@ -415,18 +419,18 @@ export default function Checkout() {
             <div className="flex gap-4 mb-6">
               <button
                 onClick={() => setOrderType("DELIVERY")}
-                disabled={hasFoodItems}
+                disabled={fromMealPlan && hasFoodItems}
                 className={`flex-1 py-3 rounded-xl border transition
       ${
         orderType === "DELIVERY"
           ? "bg-red-600 border-red-600"
           : "border-red-500/40 hover:border-red-500"
       }
-      ${hasFoodItems ? "opacity-50 cursor-not-allowed" : ""}
+      ${fromMealPlan && hasFoodItems ? "opacity-50 cursor-not-allowed" : ""}
     `}
               >
                 Delivery
-                {hasFoodItems && <span className="block text-xs">(Not available)</span>}
+                {fromMealPlan && hasFoodItems && <span className="block text-xs">(Not available)</span>}
               </button>
 
               <button
@@ -440,7 +444,7 @@ export default function Checkout() {
     `}
               >
                 Shop
-                {hasFoodItems && <span className="block text-xs">(Required for food items)</span>}
+                {fromMealPlan && hasFoodItems && <span className="block text-xs">(Required for meal plan items)</span>}
               </button>
             </div>
 
@@ -600,26 +604,32 @@ h-[100vh] flex flex-col
             </div>
 
             <div className="mt-4 space-y-3">
-              <label className="flex gap-2 cursor-pointer">
+              <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${paymentMethod === "CASH" ? "border-red-500/50 bg-red-500/10" : "border-white/10 bg-white/5 hover:border-red-500/30 hover:bg-white/10"}`}>
                 <input
                   type="radio"
+                  className="accent-red-500 h-4 w-4"
                   checked={paymentMethod === "CASH"}
                   onChange={() => setPaymentMethod("CASH")}
-                  disabled={hasFoodItems}
+                  disabled={fromMealPlan && hasFoodItems}
                 />
-                Cash on Delivery
-                {hasFoodItems && <span className="text-xs text-gray-500">(Required for food items)</span>}
+                <div className="flex flex-col text-sm">
+                  <span className="font-semibold">Cash on Delivery</span>
+                  {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-400">(Required for meal plan items)</span>}
+                </div>
               </label>
 
-              <label className="flex gap-2 cursor-pointer">
+              <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${paymentMethod === "ONLINE" ? "border-red-500/50 bg-red-500/10" : "border-white/10 bg-white/5 hover:border-red-500/30 hover:bg-white/10"}`}>
                 <input
                   type="radio"
+                  className="accent-red-500 h-4 w-4"
                   checked={paymentMethod === "ONLINE"}
                   onChange={() => setPaymentMethod("ONLINE")}
-                  disabled={hasFoodItems}
+                  disabled={fromMealPlan && hasFoodItems}
                 />
-                Online Payment
-                {hasFoodItems && <span className="text-xs text-gray-500">(Not available for food items)</span>}
+                <div className="flex flex-col text-sm">
+                  <span className="font-semibold">Online Payment</span>
+                  {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-400">(Not available for meal plan items)</span>}
+                </div>
               </label>
             </div>
 

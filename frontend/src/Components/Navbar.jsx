@@ -77,6 +77,7 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [showCategory, setShowCategory] = useState(false);
   const [showOffers, setShowOffers] = useState(false);
+  const [showProducts, setShowProducts] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
 
 
@@ -108,6 +109,7 @@ const Navbar = () => {
   useEffect(() => {
     setOpen(false);
     setShowCategory(false);
+    setShowProducts(false);
     setActiveCategory(null);
     setMobileOpen(false);
   }, [location.pathname]);
@@ -160,6 +162,7 @@ const Navbar = () => {
       logout(); // clear localStorage
       setOpen(false);
       setShowCategory(false);
+      setShowProducts(false);
       setActiveCategory(null);
       setMobileOpen(false);
       navigate("/login", { replace: true });
@@ -215,16 +218,16 @@ const Navbar = () => {
               {/* PRODUCTS DROPDOWN */}
               <div className="relative">
                 <button
-                  onMouseEnter={() => { setShowCategory(true); setShowOffers(false); }}
-                  onClick={() => { setShowCategory(!showCategory); setShowOffers(false); }}
+                  onMouseEnter={() => { setShowProducts(true); setShowOffers(false); setShowCategory(false); }}
+                  onClick={() => { setShowProducts(!showProducts); setShowOffers(false); setShowCategory(false); }}
                   className="flex items-center gap-1 cursor-pointer"
                 >
                   Products <ChevronDown size={16} />
                 </button>
 
-                {showCategory && (
+                {showProducts && (
                   <div
-                    onMouseLeave={() => setShowCategory(false)}
+                    onMouseLeave={() => setShowProducts(false)}
                     className="absolute top-full mt-4 w-56 bg-white text-black rounded-xl shadow-xl overflow-hidden"
                   >
                     <NavLink
@@ -268,8 +271,8 @@ const Navbar = () => {
               {/* OFFERS DROPDOWN */}
               <div className="relative">
                 <button
-                  onMouseEnter={() => { setShowOffers(true); setShowCategory(false); }}
-                  onClick={() => { setShowOffers(!showOffers); setShowCategory(false); }}
+                  onMouseEnter={() => { setShowOffers(true); setShowCategory(false); setShowProducts(false); }}
+                  onClick={() => { setShowOffers(!showOffers); setShowCategory(false); setShowProducts(false); }}
                   className="flex items-center gap-1 cursor-pointer"
                 >
                   Offers <ChevronDown size={16} />
@@ -310,8 +313,8 @@ const Navbar = () => {
               {/* MORE DROPDOWN */}
               <div className="relative" ref={categoryRef}>
                 <button
-                  onMouseEnter={() => { setShowCategory(true); setShowOffers(false); }}
-                  onClick={() => { setShowCategory(!showCategory); setShowOffers(false); }}
+                  onMouseEnter={() => { setShowCategory(true); setShowOffers(false); setShowProducts(false); }}
+                  onClick={() => { setShowCategory(!showCategory); setShowOffers(false); setShowProducts(false); }}
                   className="flex items-center gap-1 cursor-pointer"
                 >
                   More <ChevronDown size={16} />
