@@ -42,7 +42,8 @@ const FollowupEnquiry = () => {
 
   // Status filter
   const [statusFilter, setStatusFilter] = useState('all');
-  const [trainerFilter, setTrainerFilter] = useState('all');
+  const [staffFilter, setStaffFilter] = useState('all');
+  const [assignedTrainerFilter, setAssignedTrainerFilter] = useState('all');
   const [trainers, setTrainers] = useState([]);
 
   // Form Data
@@ -55,7 +56,8 @@ const FollowupEnquiry = () => {
     fitness_goal: "", blood_group: "", gender: "", status: "pending",
     plan_name: "", plan_price: "", plan_duration: "",
     reg_no: "", organization: "", website: "", best_time_to_reach: "",
-    updated_by: "", referred_by: ""
+    updated_by: "", referred_by: "",
+    trainer_id: "", trainer_name: ""
   });
 
   const [followupFormData, setFollowupFormData] = useState({
@@ -217,7 +219,8 @@ const FollowupEnquiry = () => {
       fitness_goal: "", blood_group: "", gender: "", status: "pending",
       plan_name: "", plan_duration: "", plan_price: "",
       reg_no: "", organization: "", website: "", best_time_to_reach: "",
-      updated_by: user?.username || "Admin", referred_by: ""
+      updated_by: user?.username || "Admin", referred_by: "",
+      trainer_id: "", trainer_name: ""
     });
   };
 
@@ -314,12 +317,17 @@ const FollowupEnquiry = () => {
     const isAdmin = role && role.toLowerCase().includes('admin');
     const matchesAccess = isAdmin || !enquiry.updated_by || enquiry.updated_by === user?.username;
 
-    let matchesTrainer = true;
-    if (isAdmin && trainerFilter !== 'all') {
-      matchesTrainer = (enquiry.updated_by || 'Admin') === trainerFilter;
+    let matchesStaff = true;
+    if (isAdmin && staffFilter !== 'all') {
+      matchesStaff = (enquiry.updated_by || 'Admin') === staffFilter;
     }
 
-    if (!matchesSearch || !matchesStatus || !matchesAccess || !matchesTrainer) return false;
+    let matchesAssignedTrainer = true;
+    if (assignedTrainerFilter !== 'all') {
+      matchesAssignedTrainer = enquiry.trainer_name === assignedTrainerFilter;
+    }
+
+    if (!matchesSearch || !matchesStatus || !matchesAccess || !matchesStaff || !matchesAssignedTrainer) return false;
     if (dateRange.type === 'All Time') return true;
     return filterByDateRange([enquiry], 'created_at', dateRange.type, dateRange.range).length > 0;
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -391,24 +399,42 @@ const FollowupEnquiry = () => {
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
             </div>
 
-            {/* Staff Filter */}
+            {/* Staff Filter (Updated By) */}
             {role === 'admin' && (
               <div className="relative group flex-1 sm:flex-none">
                 <select
-                  value={trainerFilter}
-                  onChange={(e) => { setTrainerFilter(e.target.value); setCurrentPage(1); }}
+                  value={staffFilter}
+                  onChange={(e) => { setStaffFilter(e.target.value); setCurrentPage(1); }}
                   className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[120px]"
                 >
                   <option value="all" className="bg-neutral-900">All Staff</option>
+                  <option value="Admin" className="bg-neutral-900">Admin</option>
                   {trainers.map(s => (
                     <option key={s.id} value={s.username || s.name} className="bg-neutral-900">
-                      {s.name}
+                      {s.name || s.username}
                     </option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
               </div>
             )}
+
+            {/* Assigned Trainer Filter */}
+            <div className="relative group flex-1 sm:flex-none">
+              <select
+                value={assignedTrainerFilter}
+                onChange={(e) => { setAssignedTrainerFilter(e.target.value); setCurrentPage(1); }}
+                className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[120px]"
+              >
+                <option value="all" className="bg-neutral-900">All Trainers</option>
+                {trainers.map(s => (
+                  <option key={s.id} value={s.name || s.username} className="bg-neutral-900">
+                    {s.name || s.username}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
+            </div>
           </div>
 
           <div className="flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto mt-2 lg:mt-0">
@@ -549,6 +575,11 @@ const FollowupEnquiry = () => {
                         <span className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
                           <Mail size={10} className="text-orange-500" /> {enquiry.email || 'N/A'}
                         </span>
+                        {enquiry.trainer_name && (
+                          <span className="flex items-center gap-2 text-orange-400 text-[10px] font-bold">
+                            <Users size={10} className="text-orange-500" /> Trainer: {enquiry.trainer_name}
+                          </span>
+                        )}
                         <span className="flex items-center gap-2 text-white/30 text-[9px] font-bold uppercase tracking-widest mt-1">
                           {dayjs(enquiry.created_at).format('MMM DD, YYYY')} • By {enquiry.updated_by || 'Admin'} ({getStaffRole(enquiry.updated_by)})
                         </span>
@@ -649,6 +680,9 @@ const FollowupEnquiry = () => {
                         <td className="px-3 py-4">
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-white/60 truncate max-w-[80px]">{enquiry.updated_by || 'Admin'}</span>
+                            {enquiry.trainer_name && (
+                              <span className="text-[9px] font-black text-orange-500 truncate max-w-[80px]" title={`Trainer: ${enquiry.trainer_name}`}>T: {enquiry.trainer_name}</span>
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-4 text-right">
@@ -920,6 +954,32 @@ const FollowupEnquiry = () => {
                           />
                           <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-red-500 font-bold">*</span>
                         </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <label className="text-xs font-bold text-white/60">Select Trainer</label>
+                      <div className="col-span-2 relative">
+                        <select
+                          value={formData.trainer_id || ""}
+                          onChange={(e) => {
+                            const selectedTrainer = trainers.find(t => t.id.toString() === e.target.value);
+                            setFormData({
+                              ...formData,
+                              trainer_id: e.target.value,
+                              trainer_name: selectedTrainer ? (selectedTrainer.name || selectedTrainer.username) : ""
+                            });
+                          }}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none appearance-none"
+                        >
+                          <option value="">[SELECT TRAINER]</option>
+                          {trainers.map(t => (
+                            <option key={t.id} value={t.id}>
+                              {t.name || t.username} ({t.role || 'Staff'})
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
                       </div>
                     </div>
 

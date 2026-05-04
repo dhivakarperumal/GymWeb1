@@ -64,7 +64,7 @@ const enquiryController = {
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
                 fitness_goal, blood_group, height, weight, bmi, gender, termsAccepted,
-                plan_name, plan_duration, consent_data
+                plan_name, plan_duration, consent_data, trainer_id, trainer_name
             } = req.body;
 
             if (!name || !email) {
@@ -91,8 +91,8 @@ const enquiryController = {
                     dob, age, address, employer, occupation,
                     emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                     emergency_contact_phone_home, emergency_contact_phone_work,
-                    fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted, consent_data
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted, consent_data, trainer_id, trainer_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     name, email, phone, subject || null, message || null, location || null,
                     dob || null, age || null, address || null, employer || null, occupation || null,
@@ -102,7 +102,8 @@ const enquiryController = {
                     height || null, weight || null, bmi || null, gender || null,
                     plan_name || null, plan_duration || null,
                     termsAccepted ? 1 : 0,
-                    consent_data ? JSON.stringify(consent_data) : null
+                    consent_data ? JSON.stringify(consent_data) : null,
+                    trainer_id || null, trainer_name || null
                 ]
             );
 
@@ -130,7 +131,7 @@ const enquiryController = {
                 dob, age, address, employer, occupation,
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
-                fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, status, termsAccepted, consent_data
+                fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, status, termsAccepted, consent_data, trainer_id, trainer_name
             } = req.body;
 
             const [result] = await pool.query(
@@ -139,7 +140,7 @@ const enquiryController = {
                     dob = ?, age = ?, address = ?, employer = ?, occupation = ?,
                     emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_address = ?,
                     emergency_contact_phone_home = ?, emergency_contact_phone_work = ?,
-                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?, terms_accepted = ?, consent_data = ?,
+                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?, terms_accepted = ?, consent_data = ?, trainer_id = ?, trainer_name = ?,
                     updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?`,
                 [
@@ -151,6 +152,7 @@ const enquiryController = {
                     height || null, weight || null, bmi || null, gender || null, plan_name || null, plan_duration || null, status || 'pending',
                     termsAccepted ? 1 : 0,
                     consent_data ? JSON.stringify(consent_data) : null,
+                    trainer_id || null, trainer_name || null,
                     id
                 ]
             );

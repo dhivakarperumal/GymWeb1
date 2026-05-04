@@ -41,8 +41,11 @@ const Enquiry = () => {
     fitness_goal: "",
     blood_group: "",
     gender: "",
+    trainer_id: "",
+    trainer_name: "",
     termsAccepted: false
   });
+  const [trainers, setTrainers] = useState([]);
 
   useEffect(() => {
     if (formData.height && formData.weight) {
@@ -70,7 +73,17 @@ const Enquiry = () => {
 
   useEffect(() => {
     fetchEnquiries();
+    fetchTrainers();
   }, []);
+
+  const fetchTrainers = async () => {
+    try {
+      const res = await api.get("/staff");
+      setTrainers(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching trainers:", err);
+    }
+  };
 
   const fetchEnquiries = async () => {
     try {
@@ -131,7 +144,9 @@ const Enquiry = () => {
         employer: "", occupation: "", emergency_contact_name: "",
         emergency_contact_relationship: "", emergency_contact_address: "",
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-        fitness_goal: "", blood_group: "", gender: "", termsAccepted: false
+        fitness_goal: "", blood_group: "", gender: "", 
+        trainer_id: "", trainer_name: "",
+        termsAccepted: false
       });
       toast.success(selectedEnquiry ? "Enquiry updated successfully" : "Enquiry created successfully");
     } catch (error) {
@@ -165,6 +180,8 @@ const Enquiry = () => {
       fitness_goal: enquiry.fitness_goal || "",
       blood_group: enquiry.blood_group || "",
       gender: enquiry.gender || "",
+      trainer_id: enquiry.trainer_id || "",
+      trainer_name: enquiry.trainer_name || "",
       termsAccepted: enquiry.termsAccepted || false,
       status: enquiry.status
     });
@@ -554,6 +571,11 @@ const Enquiry = () => {
                         <p className="text-white/30 text-[10px] font-bold mt-1">
                           {enquiry.location || 'Direct Lead'}
                         </p>
+                        {enquiry.trainer_name && (
+                          <p className="text-orange-400 text-[10px] font-black mt-1">
+                            Trainer: {enquiry.trainer_name}
+                          </p>
+                        )}
                       </div>
 
                       {/* Card Actions */}
@@ -624,6 +646,11 @@ const Enquiry = () => {
                             <span className="text-white/30 text-[9px] font-bold uppercase tracking-tight truncate max-w-[150px]">
                               {enquiry.email || 'No Email'}
                             </span>
+                            {enquiry.trainer_name && (
+                              <span className="text-orange-500 text-[9px] font-black uppercase truncate max-w-[150px]">
+                                Trainer: {enquiry.trainer_name}
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-4">
@@ -841,6 +868,31 @@ const Enquiry = () => {
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Select Trainer</label>
+                    <div className="relative group">
+                      <select
+                        value={formData.trainer_id}
+                        onChange={(e) => {
+                          const selectedTrainer = trainers.find(t => t.id.toString() === e.target.value);
+                          setFormData({
+                            ...formData,
+                            trainer_id: e.target.value,
+                            trainer_name: selectedTrainer ? (selectedTrainer.name || selectedTrainer.username) : ""
+                          });
+                        }}
+                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">[SELECT TRAINER]</option>
+                        {trainers.map(t => (
+                          <option key={t.id} value={t.id} className="bg-neutral-900">
+                            {t.name || t.username} ({t.role || 'Staff'})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none group-hover:text-white transition-colors" />
+                    </div>
                   </div>
                  
                 </div>
