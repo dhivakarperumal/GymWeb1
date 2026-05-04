@@ -80,12 +80,14 @@ const TrainerDashboard = () => {
           (m) => !m.status || (m.status || "").toLowerCase() === "active"
         );
 
-        /* remove duplicates by userId */
-        const uniqueMembers = Array.from(
-          new Map(
-            activeMembers.map((m) => [m.userId || m.user_id, m])
-          ).values()
-        );
+        /* remove duplicates — use gymMemberId as primary key, fall back to userId */
+        const seen = new Set();
+        const uniqueMembers = activeMembers.filter((m) => {
+          const key = String(m.gymMemberId || m.gym_member_id || m.userId || m.user_id || m.id || "");
+          if (!key || key === "undefined" || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
 
         setAssignedMembers(uniqueMembers);
 
