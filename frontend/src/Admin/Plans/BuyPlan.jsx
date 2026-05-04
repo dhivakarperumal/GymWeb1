@@ -458,7 +458,7 @@ const BuyPlanadmin = () => {
 
   return (
     <div className="text-white min-h-screen p-6">
-      <h1 className="text-3xl font-bold mb-6">Assign Plan</h1>
+     
 
       <div className="grid md:grid-cols-2 gap-10">
 
