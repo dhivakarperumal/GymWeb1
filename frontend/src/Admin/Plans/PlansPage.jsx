@@ -5,6 +5,8 @@ import {
   FaToggleOn,
   FaToggleOff,
   FaSearch,
+  FaList,
+  FaThLarge,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -28,6 +30,7 @@ const PlansAll = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState("table"); // "card" or "table"
 
   /* ================= LOAD ================= */
   const loadPlans = async () => {
@@ -129,32 +132,60 @@ const PlansAll = () => {
         </div>
       </div>
 
-      {/* SEARCH + FILTER */}
+      {/* SEARCH + FILTER + VIEW TOGGLE */}
       <div
         className={`${glassCard} p-4 flex flex-col md:flex-row items-center justify-between gap-4`}
       >
-        {/* LEFT — SEARCH */}
-        <div className="relative w-full md:w-1/3">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            placeholder="Search plan..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`${glassInput} pl-11`}
-          />
+        <div className="flex flex-col md:flex-row w-full gap-4 md:w-2/3">
+          {/* LEFT — SEARCH */}
+          <div className="relative w-full md:w-1/2">
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              placeholder="Search plan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={`${glassInput} pl-11`}
+            />
+          </div>
+
+          {/* MIDDLE — FILTER */}
+          <div className="w-full md:w-1/2">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className={glassInput}
+            >
+              <option value="all">All Plans</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
         </div>
 
-        {/* RIGHT — FILTER */}
-        <div className="w-full md:w-1/4">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className={glassInput}
+        {/* RIGHT — VIEW TOGGLE */}
+        <div className="flex bg-white/10 p-1 rounded-xl border border-white/20">
+          <button
+            onClick={() => setViewMode("card")}
+            className={`p-2.5 rounded-lg transition-all ${
+              viewMode === "card"
+                ? "bg-orange-500 text-white shadow-lg"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
+            title="Card View"
           >
-            <option value="all">All Plans</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            <FaThLarge size={18} />
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            className={`p-2.5 rounded-lg transition-all ${
+              viewMode === "table"
+                ? "bg-orange-500 text-white shadow-lg"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
+            title="Table View"
+          >
+            <FaList size={18} />
+          </button>
         </div>
       </div>
 
@@ -170,7 +201,7 @@ const PlansAll = () => {
         </div>
       ) : filteredPlans.length === 0 ? (
         <p className="text-center text-gray-400">No plans found</p>
-      ) : (
+      ) : viewMode === "card" ? (
         <div className="grid md:grid-cols-2 gap-6">
           {filteredPlans.map((p) => (
             <div key={p.id} className={`${glassCard} p-6 space-y-3`}>
@@ -235,6 +266,75 @@ const PlansAll = () => {
 
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
+          <table className="w-full min-w-[700px] text-sm text-gray-200">
+            <thead className="border-b border-white/10">
+              <tr>
+                <th className="p-4 text-left font-medium">S No</th>
+                <th className="p-4 text-left font-medium">Plan Name</th>
+                <th className="p-4 text-left font-medium">Duration</th>
+                <th className="p-4 text-left font-medium">Price</th>
+                <th className="p-4 text-left font-medium">Facilities</th>
+                <th className="p-4 text-left font-medium">Status</th>
+                <th className="p-4 text-center font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPlans.map((p, index) => (
+                <tr key={p.id} className="border-b border-white/5 hover:bg-white/5 transition">
+                  <td className="p-4 text-gray-400">{index + 1}</td>
+                  <td className="p-4 font-semibold text-white">{p.name}</td>
+                  <td className="p-4 text-gray-300">{p.duration}</td>
+                  <td className="p-4 text-gray-300">
+                    ₹{p.finalPrice ?? p.final_price ?? p.price}
+                    {p.discount > 0 && <span className="ml-1 text-[10px] text-emerald-400">({p.discount}% OFF)</span>}
+                  </td>
+                  <td className="p-4 text-gray-400">
+                    <div className="flex flex-wrap gap-1">
+                      {p.facilities?.slice(0, 2).map((f) => (
+                        <span key={f} className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded truncate max-w-[80px]">
+                          {f}
+                        </span>
+                      ))}
+                      {p.facilities?.length > 2 && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">+{p.facilities.length - 2}</span>}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <span
+                      className={`px-2.5 py-1 text-[10px] uppercase rounded-lg font-bold
+                        ${p.active
+                          ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                          : "bg-gray-500/20 text-gray-400 ring-1 ring-gray-500/30"
+                        }`}
+                    >
+                      {p.active ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="p-4 flex justify-center gap-2">
+                    <button
+                      onClick={() => navigate(`/admin/addplan/${p.id}`)}
+                      className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white transition"
+                      title="Edit Plan"
+                    >
+                      <FaEdit size={14} />
+                    </button>
+                    <button
+                      onClick={() => toggleStatus(p.id, p.active)}
+                      className={`p-2 rounded-lg transition ${p.active
+                          ? "bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white"
+                          : "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white"
+                        }`}
+                      title="Toggle Status"
+                    >
+                      {p.active ? <FaToggleOff size={14} /> : <FaToggleOn size={14} />}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
