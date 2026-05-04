@@ -307,7 +307,7 @@ const AllWorkouts = () => {
             onClick={() => setSelectedWorkout(null)}
           >
             <div
-              className="bg-gray-950/90 border border-white/10 w-full max-w-7xl rounded-3xl p-8 overflow-hidden shadow-2xl backdrop-blur-2xl flex flex-col max-h-[90vh]"
+              className="bg-gray-950/90 border border-white/10 w-full max-w-7xl rounded-3xl p-5 md:p-7 overflow-hidden shadow-2xl backdrop-blur-2xl flex flex-col max-h-[95vh]"
               onClick={(e) => e.stopPropagation()}
             >
 
@@ -328,10 +328,10 @@ const AllWorkouts = () => {
 
                 return (
                   <>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div>
-                    <h3 className="text-3xl font-extrabold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                    <h3 className="text-2xl font-extrabold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
                       Workout Timetable
                     </h3>
                     <p className="text-gray-500 text-xs mt-1 uppercase tracking-widest font-black">
@@ -375,68 +375,75 @@ const AllWorkouts = () => {
                 {/* TABLE HEADER */}
                 {/* Desktop grid view */}
                 <div className="hidden sm:block">
-                  <div className="grid grid-cols-8 bg-white/5 border-b border-white/10 text-center sticky top-0 z-10 backdrop-blur-xl">
-                    <div className="p-5 border-r border-white/10 text-xs font-black uppercase tracking-widest text-gray-400">TIME</div>
-                    {weekDays.map((day) => (
-                      <div key={day} className="p-5 border-r border-white/10 text-xs font-black uppercase tracking-widest text-orange-500">
-                        {day}
-                      </div>
-                    ))}
-                  </div>                  {/* TABLE BODY */}
-                  {dynamicTimeSlots.map((time) => (
-                    <div
-                      key={time}
-                      className="grid grid-cols-8 border-b border-white/5 text-center hover:bg-white/[0.02] transition-colors"
-                    >
-                      <div className="p-6 border-r border-white/5 font-bold text-xs text-gray-500 bg-white/[0.02]">
+                  {/* TABLE HEADER - Time Slots as Columns */}
+                  <div className={`grid bg-white/5 border-b border-white/10 text-center sticky top-0 z-10 backdrop-blur-xl`} style={{ gridTemplateColumns: `120px repeat(${dynamicTimeSlots.length}, minmax(200px, 1fr))` }}>
+                    <div className="p-3 border-r border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400">DAY / TIME</div>
+                    {dynamicTimeSlots.map((time) => (
+                      <div key={time} className="p-3 border-r border-white/10 text-[10px] font-black uppercase tracking-widest text-orange-500">
                         {time}
                       </div>
+                    ))}
+                  </div>
 
-                      {weekDays.map((dayName, dayIndex) => {
-                        const dayOffset = (selectedWeek - 1) * 7;
-                        const dayKey = `Day${dayOffset + dayIndex + 1}`;
+                  {/* TABLE BODY - Days as Rows */}
+                  {weekDays.map((dayName, dayIndex) => {
+                    const dayOffset = (selectedWeek - 1) * 7;
+                    const dayKey = `Day${dayOffset + dayIndex + 1}`;
+                    
+                    const allDayExercises =
+                      selectedWorkout.weeks?.[`Week${selectedWeek}`]?.[dayKey] ||
+                      selectedWorkout.days?.[dayKey] || [];
 
-                        const allDayExercises =
-                          selectedWorkout.weeks?.[`Week${selectedWeek}`]?.[dayKey] ||
-                          selectedWorkout.days?.[dayKey] || [];
-                        
-                        // Only show exercises that match THIS time slot
-                        const exercises = allDayExercises.filter(ex => (ex.time === time) || (!ex.time && dynamicTimeSlots.indexOf(time) === 0));
+                    return (
+                      <div
+                        key={dayName}
+                        className="grid border-b border-white/5 text-center hover:bg-white/[0.02] transition-colors"
+                        style={{ gridTemplateColumns: `120px repeat(${dynamicTimeSlots.length}, minmax(200px, 1fr))` }}
+                      >
+                        {/* Day Label */}
+                        <div className="p-6 border-r border-white/5 font-bold text-xs text-orange-400 bg-white/[0.02] flex items-center justify-center">
+                          {dayName}
+                        </div>
 
-                        return (
-                          <div
-                            key={dayName}
-                            className="p-3 border-r border-white/5 flex items-start justify-center min-h-[120px]"
-                          >
-                            {exercises.length > 0 ? (
-                              <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/5 border border-orange-500/30 rounded-2xl p-4 w-full shadow-lg">
-                                <ul className="text-xs text-left space-y-3">
-                                  {exercises.map((ex, i) => (
-                                    <li key={i} className="flex flex-col group">
-                                      <div className="flex items-start gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                                        <span className="font-bold text-white uppercase tracking-tight leading-tight group-hover:text-orange-400 transition-colors">
-                                          {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
-                                        </span>
-                                      </div>
-                                      {typeof ex === 'object' && (
-                                        <div className="flex flex-wrap gap-x-2 gap-y-1 ml-3.5 mt-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">
-                                          {ex.sets && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.sets} Sets</span>}
-                                          {ex.count && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.count}</span>}
+                        {/* Exercise Slots for each time */}
+                        {dynamicTimeSlots.map((time) => {
+                          const exercises = allDayExercises.filter(ex => (ex.time === time) || (!ex.time && dynamicTimeSlots.indexOf(time) === 0));
+
+                          return (
+                            <div
+                              key={time}
+                              className="p-3 border-r border-white/5 flex items-start justify-center min-h-[120px]"
+                            >
+                              {exercises.length > 0 ? (
+                                <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/5 border border-orange-500/30 rounded-2xl p-4 w-full shadow-lg">
+                                  <ul className="text-xs text-left space-y-3">
+                                    {exercises.map((ex, i) => (
+                                      <li key={i} className="flex flex-col group">
+                                        <div className="flex items-start gap-2">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                                          <span className="font-bold text-white uppercase tracking-tight leading-tight group-hover:text-orange-400 transition-colors">
+                                            {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
+                                          </span>
                                         </div>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ) : (
-                              <div className="mt-4 w-6 h-0.5 bg-white/10 rounded-full" />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                                        {typeof ex === 'object' && (
+                                          <div className="flex flex-wrap gap-x-2 gap-y-1 ml-3.5 mt-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">
+                                            {ex.sets && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.sets} Sets</span>}
+                                            {ex.count && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.count}</span>}
+                                          </div>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : (
+                                <div className="mt-4 w-6 h-0.5 bg-white/10 rounded-full" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
