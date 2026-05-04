@@ -7,9 +7,12 @@ import {
   XCircle,
   AlertTriangle,
   Calendar,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { FaPrint } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 // backend API
 import api from "../../api";
@@ -86,7 +89,7 @@ const Payments = () => {
         cache.adminPayments = finalData;
       } catch (error) {
         console.error(error);
-        if (!cache.adminPayments) alert("Failed to load payment data");
+        if (!cache.adminPayments) toast.error("Failed to load payment data");
       } finally {
         setLoading(false);
       }
@@ -162,7 +165,7 @@ const Payments = () => {
 
       if (res.status !== 200) {
         console.error("status update failed");
-        alert("Update failed");
+        toast.error("Update failed");
         return;
       }
 
@@ -185,7 +188,7 @@ const Payments = () => {
       );
     } catch (err) {
       console.error(err);
-      alert("Update failed");
+      toast.error("Update failed");
     }
   };
 
@@ -385,7 +388,7 @@ const Payments = () => {
       }));
 
     if (selectedData.length === 0) {
-      alert("Please select rows first");
+      toast.error("Please select rows first");
       return;
     }
 
@@ -447,12 +450,12 @@ const Payments = () => {
           });
         }
 
-        alert("Excel imported successfully");
+        toast.success("Excel imported successfully");
 
         window.location.reload();
       } catch (error) {
         console.error(error);
-        alert("Import failed");
+        toast.error("Import failed");
       }
     };
 
@@ -503,27 +506,29 @@ const Payments = () => {
             </button>
 
             {/* Toggle Buttons */}
-            <div className="flex items-center bg-[#2a2540] rounded-xl p-1">
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
               <button
                 onClick={() => setViewType("table")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                className={`p-2 rounded-lg transition-all ${
                   viewType === "table"
-                    ? "bg-orange-500 text-white"
-                    : "text-gray-300 hover:bg-white/10"
+                    ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                    : "text-white/40 hover:text-white hover:bg-white/5"
                 }`}
+                title="Table View"
               >
-                Table
+                <List size={20} />
               </button>
 
               <button
                 onClick={() => setViewType("card")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                className={`p-2 rounded-lg transition-all ${
                   viewType === "card"
-                    ? "bg-orange-500 text-white"
-                    : "text-gray-300 hover:bg-white/10"
+                    ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                    : "text-white/40 hover:text-white hover:bg-white/5"
                 }`}
+                title="Card View"
               >
-                Card
+                <LayoutGrid size={20} />
               </button>
             </div>
           </div>
