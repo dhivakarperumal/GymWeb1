@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import api from "../../api";
-
+import emailjs from "@emailjs/browser";
 const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
 const MEMBERSHIP_API = "/memberships";
@@ -284,6 +284,41 @@ Thank you for joining 💪
     window.open(url, "_blank");
   };
 
+  // ================= EMAIL JS =================
+  const sendEmailReceipt = async () => {
+    if (!form.email) {
+      console.warn("No email provided, skipping email receipt.");
+      return;
+    }
+    
+    const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
+    const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
+
+    const templateParams = {
+      to_name: selectedUser.name || "Member",
+      to_email: form.email,
+      plan_name: selectedPlan.name,
+      duration: selectedPlan.duration,
+      start_date: form.startDate,
+      end_date: form.endDate,
+      amount_paid: paidNow,
+      payment_mode: paymentModeLabel,
+      total_price: getSelectedPlanTotal()
+    };
+
+    try {
+      const response = await emailjs.send(
+        'service_gesrr9d', 
+        'template_3hkcx6m', 
+        templateParams, 
+        'e9Nfh3WsTPBxH3bn1'
+      );
+      console.log('Email sent SUCCESS!', response.status, response.text);
+    } catch (error) {
+      console.error('Email sent FAILED...', error);
+    }
+  };
+
   // ================= ASSIGN PLAN =================
   const handleAssignPlan = async () => {
     if (!selectedUser || !selectedPlan) {
@@ -380,6 +415,7 @@ Thank you for joining 💪
       alert("Plan assigned successfully");
 
       // sendWhatsApp();
+      await sendEmailReceipt();
 
       navigate("/admin/members");
     } catch (err) {
