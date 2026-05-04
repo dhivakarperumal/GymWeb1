@@ -94,6 +94,17 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [orderType, setOrderType] = useState("DELIVERY");
 
+  // Check if any item is food category
+  const hasFoodItems = items.some(item => item.category === 'Food');
+
+  // For food items, force CASH payment and SHOP pickup
+  useEffect(() => {
+    if (hasFoodItems) {
+      setPaymentMethod("CASH");
+      setOrderType("PICKUP");
+    }
+  }, [hasFoodItems]);
+
   const [shipping, setShipping] = useState({
     name: "",
     email: "",
@@ -404,15 +415,18 @@ export default function Checkout() {
             <div className="flex gap-4 mb-6">
               <button
                 onClick={() => setOrderType("DELIVERY")}
+                disabled={hasFoodItems}
                 className={`flex-1 py-3 rounded-xl border transition
       ${
         orderType === "DELIVERY"
           ? "bg-red-600 border-red-600"
           : "border-red-500/40 hover:border-red-500"
       }
+      ${hasFoodItems ? "opacity-50 cursor-not-allowed" : ""}
     `}
               >
                 Delivery
+                {hasFoodItems && <span className="block text-xs">(Not available)</span>}
               </button>
 
               <button
@@ -426,6 +440,7 @@ export default function Checkout() {
     `}
               >
                 Shop
+                {hasFoodItems && <span className="block text-xs">(Required for food items)</span>}
               </button>
             </div>
 
@@ -590,8 +605,10 @@ h-[100vh] flex flex-col
                   type="radio"
                   checked={paymentMethod === "CASH"}
                   onChange={() => setPaymentMethod("CASH")}
+                  disabled={hasFoodItems}
                 />
                 Cash on Delivery
+                {hasFoodItems && <span className="text-xs text-gray-500">(Required for food items)</span>}
               </label>
 
               <label className="flex gap-2 cursor-pointer">
@@ -599,8 +616,10 @@ h-[100vh] flex flex-col
                   type="radio"
                   checked={paymentMethod === "ONLINE"}
                   onChange={() => setPaymentMethod("ONLINE")}
+                  disabled={hasFoodItems}
                 />
                 Online Payment
+                {hasFoodItems && <span className="text-xs text-gray-500">(Not available for food items)</span>}
               </label>
             </div>
 
