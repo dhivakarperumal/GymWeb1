@@ -233,113 +233,122 @@ const AllDietPlans = () => {
               ))
             )}
           </div>
-
         {/* VIEW MODAL */}
         {selectedPlan && (
-          <div className="fixed inset-0 bg-white/80 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-900 w-full max-w-full sm:max-w-7xl rounded-xl p-4 sm:p-6 overflow-x-auto">
-              <div className="flex justify-between">
-               
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-900 w-full max-w-full sm:max-w-7xl h-[90vh] flex flex-col rounded-xl border border-white/10 shadow-2xl overflow-hidden">
               
-
-              {/* WEEK TABS */}
-              <div className="flex gap-4 mb-6">
-                {Array.from({ length: Math.ceil(selectedPlan.duration / 7) }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveWeek(i + 1)}
-                    className={`px-6 py-2 rounded-full ${
-                      activeWeek === i + 1
-                        ? "bg-red-600"
-                        : "bg-gray-800"
-                    }`}
-                  >
-                    Week {i + 1}
-                  </button>
-                ))}
-              </div>
-               <div className="text-right mt-0">
+              {/* FIXED HEADER */}
+              <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    {selectedPlan.title}
+                  </h3>
+                  <div className="flex gap-2">
+                    {Array.from({ length: Math.ceil(selectedPlan.duration / 7) }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setActiveWeek(i + 1)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          activeWeek === i + 1
+                            ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
+                            : "bg-white/5 text-gray-400 hover:bg-white/10"
+                        }`}
+                      >
+                        Week {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
                 <button
                   onClick={() => setSelectedPlan(null)}
-                  className="px-6 py-2 bg-red-600 rounded-lg"
+                  className="w-10 h-10 flex items-center justify-center bg-red-500 text-white rounded-xl hover:bg-red-600 transition shadow-lg shadow-red-500/20"
                 >
-                  X
+                  <span className="text-xl">&times;</span>
                 </button>
               </div>
-              </div>
 
-              {/* TABLE */}
-              <div className="border border-gray-700 rounded-xl overflow-hidden">
-
-                <div className="grid grid-cols-9 bg-black text-center font-semibold border-b border-gray-700 text-[10px]">
-                  <div className="p-4 border-r border-gray-700">DAY</div>
-                  {timeSlots.map((t) => (
-                    <div key={t.label} className="p-4 border-r border-gray-700 uppercase">
-                      {t.label}
+              {/* SCROLLABLE BODY */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-black/20">
+                <div className="border border-gray-700 rounded-xl overflow-x-auto custom-scrollbar">
+                  <div className="min-w-[1200px]">
+                    {/* TABLE HEADER */}
+                    <div className="grid grid-cols-9 bg-black text-center font-semibold border-b border-gray-700 text-[10px] sticky top-0 z-10">
+                      <div className="p-4 border-r border-gray-700 bg-black">DAY</div>
+                      {timeSlots.map((t) => (
+                        <div key={t.label} className="p-4 border-r border-gray-700 uppercase bg-black">
+                          {t.label}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {weekDays.map((dayName, index) => {
-                  const dayNumber =
-                    (activeWeek - 1) * 7 + index + 1;
-                  const dayKey = `Day${dayNumber}`;
-                  const dayData = selectedPlan.days?.[dayKey];
+                    {weekDays.map((dayName, index) => {
+                      const dayNumber = (activeWeek - 1) * 7 + index + 1;
+                      const dayKey = `Day${dayNumber}`;
+                      const dayData = selectedPlan.days?.[dayKey];
 
-                  return (
-                    <div
-                      key={dayName}
-                      className="grid grid-cols-9 border-b border-gray-800 text-center text-xs"
-                    >
-                      <div className="p-4 border-r border-gray-800 font-semibold bg-white/5 flex items-center justify-center">
-                        {dayName}
-                      </div>
-
-                      {timeSlots.map((t) => {
-                        const mealData = dayData?.[t.key];
-                        // Handle new structure {time, items} or old structure string/obj
-                        let items = [];
-                        let time = "";
-
-                        if (mealData) {
-                          if (mealData.items) {
-                            items = mealData.items;
-                            time = mealData.time;
-                          } else if (typeof mealData === "string") {
-                            items = [{ food: mealData }];
-                          } else {
-                            items = [{ food: mealData.food, quantity: mealData.quantity }];
-                            time = mealData.time;
-                          }
-                        }
-
-                        return (
-                          <div
-                            key={t.label}
-                            className="p-2 border-r border-gray-800 flex flex-col gap-1 overflow-y-auto max-h-32"
-                          >
-                            {time && <div className="text-[10px] text-emerald-400 font-bold">{time}</div>}
-                            {items.map((it, i) => (
-                              <div key={i} className="text-[10px] leading-tight">
-                                <span className="font-medium text-white">{it.food}</span>
-                                {it.quantity && <span className="text-gray-400 block">({it.quantity})</span>}
-                              </div>
-                            ))}
-                            {items.length === 0 && <span className="text-gray-600">-</span>}
+                      return (
+                        <div
+                          key={dayName}
+                          className="grid grid-cols-9 border-b border-gray-800 text-center text-xs hover:bg-white/[0.02] transition"
+                        >
+                          <div className="p-4 border-r border-gray-800 font-semibold bg-white/5 flex items-center justify-center">
+                            {dayName}
                           </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
 
+                          {timeSlots.map((t) => {
+                            const mealData = dayData?.[t.key];
+                            let items = [];
+                            let time = "";
+
+                            if (mealData) {
+                              if (mealData.items) {
+                                items = mealData.items;
+                                time = mealData.time;
+                              } else if (typeof mealData === "string") {
+                                items = [{ food: mealData }];
+                              } else {
+                                items = [{ food: mealData.food, quantity: mealData.quantity }];
+                                time = mealData.time;
+                              }
+                            }
+
+                            return (
+                              <div
+                                key={t.label}
+                                className="p-2 border-r border-gray-800 flex flex-col gap-1 overflow-y-auto max-h-32"
+                              >
+                                {time && <div className="text-[10px] text-emerald-400 font-bold">{time}</div>}
+                                {items.map((it, i) => (
+                                  <div key={i} className="text-[10px] leading-tight">
+                                    <span className="font-medium text-white">{it.food}</span>
+                                    {it.quantity && <span className="text-gray-400 block">({it.quantity})</span>}
+                                  </div>
+                                ))}
+                                {items.length === 0 && <span className="text-gray-600">-</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              
+              {/* MODAL FOOTER */}
+              <div className="p-4 border-t border-white/10 bg-white/5 text-center">
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                  {selectedPlan.memberName} • {selectedPlan.calories} Total Kcal • {selectedPlan.duration} Days Plan
+                </p>
+              </div>
 
             </div>
           </div>
         )}
+
 
       </div>
     </div>
