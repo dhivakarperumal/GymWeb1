@@ -32,6 +32,7 @@ const pageTitles = {
   "/trainer/reports": "Reports",
   "/trainer/settings/profile": "Profile",
   "/trainer/pt-form": "Personal Training Form",
+  "/trainer/session-tracking": "Session Tracking",
   "/trainer/pricing": "Pricing",
   "/trainer/followupenquriy": "Follow-up Enquiry",
 };

@@ -63,6 +63,11 @@ const navItems = [
     icon: Activity,
   },
   {
+    path: "/trainer/session-tracking",
+    label: "Session Tracking",
+    icon: CalendarCheck,
+  },
+  {
     path: "/trainer/pricing",   // ✅ correct
     label: "Pricing",
     icon: DollarSign,
@@ -72,11 +77,6 @@ const navItems = [
     label: "Followup Enquiry",
     icon: MessageSquare,
   },
-  // {
-  //   path: "/trainer/session-tracking",
-  //   label: "Session Tracking",
-  //   icon: CalendarCheck,
-  // },
 
   {
     path: "/trainer/overall-attendance",
