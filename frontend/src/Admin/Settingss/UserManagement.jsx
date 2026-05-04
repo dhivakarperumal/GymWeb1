@@ -41,7 +41,7 @@ const UserManagement = () => {
           username: u.username || u.email || "Unknown",
           email: u.email,
           mobile: u.mobile,
-          active: true,
+          active: u.status === "active" || u.status === undefined || u.active === 1 || u.active === true,
           role: (u.role || "member").toLowerCase(),
         }))
       );
@@ -64,10 +64,15 @@ const UserManagement = () => {
     }
   };
 
-  const toggleStatus = async (id, active) => {
-    // Users table does not have active/status field
-    // Status is implicitly 'active' for all users
-    toast.info("User status cannot be toggled (all users are active)");
+  const toggleStatus = async (id, currentActive) => {
+    try {
+      await api.put(`/users/${id}`, { active: !currentActive });
+      toast.success("User status updated");
+      loadUsers();
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+      toast.error("Failed to toggle status");
+    }
   };
 
   const totalUsers = users.length;
@@ -186,9 +191,10 @@ const UserManagement = () => {
         <table className="min-w-full text-sm text-gray-200">
           <thead className="bg-white/20">
             <tr>
-              <th className="px-4 py-4 text-left">#</th>
+              <th className="px-4 py-4 text-left">S No</th>
               <th className="px-4 py-4 text-left">Name</th>
               <th className="px-4 py-4 text-left">Email</th>
+              <th className="px-4 py-4 text-left">Phone</th>
               <th className="px-4 py-4 text-left">Role</th>
               <th className="px-4 py-4 text-left">Status</th>
               <th className="px-4 py-4 text-left">Actions</th>
@@ -201,6 +207,7 @@ const UserManagement = () => {
                 <td className="px-4 py-3">{(page - 1) * pageSize + index + 1}</td>
                 <td className="px-4 py-3 font-medium">{u.username}</td>
                 <td className="px-4 py-3">{u.email}</td>
+                <td className="px-4 py-3">{u.mobile || "N/A"}</td>
 
                 <td className="px-4 py-3">
                   {editingId === u.id ? (

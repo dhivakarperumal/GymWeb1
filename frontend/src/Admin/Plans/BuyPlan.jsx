@@ -458,7 +458,6 @@ const BuyPlanadmin = () => {
 
   return (
     <div className="text-white min-h-screen p-6">
-     
 
       <div className="grid md:grid-cols-2 gap-10">
 

@@ -208,6 +208,7 @@ const Users = () => {
                 <th className="px-4 py-4 text-left font-semibold">S No</th>
                 <th className="px-4 py-4 text-left font-semibold">Name</th>
                 <th className="px-4 py-4 text-left font-semibold">Email</th>
+                <th className="px-4 py-4 text-left font-semibold">Phone</th>
                 <th className="px-4 py-4 text-left font-semibold">Username</th>
                 <th className="px-4 py-4 text-left font-semibold">Role</th>
                 <th className="px-4 py-4 text-left font-semibold">Status</th>
@@ -225,6 +226,7 @@ const Users = () => {
                     <td className="px-4 py-3 font-medium">{index + 1}</td>
                     <td className="px-4 py-3 font-medium">{u.username || "N/A"}</td>
                     <td className="px-4 py-3">{u.email}</td>
+                    <td className="px-4 py-3">{u.mobile || u.phone || "N/A"}</td>
                     <td className="px-4 py-3">{u.username || "N/A"}</td>
 
                     <td className="px-4 py-3">
