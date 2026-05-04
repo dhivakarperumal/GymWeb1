@@ -4,6 +4,8 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import api from "../../api";
 import emailjs from "@emailjs/browser";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
 const MEMBERSHIP_API = "/memberships";
@@ -247,50 +249,79 @@ const BuyPlanadmin = () => {
     AOS.init({ duration: 900, once: true });
   }, []);
 
-  // ================= WHATSAPP =================
-  const sendWhatsApp = () => {
-    if (!selectedUser || !selectedPlan) return;
 
-    const phone = selectedUser.phone?.replace(/\D/g, "");
 
+  // ================= GENERATE PDF =================
+  const generateAndDownloadPDF = () => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(249, 115, 22); // Orange
+    doc.text("GYM MEMBERSHIP RECEIPT", 105, 20, null, null, "center");
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 35);
+    doc.text(`Receipt No: REC-${Math.floor(Math.random() * 1000000)}`, 15, 45);
+
+    // Member Info
+    doc.setFontSize(14);
+    doc.setTextColor(249, 115, 22);
+    doc.text("Member Details", 15, 60);
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Name: ${selectedUser?.name || selectedUser?.username || "Member"}`, 15, 70);
+    doc.text(`Phone: ${form.phone}`, 15, 80);
+    doc.text(`Email: ${form.email}`, 15, 90);
+
+    // Plan Info
     const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
     const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
 
-    const message = `
-🏋️ Gym Membership Activated
+    doc.autoTable({
+      startY: 100,
+      head: [["Description", "Details"]],
+      body: [
+        ["Plan Name", selectedPlan?.name || "N/A"],
+        ["Duration", `${selectedPlan?.duration || "N/A"} Months`],
+        ["Start Date", form.startDate],
+        ["End Date", form.endDate],
+        ["Total Amount", `Rs. ${getSelectedPlanTotal()}`],
+        ["Amount Paid", `Rs. ${paidNow}`],
+        ["Payment Mode", paymentModeLabel],
+        ["Payment Status", paymentType === "emi" && isEMIAllowed ? "Partial Payment" : "Paid"],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [249, 115, 22] }, // Orange header
+    });
 
-👤 Name: ${selectedUser.name}
-📞 Phone: ${form.phone}
+    // Footer
+    doc.setFontSize(10);
+    doc.text("Thank you for joining our gym!", 105, doc.lastAutoTable.finalY + 20, null, null, "center");
 
-📦 Plan: ${selectedPlan.name}
-⏳ Duration: ${selectedPlan.duration} Months
+    // Download the PDF
+    doc.save(`Receipt_${selectedUser?.name || selectedUser?.username || "Member"}.pdf`);
 
-📅 Start Date: ${form.startDate}
-📅 End Date: ${form.endDate}
-
-💰 Paid: ₹${paidNow}
-💳 Mode: ${paymentModeLabel}
-
-📏 Height: ${form.height}
-⚖️ Weight: ${form.weight}
-🧮 BMI: ${form.bmi}
-
-✅ Status: Active
-
-Thank you for joining 💪
-`;
-
-    const url = `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    // Return Data URI for email attachment
+    return doc.output('datauristring');
   };
 
   // ================= EMAIL JS =================
   const sendEmailReceipt = async () => {
+    // Always generate and download PDF, even if email is missing
+    let pdfDataUri = null;
+    try {
+      pdfDataUri = generateAndDownloadPDF();
+    } catch (e) {
+      console.error("Failed to generate PDF", e);
+    }
+
     if (!form.email) {
-      console.warn("No email provided, skipping email receipt.");
+      console.warn("No email provided, skipping email sending.");
       return;
     }
-    
+
     const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
     const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
 
@@ -303,14 +334,15 @@ Thank you for joining 💪
       end_date: form.endDate,
       amount_paid: paidNow,
       payment_mode: paymentModeLabel,
-      total_price: getSelectedPlanTotal()
+      total_price: getSelectedPlanTotal(),
+      content: pdfDataUri // Attaching the PDF base64 to the email template
     };
 
     try {
       const response = await emailjs.send(
-        'service_gesrr9d', 
-        'template_3hkcx6m', 
-        templateParams, 
+        'service_gesrr9d',
+        'template_3hkcx6m',
+        templateParams,
         'e9Nfh3WsTPBxH3bn1'
       );
       console.log('Email sent SUCCESS!', response.status, response.text);
@@ -453,7 +485,7 @@ Thank you for joining 💪
                 );
 
                 setSelectedUser(user);
-                
+
                 // FETCH HISTORY
                 if (user) {
                   const uId = user.u_id || user.user_id || user.id;
@@ -653,7 +685,7 @@ Thank you for joining 💪
                 <div className="w-1 h-8 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full"></div>
                 <h3 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">EMI Payment Plan</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="bg-white/5 p-4 rounded-xl border border-white/10 hover:border-orange-500/30 transition-all">
                   <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">Total Plan Price</p>
@@ -701,10 +733,10 @@ Thank you for joining 💪
                     {(() => {
                       const dueDate = new Date();
                       dueDate.setDate(dueDate.getDate() + 30);
-                      return dueDate.toLocaleDateString('en-IN', { 
-                        day: '2-digit', 
-                        month: 'short', 
-                        year: 'numeric' 
+                      return dueDate.toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
                       });
                     })()}
                   </p>
