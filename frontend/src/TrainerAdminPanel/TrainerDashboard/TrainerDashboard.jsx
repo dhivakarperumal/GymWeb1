@@ -103,7 +103,7 @@ const TrainerDashboard = () => {
           const workoutsRaw = Array.isArray(workoutData) ? workoutData : workoutData?.data || [];
           const userWorkouts = assignedMemberIds.length > 0
             ? workoutsRaw.filter(w => assignedMemberIds.includes(String(w.member_id || w.memberId)))
-            : workoutsRaw;
+            : [];
           workoutCount = userWorkouts.length;
           console.log("💪 Workouts:", workoutCount);
         } catch (e) {
@@ -117,7 +117,7 @@ const TrainerDashboard = () => {
           const dietsRaw = Array.isArray(dietData) ? dietData : dietData?.data || [];
           const userDiets = assignedMemberIds.length > 0
             ? dietsRaw.filter(d => assignedMemberIds.includes(String(d.member_id || d.memberId)))
-            : dietsRaw;
+            : [];
           dietCount = userDiets.length;
           console.log("🥗 Diets:", dietCount);
         } catch (e) {
