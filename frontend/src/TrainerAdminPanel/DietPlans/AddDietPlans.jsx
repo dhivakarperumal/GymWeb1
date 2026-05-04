@@ -193,7 +193,7 @@ const AddDietPlans = () => {
     setForm((prev) => {
       const updatedItems = [...prev.days[day][meal].items];
       updatedItems[index] = { ...updatedItems[index], [field]: value };
-      
+
       return {
         ...prev,
         days: {
@@ -230,7 +230,7 @@ const AddDietPlans = () => {
     setForm((prev) => {
       if (prev.days[day][meal].items.length <= 1) return prev;
       const updatedItems = prev.days[day][meal].items.filter((_, i) => i !== index);
-      
+
       return {
         ...prev,
         days: {
@@ -401,19 +401,54 @@ const AddDietPlans = () => {
   };
 
   const downloadDietPlanTemplate = () => {
-    const template = meals.map((meal) => ({
-      Day: "1",
-      Meal: meal,
-      Time: "",
-      Food: "",
-      Qty: "",
-      Kcal: "",
-    }));
+    const template = [
+      // Day 1
+      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Warm Water", Qty: "1 glass", Kcal: "0" },
+      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Almonds", Qty: "5 pcs", Kcal: "50" },
+
+      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Oats", Qty: "1 bowl", Kcal: "200" },
+      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Milk", Qty: "1 cup", Kcal: "100" },
+
+      { Day: "1", Meal: "Mid-morning", Time: "11:00", Food: "Apple", Qty: "1", Kcal: "80" },
+
+      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
+      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Chicken", Qty: "150g", Kcal: "250" },
+
+      { Day: "1", Meal: "Evening", Time: "16:30", Food: "Nuts", Qty: "50g", Kcal: "200" },
+
+      { Day: "1", Meal: "Pre-workout", Time: "17:30", Food: "Banana", Qty: "1", Kcal: "90" },
+
+      { Day: "1", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+
+      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Chapati", Qty: "2 pcs", Kcal: "200" },
+      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Veg Curry", Qty: "1 bowl", Kcal: "150" },
+
+      // Day 2
+      { Day: "2", Meal: "Early-morning", Time: "06:00", Food: "Green Tea", Qty: "1 cup", Kcal: "5" },
+
+      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Eggs", Qty: "2 pcs", Kcal: "140" },
+      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Bread", Qty: "2 slices", Kcal: "160" },
+
+      { Day: "2", Meal: "Mid-morning", Time: "11:00", Food: "Banana", Qty: "1", Kcal: "90" },
+
+      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
+      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Fish", Qty: "150g", Kcal: "250" },
+
+      { Day: "2", Meal: "Evening", Time: "16:30", Food: "Peanuts", Qty: "50g", Kcal: "250" },
+
+      { Day: "2", Meal: "Pre-workout", Time: "17:30", Food: "Dates", Qty: "3 pcs", Kcal: "70" },
+
+      { Day: "2", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+
+      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Salad", Qty: "1 bowl", Kcal: "150" },
+      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Soup", Qty: "1 cup", Kcal: "100" },
+    ];
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(template);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan Template");
-    XLSX.writeFile(workbook, "Diet_Plan_Template.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan Sample");
+
+    XLSX.writeFile(workbook, "Diet_Plan_Sample.xlsx");
   };
 
   const handleImportExcel = async (event) => {
@@ -687,7 +722,7 @@ const AddDietPlans = () => {
                 onClick={downloadDietPlanTemplate}
                 className="px-4 py-2 rounded-lg bg-slate-700/80 border border-white/10 text-white text-sm hover:bg-slate-700 transition"
               >
-                Download Excel Template
+                Download Example Excel
               </button>
 
               <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
@@ -898,8 +933,8 @@ const AddDietPlans = () => {
 
                   {meals.map((meal) => {
                     const isWorkoutMeal = meal.toLowerCase().includes("workout");
-                    const mealColorClass = isWorkoutMeal 
-                      ? "bg-purple-500/20 border-purple-500/30 text-purple-400" 
+                    const mealColorClass = isWorkoutMeal
+                      ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
                       : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
 
                     const mealItems = form.days[day][meal]?.items || [];
@@ -915,7 +950,7 @@ const AddDietPlans = () => {
                                   {meal}
                                 </div>
                               ) : (
-                                <div className="hidden md:block h-10" /> 
+                                <div className="hidden md:block h-10" />
                               )}
                             </div>
 
