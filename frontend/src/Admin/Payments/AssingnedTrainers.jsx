@@ -4,6 +4,7 @@ import cache from "../../cache";
 import { Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
+import { toast } from "react-hot-toast";
 
 const AssingnedTrainers = () => {
   const [members, setMembers] = useState([]);
@@ -11,6 +12,7 @@ const AssingnedTrainers = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [isReassignMode, setIsReassignMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
   const [assignments, setAssignments] = useState({});
@@ -119,18 +121,18 @@ const AssingnedTrainers = () => {
   /* ================= ASSIGN / REASSIGN TRAINER ================= */
  const assignTrainer = async () => {
   if (selectedUsers.length === 0) {
-    alert("Select at least one member");
+    toast.error("Select at least one member");
     return;
   }
 
   if (!selectedTrainer) {
-    alert("Select a trainer");
+    toast.error("Select a trainer");
     return;
   }
 
   const trainer = trainers.find((t) => t.id === selectedTrainer);
   if (!trainer) {
-    alert("Trainer not found");
+    toast.error("Trainer not found");
     return;
   }
 
@@ -162,7 +164,7 @@ const AssingnedTrainers = () => {
 
     await api.post("/assignments", { assignments: payload });
 
-    alert("Trainer assigned / reassigned successfully");
+    toast.success("Trainer assigned successfully");
     setShowAssignModal(false);
     setSelectedUsers([]);
     setSelectedTrainer("");
@@ -179,7 +181,7 @@ const AssingnedTrainers = () => {
     cache.adminAssignments = assignData;
   } catch (err) {
     console.error(err);
-    alert("Assignment failed");
+    toast.error("Assignment failed");
   } finally {
     setAssigning(false);
   }
@@ -232,13 +234,23 @@ const AssingnedTrainers = () => {
          
         </div>
 
-        <button
-          onClick={() => setShowAssignModal(true)}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold"
-        >
-          <Dumbbell size={20} />
-          Assign New Trainer
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => { setIsReassignMode(false); setShowAssignModal(true); }}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold"
+          >
+            <Dumbbell size={20} />
+            Assign New Trainer
+          </button>
+          
+          <button
+            onClick={() => { setIsReassignMode(true); setShowAssignModal(true); }}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold"
+          >
+            <Users size={20} />
+            Reassign Trainer
+          </button>
+        </div>
       </div>
 
       {/* SEARCH AND FILTER */}
@@ -559,17 +571,23 @@ const AssingnedTrainers = () => {
           <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
             
             {/* 🔹 TITLE */}
-            <h2 className="text-2xl font-bold mb-6 text-center">Assign Trainer</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              {isReassignMode ? "Reassign Trainer" : "Assign Trainer"}
+            </h2>
 
             {/* 🔹 MEMBER SELECT */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-300 mb-3">Select Members (Only members with active plans):</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-3">
+                {isReassignMode ? "Select Members (Only assigned members):" : "Select Members (Only members with active plans):"}
+              </label>
               <div className="max-h-56 overflow-y-auto space-y-2 pr-1 bg-black/20 rounded-xl p-3 border border-white/10">
-                {members.filter((m) => (m.plans?.length || 0) > 0 && (!assignments[m.uid] || assignments[m.uid].length === 0)).length === 0 ? (
-                  <p className="text-gray-400 text-sm text-center py-4">No unassigned members with plans found</p>
+                {members.filter((m) => (m.plans?.length || 0) > 0 && (isReassignMode ? (assignments[m.uid] && assignments[m.uid].length > 0) : (!assignments[m.uid] || assignments[m.uid].length === 0))).length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-4">
+                    {isReassignMode ? "No assigned members found" : "No unassigned members with plans found"}
+                  </p>
                 ) : (
                   members
-                    .filter((m) => (m.plans?.length || 0) > 0 && (!assignments[m.uid] || assignments[m.uid].length === 0))
+                    .filter((m) => (m.plans?.length || 0) > 0 && (isReassignMode ? (assignments[m.uid] && assignments[m.uid].length > 0) : (!assignments[m.uid] || assignments[m.uid].length === 0)))
                     .map((m) => (
                     <label
                       key={m.uid}
@@ -651,7 +669,7 @@ const AssingnedTrainers = () => {
                     : "hover:scale-105"
                 }`}
               >
-                {assigning ? "Assigning..." : "Assign Trainer"}
+                {assigning ? (isReassignMode ? "Reassigning..." : "Assigning...") : (isReassignMode ? "Reassign Trainer" : "Assign Trainer")}
               </button>
             </div>
           </div>

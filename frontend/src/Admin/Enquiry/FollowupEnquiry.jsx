@@ -155,17 +155,19 @@ const FollowupEnquiry = () => {
   };
 
   const handleSubmitEnquiry = async (e) => {
+    if (e) e.preventDefault();
+    
     if (!formData.name.trim()) {
-      alert("Name is required");
+      toast.error("Name is required");
       return;
     }
     if (!formData.phone || formData.phone.length !== 10) {
-      alert("A valid 10-digit phone number is required");
+      toast.error("A valid 10-digit phone number is required");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) {
-      alert("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
       return;
     }
 
@@ -177,9 +179,9 @@ const FollowupEnquiry = () => {
       }
       fetchEnquiries();
       setShowForm(false);
-      alert("Record saved successfully!");
+      toast.success("Record saved successfully!");
     } catch (err) {
-      alert("Error saving record");
+      toast.error("Error saving record");
     }
   };
 
@@ -210,8 +212,8 @@ const FollowupEnquiry = () => {
       name: "", email: "", phone: "", subject: "", message: "",
       height: "", weight: "", bmi: "", dob: "", age: "", address: "",
       employer: "", occupation: "", emergency_contact_name: "",
-      relationship: "", emergency_contact_address: "",
-      phone_home: "", phone_work: "",
+      emergency_contact_relationship: "", emergency_contact_address: "",
+      emergency_contact_phone_home: "", emergency_contact_phone_work: "",
       fitness_goal: "", blood_group: "", gender: "", status: "pending",
       plan_name: "", plan_duration: "", plan_price: "",
       reg_no: "", organization: "", website: "", best_time_to_reach: "",
@@ -844,11 +846,11 @@ const FollowupEnquiry = () => {
                     </div>
 
                     <div className="grid grid-cols-3 items-center gap-4">
-                      <label className="text-xs font-bold text-white/60">Phone</label>
+                      <label className="text-xs font-bold text-white/60">Work Phone</label>
                       <input
                         type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                        value={formData.emergency_contact_phone_work}
+                        onChange={(e) => setFormData({ ...formData, emergency_contact_phone_work: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                         maxLength={10}
                         placeholder="e.g., 9876543210"
                         className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
