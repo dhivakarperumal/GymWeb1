@@ -89,20 +89,27 @@ const TrainerDashboard = () => {
 
         setAssignedMembers(uniqueMembers);
 
-        const assignedMemberIds = uniqueMembers.map(m => String(m.userId || m.user_id));
-        console.log("👥 Assigned members:", assignedMemberIds.length);
+        const assignedMemberIds = uniqueMembers.map(m => String(m.gymMemberId)).filter(id => id && id !== "null");
+        const assignedUserIds = uniqueMembers.map(m => String(m.userId || m.user_id)).filter(id => id && id !== "null");
+        
+        // Combine both to ensure we catch plans saved under either ID type
+        const allAssociatedIds = [...new Set([...assignedMemberIds, ...assignedUserIds])];
+        
+        console.log("👥 Assigned IDs (Combined):", allAssociatedIds.length);
 
         let workoutCount = 0;
         let dietCount = 0;
         let checkinCount = 0;
 
         try {
-          /* WORKOUT PLANS for assigned members only */
-          const workoutRes = await api.get("/workouts");
+          /* WORKOUT PLANS for this trainer specifically */
+          const workoutRes = await api.get(`/workouts?trainerId=${trainerId}`);
           const workoutData = workoutRes.data;
           const workoutsRaw = Array.isArray(workoutData) ? workoutData : workoutData?.data || [];
-          const userWorkouts = assignedMemberIds.length > 0
-            ? workoutsRaw.filter(w => assignedMemberIds.includes(String(w.member_id || w.memberId)))
+          
+          // Filter against any possible associated ID (gymMemberId or userId)
+          const userWorkouts = allAssociatedIds.length > 0
+            ? workoutsRaw.filter(w => allAssociatedIds.includes(String(w.member_id || w.memberId || w.user_id || w.userId)))
             : [];
           workoutCount = userWorkouts.length;
           console.log("💪 Workouts:", workoutCount);
@@ -111,12 +118,14 @@ const TrainerDashboard = () => {
         }
 
         try {
-          /* DIET PLANS for assigned members only */
-          const dietRes = await api.get("/diet-plans");
+          /* DIET PLANS for this trainer specifically */
+          const dietRes = await api.get(`/diet-plans?trainerId=${trainerId}`);
           const dietData = dietRes.data;
           const dietsRaw = Array.isArray(dietData) ? dietData : dietData?.data || [];
-          const userDiets = assignedMemberIds.length > 0
-            ? dietsRaw.filter(d => assignedMemberIds.includes(String(d.member_id || d.memberId)))
+          
+          // Filter against any possible associated ID (gymMemberId or userId)
+          const userDiets = allAssociatedIds.length > 0
+            ? dietsRaw.filter(d => allAssociatedIds.includes(String(d.member_id || d.memberId || d.user_id || d.userId)))
             : [];
           dietCount = userDiets.length;
           console.log("🥗 Diets:", dietCount);
