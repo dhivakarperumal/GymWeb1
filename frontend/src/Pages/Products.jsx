@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import PageHeader from "../Components/PageHeader";
@@ -10,11 +10,16 @@ import cache from "../cache";
 
 export default function Products() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const userId = user?.id;
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Get category from URL query params
+  const queryParams = new URLSearchParams(location.search);
+  const categoryFilter = queryParams.get('category');
 
   useEffect(() => {
     const load = async () => {
@@ -74,11 +79,16 @@ export default function Products() {
     }
   };
 
+  // Filter products based on category
+  const filteredProducts = categoryFilter
+    ? products.filter(p => p.category === categoryFilter)
+    : products;
+
   return (
     <div className="bg-black text-white min-h-screen flex flex-col">
       <PageHeader
-        title="Products"
-        subtitle="Browse our catalog"
+        title={categoryFilter === 'Food' ? 'Meal Plan' : 'Products'}
+        subtitle={categoryFilter === 'Food' ? 'Nutritional supplements and meal plans' : 'Browse our catalog'}
         bgImage="https://images.unsplash.com/photo-1571902943202-507ec2618e8f"
       />
 
@@ -93,7 +103,7 @@ export default function Products() {
           </div>
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 md:py-25">
-            {products.map((p, index) => {
+            {filteredProducts.map((p, index) => {
               const id = p.id ?? p.product_id;
               if (!id) {
                 console.warn("product without id", p);

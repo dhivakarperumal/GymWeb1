@@ -212,17 +212,46 @@ const Navbar = () => {
                 Home
               </NavLink>
 
-              <NavLink
-                to="/products"
-                className={({ isActive }) =>
-                  `cursor-pointer transition ${isActive
-                    ? "text-red-500 font-semibold"
-                    : "hover:text-red-400"
-                  }`
-                }
-              >
-                Products
-              </NavLink>
+              {/* PRODUCTS DROPDOWN */}
+              <div className="relative">
+                <button
+                  onMouseEnter={() => { setShowCategory(true); setShowOffers(false); }}
+                  onClick={() => { setShowCategory(!showCategory); setShowOffers(false); }}
+                  className="flex items-center gap-1 cursor-pointer"
+                >
+                  Products <ChevronDown size={16} />
+                </button>
+
+                {showCategory && (
+                  <div
+                    onMouseLeave={() => setShowCategory(false)}
+                    className="absolute top-full mt-4 w-56 bg-white text-black rounded-xl shadow-xl overflow-hidden"
+                  >
+                    <NavLink
+                      to="/products"
+                      className={({ isActive }) =>
+                        `block px-5 py-3 cursor-pointer ${isActive && !location.search
+                          ? "bg-gray-200 font-semibold"
+                          : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      All Products
+                    </NavLink>
+                    <NavLink
+                      to="/products?category=Food"
+                      className={({ isActive }) =>
+                        `block px-5 py-3 cursor-pointer ${isActive && location.search === '?category=Food'
+                          ? "bg-gray-200 font-semibold"
+                          : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      Meal Plan
+                    </NavLink>
+                  </div>
+                )}
+              </div>
 
               <NavLink
                 to="/pricing"
@@ -522,7 +551,8 @@ const Navbar = () => {
                 { name: "Services", path: "/services" },
                 { name: "Trainers", path: "/trainers" },
                 { name: "Pricing", path: "/pricing" },
-                { name: "Products", path: "/products" },
+                { name: "All Products", path: "/products" },
+                { name: "Meal Plan", path: "/products?category=Food" },
                 { name: "Plan Offers 📋", path: "/offers/plans" },
                 { name: "Product Offers 📦", path: "/offers/products" },
 

@@ -449,6 +449,7 @@ export default function ProductDetails() {
                         size: selectedSize || null,
                         gender: selectedGender || null,
                         weight: selectedWeight || null,
+                        category: product.category,
                       },
                     },
                   })
