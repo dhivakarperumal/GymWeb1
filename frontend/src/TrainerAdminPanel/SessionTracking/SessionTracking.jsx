@@ -177,7 +177,11 @@ const SessionTracking = () => {
         try {
             const res = await api.get(`/assignments?trainerUserId=${trainerId}`);
             const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
-            setMembers(data);
+            const assigned = data.filter((item) =>
+                String(item.trainerUserId || item.trainer_id) === String(trainerId) ||
+                String(item.trainerId || item.trainer_id) === String(trainerId)
+            );
+            setMembers(assigned);
         } catch (err) {
             console.error(err);
         }

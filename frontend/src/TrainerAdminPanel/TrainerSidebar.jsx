@@ -63,22 +63,22 @@ const navItems = [
     icon: Activity,
   },
   {
-  path: "/trainer/pricing",   // ✅ correct
-  label: "Pricing",
-  icon: DollarSign,
-},
-{
-  path: "/trainer/followupenquriy",
-  label: "Followup Enquiry",
-  icon: MessageSquare,
-},
-// {
-//   path: "/trainer/session-tracking",
-//   label: "Session Tracking",
-//   icon: CalendarCheck,
-// },
+    path: "/trainer/session-tracking",
+    label: "Session Tracking",
+    icon: CalendarCheck,
+  },
+  {
+    path: "/trainer/pricing",   // ✅ correct
+    label: "Pricing",
+    icon: DollarSign,
+  },
+  {
+    path: "/trainer/followupenquriy",
+    label: "Followup Enquiry",
+    icon: MessageSquare,
+  },
 
- {
+  {
     path: "/trainer/overall-attendance",
     label: "Attendance",
     icon: CalendarCheck,
