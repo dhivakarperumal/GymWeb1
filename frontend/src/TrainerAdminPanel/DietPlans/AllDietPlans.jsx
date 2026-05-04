@@ -215,7 +215,7 @@ const AllDietPlans = () => {
                       <p className="text-xs text-gray-400 mt-2">Duration: {d.duration} days</p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 border-l border-white/10 pl-6">
                         <button onClick={() => { setSelectedPlan(d); setActiveWeek(1); }} className="p-2 rounded-full bg-yellow-500 text-white">
                           <Eye size={16} />
                         </button>
@@ -240,12 +240,12 @@ const AllDietPlans = () => {
               
               {/* FIXED HEADER */}
               <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
-                <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-6">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     {selectedPlan.title}
                   </h3>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 border-l border-white/10 pl-6">
                     {Array.from({ length: Math.ceil(selectedPlan.duration / 7) }, (_, i) => (
                       <button
                         key={i}
