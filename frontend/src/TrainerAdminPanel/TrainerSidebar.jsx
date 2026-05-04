@@ -37,7 +37,7 @@ const navItems = [
     label: "All Workouts",
     icon: Activity,
   },
-  
+
   {
     path: "/trainer/alladddietplans",
     label: "All Diet Plans",
@@ -49,7 +49,7 @@ const navItems = [
     icon: Scale,
   },
 
- 
+
   {
     path: "/trainer/send-message",
     label: "Send Message",
@@ -63,22 +63,22 @@ const navItems = [
     icon: Activity,
   },
   {
-  path: "/trainer/pricing",   // ✅ correct
-  label: "Pricing",
-  icon: DollarSign,
-},
-{
-  path: "/trainer/followupenquriy",
-  label: "Followup Enquiry",
-  icon: MessageSquare,
-},
-// {
-//   path: "/trainer/session-tracking",
-//   label: "Session Tracking",
-//   icon: CalendarCheck,
-// },
+    path: "/trainer/pricing",   // ✅ correct
+    label: "Pricing",
+    icon: DollarSign,
+  },
+  {
+    path: "/trainer/followupenquriy",
+    label: "Followup Enquiry",
+    icon: MessageSquare,
+  },
+  // {
+  //   path: "/trainer/session-tracking",
+  //   label: "Session Tracking",
+  //   icon: CalendarCheck,
+  // },
 
- {
+  {
     path: "/trainer/overall-attendance",
     label: "Attendance",
     icon: CalendarCheck,
@@ -179,87 +179,87 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </div>
 
         {/* ========== NAVIGATION ========== */}
-         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto hide-scrollbar">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-        
-                    /* ===== DROPDOWN ITEM ===== */
-                    if (item.children) {
-                      const isMenuOpen = openMenu === item.label;
-        
-                      return (
-                        <div key={item.label}>
-                          <button
-                            onClick={() => toggleMenu(item.label)}
-                            className="
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto hide-scrollbar">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+
+            /* ===== DROPDOWN ITEM ===== */
+            if (item.children) {
+              const isMenuOpen = openMenu === item.label;
+
+              return (
+                <div key={item.label}>
+                  <button
+                    onClick={() => toggleMenu(item.label)}
+                    className="
                               w-full flex items-center gap-3 px-4 py-2.5 rounded-xl
                               text-white/80 hover:bg-white/20
                             "
-                          >
-                            <Icon className="w-5 h-5 shrink-0" />
-        
-                            {!collapsed && (
-                              <>
-                                <span className="flex-1 text-left">{item.label}</span>
-                                <ChevronDown
-                                  className={`w-4 h-4 transition-transform
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform
                                     ${isMenuOpen ? "rotate-180" : ""}
                                   `}
-                                />
-                              </>
-                            )}
-                          </button>
-        
-                          {/* ===== SUB MENU ===== */}
-                          <div className={`ml-10 mt-1 space-y-1 overflow-hidden transition-all
+                        />
+                      </>
+                    )}
+                  </button>
+
+                  {/* ===== SUB MENU ===== */}
+                  <div className={`ml-10 mt-1 space-y-1 overflow-hidden transition-all
                               ${isMenuOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}
                             `}>
-                            {item.children.map((sub) => {
-                              const SubIcon = sub.icon;
-                              const isActive = isRouteActive(sub.path);
-                              return (
-                                <NavLink
-                                  key={sub.path}
-                                  to={sub.path}
-                                  onClick={() => isOpen && onClose()}
-                                  className={`
+                    {item.children.map((sub) => {
+                      const SubIcon = sub.icon;
+                      const isActive = isRouteActive(sub.path);
+                      return (
+                        <NavLink
+                          key={sub.path}
+                          to={sub.path}
+                          onClick={() => isOpen && onClose()}
+                          className={`
                                       flex items-center gap-2 px-3 py-2 rounded-lg text-sm
                                       ${isActive
-                                        ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
-                                        : "text-white/70 hover:bg-white/20"}
+                              ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+                              : "text-white/70 hover:bg-white/20"}
                                     `}
-                                >
-                                  {SubIcon && <SubIcon className="w-4 h-4 mr-1 shrink-0" />}
-                                  <span>{sub.label}</span>
-                                </NavLink>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        >
+                          {SubIcon && <SubIcon className="w-4 h-4 mr-1 shrink-0" />}
+                          <span>{sub.label}</span>
+                        </NavLink>
                       );
-                    }
-        
-                    /* ===== NORMAL ITEM ===== */
-                    const isActive = isRouteActive(item.path);
-                    return (
-                      <NavLink
-                        key={item.path}
-                        to={item.path}
-                        end={item.exact}
-                        onClick={() => isOpen && onClose()}
-                        className={`
+                    })}
+                  </div>
+                </div>
+              );
+            }
+
+            /* ===== NORMAL ITEM ===== */
+            const isActive = isRouteActive(item.path);
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.exact}
+                onClick={() => isOpen && onClose()}
+                className={`
                             flex items-center gap-3 px-4 py-2.5 rounded-xl
                             ${isActive
-                                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
-                                : "text-white/80 hover:bg-white/20"}
+                    ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                    : "text-white/80 hover:bg-white/20"}
                           `}
-                      >
-                        <Icon className="w-5 h-5 shrink-0" />
-                        {!collapsed && <span>{item.label}</span>}
-                      </NavLink>
-                    );
-                  })}
-                </nav>
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </NavLink>
+            );
+          })}
+        </nav>
         {/* ========== COLLAPSE BUTTON ========== */}
         <button
           onClick={onToggleCollapse}

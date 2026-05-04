@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X,
@@ -66,6 +66,12 @@ const FollowupEnquiry = () => {
     status: "pending",
     next_followup_date: ""
   });
+
+  const currentStaff = useMemo(() => trainers.find(t => 
+    t.email === user?.email || 
+    t.username === user?.username || 
+    t.phone === user?.mobile
+  ), [trainers, user]);
 
   // Effects
   useEffect(() => {
@@ -193,7 +199,8 @@ const FollowupEnquiry = () => {
     try {
       await api.post("/followups/interactions", {
         followup_id: selectedEnquiry.id,
-        ...followupFormData
+        ...followupFormData,
+        staff_name: user?.name || user?.username || 'Admin'
       });
       setFollowupFormData({
         interaction_date: dayjs().format('YYYY-MM-DDTHH:mm'),
@@ -220,7 +227,8 @@ const FollowupEnquiry = () => {
       plan_name: "", plan_duration: "", plan_price: "",
       reg_no: "", organization: "", website: "", best_time_to_reach: "",
       updated_by: user?.username || "Admin", referred_by: "",
-      trainer_id: "", trainer_name: ""
+      trainer_id: (role !== 'admin' && currentStaff) ? currentStaff.id : "",
+      trainer_name: (role !== 'admin' && currentStaff) ? (currentStaff.name || currentStaff.username) : ""
     });
   };
 
@@ -315,7 +323,12 @@ const FollowupEnquiry = () => {
 
     const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
     const isAdmin = role && role.toLowerCase().includes('admin');
-    const matchesAccess = isAdmin || !enquiry.updated_by || enquiry.updated_by === user?.username;
+    
+    // Trainers see leads they updated OR leads assigned to them (by ID or Name)
+    const matchesAccess = isAdmin || 
+                         (enquiry.updated_by === user?.username) || 
+                         (enquiry.trainer_name && (enquiry.trainer_name === user?.name || enquiry.trainer_name === user?.username)) ||
+                         (enquiry.trainer_id && currentStaff && Number(enquiry.trainer_id) === Number(currentStaff.id));
 
     let matchesStaff = true;
     if (isAdmin && staffFilter !== 'all') {
@@ -623,7 +636,8 @@ const FollowupEnquiry = () => {
                     <th className="px-3 py-5 border-b border-white/5 text-left">Plan</th>
                     <th className="px-3 py-5 border-b border-white/5 text-left">Status</th>
                     <th className="px-3 py-5 border-b border-white/5 text-left">Date</th>
-                    <th className="px-3 py-5 border-b border-white/5 text-left">Staff</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Assigned Trainer</th>
+                    <th className="px-3 py-5 border-b border-white/5 text-left">Last Updated By</th>
                     <th className="px-3 py-5 border-b border-white/5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -678,11 +692,19 @@ const FollowupEnquiry = () => {
                           {dayjs(enquiry.created_at).format('DD/MM/YY')}
                         </td>
                         <td className="px-3 py-4">
+                          {enquiry.trainer_name ? (
+                            <div className="flex items-center gap-2 text-orange-400 font-bold text-xs">
+                              <Users size={12} className="text-orange-500" />
+                              <span className="truncate max-w-[100px]">{enquiry.trainer_name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-white/10 italic text-[10px]">Unassigned</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-4">
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-white/60 truncate max-w-[80px]">{enquiry.updated_by || 'Admin'}</span>
-                            {enquiry.trainer_name && (
-                              <span className="text-[9px] font-black text-orange-500 truncate max-w-[80px]" title={`Trainer: ${enquiry.trainer_name}`}>T: {enquiry.trainer_name}</span>
-                            )}
+                            <span className="text-[8px] text-white/20 uppercase font-black">{getStaffRole(enquiry.updated_by)}</span>
                           </div>
                         </td>
                         <td className="px-3 py-4 text-right">
@@ -1128,9 +1150,14 @@ const FollowupEnquiry = () => {
                               <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
                               <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
-                                    {dayjs(f.interaction_date).format('MMM DD, YYYY - HH:mm')}
-                                  </span>
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
+                                      {dayjs(f.interaction_date).format('MMM DD, YYYY - HH:mm')}
+                                    </span>
+                                    {f.staff_name && (
+                                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-tight">By: {f.staff_name}</span>
+                                    )}
+                                  </div>
                                   <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${f.status === 'completed' ? 'border-green-500/50 text-green-500' :
                                       f.status === 'cancelled' ? 'border-red-500/50 text-red-500' :
                                         'border-blue-500/50 text-blue-500'

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock,ChevronDown, Users, X, ChevronLeft, ChevronRight, FileText, Download } from "lucide-react";
+import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, ChevronDown, Users, X, ChevronLeft, ChevronRight, FileText, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
@@ -122,8 +122,8 @@ const Enquiry = () => {
         await api.put(`/enquiries/${selectedEnquiry.id}`, formData);
       } else {
         // Check for duplicates before creating new enquiry
-        const isDuplicate = enquiries.some(e => 
-          (formData.email && e.email?.toLowerCase() === formData.email.toLowerCase()) || 
+        const isDuplicate = enquiries.some(e =>
+          (formData.email && e.email?.toLowerCase() === formData.email.toLowerCase()) ||
           (formData.phone && e.phone === formData.phone)
         );
 
@@ -144,7 +144,7 @@ const Enquiry = () => {
         employer: "", occupation: "", emergency_contact_name: "",
         emergency_contact_relationship: "", emergency_contact_address: "",
         emergency_contact_phone_home: "", emergency_contact_phone_work: "",
-        fitness_goal: "", blood_group: "", gender: "", 
+        fitness_goal: "", blood_group: "", gender: "",
         trainer_id: "", trainer_name: "",
         termsAccepted: false
       });
@@ -249,8 +249,8 @@ const Enquiry = () => {
           }
 
           // Check for duplicates in existing enquiries list
-          const isDuplicate = enquiries.some(e => 
-            (payload.email && e.email?.toLowerCase() === payload.email.toLowerCase()) || 
+          const isDuplicate = enquiries.some(e =>
+            (payload.email && e.email?.toLowerCase() === payload.email.toLowerCase()) ||
             (payload.phone && e.phone === payload.phone)
           );
 
@@ -360,9 +360,9 @@ const Enquiry = () => {
 
   const filteredEnquiries = enquiries.filter(enquiry => {
     const matchesSearch = enquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         enquiry.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         enquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
+      enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      enquiry.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      enquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || enquiry.status === statusFilter;
     if (!(matchesSearch && matchesStatus)) return false;
 
@@ -726,11 +726,10 @@ const Enquiry = () => {
                   <button
                     key={i + 1}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`w-8 h-8 rounded-lg border transition-all text-[10px] font-black ${
-                      currentPage === i + 1
+                    className={`w-8 h-8 rounded-lg border transition-all text-[10px] font-black ${currentPage === i + 1
                         ? "bg-orange-500 border-orange-500 text-white"
                         : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white"
-                    }`}
+                      }`}
                   >
                     {i + 1}
                   </button>
@@ -787,7 +786,7 @@ const Enquiry = () => {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Enter full name"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
@@ -798,7 +797,7 @@ const Enquiry = () => {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="e.g., name@email.com"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
@@ -810,7 +809,7 @@ const Enquiry = () => {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                       maxLength={10}
                       placeholder="e.g., 9876543210"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -822,7 +821,7 @@ const Enquiry = () => {
                       <input
                         type="date"
                         value={formData.dob}
-                        onChange={(e) => setFormData({...formData, dob: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                         className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
@@ -831,7 +830,7 @@ const Enquiry = () => {
                       <input
                         type="number"
                         value={formData.age}
-                        onChange={(e) => setFormData({...formData, age: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                         placeholder="e.g., 25"
                         className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -841,7 +840,7 @@ const Enquiry = () => {
                     <label className="block text-sm font-medium text-white/80 mb-1">Blood Group</label>
                     <select
                       value={formData.blood_group}
-                      onChange={(e) => setFormData({...formData, blood_group: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select Blood Group</option>
@@ -859,7 +858,7 @@ const Enquiry = () => {
                     <label className="block text-sm font-medium text-white/80 mb-1">Gender</label>
                     <select
                       value={formData.gender}
-                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     >
@@ -894,13 +893,13 @@ const Enquiry = () => {
                       <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none group-hover:text-white transition-colors" />
                     </div>
                   </div>
-                 
+
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-1">Full Address</label>
                   <textarea
                     value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     rows={2}
                     placeholder="Door No., Street, City, State, Pincode"
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -917,7 +916,7 @@ const Enquiry = () => {
                     <input
                       type="text"
                       value={formData.employer}
-                      onChange={(e) => setFormData({...formData, employer: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, employer: e.target.value })}
                       placeholder="e.g., Company / Organisation name"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -927,7 +926,7 @@ const Enquiry = () => {
                     <input
                       type="text"
                       value={formData.occupation}
-                      onChange={(e) => setFormData({...formData, occupation: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
                       placeholder="e.g., Software Engineer"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -944,7 +943,7 @@ const Enquiry = () => {
                     <input
                       type="text"
                       value={formData.emergency_contact_name}
-                      onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })}
                       placeholder="Contact person full name"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -954,7 +953,7 @@ const Enquiry = () => {
                     <input
                       type="text"
                       value={formData.emergency_contact_relationship}
-                      onChange={(e) => setFormData({...formData, emergency_contact_relationship: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, emergency_contact_relationship: e.target.value })}
                       placeholder="e.g., Spouse, Parent, Friend"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -964,7 +963,7 @@ const Enquiry = () => {
                     <input
                       type="tel"
                       value={formData.emergency_contact_phone_home}
-                      onChange={(e) => setFormData({...formData, emergency_contact_phone_home: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                      onChange={(e) => setFormData({ ...formData, emergency_contact_phone_home: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                       maxLength={10}
                       placeholder="e.g., 9876543210"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -975,7 +974,7 @@ const Enquiry = () => {
                     <input
                       type="tel"
                       value={formData.emergency_contact_phone_work}
-                      onChange={(e) => setFormData({...formData, emergency_contact_phone_work: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                      onChange={(e) => setFormData({ ...formData, emergency_contact_phone_work: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                       maxLength={10}
                       placeholder="e.g., 9876543210"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -986,7 +985,7 @@ const Enquiry = () => {
                   <label className="block text-sm font-medium text-white/80 mb-1">Contact Address</label>
                   <textarea
                     value={formData.emergency_contact_address}
-                    onChange={(e) => setFormData({...formData, emergency_contact_address: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, emergency_contact_address: e.target.value })}
                     rows={2}
                     placeholder="Emergency contact's full address"
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1003,7 +1002,7 @@ const Enquiry = () => {
                     <input
                       type="number"
                       value={formData.height}
-                      onChange={(e) => setFormData({...formData, height: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, height: e.target.value })}
                       placeholder="e.g., 170"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -1013,7 +1012,7 @@ const Enquiry = () => {
                     <input
                       type="number"
                       value={formData.weight}
-                      onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                       placeholder="e.g., 70"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -1029,27 +1028,27 @@ const Enquiry = () => {
                     />
                   </div>
                 </div>
-              <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                 <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Fitness Goals</label>
-                  <textarea
-                    value={formData.fitness_goal}
-                    onChange={(e) => setFormData({...formData, fitness_goal: e.target.value})}
-                    rows={2}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Describe your fitness objectives..."
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Fitness Goals</label>
+                    <textarea
+                      value={formData.fitness_goal}
+                      onChange={(e) => setFormData({ ...formData, fitness_goal: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Describe your fitness objectives..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-1">Additional Notes / Message</label>
+                    <textarea
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">Additional Notes / Message</label>
-                  <textarea
-                    value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
-                    rows={2}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-               </div>
               </div>
 
               <div className="flex items-center gap-2">
@@ -1058,7 +1057,7 @@ const Enquiry = () => {
                   id="terms"
                   required
                   checked={formData.termsAccepted || false}
-                  onChange={(e) => setFormData({...formData, termsAccepted: e.target.checked})}
+                  onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
                   className="w-4 h-4 text-orange-500 bg-transparent border border-white/40 rounded focus:ring-orange-500 focus:ring-offset-gray-900 cursor-pointer"
                 />
                 <label htmlFor="terms" className="text-sm text-white/80 cursor-pointer">
@@ -1071,7 +1070,7 @@ const Enquiry = () => {
                   <label className="block text-sm font-medium text-white/80 mb-1">Status</label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="pending">Pending</option>
@@ -1081,7 +1080,7 @@ const Enquiry = () => {
                 </div>
               )}
               <div className="flex gap-3 pt-4">
-                 <button
+                <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
@@ -1105,7 +1104,7 @@ const Enquiry = () => {
                 >
                   {selectedEnquiry ? 'Update' : 'Create'}
                 </button>
-               
+
               </div>
             </form>
           </div>
