@@ -68,8 +68,8 @@ const AllWorkouts = () => {
           category: w.category,
           level: w.level,
           goal: w.goal,
-          durationWeeks: w.duration_weeks,
-          days: w.days,
+          durationWeeks: w.duration_weeks || Math.ceil(Object.keys(typeof w.days === 'string' ? JSON.parse(w.days || '{}') : (w.days || {})).length / 7) || 1,
+          days: typeof w.days === 'string' ? JSON.parse(w.days || '{}') : w.days,
           status: w.status,
           createdAt: w.created_at,
           updatedAt: w.updated_at,
@@ -305,7 +305,7 @@ const AllWorkouts = () => {
         {/* ---------------- VIEW MODAL ---------------- */}
         {selectedWorkout && (
           <div
-            className="fixed inset-0 bg-white/80 flex items-center justify-center p-6 z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-6 z-50"
             onClick={() => setSelectedWorkout(null)}
           >
             <div
@@ -316,7 +316,7 @@ const AllWorkouts = () => {
               {/* HEADER */}
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold">
-                  Weekly Timetable ({selectedWorkout.durationWeeks} Weeks)
+                  Weekly Timetable ({selectedWorkout.durationWeeks || Math.ceil(Object.keys(selectedWorkout.days || {}).length / 7) || 1} Weeks)
                 </h3>
 
                 <button
@@ -330,7 +330,7 @@ const AllWorkouts = () => {
               {/* WEEK SELECTOR */}
               <div className="flex gap-3 mb-6 flex-wrap">
                 {Array.from(
-                  { length: selectedWorkout.durationWeeks || 1 },
+                  { length: selectedWorkout.durationWeeks || Math.ceil(Object.keys(selectedWorkout.days || {}).length / 7) || 1 },
                   (_, i) => i + 1
                 ).map((week) => (
                   <button
@@ -373,7 +373,8 @@ const AllWorkouts = () => {
                       </div>
 
                       {weekDays.map((dayName, dayIndex) => {
-                        const dayKey = `Day${dayIndex + 1}`;
+                        const dayOffset = (selectedWeek - 1) * 7;
+                        const dayKey = `Day${dayOffset + dayIndex + 1}`;
 
                         const exercises =
                           selectedWorkout.weeks?.[`Week${selectedWeek}`]?.[dayKey] ||
@@ -415,7 +416,9 @@ const AllWorkouts = () => {
                 {/* Mobile stacked view: show each day as a vertical section with time slots */}
                 <div className="sm:hidden space-y-4 p-2">
                   {weekDays.map((dayName, dayIndex) => {
-                    const dayKey = `Day${dayIndex + 1}`;
+                    const dayOffset = (selectedWeek - 1) * 7;
+                    const dayKey = `Day${dayOffset + dayIndex + 1}`;
+
                     const exercisesBySlot = timeSlots.map((time, tIdx) => {
                       const exercises =
                         selectedWorkout.weeks?.[`Week${selectedWeek}`]?.[dayKey] ||
