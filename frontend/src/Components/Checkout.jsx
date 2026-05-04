@@ -604,26 +604,32 @@ h-[100vh] flex flex-col
             </div>
 
             <div className="mt-4 space-y-3">
-              <label className="flex gap-2 cursor-pointer">
+              <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${paymentMethod === "CASH" ? "border-red-500/50 bg-red-500/10" : "border-white/10 bg-white/5 hover:border-red-500/30 hover:bg-white/10"}`}>
                 <input
                   type="radio"
+                  className="accent-red-500 h-4 w-4"
                   checked={paymentMethod === "CASH"}
                   onChange={() => setPaymentMethod("CASH")}
                   disabled={fromMealPlan && hasFoodItems}
                 />
-                Cash on Delivery
-                {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-500">(Required for meal plan items)</span>}
+                <div className="flex flex-col text-sm">
+                  <span className="font-semibold">Cash on Delivery</span>
+                  {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-400">(Required for meal plan items)</span>}
+                </div>
               </label>
 
-              <label className="flex gap-2 cursor-pointer">
+              <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${paymentMethod === "ONLINE" ? "border-red-500/50 bg-red-500/10" : "border-white/10 bg-white/5 hover:border-red-500/30 hover:bg-white/10"}`}>
                 <input
                   type="radio"
+                  className="accent-red-500 h-4 w-4"
                   checked={paymentMethod === "ONLINE"}
                   onChange={() => setPaymentMethod("ONLINE")}
                   disabled={fromMealPlan && hasFoodItems}
                 />
-                Online Payment
-                {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-500">(Not available for meal plan items)</span>}
+                <div className="flex flex-col text-sm">
+                  <span className="font-semibold">Online Payment</span>
+                  {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-400">(Not available for meal plan items)</span>}
+                </div>
               </label>
             </div>
 
