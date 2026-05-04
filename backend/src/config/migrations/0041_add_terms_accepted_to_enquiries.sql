@@ -1,1 +1,1 @@
-ALTER TABLE enquiries ADD COLUMN terms_accepted TINYINT(1) DEFAULT 0;
+ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS terms_accepted TINYINT(1) DEFAULT 0;

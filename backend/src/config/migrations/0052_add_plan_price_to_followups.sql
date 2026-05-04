@@ -1,2 +1,2 @@
 -- Migration 0052: Add plan_price to followups table
-ALTER TABLE followups ADD COLUMN plan_price DECIMAL(10, 2) NULL;
+ALTER TABLE followups ADD COLUMN IF NOT EXISTS plan_price DECIMAL(10, 2) NULL;
