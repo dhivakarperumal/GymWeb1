@@ -97,17 +97,21 @@ export default function Checkout() {
   // Check if user came from meal plan (forces restrictions)
   const fromMealPlan = location.state?.fromMealPlan || false;
 
+  // Check if user came from all products (forces shop pickup and COD only)
+  const fromAllProducts = location.pathname.includes('/products') || location.state?.fromAllProducts || false;
+
   // Check if any item is food category
   const hasFoodItems = items.some(item => item.category === 'Food');
 
   // For meal plan purchases, force CASH payment and SHOP pickup
+  // For all products purchases, also force CASH payment and SHOP pickup
   // For regular purchases with food items, allow user choice
   useEffect(() => {
-    if (fromMealPlan && hasFoodItems) {
+    if ((fromMealPlan && hasFoodItems) || fromAllProducts) {
       setPaymentMethod("CASH");
       setOrderType("PICKUP");
     }
-  }, [fromMealPlan, hasFoodItems]);
+  }, [fromMealPlan, hasFoodItems, fromAllProducts]);
 
   const [shipping, setShipping] = useState({
     name: "",
@@ -250,6 +254,11 @@ export default function Checkout() {
 
   /* PLACE ORDER */
   const placeOrder = async () => {
+    // When coming from all products, only pickup is allowed
+    if (fromAllProducts && orderType !== "PICKUP") {
+      return toast.error("❌ Only shop pickup is available for products");
+    }
+
     if (orderType === "DELIVERY") {
       // Check each field individually for better error messages
       if (!shipping.name || shipping.name.trim() === "")
@@ -347,7 +356,8 @@ export default function Checkout() {
                     Fill all fields to continue
                   </p>
                   <p className="text-xs text-red-300 mt-1">
-                    {orderType === "DELIVERY"
+                    {fromAllProducts ? "Name & Phone are required for shop pickup" :
+                     orderType === "DELIVERY"
                       ? "Name, Phone, Address & State are required"
                       : "Name & Phone are required"}
                   </p>
@@ -417,7 +427,8 @@ export default function Checkout() {
             )}
 
             <div className="flex gap-4 mb-6">
-              <button
+              {/* COMMENTED OUT: Delivery option disabled when coming from all products */}
+              {/* <button
                 onClick={() => setOrderType("DELIVERY")}
                 disabled={fromMealPlan && hasFoodItems}
                 className={`flex-1 py-3 rounded-xl border transition
@@ -431,7 +442,7 @@ export default function Checkout() {
               >
                 Delivery
                 {fromMealPlan && hasFoodItems && <span className="block text-xs">(Not available)</span>}
-              </button>
+              </button> */}
 
               <button
                 onClick={() => setOrderType("PICKUP")}
@@ -444,7 +455,7 @@ export default function Checkout() {
     `}
               >
                 Shop
-                {fromMealPlan && hasFoodItems && <span className="block text-xs">(Required for meal plan items)</span>}
+                {(fromMealPlan && hasFoodItems) || fromAllProducts ? <span className="block text-xs">(Required for meal plan items / all products)</span> : ""}
               </button>
             </div>
 
@@ -610,15 +621,16 @@ h-[100vh] flex flex-col
                   className="accent-red-500 h-4 w-4"
                   checked={paymentMethod === "CASH"}
                   onChange={() => setPaymentMethod("CASH")}
-                  disabled={fromMealPlan && hasFoodItems}
+                  disabled={(fromMealPlan && hasFoodItems) || fromAllProducts}
                 />
                 <div className="flex flex-col text-sm">
                   <span className="font-semibold">Cash on Delivery</span>
-                  {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-400">(Required for meal plan items)</span>}
+                  {((fromMealPlan && hasFoodItems) || fromAllProducts) && <span className="text-xs text-gray-400">(Required for meal plan items / all products)</span>}
                 </div>
               </label>
 
-              <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${paymentMethod === "ONLINE" ? "border-red-500/50 bg-red-500/10" : "border-white/10 bg-white/5 hover:border-red-500/30 hover:bg-white/10"}`}>
+              {/* COMMENTED OUT: Online payment disabled when coming from all products */}
+              {/* <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${paymentMethod === "ONLINE" ? "border-red-500/50 bg-red-500/10" : "border-white/10 bg-white/5 hover:border-red-500/30 hover:bg-white/10"}`}>
                 <input
                   type="radio"
                   className="accent-red-500 h-4 w-4"
@@ -630,7 +642,7 @@ h-[100vh] flex flex-col
                   <span className="font-semibold">Online Payment</span>
                   {fromMealPlan && hasFoodItems && <span className="text-xs text-gray-400">(Not available for meal plan items)</span>}
                 </div>
-              </label>
+              </label> */}
             </div>
 
             <button
