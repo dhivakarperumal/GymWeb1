@@ -22,6 +22,7 @@ const AssingnedTrainers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
+  const [modalSearch, setModalSearch] = useState("");
 
   /* ================= FETCH MEMBERSHIPS ================= */
   useEffect(() => {
@@ -35,14 +36,14 @@ const AssingnedTrainers = () => {
       try {
         const res = await api.get("/memberships");
         const membershipsData = Array.isArray(res.data) ? res.data : [];
- 
+
         const usersData = membershipsData.map((m) => ({
           uid: m.userId || `m_${m.id}`,
           membershipId: m.id,
           username: m.username || m.userName || "No Name",
           email: m.email || m.userEmail || "",
           userEmail: m.userEmail || m.email || "",
-          workoutCount: 0, 
+          workoutCount: 0,
           dietCount: 0,
           plans: [{
             id: m.id.toString(),
@@ -119,73 +120,80 @@ const AssingnedTrainers = () => {
 
 
   /* ================= ASSIGN / REASSIGN TRAINER ================= */
- const assignTrainer = async () => {
-  if (selectedUsers.length === 0) {
-    toast.error("Select at least one member");
-    return;
-  }
-
-  if (!selectedTrainer) {
-    toast.error("Select a trainer");
-    return;
-  }
-
-  const trainer = trainers.find((t) => t.id === selectedTrainer);
-  if (!trainer) {
-    toast.error("Trainer not found");
-    return;
-  }
-
-  const safeTrainerName = trainer.name || trainer.username || trainer.email || "Trainer";
-
-  setAssigning(true);
-  try {
-    const payload = [];
-    for (const member of members.filter((m) => selectedUsers.includes(m.uid))) {
-      for (const plan of member.plans) {
-        payload.push({
-          userId: member.uid,
-          username: member.username || "No Name",
-          userEmail: member.email || "",
-          planId: plan.id,
-          planName: plan.planName,
-          planDuration: plan.duration,
-          planStartDate: plan.startDate,
-          planEndDate: plan.endDate,
-          planPrice: plan.pricePaid,
-          trainerId: trainer.id,
-          trainerName: safeTrainerName,
-          trainerSource: trainer.source || "staff",
-          status: "active",
-          updatedAt: new Date().toISOString(),
-        });
-      }
+  const assignTrainer = async () => {
+    if (selectedUsers.length === 0) {
+      toast.error("Select at least one member");
+      return;
     }
 
-    await api.post("/assignments", { assignments: payload });
+    if (!selectedTrainer) {
+      toast.error("Select a trainer");
+      return;
+    }
 
-    toast.success("Trainer assigned successfully");
-    setShowAssignModal(false);
-    setSelectedUsers([]);
-    setSelectedTrainer("");
+    const trainer = trainers.find((t) => t.id === selectedTrainer);
+    if (!trainer) {
+      toast.error("Trainer not found");
+      return;
+    }
 
-    // refresh assignments list
-    const res = await api.get("/assignments");
-    const assignData = {};
-    (Array.isArray(res.data) ? res.data : []).forEach((a) => {
-      const userId = a.userId?.toString();
-      if (!assignData[userId]) assignData[userId] = [];
-      assignData[userId].push(a);
-    });
-    setAssignments(assignData);
-    cache.adminAssignments = assignData;
-  } catch (err) {
-    console.error(err);
-    toast.error("Assignment failed");
-  } finally {
-    setAssigning(false);
-  }
-};
+    const safeTrainerName = trainer.name || trainer.username || trainer.email || "Trainer";
+
+    setAssigning(true);
+    try {
+      const payload = [];
+      for (const member of members.filter((m) => selectedUsers.includes(m.uid))) {
+        for (const plan of member.plans) {
+          payload.push({
+            userId: member.uid,
+            username: member.username || "No Name",
+            userEmail: member.email || "",
+            planId: plan.id,
+            planName: plan.planName,
+            planDuration: plan.duration,
+            planStartDate: plan.startDate,
+            planEndDate: plan.endDate,
+            planPrice: plan.pricePaid,
+            trainerId: trainer.id,
+            trainerName: safeTrainerName,
+            trainerSource: trainer.source || "staff",
+            status: "active",
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      await api.post("/assignments", { assignments: payload });
+
+      toast.success("Trainer assigned successfully");
+      setShowAssignModal(false);
+      setSelectedUsers([]);
+      setSelectedTrainer("");
+      setModalSearch("");
+
+      // refresh assignments list
+      const res = await api.get("/assignments");
+      const assignData = {};
+      (Array.isArray(res.data) ? res.data : []).forEach((a) => {
+        const userId = a.userId?.toString();
+        if (!assignData[userId]) assignData[userId] = [];
+        assignData[userId].push(a);
+      });
+      setAssignments(assignData);
+      cache.adminAssignments = assignData;
+    } catch (err) {
+      console.error(err);
+      toast.error("Assignment failed");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleQuickAssign = (memberUid, reassign = false) => {
+    setSelectedUsers([memberUid]);
+    setIsReassignMode(reassign);
+    setShowAssignModal(true);
+  };
 
   /* ================= FILTER & SEARCH LOGIC ================= */
   const filteredMembers = members.filter((m) => {
@@ -231,7 +239,7 @@ const AssingnedTrainers = () => {
     <div className="min-h-screen p-4 md:p-8 text-white" dir="ltr">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
         <div>
-         
+
         </div>
 
         <div className="flex gap-4">
@@ -242,7 +250,7 @@ const AssingnedTrainers = () => {
             <Dumbbell size={20} />
             Assign New Trainer
           </button>
-          
+
           <button
             onClick={() => { setIsReassignMode(true); setShowAssignModal(true); }}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold"
@@ -254,82 +262,77 @@ const AssingnedTrainers = () => {
       </div>
 
       {/* SEARCH AND FILTER */}
-     <div className="mb-8">
-  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-    
-    {/* 🔍 Search Bar — Left */}
-    <div className="relative w-full md:w-1/3">
-      <Search className="absolute left-4 top-3 text-gray-400" size={20} />
-      <input
-        type="text"
-        placeholder="Search by name or email..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-      />
-    </div>
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-    {/* 🎛 Filter Buttons — Right */}
-    <div className="flex flex-wrap gap-3 justify-start md:justify-end items-center">
-      <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
-      <button
-        onClick={() => handleFilterChange("all")}
-        className={`px-4 py-2 rounded-lg font-medium transition ${
-          filterType === "all"
-            ? "bg-orange-500 text-white"
-            : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
-        }`}
-      >
-        All Members
-      </button>
+          {/* 🔍 Search Bar — Left */}
+          <div className="relative w-full md:w-1/3">
+            <Search className="absolute left-4 top-3 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
 
-      <button
-        onClick={() => handleFilterChange("assigned")}
-        className={`px-4 py-2 rounded-lg font-medium transition ${
-          filterType === "assigned"
-            ? "bg-green-500 text-white"
-            : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
-        }`}
-      >
-        ✓ Assigned
-      </button>
+          {/* 🎛 Filter Buttons — Right */}
+          <div className="flex flex-wrap gap-3 justify-start md:justify-end items-center">
+            <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+            <button
+              onClick={() => handleFilterChange("all")}
+              className={`px-4 py-2 rounded-lg font-medium transition ${filterType === "all"
+                  ? "bg-orange-500 text-white"
+                  : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
+                }`}
+            >
+              All Members
+            </button>
 
-      <button
-        onClick={() => handleFilterChange("unassigned")}
-        className={`px-4 py-2 rounded-lg font-medium transition ${
-          filterType === "unassigned"
-            ? "bg-red-500 text-white"
-            : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
-        }`}
-      >
-        ✗ Not Assigned
-      </button>
+            <button
+              onClick={() => handleFilterChange("assigned")}
+              className={`px-4 py-2 rounded-lg font-medium transition ${filterType === "assigned"
+                  ? "bg-green-500 text-white"
+                  : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
+                }`}
+            >
+              ✓ Assigned
+            </button>
 
-      {/* 🖥 View Toggle */}
-      <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 ml-0 md:ml-4">
-        <button
-          onClick={() => setViewMode("card")}
-          className={`p-2 rounded-lg transition ${
-            viewMode === "card" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
-          }`}
-          title="Card View"
-        >
-          <LayoutGrid size={20} />
-        </button>
-        <button
-          onClick={() => setViewMode("table")}
-          className={`p-2 rounded-lg transition ${
-            viewMode === "table" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
-          }`}
-          title="Table View"
-        >
-          <List size={20} />
-        </button>
+            <button
+              onClick={() => handleFilterChange("unassigned")}
+              className={`px-4 py-2 rounded-lg font-medium transition ${filterType === "unassigned"
+                  ? "bg-red-500 text-white"
+                  : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
+                }`}
+            >
+              ✗ Not Assigned
+            </button>
+
+            {/* 🖥 View Toggle */}
+            <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 ml-0 md:ml-4">
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-lg transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
+                  }`}
+                title="Card View"
+              >
+                <LayoutGrid size={20} />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-lg transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
+                  }`}
+                title="Table View"
+              >
+                <List size={20} />
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
-    </div>
-
-  </div>
-</div>
 
 
       {/* MEMBERS WITH TRAINERS */}
@@ -380,16 +383,20 @@ const AssingnedTrainers = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-3 text-sm">
+                  <div className="flex flex-wrap gap-3 text-sm items-center">
                     <div className="bg-blue-500/20 px-3 py-1 rounded-full border border-blue-400/30">
                       <span className="text-blue-300 font-medium">Plans: {m.plans?.length || 0}</span>
                     </div>
-                    <div className="bg-purple-500/20 px-3 py-1 rounded-full border border-purple-400/30">
-                      <span className="text-purple-300 font-medium">W: {m.workoutCount || 0}</span>
-                    </div>
-                    <div className="bg-green-500/20 px-3 py-1 rounded-full border border-green-400/30">
-                      <span className="text-green-300 font-medium">D: {m.dietCount || 0}</span>
-                    </div>
+
+                    <button
+                      onClick={() => handleQuickAssign(m.uid, assignments[m.uid]?.length > 0)}
+                      className={`ml-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg ${assignments[m.uid]?.length > 0
+                          ? "bg-blue-600 text-white shadow-blue-500/25 border border-blue-400/50"
+                          : "bg-emerald-600 text-white shadow-emerald-500/25 border border-emerald-400/50"
+                        }`}
+                    >
+                      {assignments[m.uid]?.length > 0 ? "Reassign" : "Assign"}
+                    </button>
                   </div>
                 </div>
 
@@ -399,7 +406,9 @@ const AssingnedTrainers = () => {
                     {assignments[m.uid].map((assign) => (
                       <div
                         key={assign.id}
-                        className="bg-white/5 border border-green-400/30 rounded-xl p-4 space-y-3"
+                        onClick={() => handleQuickAssign(m.uid, true)}
+                        className="bg-white/5 border border-green-400/30 rounded-xl p-4 space-y-3 cursor-pointer hover:bg-white/10 transition-all"
+                        title="Click to Reassign"
                       >
                         <div className="flex items-center gap-3 pb-3 border-b border-white/10">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0">
@@ -420,9 +429,16 @@ const AssingnedTrainers = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-red-500/10 border border-red-400/30 rounded-xl p-4 flex items-start gap-3">
+                  <div
+                    onClick={() => handleQuickAssign(m.uid, false)}
+                    className="bg-red-500/10 border border-red-400/30 rounded-xl p-4 flex items-start gap-3 cursor-pointer hover:bg-red-500/20 transition-all"
+                    title="Click to Assign Trainer"
+                  >
                     <AlertCircle size={18} className="text-red-400 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-300">No Trainer Assigned</p>
+                    <div className="flex-1">
+                      <p className="text-sm text-red-300 font-bold">No Trainer Assigned</p>
+                      <p className="text-[10px] text-red-400/60 font-medium">Click here to assign a trainer now</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -453,12 +469,23 @@ const AssingnedTrainers = () => {
                       <td className="px-6 py-4">
                         {assigned.length > 0 ? (
                           assigned.map((a) => (
-                            <div key={a.id} className="text-green-300 font-medium">
-                              {a.trainerName}
+                            <div
+                              key={a.id}
+                              onClick={() => handleQuickAssign(m.uid, true)}
+                              className="text-green-300 font-medium cursor-pointer hover:text-white transition-colors flex items-center gap-2"
+                              title="Click to Reassign"
+                            >
+                              <Dumbbell size={12} /> {a.trainerName}
                             </div>
                           ))
                         ) : (
-                          <span className="text-red-400">Unassigned</span>
+                          <button
+                            onClick={() => handleQuickAssign(m.uid, false)}
+                            className="text-red-400 hover:text-red-300 hover:underline transition-all font-bold"
+                            title="Click to Assign"
+                          >
+                            Unassigned
+                          </button>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -478,9 +505,8 @@ const AssingnedTrainers = () => {
                         ))}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-black ${
-                          assigned.length > 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-black ${assigned.length > 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                          }`}>
                           {assigned.length > 0 ? "Assigned" : "Pending"}
                         </span>
                       </td>
@@ -524,11 +550,10 @@ const AssingnedTrainers = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-lg text-sm font-medium transition ${
-                        currentPage === pageNum
+                      className={`w-10 h-10 rounded-lg text-sm font-medium transition ${currentPage === pageNum
                           ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30"
                           : "bg-white/10 text-gray-400 border border-white/20 hover:bg-white/20"
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>
@@ -569,7 +594,7 @@ const AssingnedTrainers = () => {
       {showAssignModal && (
         <div className="fixed inset-0 bg-black/70 z-9999 flex items-center justify-center p-4" dir="ltr">
           <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
-            
+
             {/* 🔹 TITLE */}
             <h2 className="text-2xl font-bold mb-6 text-center">
               {isReassignMode ? "Reassign Trainer" : "Assign Trainer"}
@@ -580,41 +605,63 @@ const AssingnedTrainers = () => {
               <label className="block text-sm font-semibold text-gray-300 mb-3">
                 {isReassignMode ? "Select Members (Only assigned members):" : "Select Members (Only members with active plans):"}
               </label>
+
+              {/* Modal Search Input */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={modalSearch}
+                  onChange={(e) => setModalSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-black/40 border border-white/20 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                />
+              </div>
+
               <div className="max-h-56 overflow-y-auto space-y-2 pr-1 bg-black/20 rounded-xl p-3 border border-white/10">
-                {members.filter((m) => (m.plans?.length || 0) > 0 && (isReassignMode ? (assignments[m.uid] && assignments[m.uid].length > 0) : (!assignments[m.uid] || assignments[m.uid].length === 0))).length === 0 ? (
+                {members
+                  .filter((m) => (m.plans?.length || 0) > 0 && (isReassignMode ? (assignments[m.uid] && assignments[m.uid].length > 0) : (!assignments[m.uid] || assignments[m.uid].length === 0)))
+                  .filter((m) =>
+                    m.username?.toLowerCase().includes(modalSearch.toLowerCase()) ||
+                    m.email?.toLowerCase().includes(modalSearch.toLowerCase())
+                  ).length === 0 ? (
                   <p className="text-gray-400 text-sm text-center py-4">
-                    {isReassignMode ? "No assigned members found" : "No unassigned members with plans found"}
+                    {modalSearch ? "No matching members found" : (isReassignMode ? "No assigned members found" : "No unassigned members with plans found")}
                   </p>
                 ) : (
                   members
                     .filter((m) => (m.plans?.length || 0) > 0 && (isReassignMode ? (assignments[m.uid] && assignments[m.uid].length > 0) : (!assignments[m.uid] || assignments[m.uid].length === 0)))
+                    .filter((m) =>
+                      m.username?.toLowerCase().includes(modalSearch.toLowerCase()) ||
+                      m.email?.toLowerCase().includes(modalSearch.toLowerCase())
+                    )
                     .map((m) => (
-                    <label
-                      key={m.uid}
-                      className="flex items-start gap-3 bg-white/5 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition border border-white/10"
-                    >
-                      <input
-                        type="checkbox"
-                        className="accent-orange-500 mt-1 shrink-0"
-                        disabled={assigning}
-                        checked={selectedUsers.includes(m.uid)}
-                        onChange={(e) => {
-                          setSelectedUsers((prev) =>
-                            e.target.checked
-                              ? [...new Set([...prev, m.uid])]
-                              : prev.filter((id) => id !== m.uid)
-                          );
-                        }}
-                      />
-                      <div className="flex-1 text-sm">
-                        <p className="font-semibold text-white">{m.username || "No Name"}</p>
-                        <p className="text-xs text-gray-400">{m.email}</p>
-                        <p className="text-xs text-cyan-400 mt-1">
-                          {m.plans?.length || 0} plans
-                        </p>
-                      </div>
-                    </label>
-                  ))
+                      <label
+                        key={m.uid}
+                        className="flex items-start gap-3 bg-white/5 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition border border-white/10"
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-orange-500 mt-1 shrink-0"
+                          disabled={assigning}
+                          checked={selectedUsers.includes(m.uid)}
+                          onChange={(e) => {
+                            setSelectedUsers((prev) =>
+                              e.target.checked
+                                ? [...new Set([...prev, m.uid])]
+                                : prev.filter((id) => id !== m.uid)
+                            );
+                          }}
+                        />
+                        <div className="flex-1 text-sm">
+                          <p className="font-semibold text-white">{m.username || "No Name"}</p>
+                          <p className="text-xs text-gray-400">{m.email}</p>
+                          <p className="text-xs text-cyan-400 mt-1">
+                            {m.plans?.length || 0} plans
+                          </p>
+                        </div>
+                      </label>
+                    ))
                 )}
               </div>
             </div>
@@ -633,9 +680,8 @@ const AssingnedTrainers = () => {
                 value={selectedTrainer}
                 onChange={(e) => setSelectedTrainer(e.target.value)}
                 disabled={assigning}
-                className={`w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                  assigning ? "opacity-60 cursor-not-allowed" : ""
-                }`}
+                className={`w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 ${assigning ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
               >
                 <option value="">-- Select Trainer --</option>
                 {trainers.length === 0 ? (
@@ -643,7 +689,7 @@ const AssingnedTrainers = () => {
                 ) : (
                   trainers.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name || t.username} 
+                      {t.name || t.username}
                     </option>
                   ))
                 )}
@@ -663,11 +709,10 @@ const AssingnedTrainers = () => {
               <button
                 onClick={assignTrainer}
                 disabled={assigning || !selectedTrainer || selectedUsers.length === 0}
-                className={`flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-white font-medium transition hover:shadow-lg ${
-                  assigning || !selectedTrainer || selectedUsers.length === 0
+                className={`flex-1 px-4 py-3 bg-emerald-600 rounded-lg text-white font-medium transition hover:shadow-lg shadow-emerald-500/20 ${assigning || !selectedTrainer || selectedUsers.length === 0
                     ? "opacity-60 cursor-not-allowed"
-                    : "hover:scale-105"
-                }`}
+                    : "hover:scale-105 hover:bg-emerald-500"
+                  }`}
               >
                 {assigning ? (isReassignMode ? "Reassigning..." : "Assigning...") : (isReassignMode ? "Reassign Trainer" : "Assign Trainer")}
               </button>
