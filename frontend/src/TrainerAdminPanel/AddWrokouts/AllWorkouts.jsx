@@ -18,8 +18,6 @@ const weekDays = [
 
 const timeSlots = [
   "06:00 - 08:00",
-  "08:00 - 10:00",
-  "10:00 - 12:00",
 ];
 
 const AllWorkouts = () => {
@@ -309,54 +307,62 @@ const AllWorkouts = () => {
             onClick={() => setSelectedWorkout(null)}
           >
             <div
-              className="bg-gray-950 w-full max-w-7xl rounded-2xl p-6 overflow-x-auto"
+              className="bg-gray-950/90 border border-white/10 w-full max-w-7xl rounded-3xl p-8 overflow-hidden shadow-2xl backdrop-blur-2xl flex flex-col max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
 
-              {/* HEADER */}
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold">
-                  Weekly Timetable ({selectedWorkout.durationWeeks || Math.ceil(Object.keys(selectedWorkout.days || {}).length / 7) || 1} Weeks)
-                </h3>
+              {/* HEADER & NAV */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                  <div>
+                    <h3 className="text-3xl font-extrabold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                      Workout Timetable
+                    </h3>
+                    <p className="text-gray-500 text-xs mt-1 uppercase tracking-widest font-black">
+                      {selectedWorkout.memberName} • {selectedWorkout.durationWeeks || Math.ceil(Object.keys(selectedWorkout.days || {}).length / 7) || 1} Weeks
+                    </p>
+                  </div>
+
+                  {/* WEEK SELECTOR */}
+                  <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/5 h-fit">
+                    {Array.from(
+                      { length: selectedWorkout.durationWeeks || Math.ceil(Object.keys(selectedWorkout.days || {}).length / 7) || 1 },
+                      (_, i) => i + 1
+                    ).map((week) => (
+                      <button
+                        key={week}
+                        onClick={() => setSelectedWeek(week)}
+                        className={`px-5 py-2 rounded-xl text-xs font-black uppercase transition-all duration-300
+                          ${selectedWeek === week
+                            ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                            : "text-gray-500 hover:bg-white/5 hover:text-white"
+                          }
+                        `}
+                      >
+                        Week {week}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <button
                   onClick={() => setSelectedWorkout(null)}
-                  className="p-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition"
+                  className="p-3 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all duration-300 w-fit"
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
 
-              {/* WEEK SELECTOR */}
-              <div className="flex gap-3 mb-6 flex-wrap">
-                {Array.from(
-                  { length: selectedWorkout.durationWeeks || Math.ceil(Object.keys(selectedWorkout.days || {}).length / 7) || 1 },
-                  (_, i) => i + 1
-                ).map((week) => (
-                  <button
-                    key={week}
-                    onClick={() => setSelectedWeek(week)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition
-                      ${selectedWeek === week
-                        ? "bg-orange-500 text-black"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                      }
-                    `}
-                  >
-                    Week {week}
-                  </button>
-                ))}
-              </div>
-
-              <div className="min-w-[1000px] border border-gray-700 rounded-xl overflow-hidden">
+              <div className="flex-1 overflow-auto rounded-2xl border border-white/5 custom-scrollbar">
+                <div className="min-w-[1100px]">
 
                 {/* TABLE HEADER */}
                 {/* Desktop grid view */}
                 <div className="hidden sm:block">
-                  <div className="grid grid-cols-8 bg-gray-900 border-b border-gray-700 text-center font-semibold">
-                    <div className="p-4 border-r border-gray-700">TIME</div>
+                  <div className="grid grid-cols-8 bg-white/5 border-b border-white/10 text-center sticky top-0 z-10 backdrop-blur-xl">
+                    <div className="p-5 border-r border-white/10 text-xs font-black uppercase tracking-widest text-gray-400">TIME</div>
                     {weekDays.map((day) => (
-                      <div key={day} className="p-4 border-r border-gray-700">
+                      <div key={day} className="p-5 border-r border-white/10 text-xs font-black uppercase tracking-widest text-orange-500">
                         {day}
                       </div>
                     ))}
@@ -366,9 +372,9 @@ const AllWorkouts = () => {
                   {timeSlots.map((time, timeIndex) => (
                     <div
                       key={time}
-                      className="grid grid-cols-8 border-b border-gray-800 text-center"
+                      className="grid grid-cols-8 border-b border-white/5 text-center hover:bg-white/[0.02] transition-colors"
                     >
-                      <div className="p-6 border-r border-gray-800 font-semibold text-gray-400">
+                      <div className="p-6 border-r border-white/5 font-bold text-xs text-gray-500 bg-white/[0.02]">
                         {time}
                       </div>
 
@@ -383,28 +389,32 @@ const AllWorkouts = () => {
                         return (
                           <div
                             key={dayName}
-                            className="p-4 border-r border-gray-800 flex items-center justify-center"
+                            className="p-3 border-r border-white/5 flex items-start justify-center min-h-[120px]"
                           >
-                            {timeIndex === 0 && exercises ? (
-                              <div className="bg-orange-500 text-black rounded-xl p-4 w-full">
-                                <ul className="text-xs text-left space-y-1">
+                            {timeIndex === 0 && exercises && exercises.length > 0 ? (
+                              <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/5 border border-orange-500/30 rounded-2xl p-4 w-full shadow-lg">
+                                <ul className="text-xs text-left space-y-3">
                                   {exercises.map((ex, i) => (
-                                    <li key={i} className="flex flex-col mb-1 last:mb-0">
-                                      <span className="font-bold uppercase tracking-tighter">
-                                        • {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
-                                      </span>
-                                      {typeof ex === 'object' && (
-                                        <span className="opacity-60 ml-3 text-[10px]">
-                                          {ex.sets && `${ex.sets} Sets`} {ex.count && `• ${ex.count}`}
-                                          {ex.time && ` • ${ex.time}`}
+                                    <li key={i} className="flex flex-col group">
+                                      <div className="flex items-start gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                                        <span className="font-bold text-white uppercase tracking-tight leading-tight group-hover:text-orange-400 transition-colors">
+                                          {typeof ex === 'object' ? (ex.name || 'No Name') : ex}
                                         </span>
+                                      </div>
+                                      {typeof ex === 'object' && (
+                                        <div className="flex flex-wrap gap-x-2 gap-y-1 ml-3.5 mt-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">
+                                          {ex.sets && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.sets} Sets</span>}
+                                          {ex.count && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.count}</span>}
+                                          {ex.time && <span className="bg-white/5 px-1.5 py-0.5 rounded">{ex.time}</span>}
+                                        </div>
                                       )}
                                     </li>
                                   ))}
                                 </ul>
                               </div>
                             ) : (
-                              <span className="text-gray-700 text-xs">-</span>
+                              <div className="mt-4 w-6 h-0.5 bg-white/10 rounded-full" />
                             )}
                           </div>
                         );
@@ -412,6 +422,7 @@ const AllWorkouts = () => {
                     </div>
                   ))}
                 </div>
+              </div>
 
                 {/* Mobile stacked view: show each day as a vertical section with time slots */}
                 <div className="sm:hidden space-y-4 p-2">
