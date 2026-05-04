@@ -193,7 +193,7 @@ const AddDietPlans = () => {
     setForm((prev) => {
       const updatedItems = [...prev.days[day][meal].items];
       updatedItems[index] = { ...updatedItems[index], [field]: value };
-      
+
       return {
         ...prev,
         days: {
@@ -230,7 +230,7 @@ const AddDietPlans = () => {
     setForm((prev) => {
       if (prev.days[day][meal].items.length <= 1) return prev;
       const updatedItems = prev.days[day][meal].items.filter((_, i) => i !== index);
-      
+
       return {
         ...prev,
         days: {
@@ -359,6 +359,25 @@ const AddDietPlans = () => {
     const raw = normalizeString(value).toLowerCase();
     if (!raw) return "";
 
+    const normalized = raw.replace(/[\s_-]+/g, " ").trim();
+
+    if (["early morning", "early-morning", "early"].includes(normalized)) {
+      return "Early-morning";
+    }
+    if (["mid morning", "mid-morning", "mid", "midmorning"].includes(normalized)) {
+      return "Mid-morning";
+    }
+    if (["breakfast"].includes(normalized)) return "Breakfast";
+    if (["lunch"].includes(normalized)) return "Lunch";
+    if (["evening"].includes(normalized)) return "Evening";
+    if (["dinner"].includes(normalized)) return "Dinner";
+    if (["pre workout", "pre-workout", "preworkout"].includes(normalized)) {
+      return "Pre-workout";
+    }
+    if (["post workout", "post-workout", "postworkout"].includes(normalized)) {
+      return "Post-workout";
+    }
+
     const found = meals.find((meal) => meal.toLowerCase() === raw);
     if (found) return found;
 
@@ -368,13 +387,68 @@ const AddDietPlans = () => {
       }
     }
 
+    if (raw.includes("pre") && raw.includes("workout")) return "Pre-workout";
+    if (raw.includes("post") && raw.includes("workout")) return "Post-workout";
+    if (raw.includes("early") && raw.includes("morning")) return "Early-morning";
+    if (raw.includes("mid") && raw.includes("morning")) return "Mid-morning";
     if (raw.includes("breakfast")) return "Breakfast";
     if (raw.includes("lunch")) return "Lunch";
     if (raw.includes("dinner")) return "Dinner";
     if (raw.includes("evening")) return "Evening";
-    if (raw.includes("morning")) return "Morning";
+    if (raw.includes("morning")) return "Early-morning";
 
     return "";
+  };
+
+  const downloadDietPlanTemplate = () => {
+    const template = [
+      // Day 1
+      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Warm Water", Qty: "1 glass", Kcal: "0" },
+      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Almonds", Qty: "5 pcs", Kcal: "50" },
+
+      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Oats", Qty: "1 bowl", Kcal: "200" },
+      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Milk", Qty: "1 cup", Kcal: "100" },
+
+      { Day: "1", Meal: "Mid-morning", Time: "11:00", Food: "Apple", Qty: "1", Kcal: "80" },
+
+      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
+      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Chicken", Qty: "150g", Kcal: "250" },
+
+      { Day: "1", Meal: "Evening", Time: "16:30", Food: "Nuts", Qty: "50g", Kcal: "200" },
+
+      { Day: "1", Meal: "Pre-workout", Time: "17:30", Food: "Banana", Qty: "1", Kcal: "90" },
+
+      { Day: "1", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+
+      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Chapati", Qty: "2 pcs", Kcal: "200" },
+      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Veg Curry", Qty: "1 bowl", Kcal: "150" },
+
+      // Day 2
+      { Day: "2", Meal: "Early-morning", Time: "06:00", Food: "Green Tea", Qty: "1 cup", Kcal: "5" },
+
+      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Eggs", Qty: "2 pcs", Kcal: "140" },
+      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Bread", Qty: "2 slices", Kcal: "160" },
+
+      { Day: "2", Meal: "Mid-morning", Time: "11:00", Food: "Banana", Qty: "1", Kcal: "90" },
+
+      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
+      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Fish", Qty: "150g", Kcal: "250" },
+
+      { Day: "2", Meal: "Evening", Time: "16:30", Food: "Peanuts", Qty: "50g", Kcal: "250" },
+
+      { Day: "2", Meal: "Pre-workout", Time: "17:30", Food: "Dates", Qty: "3 pcs", Kcal: "70" },
+
+      { Day: "2", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+
+      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Salad", Qty: "1 bowl", Kcal: "150" },
+      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Soup", Qty: "1 cup", Kcal: "100" },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan Sample");
+
+    XLSX.writeFile(workbook, "Diet_Plan_Sample.xlsx");
   };
 
   const handleImportExcel = async (event) => {
@@ -413,15 +487,25 @@ const AddDietPlans = () => {
 
         const dayKey = `Day${dayNumber}`;
         if (!parsedDays[dayKey]) {
-          parsedDays[dayKey] = generateSingleDay();
+          parsedDays[dayKey] = {};
         }
 
-        parsedDays[dayKey][mealName] = {
-          food,
-          quantity,
-          calories,
-          time,
-        };
+        if (!parsedDays[dayKey][mealName]) {
+          parsedDays[dayKey][mealName] = {
+            time: "",
+            items: [],
+          };
+        }
+
+        const mealData = parsedDays[dayKey][mealName];
+        if (time) {
+          mealData.time = time;
+        }
+
+        const rowItem = { food, quantity, calories };
+        if (food || quantity || calories) {
+          mealData.items.push(rowItem);
+        }
 
         rowsParsed += 1;
       });
@@ -437,10 +521,24 @@ const AddDietPlans = () => {
 
       const newDays = {};
       dayKeys.forEach((dayKey) => {
-        newDays[dayKey] = {
-          ...generateSingleDay(),
-          ...parsedDays[dayKey],
-        };
+        const rawDay = parsedDays[dayKey] || {};
+        const dayTemplate = generateSingleDay();
+        const mergedDay = {};
+
+        meals.forEach((meal) => {
+          const mealData = rawDay[meal];
+          if (mealData) {
+            mergedDay[meal] = {
+              ...dayTemplate[meal],
+              time: mealData.time || dayTemplate[meal].time,
+              items: mealData.items.length > 0 ? mealData.items : dayTemplate[meal].items,
+            };
+          } else {
+            mergedDay[meal] = dayTemplate[meal];
+          }
+        });
+
+        newDays[dayKey] = mergedDay;
       });
 
       setForm((prev) => ({
@@ -617,19 +715,30 @@ const AddDietPlans = () => {
             {id ? "Edit Diet Plan" : "Create Custom Diet Plan"}
           </h2>
 
-          <div className="flex flex-col items-end gap-1">
-            <label className="text-[10px] text-white/50">
-              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal.
-            </label>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={downloadDietPlanTemplate}
+                className="px-4 py-2 rounded-lg bg-slate-700/80 border border-white/10 text-white text-sm hover:bg-slate-700 transition"
+              >
+                Download Example Excel
+              </button>
 
-            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
-              {importing ? "Importing..." : "Import Excel"}
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleImportExcel}
-                className="hidden"
-              />
+              <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
+                {importing ? "Importing..." : "Import Excel"}
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportExcel}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <label className="text-[10px] text-white/50 max-w-md text-right">
+              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal. Use meal names:
+              Early-morning, Breakfast, Mid-morning, Lunch, Evening, Dinner, Pre-workout, Post-workout.
             </label>
           </div>
         </div>
@@ -824,8 +933,8 @@ const AddDietPlans = () => {
 
                   {meals.map((meal) => {
                     const isWorkoutMeal = meal.toLowerCase().includes("workout");
-                    const mealColorClass = isWorkoutMeal 
-                      ? "bg-purple-500/20 border-purple-500/30 text-purple-400" 
+                    const mealColorClass = isWorkoutMeal
+                      ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
                       : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
 
                     const mealItems = form.days[day][meal]?.items || [];
@@ -841,7 +950,7 @@ const AddDietPlans = () => {
                                   {meal}
                                 </div>
                               ) : (
-                                <div className="hidden md:block h-10" /> 
+                                <div className="hidden md:block h-10" />
                               )}
                             </div>
 

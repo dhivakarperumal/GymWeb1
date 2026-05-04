@@ -575,6 +575,7 @@ const AddWorkout = () => {
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition border border-white/5"
                     title="Download Template"
                   >
+                    Download Example Excel
                     <Download size={16} />
                   </button>
                 </div>
