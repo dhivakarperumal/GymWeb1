@@ -89,6 +89,10 @@ async function login(req, res) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    if (user.status === 'inactive') {
+      return res.status(403).json({ message: 'Your account is inactive. Please contact the administrator.' });
+    }
+
     const token = jwt.sign(
       { userId: user.id, role: user.role, email: user.email },
       process.env.JWT_SECRET || 'secret',
@@ -136,6 +140,10 @@ async function googleLogin(req, res) {
           [googleId, picture, user.id]
         );
       }
+    }
+
+    if (user.status === 'inactive') {
+      return res.status(403).json({ message: 'Your account is inactive. Please contact the administrator.' });
     }
 
     const token = jwt.sign(
