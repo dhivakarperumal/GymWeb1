@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// Default to same-origin API path in production deployments.
+// Local development should use .env with http://localhost:5000/api or the VITE_API_URL override.
+const rawApiUrl = import.meta.env.VITE_API_URL ?? "/api";
 export const API_URL = rawApiUrl.endsWith("/") ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
 const api = axios.create({
