@@ -50,10 +50,7 @@ const AddDietPlans = () => {
     title: "",
     totalCalories: "",
     duration: 1,
-    days: {
-      Day1: generateSingleDay(),
-      Day2: generateSingleDay(),
-    },
+    days: [generateSingleDay()],
   });
 
   /* ================= FETCH MEMBERS ================= */
@@ -98,9 +95,9 @@ const AddDietPlans = () => {
   useEffect(() => {
     let total = 0;
 
-    Object.values(form.days).forEach((day) => {
-      Object.values(day).forEach((meal) => {
-        if (Array.isArray(meal.items)) {
+    (form.days || []).forEach((day) => {
+      Object.values(day || {}).forEach((meal) => {
+        if (meal && Array.isArray(meal.items)) {
           meal.items.forEach(item => {
             total += Number(item.calories || 0);
           });
@@ -114,6 +111,31 @@ const AddDietPlans = () => {
     }));
   }, [form.days]);
 
+  /* ================= TIME FORMAT HELPERS ================= */
+  const convertTo24Hour = (timeStr) => {
+    if (!timeStr) return "";
+    const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) return timeStr; // Already 24h or invalid
+
+    let hours = parseInt(match[1]);
+    const minutes = match[2];
+    const ampm = match[3].toUpperCase();
+
+    if (ampm === "PM" && hours < 12) hours += 12;
+    if (ampm === "AM" && hours === 12) hours = 0;
+
+    return `${String(hours).padStart(2, "0")}:${minutes}`;
+  };
+
+  const formatTo12Hour = (time24) => {
+    if (!time24) return "";
+    const [hours, minutes] = time24.split(":");
+    let h = parseInt(hours);
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${String(h).padStart(2, "0")}:${minutes} ${ampm}`;
+  };
+
   /* ================= LOAD DIET FOR EDIT ================= */
   useEffect(() => {
     if (!id) return;
@@ -126,31 +148,58 @@ const AddDietPlans = () => {
         const memberId = data.memberId || data.member_id;
         const memberName = data.memberName || data.member_name;
 
-        const fixedDays = {};
+        let daysData = data.days;
+        if (typeof daysData === 'string') {
+          try { daysData = JSON.parse(daysData); } catch (e) { daysData = []; }
+        }
 
-        Object.keys(data.days || {}).forEach((dayKey) => {
-          fixedDays[dayKey] = {};
+        let fixedDays = [];
 
-          meals.forEach((meal) => {
-            const mealData = data.days[dayKey][meal];
-
-            // Migration logic for old data structure
-            if (!mealData) {
-              fixedDays[dayKey][meal] = { time: "", items: [{ food: "", quantity: "", calories: "" }] };
-            } else if (mealData.items) {
-              fixedDays[dayKey][meal] = mealData;
-            } else {
-              fixedDays[dayKey][meal] = {
-                time: mealData.time || "",
-                items: [{
-                  food: mealData.food || (typeof mealData === "string" ? mealData : ""),
-                  quantity: mealData.quantity || "",
-                  calories: mealData.calories || "",
-                }]
-              };
-            }
+        // Handle both object {Day1: ...} and array [...]
+        if (Array.isArray(daysData)) {
+          fixedDays = daysData.map(day => {
+            const normalizedDay = {};
+            meals.forEach(meal => {
+              const mealData = day[meal];
+              if (!mealData) {
+                normalizedDay[meal] = { time: "", items: [{ food: "", quantity: "", calories: "" }] };
+              } else {
+                normalizedDay[meal] = {
+                  time: mealData.time || "",
+                  items: Array.isArray(mealData.items) ? mealData.items : [{ food: "", quantity: "", calories: "" }]
+                };
+              }
+            });
+            return normalizedDay;
           });
-        });
+        } else {
+          // Object format conversion
+          const keys = Object.keys(daysData || {}).sort((a, b) => {
+            const numA = parseInt(a.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.replace(/\D/g, '')) || 0;
+            return numA - numB;
+          });
+
+          fixedDays = keys.map(key => {
+            const day = daysData[key];
+            const normalizedDay = {};
+            meals.forEach(meal => {
+              const mealData = day[meal];
+              if (!mealData) {
+                normalizedDay[meal] = { time: "", items: [{ food: "", quantity: "", calories: "" }] };
+              } else {
+                normalizedDay[meal] = {
+                  time: mealData.time || "",
+                  items: Array.isArray(mealData.items) ? mealData.items : [{ food: "", quantity: "", calories: "" }]
+                };
+              }
+            });
+            return normalizedDay;
+          });
+        }
+
+        // If empty, ensure at least 1 day
+        if (fixedDays.length === 0) fixedDays = [generateSingleDay()];
 
         setForm({
           memberId,
@@ -160,7 +209,7 @@ const AddDietPlans = () => {
           memberWeight: data.memberWeight || data.member_weight || "",
           title: data.title || "",
           totalCalories: data.totalCalories || data.total_calories || "",
-          duration: data.duration || 1,
+          duration: data.duration || fixedDays.length,
           days: fixedDays,
         });
       } catch (err) {
@@ -173,139 +222,115 @@ const AddDietPlans = () => {
   }, [id]);
 
   /* ================= HANDLE MEAL CHANGE ================= */
-  const handleMealTimeChange = (day, meal, value) => {
-    setForm((prev) => ({
-      ...prev,
-      days: {
-        ...prev.days,
-        [day]: {
-          ...prev.days[day],
-          [meal]: {
-            ...prev.days[day][meal],
-            time: value,
-          },
-        },
-      },
-    }));
-  };
-
-  const handleFoodItemChange = (day, meal, index, field, value) => {
+  const handleMealTimeChange = (dayIndex, meal, value) => {
+    const formattedTime = formatTo12Hour(value);
     setForm((prev) => {
-      const updatedItems = [...prev.days[day][meal].items];
-      updatedItems[index] = { ...updatedItems[index], [field]: value };
-
-      return {
-        ...prev,
-        days: {
-          ...prev.days,
-          [day]: {
-            ...prev.days[day],
-            [meal]: {
-              ...prev.days[day][meal],
-              items: updatedItems,
-            },
-          },
+      const updatedDays = [...prev.days];
+      updatedDays[dayIndex] = {
+        ...updatedDays[dayIndex],
+        [meal]: {
+          ...updatedDays[dayIndex][meal],
+          time: formattedTime,
         },
       };
+      return { ...prev, days: updatedDays };
     });
   };
 
-  const handleAddFoodItem = (day, meal) => {
-    setForm((prev) => ({
-      ...prev,
-      days: {
-        ...prev.days,
-        [day]: {
-          ...prev.days[day],
-          [meal]: {
-            ...prev.days[day][meal],
-            items: [...prev.days[day][meal].items, { food: "", quantity: "", calories: "" }],
-          },
-        },
-      },
-    }));
-  };
-
-  const handleRemoveFoodItem = (day, meal, index) => {
+  const handleFoodItemChange = (dayIndex, meal, itemIndex, field, value) => {
     setForm((prev) => {
-      if (prev.days[day][meal].items.length <= 1) return prev;
-      const updatedItems = prev.days[day][meal].items.filter((_, i) => i !== index);
+      const updatedDays = [...prev.days];
+      const updatedItems = [...updatedDays[dayIndex][meal].items];
+      updatedItems[itemIndex] = { ...updatedItems[itemIndex], [field]: value };
 
-      return {
-        ...prev,
-        days: {
-          ...prev.days,
-          [day]: {
-            ...prev.days[day],
-            [meal]: {
-              ...prev.days[day][meal],
-              items: updatedItems,
-            },
-          },
+      updatedDays[dayIndex] = {
+        ...updatedDays[dayIndex],
+        [meal]: {
+          ...updatedDays[dayIndex][meal],
+          items: updatedItems,
         },
       };
+
+      return { ...prev, days: updatedDays };
+    });
+  };
+
+  const handleAddFoodItem = (dayIndex, meal) => {
+    setForm((prev) => {
+      const updatedDays = [...prev.days];
+      updatedDays[dayIndex] = {
+        ...updatedDays[dayIndex],
+        [meal]: {
+          ...updatedDays[dayIndex][meal],
+          items: [...updatedDays[dayIndex][meal].items, { food: "", quantity: "", calories: "" }],
+        },
+      };
+      return { ...prev, days: updatedDays };
+    });
+  };
+
+  const handleRemoveFoodItem = (dayIndex, meal, itemIndex) => {
+    setForm((prev) => {
+      if (prev.days[dayIndex][meal].items.length <= 1) return prev;
+      const updatedDays = [...prev.days];
+      const updatedItems = updatedDays[dayIndex][meal].items.filter((_, i) => i !== itemIndex);
+
+      updatedDays[dayIndex] = {
+        ...updatedDays[dayIndex],
+        [meal]: {
+          ...updatedDays[dayIndex][meal],
+          items: updatedItems,
+        },
+      };
+
+      return { ...prev, days: updatedDays };
     });
   };
 
   /* ================= ADD DAY ================= */
   const handleAddDay = () => {
-    const count = Object.keys(form.days).length;
+    const count = form.days.length;
 
     if (count >= 60) {
       toast.error("Maximum 60 days allowed");
       return;
     }
 
-    const newKey = `Day${count + 1}`;
-
     setForm((prev) => ({
       ...prev,
       duration: count + 1,
-      days: {
-        ...prev.days,
-        [newKey]: generateSingleDay(),
-      },
+      days: [...prev.days, generateSingleDay()],
     }));
   };
 
   /* ================= REMOVE DAY ================= */
   const handleRemoveDay = () => {
-    const count = Object.keys(form.days).length;
+    const count = form.days.length;
 
     if (count <= 1) {
       toast.error("Minimum 1 day required");
       return;
     }
 
-    const lastKey = `Day${count}`;
-
-    const updated = { ...form.days };
-    delete updated[lastKey];
-
     setForm((prev) => ({
       ...prev,
       duration: count - 1,
-      days: updated,
+      days: prev.days.slice(0, -1),
     }));
   };
 
   /* ================= COPY DAY 1 TO ALL ================= */
   const handleCopyDay1ToAll = () => {
-    if (Object.keys(form.days).length <= 1) {
+    if (form.days.length <= 1) {
       toast.error("Add more days first");
       return;
     }
 
-    const day1Data = form.days["Day1"];
+    const day1Data = form.days[0];
     const getDeepCopy = () => JSON.parse(JSON.stringify(day1Data));
 
     setForm((prev) => {
-      const updatedDays = { ...prev.days };
-      Object.keys(updatedDays).forEach((dayKey) => {
-        if (dayKey !== "Day1") {
-          updatedDays[dayKey] = getDeepCopy();
-        }
-      });
+      const updatedDays = prev.days.map((day, i) => i === 0 ? day : getDeepCopy());
       return { ...prev, days: updatedDays };
     });
     toast.success("Day 1 copied to all days");
@@ -510,18 +535,20 @@ const AddDietPlans = () => {
         rowsParsed += 1;
       });
 
-      const dayKeys = Object.keys(parsedDays).sort(
-        (a, b) => Number(a.replace("Day", "")) - Number(b.replace("Day", ""))
-      );
+      const dayIndices = Object.keys(parsedDays)
+        .map(key => parseInt(key.replace("Day", "")))
+        .sort((a, b) => a - b);
 
-      if (dayKeys.length === 0 || rowsParsed === 0) {
+      if (dayIndices.length === 0 || rowsParsed === 0) {
         toast.error("No valid diet rows found. Use columns like Day, Meal, Time, Food, Qty, Kcal.");
         return;
       }
 
-      const newDays = {};
-      dayKeys.forEach((dayKey) => {
-        const rawDay = parsedDays[dayKey] || {};
+      const maxDay = Math.max(...dayIndices);
+      const newDaysArray = [];
+
+      for (let i = 1; i <= maxDay; i++) {
+        const rawDay = parsedDays[`Day${i}`] || {};
         const dayTemplate = generateSingleDay();
         const mergedDay = {};
 
@@ -537,17 +564,16 @@ const AddDietPlans = () => {
             mergedDay[meal] = dayTemplate[meal];
           }
         });
-
-        newDays[dayKey] = mergedDay;
-      });
+        newDaysArray.push(mergedDay);
+      }
 
       setForm((prev) => ({
         ...prev,
-        days: newDays,
-        duration: dayKeys.length,
+        days: newDaysArray,
+        duration: newDaysArray.length,
       }));
 
-      toast.success(`Imported diet plan for ${dayKeys.length} day(s)`);
+      toast.success(`Imported diet plan for ${newDaysArray.length} day(s)`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to import Excel. Please check the file format.");
@@ -599,7 +625,7 @@ const AddDietPlans = () => {
           memberWeight: form.memberWeight,
           title: form.title,
           totalCalories: Number(form.totalCalories) || 0,
-          duration: form.duration,
+          duration: Number(form.duration) || form.days.length,
           days: form.days,
           status: "active",
         };
@@ -625,7 +651,7 @@ const AddDietPlans = () => {
               memberWeight: form.memberWeight,
               title: form.title,
               totalCalories: Number(form.totalCalories) || 0,
-              duration: form.duration,
+              duration: Number(form.duration) || form.days.length,
               days: form.days,
               status: "active",
             };
@@ -671,8 +697,6 @@ const AddDietPlans = () => {
       const next = new Set(prev);
       if (next.has(mId)) {
         next.delete(mId);
-        // If no one is left, clear weight. Otherwise, if many selected, keep as is or clear if needed.
-        // For simplicity: if 0 selected -> clear. If some left -> potentially keep or set to first one.
         if (next.size === 0) {
           setForm(p => ({ ...p, memberWeight: "" }));
         }
@@ -897,7 +921,7 @@ const AddDietPlans = () => {
             <div className="space-y-1">
               <label className="text-xs font-medium text-white/50 ml-1">Duration (Days)</label>
               <div className={`${inputClass} flex items-center justify-between bg-black/60`}>
-                <span>{Object.keys(form.days).length} Days</span>
+                <span>{form.days.length} Days</span>
                 <div className="flex gap-2">
                   <button type="button" onClick={handleRemoveDay} className="text-red-400 hover:text-red-300 font-bold px-1">-</button>
                   <button type="button" onClick={handleAddDay} className="text-emerald-400 hover:text-emerald-300 font-bold px-1">+</button>
@@ -911,16 +935,14 @@ const AddDietPlans = () => {
           {/* DAYS */}
           <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
 
-            {Object.keys(form.days)
-              .sort((a, b) => parseInt(a.slice(3)) - parseInt(b.slice(3)))
-              .map((day) => (
+            {form.days.map((dayData, dayIndex) => (
                 <div
-                  key={day}
+                  key={dayIndex}
                   className="bg-black/30 border border-white/10 rounded-lg p-4 space-y-4"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-emerald-400">{day}</h3>
-                    {day === "Day1" && Object.keys(form.days).length > 1 && (
+                    <h3 className="font-semibold text-emerald-400">Day {dayIndex + 1}</h3>
+                    {dayIndex === 0 && form.days.length > 1 && (
                       <button
                         type="button"
                         onClick={handleCopyDay1ToAll}
@@ -937,7 +959,7 @@ const AddDietPlans = () => {
                       ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
                       : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
 
-                    const mealItems = form.days[day][meal]?.items || [];
+                    const mealItems = dayData[meal]?.items || [];
 
                     return (
                       <div key={meal} className="bg-white/5 rounded-xl p-4 border border-white/5 space-y-2">
@@ -961,8 +983,8 @@ const AddDietPlans = () => {
                                   <input
                                     type="time"
                                     className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
-                                    value={form.days[day][meal]?.time || ""}
-                                    onChange={(e) => handleMealTimeChange(day, meal, e.target.value)}
+                                    value={convertTo24Hour(dayData[meal]?.time || "")}
+                                    onChange={(e) => handleMealTimeChange(dayIndex, meal, e.target.value)}
                                   />
                                 </div>
                               ) : (
@@ -976,7 +998,7 @@ const AddDietPlans = () => {
                                 className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
                                 placeholder="Food Item"
                                 value={item.food}
-                                onChange={(e) => handleFoodItemChange(day, meal, idx, "food", e.target.value)}
+                                onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "food", e.target.value)}
                               />
                             </div>
 
@@ -986,7 +1008,7 @@ const AddDietPlans = () => {
                                 className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
                                 placeholder="Qty"
                                 value={item.quantity}
-                                onChange={(e) => handleFoodItemChange(day, meal, idx, "quantity", e.target.value)}
+                                onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "quantity", e.target.value)}
                               />
                             </div>
 
@@ -997,7 +1019,7 @@ const AddDietPlans = () => {
                                 className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
                                 placeholder="Kcal"
                                 value={item.calories}
-                                onChange={(e) => handleFoodItemChange(day, meal, idx, "calories", e.target.value)}
+                                onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "calories", e.target.value)}
                               />
                             </div>
 
@@ -1005,7 +1027,7 @@ const AddDietPlans = () => {
                             <div className="flex gap-1 shrink-0">
                               <button
                                 type="button"
-                                onClick={() => handleAddFoodItem(day, meal)}
+                                onClick={() => handleAddFoodItem(dayIndex, meal)}
                                 className="w-10 h-10 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/40 transition"
                               >
                                 +
@@ -1013,7 +1035,7 @@ const AddDietPlans = () => {
                               {mealItems.length > 1 && (
                                 <button
                                   type="button"
-                                  onClick={() => handleRemoveFoodItem(day, meal, idx)}
+                                  onClick={() => handleRemoveFoodItem(dayIndex, meal, idx)}
                                   className="w-10 h-10 flex items-center justify-center bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/40 transition"
                                 >
                                   -

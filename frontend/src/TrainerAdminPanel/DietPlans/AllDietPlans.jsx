@@ -339,8 +339,10 @@ const AllDietPlans = () => {
                   {/* TABLE BODY */}
                   {weekDays.map((dayName, index) => {
                     const dayNumber = (activeWeek - 1) * 7 + index + 1;
-                    const dayKey = `Day${dayNumber}`;
-                    const dayData = selectedPlan.days?.[dayKey];
+                    // Support both new array format and legacy object format
+                    const dayData = Array.isArray(selectedPlan.days) 
+                      ? selectedPlan.days[dayNumber - 1] 
+                      : selectedPlan.days?.[`Day${dayNumber}`];
 
                     return (
                       <div
