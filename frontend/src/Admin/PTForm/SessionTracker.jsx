@@ -29,7 +29,7 @@ const SessionTracker = ({
       workout: "",
       status: "Pending",
       client_sign: "",
-      trainer_sign: initialFormData?.trainer_name_assigned || currentLoginName,
+      trainer_sign: initialFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
     }))
   });
 
@@ -45,7 +45,7 @@ const SessionTracker = ({
       // ensure the trainer_sign is filled if it's currently empty/default
       const updatedSessions = currentSessions.map(s => ({
         ...s,
-        trainer_sign: s.trainer_sign || initialFormData.trainer_name_assigned || currentLoginName
+        trainer_sign: s.trainer_sign || initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName)
       }));
 
       return {

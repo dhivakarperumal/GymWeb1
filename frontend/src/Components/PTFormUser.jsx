@@ -114,7 +114,24 @@ const PTFormUser = () => {
       const userEnquiry = enquiries.find((entry) => entry.email === user.email);
       setHasEnquiry(!!userEnquiry);
 
+      // Fetch Trainer Assignment
+      let trainerName = "";
+      try {
+        const assignRes = await api.get("/assignments");
+        const allAssignments = Array.isArray(assignRes.data) ? assignRes.data : [];
+        const myAssignment = allAssignments.find(a => 
+          String(a.userId) === String(user.id) ||
+          (a.userEmail && user.email && a.userEmail.toLowerCase() === user.email.toLowerCase())
+        );
+        if (myAssignment) {
+          trainerName = myAssignment.trainerName || myAssignment.trainer_name || "";
+        }
+      } catch (err) {
+        console.error("Failed to fetch assignment in PTFormUser", err);
+      }
+
       let initialForm = buildInitialForm(user, memberData);
+      initialForm.trainer_name_assigned = trainerName;
       if (memberData?.id) {
         try {
           const ptRes = await api.get(`/pt-forms/${memberData.id}`);
