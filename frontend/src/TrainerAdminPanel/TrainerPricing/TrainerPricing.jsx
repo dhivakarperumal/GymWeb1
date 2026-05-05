@@ -97,15 +97,8 @@ const TrainerPricing = () => {
 
   return (
     <div className="min-h-screen text-white space-y-8">
-      {/* ========== HEADER ========== */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-          Pricing Strategy
-        </h1>
-        <p className="text-white/60">
-          Manage and monitor all membership plans and pricing tiers
-        </p>
-      </div>
+
+    
 
       {/* ========== STATS GRID ========== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

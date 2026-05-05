@@ -13,6 +13,9 @@ const SessionTracker = ({
   userMode = false,
   allowStatusEdit = false,
   onSaved = () => {},
+  standalone = false,
+  disabled = false,
+  buttonLabel = null,
 }) => {
   const { user } = useAuth();
   const trainerName = localStorage.getItem('username') || localStorage.getItem('name') || "";
@@ -68,24 +71,35 @@ const SessionTracker = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (userMode) {
-      // In user mode, update the PT form with approved sessions
+
+    if (standalone) {
       try {
-        const payload = {
-          member_id: initialFormData.member_id,
-          user_id: initialFormData.u_id,
-          formData: { ...initialFormData, sessions: localFormData.sessions },
-          completed: true
-        };
-        await api.post(`/pt-forms`, payload);
-        toast.success("Sessions approved successfully!");
-        onSaved({ ...initialFormData, sessions: localFormData.sessions });
+        await onSaved({ ...initialFormData, sessions: localFormData.sessions });
       } catch (error) {
-        console.error("Error updating sessions:", error);
-        toast.error("Failed to approve sessions.");
+        console.error("Error saving session tracker:", error);
+        toast.error("Failed to save session tracker.");
       }
-    } else {
+      return;
+    }
+
+    if (!userMode) {
       onNext(localFormData);
+      return;
+    }
+
+    try {
+      const payload = {
+        member_id: initialFormData.member_id,
+        user_id: initialFormData.u_id,
+        formData: { ...initialFormData, sessions: localFormData.sessions },
+        completed: true,
+      };
+      await api.post(`/pt-forms`, payload);
+      toast.success("Sessions approved successfully!");
+      onSaved({ ...initialFormData, sessions: localFormData.sessions });
+    } catch (error) {
+      console.error("Error updating sessions:", error);
+      toast.error("Failed to approve sessions.");
     }
   };
 
@@ -195,9 +209,16 @@ const SessionTracker = ({
               )}
               <button
                 type="submit"
-                className="flex-[2] px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs"
+                disabled={disabled}
+                className={`flex-[2] px-6 py-4 rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs ${disabled ? 'bg-orange-500/50 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700'}`}
               >
-                {userMode ? "Approve Sessions" : (isLastStep ? "Complete Registration" : "Next Step")}
+                {userMode
+                  ? "Approve Sessions"
+                  : standalone
+                  ? buttonLabel || "Save Session Tracker"
+                  : isLastStep
+                  ? "Complete Registration"
+                  : "Next Step"}
               </button>
             </div>
           </div>

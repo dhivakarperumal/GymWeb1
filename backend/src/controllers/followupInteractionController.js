@@ -19,17 +19,17 @@ const followupInteractionController = {
     // Create a new interaction
     createInteraction: async (req, res) => {
         try {
-            const { followup_id, interaction_date, notes, status, next_followup_date } = req.body;
-
+            const { followup_id, interaction_date, notes, status, next_followup_date, staff_name } = req.body;
+            
             if (!followup_id || !interaction_date) {
                 return res.status(400).json({ error: 'Followup ID and interaction date are required' });
             }
 
             const [result] = await pool.query(
                 `INSERT INTO followup_interactions (
-                    followup_id, interaction_date, notes, status, next_followup_date
-                ) VALUES (?, ?, ?, ?, ?)`,
-                [followup_id, interaction_date, notes || null, status || 'pending', next_followup_date || null]
+                    followup_id, interaction_date, notes, status, next_followup_date, staff_name
+                ) VALUES (?, ?, ?, ?, ?, ?)`,
+                [followup_id, interaction_date, notes || null, status || 'pending', next_followup_date || null, staff_name || 'Admin']
             );
 
             // Update the main followup status

@@ -32,6 +32,7 @@ const pageTitles = {
   "/trainer/reports": "Reports",
   "/trainer/settings/profile": "Profile",
   "/trainer/pt-form": "Personal Training Form",
+  "/trainer/session-tracking": "Session Tracking",
   "/trainer/pricing": "Pricing",
   "/trainer/followupenquriy": "Follow-up Enquiry",
 };
@@ -170,7 +171,9 @@ const Header = ({ onMenuClick }) => {
   const handleLogout = async () => {
     try {
       logout();
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);

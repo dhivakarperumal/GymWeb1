@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 async function getAllUsers(req, res) {
   try {
-    const [rows] = await db.query('SELECT id, username, email, mobile, role, created_at FROM users ORDER BY created_at DESC');
+    const [rows] = await db.query('SELECT id, username, email, mobile, role, status, created_at FROM users ORDER BY created_at DESC');
     res.json(rows);
   } catch (err) {
     console.error('getAllUsers error', err);
@@ -16,7 +16,7 @@ async function getUserById(req, res) {
     const idNum = parseInt(id, 10);
 
     const [rows] = await db.query(
-      'SELECT id, username, email, mobile, role, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, mobile, role, status, created_at FROM users WHERE id = ?',
       [idNum]
     );
 
@@ -33,7 +33,7 @@ async function getUserById(req, res) {
 async function updateUserRole(req, res) {
   try {
     const { id } = req.params;
-    const { role, username, mobile } = req.body;
+    const { role, username, mobile, active, status } = req.body;
     const idNum = parseInt(id, 10);
 
     const updates = [];
@@ -57,6 +57,15 @@ async function updateUserRole(req, res) {
       params.push(mobile);
     }
 
+    // Support both `active` boolean (from frontend toggle) or `status` string
+    if (active !== undefined) {
+      updates.push('status = ?');
+      params.push(active ? 'active' : 'inactive');
+    } else if (status) {
+      updates.push('status = ?');
+      params.push(status);
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
@@ -71,7 +80,7 @@ async function updateUserRole(req, res) {
     }
 
     const [rows] = await db.query(
-      'SELECT id, username, email, mobile, role, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, mobile, role, status, created_at FROM users WHERE id = ?',
       [idNum]
     );
 

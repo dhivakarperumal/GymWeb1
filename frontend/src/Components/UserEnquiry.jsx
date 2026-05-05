@@ -143,6 +143,20 @@ const UserEnquiry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (!formData.phone || formData.phone.length !== 10) {
+      toast.error("A valid 10-digit phone number is required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
     
     // Check for duplicates (only if it's a NEW enquiry, not an update)
     if (!selectedEnquiry) {
@@ -381,7 +395,7 @@ const UserEnquiry = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField label="Full Name" value={formData.name} onChange={(val) => setFormData({ ...formData, name: val })} required placeholder="e.g. John Doe" />
                     <InputField label="Email Address" type="email" value={formData.email} onChange={(val) => setFormData({ ...formData, email: val })} required placeholder="john@example.com" />
-                    <InputField label="Phone Number" type="tel" value={formData.phone} onChange={(val) => setFormData({ ...formData, phone: val })} placeholder="Enter 10-digit mobile number" />
+                    <InputField label="Phone Number" type="tel" value={formData.phone} onChange={(val) => setFormData({ ...formData, phone: val.replace(/\D/g, '').slice(0, 10) })} required placeholder="e.g. 9876543210" />
 
                     <div className="grid grid-cols-2 gap-4">
                       <InputField label="Date of Birth" type="date" value={formData.dob} onChange={(val) => setFormData({ ...formData, dob: val })} />
@@ -436,8 +450,8 @@ const UserEnquiry = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField label="Guardian/Contact Name" value={formData.emergency_contact_name} onChange={(val) => setFormData({ ...formData, emergency_contact_name: val })} placeholder="Full name" />
                     <InputField label="Relationship" value={formData.emergency_contact_relationship} onChange={(val) => setFormData({ ...formData, emergency_contact_relationship: val })} placeholder="e.g. Father, Spouse, Friend" />
-                    <InputField label="Home / Primary Phone" type="tel" value={formData.emergency_contact_phone_home} onChange={(val) => setFormData({ ...formData, emergency_contact_phone_home: val })} placeholder="Phone number" />
-                    <InputField label="Work / Secondary Phone" type="tel" value={formData.emergency_contact_phone_work} onChange={(val) => setFormData({ ...formData, emergency_contact_phone_work: val })} placeholder="Alternative number" />
+                    <InputField label="Home / Primary Phone" type="tel" value={formData.emergency_contact_phone_home} onChange={(val) => setFormData({ ...formData, emergency_contact_phone_home: val.replace(/\D/g, '').slice(0, 10) })} placeholder="e.g. 9876543210" />
+                    <InputField label="Work / Secondary Phone" type="tel" value={formData.emergency_contact_phone_work} onChange={(val) => setFormData({ ...formData, emergency_contact_phone_work: val.replace(/\D/g, '').slice(0, 10) })} placeholder="Alternative number" />
                   </div>
                   <InputField label="Emergency Contact Address" value={formData.emergency_contact_address} onChange={(val) => setFormData({ ...formData, emergency_contact_address: val })} isTextArea placeholder="Guardian's address..." />
                 </div>

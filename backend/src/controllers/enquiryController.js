@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 const enquiryController = {
     // Get all enquiries
@@ -64,7 +65,7 @@ const enquiryController = {
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
                 fitness_goal, blood_group, height, weight, bmi, gender, termsAccepted,
-                plan_name, plan_duration, consent_data
+                plan_name, plan_duration, consent_data, trainer_id, trainer_name
             } = req.body;
 
             if (!name || !email) {
@@ -91,8 +92,8 @@ const enquiryController = {
                     dob, age, address, employer, occupation,
                     emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                     emergency_contact_phone_home, emergency_contact_phone_work,
-                    fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted, consent_data
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted, consent_data, trainer_id, trainer_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     name, email, phone, subject || null, message || null, location || null,
                     dob || null, age || null, address || null, employer || null, occupation || null,
@@ -102,7 +103,8 @@ const enquiryController = {
                     height || null, weight || null, bmi || null, gender || null,
                     plan_name || null, plan_duration || null,
                     termsAccepted ? 1 : 0,
-                    consent_data ? JSON.stringify(consent_data) : null
+                    consent_data ? JSON.stringify(consent_data) : null,
+                    trainer_id || null, trainer_name || null
                 ]
             );
 
@@ -130,7 +132,7 @@ const enquiryController = {
                 dob, age, address, employer, occupation,
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
                 emergency_contact_phone_home, emergency_contact_phone_work,
-                fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, status, termsAccepted, consent_data
+                fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, status, termsAccepted, consent_data, trainer_id, trainer_name
             } = req.body;
 
             const [result] = await pool.query(
@@ -139,7 +141,7 @@ const enquiryController = {
                     dob = ?, age = ?, address = ?, employer = ?, occupation = ?,
                     emergency_contact_name = ?, emergency_contact_relationship = ?, emergency_contact_address = ?,
                     emergency_contact_phone_home = ?, emergency_contact_phone_work = ?,
-                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?, terms_accepted = ?, consent_data = ?,
+                    fitness_goal = ?, blood_group = ?, height = ?, weight = ?, bmi = ?, gender = ?, plan_name = ?, plan_duration = ?, status = ?, terms_accepted = ?, consent_data = ?, trainer_id = ?, trainer_name = ?,
                     updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?`,
                 [
@@ -151,6 +153,7 @@ const enquiryController = {
                     height || null, weight || null, bmi || null, gender || null, plan_name || null, plan_duration || null, status || 'pending',
                     termsAccepted ? 1 : 0,
                     consent_data ? JSON.stringify(consent_data) : null,
+                    trainer_id || null, trainer_name || null,
                     id
                 ]
             );
@@ -238,6 +241,62 @@ const enquiryController = {
             res.json({ message: 'Enquiry deleted successfully' });
         } catch (error) {
             console.error('Error deleting enquiry:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // Convert enquiry to user
+    convertToUser: async (req, res) => {
+        try {
+            const { id } = req.params;
+            
+            // 1. Get Enquiry details
+            const [enquiries] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [id]);
+            if (enquiries.length === 0) {
+                return res.status(404).json({ error: 'Enquiry not found' });
+            }
+
+            const enquiry = enquiries[0];
+            if (!enquiry.email || !enquiry.phone) {
+                return res.status(400).json({ error: 'Enquiry must have an email and phone number to convert' });
+            }
+
+            // 2. Check if user already exists
+            const [existingUsers] = await pool.query(
+                'SELECT * FROM users WHERE email = ? OR mobile = ?',
+                [enquiry.email, enquiry.phone]
+            );
+
+            if (existingUsers.length > 0) {
+                // If user exists, we just update the enquiry status
+                await pool.query('UPDATE enquiries SET status = ? WHERE id = ?', ['converted', id]);
+                return res.status(400).json({ 
+                    error: 'A user with this email or phone already exists.',
+                    userExists: true
+                });
+            }
+
+            // 3. Create the user
+            const defaultPassword = enquiry.phone.toString(); // Set password to phone number initially
+            const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+            const [userResult] = await pool.query(
+                `INSERT INTO users (username, email, mobile, password_hash, role, status, created_at)
+                 VALUES (?, ?, ?, ?, 'member', 'active', NOW())`,
+                [enquiry.name, enquiry.email, enquiry.phone, passwordHash]
+            );
+
+            // 4. Update enquiry status
+            await pool.query('UPDATE enquiries SET status = ? WHERE id = ?', ['converted', id]);
+
+            res.status(201).json({
+                message: 'Enquiry successfully converted to User.',
+                userId: userResult.insertId,
+                defaultPassword: defaultPassword
+            });
+
+        } catch (error) {
+            console.error('Error converting enquiry to user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

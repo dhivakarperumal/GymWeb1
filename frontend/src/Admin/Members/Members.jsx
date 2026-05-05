@@ -173,11 +173,20 @@ const Members = () => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        for (const row of jsonData) {
-          const email = row.Email || row.email;
-          if (!email) continue;
+        let successCount = 0;
+        let failCount = 0;
 
-          const username = email.split('@')[0];
+        for (const row of jsonData) {
+          const email = row["Email Address"] || row.Email || row.email || "";
+          const phone = String(row["Phone Number"] || row.Phone || row.phone || row.Mobile || "");
+          const name = row["Full Name"] || row.Name || row.name || "Unknown Member";
+          
+          if (!phone && !email) {
+             failCount++;
+             continue; // Must have at least phone or email
+          }
+
+          const username = row.Username || row.username || (email ? email.split('@')[0] : name.replace(/\s+/g, '').toLowerCase());
           const joinDate = excelDateToJSDate(row["Join Date"] || row.joinDate || row["JoinDate"]);
           const duration = Number(row.Duration || row.duration || 0);
 
@@ -192,8 +201,8 @@ const Members = () => {
           }
 
           // Calculate BMI
-          const height = row.Height || row.height || "";
-          const weight = row.Weight || row.weight || "";
+          const height = row["Height (cm)"] || row.Height || row.height || "";
+          const weight = row["Weight (kg)"] || row.Weight || row.weight || "";
           let bmi = row.BMI || row.bmi || "";
           if (!bmi && height && weight) {
             const h = Number(height) / 100;
@@ -202,10 +211,10 @@ const Members = () => {
           }
 
           const payload = {
-            name: row.Name || row.name,
+            name: name,
             username: username,
-            phone: String(row.Phone || row.phone || row.Mobile || ""),
-            email: email,
+            phone: phone,
+            email: email === "-" ? "" : email,
             gender: row.Gender || row.gender || "",
             height: height,
             weight: weight,
@@ -215,15 +224,27 @@ const Members = () => {
             joinDate: joinDate,
             expiryDate: expiryDate,
             status: row.Status || row.status || "active",
-            address: row.Address || row.address || "",
-            notes: row.Notes || row.notes || "",
-            password: String(row.Phone || row.phone || row.Mobile || "123456")
+            address: row["Home Address"] || row.Address || row.address || "",
+            notes: row["Additional Notes"] || row.Notes || row.notes || "",
+            password: row.Password || row.password || phone || "123456"
           };
 
-          await api.post("/members", payload);
+          try {
+            await api.post("/members", payload);
+            successCount++;
+          } catch (rowErr) {
+            console.error("Failed to import row:", row.Name, rowErr.response?.data || rowErr.message);
+            failCount++;
+          }
         }
 
-        toast.success("Imported successfully");
+        if (successCount > 0) {
+          toast.success(`Imported ${successCount} members successfully.`);
+        }
+        if (failCount > 0) {
+          toast.error(`Failed to import ${failCount} rows (duplicates or missing info).`);
+        }
+        
         fetchMembers();
       } catch (err) {
         console.error(err);
@@ -379,7 +400,7 @@ const Members = () => {
                 <th className="p-4 text-left font-medium">BMI</th>
                 <th className="p-4 text-left font-medium">PT Form</th>
                 <th className="p-4 text-left font-medium">Plan</th>
-                
+
                 <th className="p-4 text-left font-medium">Type</th>
                 <th className="p-4 text-left font-medium">Actions</th>
               </tr>
@@ -443,7 +464,7 @@ const Members = () => {
                         {m.plan || m.role || "Member"}
                       </span>
                     </td>
-                   
+
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${m.source === "users"
                         ? "bg-blue-500/20 text-blue-400"
@@ -452,7 +473,7 @@ const Members = () => {
                         {m.source === "users" ? "User" : "Gym Member"}
                       </span>
                     </td>
-                   
+
                     <td className="p-4 flex gap-2">
                       <button
                         onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
@@ -522,15 +543,15 @@ const Members = () => {
                           <Printer size={14} />
                         </button>
                       )}
-                        <button
-                          onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
-                          className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
-                          title="View Details"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={() => {
+                      <button
+                        onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
+                        className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
+                        title="View Details"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => {
                           if (m.source === "users") {
                             navigate(`/admin/addmembers?user_id=${m.u_id}`);
                           } else {
@@ -740,7 +761,7 @@ const Members = () => {
 
             {/* Modal Content - Native Component View */}
             <div className="flex-1 overflow-y-auto bg-gray-100/50 p-4 sm:p-8 custom-scrollbar">
-               <PTFormPreviewContent memberId={ptViewMemberId} />
+              <PTFormPreviewContent memberId={ptViewMemberId} />
             </div>
 
             {/* Modal Footer */}

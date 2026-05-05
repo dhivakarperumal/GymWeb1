@@ -35,6 +35,8 @@ import {
 import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
 
 const pageInfo = {
   "/admin": { title: "Dashboard", icon: LayoutDashboard },
@@ -180,7 +182,9 @@ const Header = ({ onMenuClick }) => {
       // Clear AuthContext first
       logout();
       // Then sign out from Firebase
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
       // Navigate to login
       navigate("/login", { replace: true });
     } catch (error) {

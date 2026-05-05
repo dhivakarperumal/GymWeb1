@@ -17,6 +17,9 @@ const workoutTypes = [
   "Yoga / Stretching",
   "HIIT",
   "Bodyweight",
+  "Mobility",
+  "Activity",
+  "Stability",
   "Warm Up",
   "Cool Down",
   "Rest Day",
@@ -133,6 +136,28 @@ const AddWorkout = () => {
     });
   };
 
+  /* ---------------- REMOVE DAY ---------------- */
+  const removeDay = () => {
+    const dayCount = Object.keys(days).length;
+    if (dayCount <= 1) return;
+    const nextDays = { ...days };
+    delete nextDays[`Day${dayCount}`];
+    setDays(nextDays);
+  };
+
+  /* ---------------- COPY DAY 1 TO ALL ---------------- */
+  const copyDay1ToAll = () => {
+    if (!window.confirm("Copy Day 1 to all other days? This will overwrite existing data.")) return;
+    const day1Data = days["Day1"];
+    const newDays = {};
+    Object.keys(days).forEach((day) => {
+      // Deep copy day1Data to each day
+      newDays[day] = JSON.parse(JSON.stringify(day1Data));
+    });
+    setDays(newDays);
+    toast.success("Day 1 copied to all days!");
+  };
+
   /* ---------------- ADD EXERCISE ---------------- */
   const addExercise = (dayKey) => {
     setDays({
@@ -176,7 +201,9 @@ const AddWorkout = () => {
       toast.error("Member ID is missing");
       return;
     }
+    const calculatedWeeks = Math.ceil(Object.keys(days).length / 7);
     setSubmitting(true);
+
     try {
       if (isEditMode) {
         const payload = {
@@ -189,7 +216,7 @@ const AddWorkout = () => {
           level: form.level,
           category: form.category,
           goal: form.goal,
-          durationWeeks: Number(form.durationWeeks),
+          durationWeeks: calculatedWeeks,
           days,
           status: "active",
         };
@@ -214,7 +241,7 @@ const AddWorkout = () => {
               level: form.level,
               category: form.category,
               goal: form.goal,
-              durationWeeks: Number(form.durationWeeks),
+              durationWeeks: calculatedWeeks,
               days,
               status: "active",
             };
@@ -548,6 +575,7 @@ const AddWorkout = () => {
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition border border-white/5"
                     title="Download Template"
                   >
+                    Download Example Excel
                     <Download size={16} />
                   </button>
                 </div>
@@ -625,21 +653,6 @@ const AddWorkout = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Duration (Weeks)</label>
-              <input
-                type="number"
-                className={inputClass}
-                placeholder="e.g. 12"
-                value={form.durationWeeks}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    durationWeeks: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-1">
               <label className="text-xs font-medium text-white/50 ml-1">Training Category</label>
               <select
                 className={inputClass}
@@ -648,11 +661,9 @@ const AddWorkout = () => {
                   setForm({ ...form, category: e.target.value })
                 }
               >
-                <option>Weight Training</option>
-                <option>Cardio</option>
-                <option>Yoga</option>
-                <option>HIIT</option>
-                <option>Zumba</option>
+                {workoutTypes.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
               </select>
             </div>
 
@@ -668,14 +679,38 @@ const AddWorkout = () => {
               />
             </div>
 
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-white/50 ml-1">Duration (Days)</label>
+              <div className={`${inputClass} flex items-center justify-between bg-black/60`}>
+                <span>{Object.keys(days).length} Days</span>
+                <div className="flex gap-2">
+                  <button type="button" onClick={removeDay} className="text-red-400 hover:text-red-300 font-bold px-1">-</button>
+                  <button type="button" onClick={addDay} className="text-emerald-400 hover:text-emerald-300 font-bold px-1">+</button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           {/* DAYS */}
-          {Object.keys(days).map((dayKey) => (
+          {Object.keys(days)
+            .sort((a, b) => parseInt(a.slice(3)) - parseInt(b.slice(3)))
+            .map((dayKey) => (
             <div key={dayKey} className="bg-black/40 p-4 rounded-xl">
-              <h3 className="font-semibold mb-4 text-orange-400 border-b border-white/10 pb-2">
-                {dayKey}
-              </h3>
+              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                <h3 className="font-semibold text-orange-400">
+                  {dayKey}
+                </h3>
+                {dayKey === "Day1" && Object.keys(days).length > 1 && (
+                  <button
+                    type="button"
+                    onClick={copyDay1ToAll}
+                    className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
+                  >
+                    Copy to All Days
+                  </button>
+                )}
+              </div>
 
               {days[dayKey].map((item, index) => (
                 <div

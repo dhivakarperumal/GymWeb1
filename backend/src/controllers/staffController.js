@@ -104,7 +104,7 @@ async function createStaff(req, res) {
     try {
       const passwordToHash = body.password || body.phone || '';
       const hashed = passwordToHash ? await bcrypt.hash(passwordToHash, 10) : null;
-      const userRole = 'trainer';
+      const userRole = body.role || 'trainer';
       await connection.query(
         `INSERT INTO users (email, password_hash, role, username, mobile)
            VALUES (?, ?, ?, ?, ?)`,

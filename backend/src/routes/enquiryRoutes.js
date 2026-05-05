@@ -17,6 +17,9 @@ router.put('/:id', enquiryController.updateEnquiry);
 // PUT /api/enquiries/:id/status - Update enquiry status
 router.put('/:id/status', enquiryController.updateEnquiryStatus);
 
+// POST /api/enquiries/:id/convert - Convert enquiry to user
+router.post('/:id/convert', enquiryController.convertToUser);
+
 // DELETE /api/enquiries/:id - Delete enquiry
 router.delete('/:id', enquiryController.deleteEnquiry);
 

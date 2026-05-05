@@ -185,7 +185,16 @@ const Billing = () => {
     if (!cart.length) return toast.error("Cart empty");
 
     for (const key in shipping) {
-      if (!shipping[key]) return toast.error(`Fill ${key} field`);
+      if (key !== 'country' && !shipping[key]) return toast.error(`Fill ${key} field`);
+    }
+
+    if (shipping.phone.length !== 10) {
+      return toast.error("A valid 10-digit phone number is required");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (shipping.email && !emailRegex.test(shipping.email)) {
+      return toast.error("Please enter a valid email address");
     }
 
     try {
@@ -380,24 +389,79 @@ const Billing = () => {
         <h3 className="text-lg font-semibold mb-3">Shipping Details</h3>
 
         <div className="grid md:grid-cols-2 gap-4 mb-6">
-          {Object.keys(shipping).map((key) => (
-            <div key={key}>
-              <label className="text-xs text-gray-400 uppercase block mb-2">
-                {key}
-              </label>
-              <input
-                className={inputClass}
-                value={shipping[key]}
-                onChange={(e) =>
-                  setShipping((prev) => ({
-                    ...prev,
-                    [key]: e.target.value,
-                  }))
-                }
-                placeholder={key}
-              />
-            </div>
-          ))}
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">Name <span className="text-red-500">*</span></label>
+            <input
+              className={inputClass}
+              value={shipping.name}
+              onChange={(e) => setShipping({ ...shipping, name: e.target.value })}
+              placeholder="Full Name"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">Phone <span className="text-red-500">*</span></label>
+            <input
+              className={inputClass}
+              value={shipping.phone}
+              onChange={(e) => setShipping({ ...shipping, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+              maxLength={10}
+              placeholder="10-digit phone"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">Email <span className="text-red-500">*</span></label>
+            <input
+              className={inputClass}
+              value={shipping.email}
+              onChange={(e) => setShipping({ ...shipping, email: e.target.value })}
+              placeholder="Email Address"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">Address <span className="text-red-500">*</span></label>
+            <input
+              className={inputClass}
+              value={shipping.address}
+              onChange={(e) => setShipping({ ...shipping, address: e.target.value })}
+              placeholder="Street Address"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">City <span className="text-red-500">*</span></label>
+            <input
+              className={inputClass}
+              value={shipping.city}
+              onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+              placeholder="City"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">State <span className="text-red-500">*</span></label>
+            <input
+              className={inputClass}
+              value={shipping.state}
+              onChange={(e) => setShipping({ ...shipping, state: e.target.value })}
+              placeholder="State"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">Zip <span className="text-red-500">*</span></label>
+            <input
+              className={inputClass}
+              value={shipping.zip}
+              onChange={(e) => setShipping({ ...shipping, zip: e.target.value })}
+              placeholder="Pincode"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase block mb-2">Country</label>
+            <input
+              className={inputClass}
+              value={shipping.country}
+              onChange={(e) => setShipping({ ...shipping, country: e.target.value })}
+              placeholder="Country"
+            />
+          </div>
         </div>
       </div>
 

@@ -10,17 +10,15 @@ import { Search, Users, CheckSquare, Square, X, RefreshCw } from "lucide-react";
 const inputClass =
   "w-full bg-black/40 border border-white/20 rounded-lg px-3 py-3.5 text-white text-sm";
 
-const meals = ["Morning", "Breakfast", "Lunch", "Evening", "Dinner"];
+const meals = ["Early-morning", "Breakfast", "Mid-morning", "Lunch", "Evening", "Dinner", "Pre-workout", "Post-workout"];
 
 /* ---------- GENERATE SINGLE DAY ---------- */
 const generateSingleDay = () => {
   const day = {};
   meals.forEach((meal) => {
     day[meal] = {
-      food: "",
-      quantity: "",
-      calories: "",
       time: "",
+      items: [{ food: "", quantity: "", calories: "" }]
     };
   });
   return day;
@@ -102,7 +100,11 @@ const AddDietPlans = () => {
 
     Object.values(form.days).forEach((day) => {
       Object.values(day).forEach((meal) => {
-        total += Number(meal.calories || 0);
+        if (Array.isArray(meal.items)) {
+          meal.items.forEach(item => {
+            total += Number(item.calories || 0);
+          });
+        }
       });
     });
 
@@ -132,18 +134,19 @@ const AddDietPlans = () => {
           meals.forEach((meal) => {
             const mealData = data.days[dayKey][meal];
 
-            if (typeof mealData === "string") {
-              fixedDays[dayKey][meal] = {
-                food: mealData,
-                quantity: "",
-                calories: "",
-              };
+            // Migration logic for old data structure
+            if (!mealData) {
+              fixedDays[dayKey][meal] = { time: "", items: [{ food: "", quantity: "", calories: "" }] };
+            } else if (mealData.items) {
+              fixedDays[dayKey][meal] = mealData;
             } else {
               fixedDays[dayKey][meal] = {
-                food: mealData?.food || "",
-                quantity: mealData?.quantity || "",
-                calories: mealData?.calories || "",
-                time: mealData?.time || "",
+                time: mealData.time || "",
+                items: [{
+                  food: mealData.food || (typeof mealData === "string" ? mealData : ""),
+                  quantity: mealData.quantity || "",
+                  calories: mealData.calories || "",
+                }]
               };
             }
           });
@@ -170,7 +173,7 @@ const AddDietPlans = () => {
   }, [id]);
 
   /* ================= HANDLE MEAL CHANGE ================= */
-  const handleMealChange = (day, meal, field, value) => {
+  const handleMealTimeChange = (day, meal, value) => {
     setForm((prev) => ({
       ...prev,
       days: {
@@ -179,11 +182,69 @@ const AddDietPlans = () => {
           ...prev.days[day],
           [meal]: {
             ...prev.days[day][meal],
-            [field]: value,
+            time: value,
           },
         },
       },
     }));
+  };
+
+  const handleFoodItemChange = (day, meal, index, field, value) => {
+    setForm((prev) => {
+      const updatedItems = [...prev.days[day][meal].items];
+      updatedItems[index] = { ...updatedItems[index], [field]: value };
+
+      return {
+        ...prev,
+        days: {
+          ...prev.days,
+          [day]: {
+            ...prev.days[day],
+            [meal]: {
+              ...prev.days[day][meal],
+              items: updatedItems,
+            },
+          },
+        },
+      };
+    });
+  };
+
+  const handleAddFoodItem = (day, meal) => {
+    setForm((prev) => ({
+      ...prev,
+      days: {
+        ...prev.days,
+        [day]: {
+          ...prev.days[day],
+          [meal]: {
+            ...prev.days[day][meal],
+            items: [...prev.days[day][meal].items, { food: "", quantity: "", calories: "" }],
+          },
+        },
+      },
+    }));
+  };
+
+  const handleRemoveFoodItem = (day, meal, index) => {
+    setForm((prev) => {
+      if (prev.days[day][meal].items.length <= 1) return prev;
+      const updatedItems = prev.days[day][meal].items.filter((_, i) => i !== index);
+
+      return {
+        ...prev,
+        days: {
+          ...prev.days,
+          [day]: {
+            ...prev.days[day],
+            [meal]: {
+              ...prev.days[day][meal],
+              items: updatedItems,
+            },
+          },
+        },
+      };
+    });
   };
 
   /* ================= ADD DAY ================= */
@@ -298,6 +359,25 @@ const AddDietPlans = () => {
     const raw = normalizeString(value).toLowerCase();
     if (!raw) return "";
 
+    const normalized = raw.replace(/[\s_-]+/g, " ").trim();
+
+    if (["early morning", "early-morning", "early"].includes(normalized)) {
+      return "Early-morning";
+    }
+    if (["mid morning", "mid-morning", "mid", "midmorning"].includes(normalized)) {
+      return "Mid-morning";
+    }
+    if (["breakfast"].includes(normalized)) return "Breakfast";
+    if (["lunch"].includes(normalized)) return "Lunch";
+    if (["evening"].includes(normalized)) return "Evening";
+    if (["dinner"].includes(normalized)) return "Dinner";
+    if (["pre workout", "pre-workout", "preworkout"].includes(normalized)) {
+      return "Pre-workout";
+    }
+    if (["post workout", "post-workout", "postworkout"].includes(normalized)) {
+      return "Post-workout";
+    }
+
     const found = meals.find((meal) => meal.toLowerCase() === raw);
     if (found) return found;
 
@@ -307,13 +387,68 @@ const AddDietPlans = () => {
       }
     }
 
+    if (raw.includes("pre") && raw.includes("workout")) return "Pre-workout";
+    if (raw.includes("post") && raw.includes("workout")) return "Post-workout";
+    if (raw.includes("early") && raw.includes("morning")) return "Early-morning";
+    if (raw.includes("mid") && raw.includes("morning")) return "Mid-morning";
     if (raw.includes("breakfast")) return "Breakfast";
     if (raw.includes("lunch")) return "Lunch";
     if (raw.includes("dinner")) return "Dinner";
     if (raw.includes("evening")) return "Evening";
-    if (raw.includes("morning")) return "Morning";
+    if (raw.includes("morning")) return "Early-morning";
 
     return "";
+  };
+
+  const downloadDietPlanTemplate = () => {
+    const template = [
+      // Day 1
+      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Warm Water", Qty: "1 glass", Kcal: "0" },
+      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Almonds", Qty: "5 pcs", Kcal: "50" },
+
+      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Oats", Qty: "1 bowl", Kcal: "200" },
+      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Milk", Qty: "1 cup", Kcal: "100" },
+
+      { Day: "1", Meal: "Mid-morning", Time: "11:00", Food: "Apple", Qty: "1", Kcal: "80" },
+
+      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
+      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Chicken", Qty: "150g", Kcal: "250" },
+
+      { Day: "1", Meal: "Evening", Time: "16:30", Food: "Nuts", Qty: "50g", Kcal: "200" },
+
+      { Day: "1", Meal: "Pre-workout", Time: "17:30", Food: "Banana", Qty: "1", Kcal: "90" },
+
+      { Day: "1", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+
+      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Chapati", Qty: "2 pcs", Kcal: "200" },
+      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Veg Curry", Qty: "1 bowl", Kcal: "150" },
+
+      // Day 2
+      { Day: "2", Meal: "Early-morning", Time: "06:00", Food: "Green Tea", Qty: "1 cup", Kcal: "5" },
+
+      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Eggs", Qty: "2 pcs", Kcal: "140" },
+      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Bread", Qty: "2 slices", Kcal: "160" },
+
+      { Day: "2", Meal: "Mid-morning", Time: "11:00", Food: "Banana", Qty: "1", Kcal: "90" },
+
+      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
+      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Fish", Qty: "150g", Kcal: "250" },
+
+      { Day: "2", Meal: "Evening", Time: "16:30", Food: "Peanuts", Qty: "50g", Kcal: "250" },
+
+      { Day: "2", Meal: "Pre-workout", Time: "17:30", Food: "Dates", Qty: "3 pcs", Kcal: "70" },
+
+      { Day: "2", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+
+      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Salad", Qty: "1 bowl", Kcal: "150" },
+      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Soup", Qty: "1 cup", Kcal: "100" },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan Sample");
+
+    XLSX.writeFile(workbook, "Diet_Plan_Sample.xlsx");
   };
 
   const handleImportExcel = async (event) => {
@@ -352,15 +487,25 @@ const AddDietPlans = () => {
 
         const dayKey = `Day${dayNumber}`;
         if (!parsedDays[dayKey]) {
-          parsedDays[dayKey] = generateSingleDay();
+          parsedDays[dayKey] = {};
         }
 
-        parsedDays[dayKey][mealName] = {
-          food,
-          quantity,
-          calories,
-          time,
-        };
+        if (!parsedDays[dayKey][mealName]) {
+          parsedDays[dayKey][mealName] = {
+            time: "",
+            items: [],
+          };
+        }
+
+        const mealData = parsedDays[dayKey][mealName];
+        if (time) {
+          mealData.time = time;
+        }
+
+        const rowItem = { food, quantity, calories };
+        if (food || quantity || calories) {
+          mealData.items.push(rowItem);
+        }
 
         rowsParsed += 1;
       });
@@ -376,10 +521,24 @@ const AddDietPlans = () => {
 
       const newDays = {};
       dayKeys.forEach((dayKey) => {
-        newDays[dayKey] = {
-          ...generateSingleDay(),
-          ...parsedDays[dayKey],
-        };
+        const rawDay = parsedDays[dayKey] || {};
+        const dayTemplate = generateSingleDay();
+        const mergedDay = {};
+
+        meals.forEach((meal) => {
+          const mealData = rawDay[meal];
+          if (mealData) {
+            mergedDay[meal] = {
+              ...dayTemplate[meal],
+              time: mealData.time || dayTemplate[meal].time,
+              items: mealData.items.length > 0 ? mealData.items : dayTemplate[meal].items,
+            };
+          } else {
+            mergedDay[meal] = dayTemplate[meal];
+          }
+        });
+
+        newDays[dayKey] = mergedDay;
       });
 
       setForm((prev) => ({
@@ -418,7 +577,7 @@ const AddDietPlans = () => {
     }
 
     const hasFood = Object.values(form.days).some((day) =>
-      Object.values(day).some((meal) => meal.food.trim() !== "")
+      Object.values(day).some((meal) => meal.items?.some(item => item.food.trim() !== ""))
     );
 
     if (!hasFood) {
@@ -556,19 +715,30 @@ const AddDietPlans = () => {
             {id ? "Edit Diet Plan" : "Create Custom Diet Plan"}
           </h2>
 
-          <div className="flex flex-col items-end gap-1">
-            <label className="text-[10px] text-white/50">
-              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal.
-            </label>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={downloadDietPlanTemplate}
+                className="px-4 py-2 rounded-lg bg-slate-700/80 border border-white/10 text-white text-sm hover:bg-slate-700 transition"
+              >
+                Download Example Excel
+              </button>
 
-            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
-              {importing ? "Importing..." : "Import Excel"}
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleImportExcel}
-                className="hidden"
-              />
+              <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
+                {importing ? "Importing..." : "Import Excel"}
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportExcel}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <label className="text-[10px] text-white/50 max-w-md text-right">
+              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal. Use meal names:
+              Early-morning, Breakfast, Mid-morning, Lunch, Evening, Dinner, Pre-workout, Post-workout.
             </label>
           </div>
         </div>
@@ -761,58 +931,100 @@ const AddDietPlans = () => {
                     )}
                   </div>
 
-                  {meals.map((meal) => (
-                    <div key={meal} className="grid grid-cols-1 md:grid-cols-6 items-center gap-3">
-                      {/* Meal Label */}
-                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-3.5 text-emerald-400 text-xs font-bold uppercase tracking-widest text-center">
-                        {meal}
+                  {meals.map((meal) => {
+                    const isWorkoutMeal = meal.toLowerCase().includes("workout");
+                    const mealColorClass = isWorkoutMeal
+                      ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
+                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+
+                    const mealItems = form.days[day][meal]?.items || [];
+
+                    return (
+                      <div key={meal} className="bg-white/5 rounded-xl p-4 border border-white/5 space-y-2">
+                        {mealItems.map((item, idx) => (
+                          <div key={idx} className="flex flex-wrap md:flex-nowrap items-center gap-3">
+                            {/* Meal Category (Left) */}
+                            <div className="w-full md:w-32 shrink-0">
+                              {idx === 0 ? (
+                                <div className={`px-2 py-3 rounded-lg text-[10px] font-black uppercase tracking-tighter text-center border shadow-sm ${mealColorClass}`}>
+                                  {meal}
+                                </div>
+                              ) : (
+                                <div className="hidden md:block h-10" />
+                              )}
+                            </div>
+
+                            {/* Timing */}
+                            <div className="w-full md:w-28 shrink-0">
+                              {idx === 0 ? (
+                                <div className="relative">
+                                  <input
+                                    type="time"
+                                    className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                                    value={form.days[day][meal]?.time || ""}
+                                    onChange={(e) => handleMealTimeChange(day, meal, e.target.value)}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="hidden md:block h-10" />
+                              )}
+                            </div>
+
+                            {/* Food Item (Flexible) */}
+                            <div className="flex-1 min-w-[200px]">
+                              <input
+                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                                placeholder="Food Item"
+                                value={item.food}
+                                onChange={(e) => handleFoodItemChange(day, meal, idx, "food", e.target.value)}
+                              />
+                            </div>
+
+                            {/* Quantity (Fixed) */}
+                            <div className="w-24 shrink-0">
+                              <input
+                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                                placeholder="Qty"
+                                value={item.quantity}
+                                onChange={(e) => handleFoodItemChange(day, meal, idx, "quantity", e.target.value)}
+                              />
+                            </div>
+
+                            {/* Calories (Fixed) */}
+                            <div className="w-24 shrink-0">
+                              <input
+                                type="number"
+                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                                placeholder="Kcal"
+                                value={item.calories}
+                                onChange={(e) => handleFoodItemChange(day, meal, idx, "calories", e.target.value)}
+                              />
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleAddFoodItem(day, meal)}
+                                className="w-10 h-10 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/40 transition"
+                              >
+                                +
+                              </button>
+                              {mealItems.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveFoodItem(day, meal, idx)}
+                                  className="w-10 h-10 flex items-center justify-center bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/40 transition"
+                                >
+                                  -
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Timing first */}
-                      <input
-                        type="time"
-                        className={inputClass}
-                        placeholder="Timing"
-                        value={form.days[day][meal]?.time || ""}
-                        onChange={(e) =>
-                          handleMealChange(day, meal, "time", e.target.value)
-                        }
-                      />
-
-                      {/* Food */}
-                      <input
-                        className={`${inputClass} md:col-span-2`}
-                        placeholder="Food Item"
-                        value={form.days[day][meal]?.food || ""}
-                        onChange={(e) =>
-                          handleMealChange(day, meal, "food", e.target.value)
-                        }
-                      />
-
-                      {/* Quantity */}
-                      <input
-                        className={inputClass}
-                        placeholder="Qty"
-                        value={form.days[day][meal]?.quantity || ""}
-                        onChange={(e) =>
-                          handleMealChange(day, meal, "quantity", e.target.value)
-                        }
-                      />
-
-                      {/* Calories */}
-                      <input
-                        type="number"
-                        className={inputClass}
-                        placeholder="Kcal"
-                        value={form.days[day][meal]?.calories || ""}
-                        onChange={(e) =>
-                          handleMealChange(day, meal, "calories", e.target.value)
-                        }
-                      />
-
-                    </div>
-                  ))}
-
+                    );
+                  })}
                 </div>
               ))}
 

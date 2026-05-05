@@ -3,8 +3,12 @@ import { X, Phone, Mail, Target, History, Clock, ChevronDown } from "lucide-reac
 import api from "../api";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
+import { useAuth } from "../PrivateRouter/AuthContext";
 
 const FollowupEnquiryModal = ({ visible, onClose }) => {
+  const { profileName } = useAuth();
+  const currentUserName = profileName || "Admin";
+
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
   const [createdAt, setCreatedAt] = useState(dayjs());
@@ -37,16 +41,29 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
     organization: "",
     website: "",
     best_time_to_reach: "",
-    updated_by: "Website Lead",
+    updated_by: currentUserName,
     referred_by: "",
+    trainer_id: "",
+    trainer_name: "",
   });
+  const [trainers, setTrainers] = useState([]);
 
   useEffect(() => {
     if (!visible) return;
     setCreatedAt(dayjs());
     fetchPlans();
+    fetchTrainers();
     resetForm();
   }, [visible]);
+
+  const fetchTrainers = async () => {
+    try {
+      const res = await api.get("/staff");
+      setTrainers(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching trainers:", err);
+    }
+  };
 
   useEffect(() => {
     if (formData.dob) {
@@ -94,13 +111,19 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
       organization: "",
       website: "",
       best_time_to_reach: "",
-      updated_by: "Website Lead",
+      updated_by: currentUserName,
       referred_by: "",
+      trainer_id: "",
+      trainer_name: "",
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.phone && formData.phone.length !== 10) {
+      toast.error("Please enter a valid 10-digit phone number");
+      return;
+    }
     setLoading(true);
     try {
       const payload = {
@@ -229,8 +252,9 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
                 <input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="e.g., +91 9876543210"
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                  maxLength={10}
+                  placeholder="e.g., 9876543210"
                   className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                 />
               </div>
@@ -290,12 +314,39 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      maxLength={10}
                       placeholder="Secondary contact..."
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none"
                     />
                     <span className="absolute -right-4 top-1/2 -translate-y-1/2 text-red-500 font-bold">*</span>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 items-center gap-4">
+                <label className="text-xs font-bold text-white/60">Select Trainer</label>
+                <div className="col-span-2 relative group">
+                  <select
+                    value={formData.trainer_id || ""}
+                    onChange={(e) => {
+                      const selectedTrainer = trainers.find(t => t.id.toString() === e.target.value);
+                      setFormData({
+                        ...formData,
+                        trainer_id: e.target.value,
+                        trainer_name: selectedTrainer ? (selectedTrainer.name || selectedTrainer.username) : ""
+                      });
+                    }}
+                    className="w-full py-2.5 pl-4 pr-10 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
+                  >
+                    <option value="">[SELECT TRAINER]</option>
+                    {trainers.map(t => (
+                      <option key={t.id} value={t.id} className="bg-neutral-900">
+                        {t.name || t.username} ({t.role || 'Staff'})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none group-hover:text-white transition-colors" />
                 </div>
               </div>
 
@@ -327,6 +378,7 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
                         ...formData,
                         plan_name: e.target.value,
                         plan_price: selectedPlan ? (selectedPlan.finalPrice || selectedPlan.price) : "",
+                        plan_duration: selectedPlan ? (selectedPlan.duration_days || selectedPlan.duration || 0) : 0,
                       });
                     }}
                     className="w-full py-2.5 pl-4 pr-10 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all"
