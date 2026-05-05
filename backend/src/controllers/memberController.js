@@ -287,7 +287,7 @@ async function createMember(req, res) {
     try {
       const pwd = password || phone || '';
       const hashed = pwd ? await bcrypt.hash(pwd, 10) : null;
-      
+
       if (existingUser.length > 0) {
         // Update existing user login
         await connection.query(
