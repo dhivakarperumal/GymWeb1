@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import * as XLSX from "xlsx";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
+import { CheckSquare, RefreshCw, Search, Square, Users, X } from "lucide-react";
 import api from "../../api";
-import { Search, Users, CheckSquare, Square, X, RefreshCw } from "lucide-react";
 
 const inputClass =
   "w-full bg-black/40 border border-white/20 rounded-lg px-3 py-3.5 text-white text-sm";
@@ -936,119 +936,119 @@ const AddDietPlans = () => {
           <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
 
             {form.days.map((dayData, dayIndex) => (
-                <div
-                  key={dayIndex}
-                  className="bg-black/30 border border-white/10 rounded-lg p-4 space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-emerald-400">Day {dayIndex + 1}</h3>
-                    {dayIndex === 0 && form.days.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={handleCopyDay1ToAll}
-                        className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
-                      >
-                        Copy to All Days
-                      </button>
-                    )}
-                  </div>
+              <div
+                key={dayIndex}
+                className="bg-black/30 border border-white/10 rounded-lg p-4 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-emerald-400">Day {dayIndex + 1}</h3>
+                  {dayIndex === 0 && form.days.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleCopyDay1ToAll}
+                      className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
+                    >
+                      Copy to All Days
+                    </button>
+                  )}
+                </div>
 
-                  {meals.map((meal) => {
-                    const isWorkoutMeal = meal.toLowerCase().includes("workout");
-                    const mealColorClass = isWorkoutMeal
-                      ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
-                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+                {meals.map((meal) => {
+                  const isWorkoutMeal = meal.toLowerCase().includes("workout");
+                  const mealColorClass = isWorkoutMeal
+                    ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
+                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
 
-                    const mealItems = dayData[meal]?.items || [];
+                  const mealItems = dayData[meal]?.items || [];
 
-                    return (
-                      <div key={meal} className="bg-white/5 rounded-xl p-4 border border-white/5 space-y-2">
-                        {mealItems.map((item, idx) => (
-                          <div key={idx} className="flex flex-wrap md:flex-nowrap items-center gap-3">
-                            {/* Meal Category (Left) */}
-                            <div className="w-full md:w-32 shrink-0">
-                              {idx === 0 ? (
-                                <div className={`px-2 py-3 rounded-lg text-[10px] font-black uppercase tracking-tighter text-center border shadow-sm ${mealColorClass}`}>
-                                  {meal}
-                                </div>
-                              ) : (
-                                <div className="hidden md:block h-10" />
-                              )}
-                            </div>
+                  return (
+                    <div key={meal} className="bg-white/5 rounded-xl p-4 border border-white/5 space-y-2">
+                      {mealItems.map((item, idx) => (
+                        <div key={idx} className="flex flex-wrap md:flex-nowrap items-center gap-3">
+                          {/* Meal Category (Left) */}
+                          <div className="w-full md:w-32 shrink-0">
+                            {idx === 0 ? (
+                              <div className={`px-2 py-3 rounded-lg text-[10px] font-black uppercase tracking-tighter text-center border shadow-sm ${mealColorClass}`}>
+                                {meal}
+                              </div>
+                            ) : (
+                              <div className="hidden md:block h-10" />
+                            )}
+                          </div>
 
-                            {/* Timing */}
-                            <div className="w-full md:w-28 shrink-0">
-                              {idx === 0 ? (
-                                <div className="relative">
-                                  <input
-                                    type="time"
-                                    className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
-                                    value={convertTo24Hour(dayData[meal]?.time || "")}
-                                    onChange={(e) => handleMealTimeChange(dayIndex, meal, e.target.value)}
-                                  />
-                                </div>
-                              ) : (
-                                <div className="hidden md:block h-10" />
-                              )}
-                            </div>
+                          {/* Timing */}
+                          <div className="w-full md:w-28 shrink-0">
+                            {idx === 0 ? (
+                              <div className="relative">
+                                <input
+                                  type="time"
+                                  className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                                  value={convertTo24Hour(dayData[meal]?.time || "")}
+                                  onChange={(e) => handleMealTimeChange(dayIndex, meal, e.target.value)}
+                                />
+                              </div>
+                            ) : (
+                              <div className="hidden md:block h-10" />
+                            )}
+                          </div>
 
-                            {/* Food Item (Flexible) */}
-                            <div className="flex-1 min-w-[200px]">
-                              <input
-                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
-                                placeholder="Food Item"
-                                value={item.food}
-                                onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "food", e.target.value)}
-                              />
-                            </div>
+                          {/* Food Item (Flexible) */}
+                          <div className="flex-1 min-w-[200px]">
+                            <input
+                              className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                              placeholder="Food Item"
+                              value={item.food}
+                              onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "food", e.target.value)}
+                            />
+                          </div>
 
-                            {/* Quantity (Fixed) */}
-                            <div className="w-24 shrink-0">
-                              <input
-                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
-                                placeholder="Qty"
-                                value={item.quantity}
-                                onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "quantity", e.target.value)}
-                              />
-                            </div>
+                          {/* Quantity (Fixed) */}
+                          <div className="w-24 shrink-0">
+                            <input
+                              className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                              placeholder="Qty"
+                              value={item.quantity}
+                              onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "quantity", e.target.value)}
+                            />
+                          </div>
 
-                            {/* Calories (Fixed) */}
-                            <div className="w-24 shrink-0">
-                              <input
-                                type="number"
-                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
-                                placeholder="Kcal"
-                                value={item.calories}
-                                onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "calories", e.target.value)}
-                              />
-                            </div>
+                          {/* Calories (Fixed) */}
+                          <div className="w-24 shrink-0">
+                            <input
+                              type="number"
+                              className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                              placeholder="Kcal"
+                              value={item.calories}
+                              onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "calories", e.target.value)}
+                            />
+                          </div>
 
-                            {/* Actions */}
-                            <div className="flex gap-1 shrink-0">
+                          {/* Actions */}
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleAddFoodItem(dayIndex, meal)}
+                              className="w-10 h-10 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/40 transition"
+                            >
+                              +
+                            </button>
+                            {mealItems.length > 1 && (
                               <button
                                 type="button"
-                                onClick={() => handleAddFoodItem(dayIndex, meal)}
-                                className="w-10 h-10 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/40 transition"
+                                onClick={() => handleRemoveFoodItem(dayIndex, meal, idx)}
+                                className="w-10 h-10 flex items-center justify-center bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/40 transition"
                               >
-                                +
+                                -
                               </button>
-                              {mealItems.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveFoodItem(dayIndex, meal, idx)}
-                                  className="w-10 h-10 flex items-center justify-center bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/40 transition"
-                                >
-                                  -
-                                </button>
-                              )}
-                            </div>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
 
           </div>
 
