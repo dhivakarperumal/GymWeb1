@@ -176,7 +176,22 @@ const AllDietPlans = () => {
                     <td className="px-6 py-5">
                       <div className="flex justify-center items-center gap-3">
                         <button
-                          onClick={() => { setSelectedPlan(d); setActiveWeek(1); }}
+                          onClick={() => { 
+                            let rawDays = d.days;
+                            let parsedDays = [];
+                            try {
+                              // Recursive parse to handle potential double-encoding
+                              while (typeof rawDays === 'string') {
+                                rawDays = JSON.parse(rawDays);
+                              }
+                              parsedDays = rawDays;
+                            } catch (e) {
+                              console.error("Parse error", e);
+                              parsedDays = [];
+                            }
+                            setSelectedPlan({ ...d, days: parsedDays }); 
+                            setActiveWeek(1); 
+                          }}
                           className="p-2.5 rounded-xl bg-white/5 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-lg"
                         >
                           <Eye size={18} />
@@ -238,7 +253,21 @@ const AllDietPlans = () => {
 
                   <div className="flex gap-3 pt-4">
                     <button
-                      onClick={() => { setSelectedPlan(d); setActiveWeek(1); }}
+                      onClick={() => { 
+                        let rawDays = d.days;
+                        let parsedDays = [];
+                        try {
+                          while (typeof rawDays === 'string') {
+                            rawDays = JSON.parse(rawDays);
+                          }
+                          parsedDays = rawDays;
+                        } catch (e) {
+                          console.error("Parse error", e);
+                          parsedDays = [];
+                        }
+                        setSelectedPlan({ ...d, days: parsedDays }); 
+                        setActiveWeek(1); 
+                      }}
                       className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-emerald-500/20"
                     >
                       View Plan
@@ -339,10 +368,20 @@ const AllDietPlans = () => {
                   {/* TABLE BODY */}
                   {weekDays.map((dayName, index) => {
                     const dayNumber = (activeWeek - 1) * 7 + index + 1;
-                    // Support both new array format and legacy object format
-                    const dayData = Array.isArray(selectedPlan.days) 
-                      ? selectedPlan.days[dayNumber - 1] 
-                      : selectedPlan.days?.[`Day${dayNumber}`];
+                    
+                    // Robust day data lookup
+                    let dayData = null;
+                    if (selectedPlan.days) {
+                      if (Array.isArray(selectedPlan.days)) {
+                        dayData = selectedPlan.days[dayNumber - 1];
+                      } else {
+                        // Object lookup: Try Day1, day1, 1, "1"
+                        dayData = selectedPlan.days[`Day${dayNumber}`] || 
+                                  selectedPlan.days[`day${dayNumber}`] || 
+                                  selectedPlan.days[dayNumber] || 
+                                  selectedPlan.days[String(dayNumber)];
+                      }
+                    }
 
                     return (
                       <div
@@ -356,19 +395,40 @@ const AllDietPlans = () => {
 
                         {/* Meal Slots */}
                         {timeSlots.map((t) => {
-                          const mealData = dayData?.[t.key];
+                          // Robust data extraction
+                          let mealData = null;
+                          if (dayData) {
+                            // 1. Direct key match
+                            if (dayData[t.key]) {
+                              mealData = dayData[t.key];
+                            } else {
+                              // 2. Case-insensitive & space/hyphen insensitive lookup
+                              const normalizedSearchKey = t.key.toLowerCase().replace(/[\s_-]/g, "");
+                              const foundEntry = Object.entries(dayData).find(([k]) => {
+                                const normalizedKey = k.toLowerCase().replace(/[\s_-]/g, "");
+                                return normalizedKey === normalizedSearchKey;
+                              });
+                              if (foundEntry) mealData = foundEntry[1];
+                            }
+                          }
+
                           let items = [];
                           let time = "";
 
                           if (mealData) {
-                            if (mealData.items) {
-                              items = mealData.items;
-                              time = mealData.time;
-                            } else if (typeof mealData === "string") {
+                            // Handle various mealData formats (legacy string, new object with items array, or single item object)
+                            if (mealData.items && Array.isArray(mealData.items)) {
+                              // Filter out truly empty items (no food name)
+                              items = mealData.items.filter(it => (it.food || it.Food || "").trim() !== "");
+                              time = mealData.time || mealData.Time || "";
+                            } else if (typeof mealData === "string" && mealData.trim() !== "") {
                               items = [{ food: mealData }];
-                            } else {
-                              items = [{ food: mealData.food, quantity: mealData.quantity }];
-                              time = mealData.time;
+                            } else if (mealData.food || mealData.Food) {
+                              items = [{ 
+                                food: mealData.food || mealData.Food, 
+                                quantity: mealData.quantity || mealData.Quantity || mealData.qty || mealData.Qty || "" 
+                              }];
+                              time = mealData.time || mealData.Time || "";
                             }
                           }
 
@@ -389,11 +449,11 @@ const AllDietPlans = () => {
                                     {items.map((it, i) => (
                                       <li key={i} className="flex flex-col border-b border-white/5 last:border-0 pb-1.5 last:pb-0">
                                         <span className="font-bold text-white leading-tight group-hover:text-emerald-400 transition-colors">
-                                          {it.food}
+                                          {it.food || it.Food}
                                         </span>
-                                        {it.quantity && (
+                                        {(it.quantity || it.Quantity || it.qty || it.Qty) && (
                                           <span className="text-gray-500 text-[9px] font-medium mt-0.5 uppercase">
-                                            {it.quantity}
+                                            {it.quantity || it.Quantity || it.qty || it.Qty}
                                           </span>
                                         )}
                                       </li>
@@ -416,6 +476,7 @@ const AllDietPlans = () => {
             </div>
           </div>
         )}
+
 
 
       </div>
