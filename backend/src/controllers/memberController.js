@@ -222,16 +222,12 @@ async function createMember(req, res) {
       return res.status(400).json({ message: "A member with this phone or email already exists" });
     }
 
-    // Check users table to avoid conflict with existing user accounts
+    // We no longer block creation if a user account already exists.
+    // We just check if they exist so we can link/update their user account later.
     const [existingUser] = await connection.query(
       "SELECT id FROM users WHERE mobile = ? OR (email = ? AND email IS NOT NULL AND email != '')",
       [phone, email]
     );
-
-    if (existingUser.length > 0) {
-      await connection.rollback();
-      return res.status(400).json({ message: "A user account with this phone or email already exists" });
-    }
 
     // Parse numeric fields early so they can be used in insert loop
     const numHeight = height != null && !isNaN(height) ? Number(height) : null;
@@ -287,15 +283,24 @@ async function createMember(req, res) {
       throw new Error('Failed to generate unique member_id');
     }
 
-    // create user account for member
+    // create or update user account for member
     try {
       const pwd = password || phone || '';
       const hashed = pwd ? await bcrypt.hash(pwd, 10) : null;
-      await connection.query(
-        `INSERT INTO users (email, password_hash, role, username, mobile)
-           VALUES (?, ?, ?, ?, ?)`,
-        [email || null, hashed, 'user', username || null, phone || null]
-      );
+      
+      if (existingUser.length > 0) {
+        // Update existing user login
+        await connection.query(
+          `UPDATE users SET password_hash = ?, username = ? WHERE id = ?`,
+          [hashed, username || null, existingUser[0].id]
+        );
+      } else {
+        await connection.query(
+          `INSERT INTO users (email, password_hash, role, username, mobile)
+             VALUES (?, ?, ?, ?, ?)`,
+          [email || null, hashed, 'user', username || null, phone || null]
+        );
+      }
     } catch (userErr) {
       if (userErr.code === 'ER_DUP_ENTRY') {
         console.warn('createMember: user already exists, skipping user insert');

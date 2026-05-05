@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 const enquiryController = {
     // Get all enquiries
@@ -240,6 +241,62 @@ const enquiryController = {
             res.json({ message: 'Enquiry deleted successfully' });
         } catch (error) {
             console.error('Error deleting enquiry:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // Convert enquiry to user
+    convertToUser: async (req, res) => {
+        try {
+            const { id } = req.params;
+            
+            // 1. Get Enquiry details
+            const [enquiries] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [id]);
+            if (enquiries.length === 0) {
+                return res.status(404).json({ error: 'Enquiry not found' });
+            }
+
+            const enquiry = enquiries[0];
+            if (!enquiry.email || !enquiry.phone) {
+                return res.status(400).json({ error: 'Enquiry must have an email and phone number to convert' });
+            }
+
+            // 2. Check if user already exists
+            const [existingUsers] = await pool.query(
+                'SELECT * FROM users WHERE email = ? OR mobile = ?',
+                [enquiry.email, enquiry.phone]
+            );
+
+            if (existingUsers.length > 0) {
+                // If user exists, we just update the enquiry status
+                await pool.query('UPDATE enquiries SET status = ? WHERE id = ?', ['converted', id]);
+                return res.status(400).json({ 
+                    error: 'A user with this email or phone already exists.',
+                    userExists: true
+                });
+            }
+
+            // 3. Create the user
+            const defaultPassword = enquiry.phone.toString(); // Set password to phone number initially
+            const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+            const [userResult] = await pool.query(
+                `INSERT INTO users (username, email, mobile, password_hash, role, status, created_at)
+                 VALUES (?, ?, ?, ?, 'member', 'active', NOW())`,
+                [enquiry.name, enquiry.email, enquiry.phone, passwordHash]
+            );
+
+            // 4. Update enquiry status
+            await pool.query('UPDATE enquiries SET status = ? WHERE id = ?', ['converted', id]);
+
+            res.status(201).json({
+                message: 'Enquiry successfully converted to User.',
+                userId: userResult.insertId,
+                defaultPassword: defaultPassword
+            });
+
+        } catch (error) {
+            console.error('Error converting enquiry to user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
