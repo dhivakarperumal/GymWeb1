@@ -6,7 +6,7 @@ const db = require('../config/db');
  */
 async function getAttendance(req, res) {
   try {
-    const { date, trainerId, memberOnly } = req.query;
+    const { date, trainerId, memberId, memberOnly } = req.query;
 
     // Improved query to get names from either users or staff
     let sql = `
@@ -42,6 +42,11 @@ async function getAttendance(req, res) {
     // 🔒 memberOnly=true → exclude trainer/staff/admin records (Member Attendance page)
     if (memberOnly === 'true') {
       sql += " AND (u.role IS NULL OR (LOWER(u.role) NOT IN ('trainer', 'staff', 'admin')))";
+    }
+
+    if (memberId) {
+      sql += " AND a.member_id = ?";
+      params.push(memberId);
     }
 
     sql += " GROUP BY a.id ORDER BY a.check_in DESC";

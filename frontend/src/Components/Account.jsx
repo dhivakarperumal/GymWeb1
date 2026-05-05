@@ -10,6 +10,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
+import { toast } from "react-hot-toast";
+import { Shield, Key, Eye, EyeOff, CalendarCheck } from "lucide-react";
+import UserAttendance from "./UserAttendance";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -24,6 +27,13 @@ const Account = () => {
   const [userInfo, setUserInfo] = useState({});
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
+  
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   /* ================= FETCH USER INFO ================= */
   useEffect(() => {
@@ -76,6 +86,7 @@ const Account = () => {
   const tabs = [
     { key: "personal", label: "Personal Details" },
     { key: "plans", label: "My Plans" },
+    { key: "attendance", label: "Attendance" },
     ...(hasActivePlan
       ? [
           { key: "diet", label: "Diet Chart" },
@@ -86,6 +97,7 @@ const Account = () => {
     { key: "orders", label: "My Orders" },
     { key: "address", label: "Address" },
     { key: "notifications", label: "Notifications" },
+    { key: "security", label: "Security" },
   ];
 
   /* ================= CONTENT ================= */
@@ -136,11 +148,122 @@ const Account = () => {
       case "ptform":
         return <PTFormUser />;
 
+      case "attendance":
+        return <UserAttendance userId={userId} />;
+
       case "workouts":
         return <Workouts />;
 
       case "notifications": // Added
         return <UserNotifications userEmail={userInfo.email} />;
+      
+      case "security":
+        return (
+          <div className="max-w-md space-y-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-red-500/10 rounded-2xl">
+                <Shield className="text-red-500" size={24} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Security Settings</h2>
+                <p className="text-sm text-gray-400">Manage your account security and password</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-900/50 border border-red-500/10 rounded-3xl p-8 space-y-6">
+              <div className="space-y-4">
+                <div className="relative">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Old Password</label>
+                  <div className="relative mt-2">
+                    <input
+                      type={showOldPassword ? "text" : "password"}
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm focus:border-red-500/50 transition-all outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                    >
+                      {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">New Password</label>
+                  <div className="relative mt-2">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm focus:border-red-500/50 transition-all outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Confirm Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat new password"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white text-sm mt-2 focus:border-red-500/50 transition-all outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  if (!newPassword || !confirmPassword) {
+                    toast.error("Please fill all fields");
+                    return;
+                  }
+                  if (newPassword !== confirmPassword) {
+                    toast.error("Passwords do not match");
+                    return;
+                  }
+                  if (newPassword.length < 6) {
+                    toast.error("Password must be at least 6 characters");
+                    return;
+                  }
+
+                  setLoading(true);
+                  try {
+                    await api.post("/auth/set-password", {
+                      userId: user.id,
+                      oldPassword,
+                      newPassword
+                    });
+                    toast.success("Password updated successfully!");
+                    setOldPassword("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                  } catch (err) {
+                    toast.error(err.response?.data?.message || "Failed to update password");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-600/20 disabled:opacity-50"
+              >
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </div>
+        );
 
       default:
         return null;

@@ -161,4 +161,44 @@ async function googleLogin(req, res) {
   }
 }
 
-module.exports = { register, login, googleLogin };
+// set or change password
+async function setPassword(req, res) {
+  const { userId, oldPassword, newPassword } = req.body;
+  if (!userId || !newPassword) {
+    return res.status(400).json({ message: 'User ID and new password are required' });
+  }
+
+  try {
+    // 1. Fetch current user to get password_hash
+    const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = rows[0];
+
+    // 2. Verify old password if it exists (not null)
+    if (user.password_hash) {
+      if (!oldPassword) {
+        return res.status(400).json({ message: 'Old password is required to change password' });
+      }
+      const match = await bcrypt.compare(oldPassword, user.password_hash);
+      if (!match) {
+        return res.status(400).json({ message: 'Incorrect old password' });
+      }
+    }
+
+    // 3. Hash and update
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [hashed, userId]
+    );
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    logger.error('setPassword error: %O', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+module.exports = { register, login, googleLogin, setPassword };
