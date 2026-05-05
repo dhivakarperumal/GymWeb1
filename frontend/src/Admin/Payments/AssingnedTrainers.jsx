@@ -450,6 +450,7 @@ const AssingnedTrainers = () => {
             <table className="min-w-full text-sm">
               <thead className="bg-white/10 border-b border-white/10">
                 <tr>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-300">S No</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-300">Member</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-300">Trainer</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-300">Plan</th>
@@ -458,10 +459,13 @@ const AssingnedTrainers = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {paginatedData.map((m) => {
+                {paginatedData.map((m, index) => {
                   const assigned = assignments[m.uid] || [];
                   return (
                     <tr key={m.uid} className="hover:bg-white/5 transition">
+                      <td className="px-6 py-4 text-white font-medium">
+                        {startIndex + index + 1}
+                      </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-white">{m.username}</p>
                         <p className="text-xs text-gray-400">{m.email}</p>
