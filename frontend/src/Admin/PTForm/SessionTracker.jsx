@@ -17,28 +17,43 @@ const SessionTracker = ({
   disabled = false,
   buttonLabel = null,
 }) => {
-  const { user } = useAuth();
-  const trainerName = localStorage.getItem('username') || localStorage.getItem('name') || "";
+  const { user, profileName } = useAuth();
+  const currentLoginName = profileName || "";
 
   const [localFormData, setLocalFormData] = useState({
-    sessions: initialFormData?.sessions || Array(25).fill(null).map((_, i) => ({
+    sessions: (initialFormData?.sessions && initialFormData.sessions.length > 0) 
+      ? initialFormData.sessions 
+      : Array(25).fill(null).map((_, i) => ({
       session_no: i + 1,
       date: "",
       workout: "",
       status: "Pending",
       client_sign: "",
-      trainer_sign: initialFormData?.trainer_name_assigned || trainerName,
+      trainer_sign: initialFormData?.trainer_name_assigned || currentLoginName,
     }))
   });
 
   useEffect(() => {
-    if (initialFormData && initialFormData.sessions) {
-      setLocalFormData(prev => ({
-        ...prev,
-        sessions: initialFormData.sessions
+    if (!initialFormData) return;
+
+    setLocalFormData(prev => {
+      const currentSessions = (initialFormData.sessions && initialFormData.sessions.length > 0) 
+        ? initialFormData.sessions 
+        : prev.sessions;
+
+      // If we are using sessions (either new ones or existing ones), 
+      // ensure the trainer_sign is filled if it's currently empty/default
+      const updatedSessions = currentSessions.map(s => ({
+        ...s,
+        trainer_sign: s.trainer_sign || initialFormData.trainer_name_assigned || currentLoginName
       }));
-    }
-  }, [initialFormData]);
+
+      return {
+        ...prev,
+        sessions: updatedSessions
+      };
+    });
+  }, [initialFormData?.sessions, initialFormData?.trainer_name_assigned, currentLoginName]);
 
   const handleSessionChange = (index, field, value) => {
     if (userMode && ['date', 'workout', 'trainer_sign', 'client_sign'].includes(field)) {

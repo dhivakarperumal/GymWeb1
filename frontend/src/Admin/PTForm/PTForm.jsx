@@ -17,7 +17,7 @@ const PTForm = () => {
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, profileName } = useAuth();
   const memberId = searchParams.get("member_id");
 
   useEffect(() => {
@@ -76,12 +76,12 @@ const PTForm = () => {
               setFormData(prev => ({
                 ...prev,
                 ...savedData,
-                trainer_name_assigned: trainerName || savedData.trainer_name_assigned || ""
+                trainer_name_assigned: trainerName || savedData.trainer_name_assigned || (role === 'trainer' ? (profileName || "") : "")
               }));
             } else {
               setFormData(prev => ({
                 ...prev,
-                trainer_name_assigned: trainerName
+                trainer_name_assigned: trainerName || (role === 'trainer' ? (profileName || "") : "")
               }));
             }
           } catch (err) {
