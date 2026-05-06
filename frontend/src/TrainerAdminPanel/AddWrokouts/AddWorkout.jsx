@@ -110,6 +110,8 @@ const AddWorkout = () => {
         setForm({
           memberId: data.member_id,
           memberName: data.member_name,
+          memberEmail: data.member_email,
+          memberMobile: data.member_mobile,
           level: data.level,
           goal: data.goal || "",
           durationWeeks: data.duration_weeks,
