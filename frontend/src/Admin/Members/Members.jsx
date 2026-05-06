@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api"
@@ -9,6 +9,7 @@ import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import dayjs from "dayjs";
 
 
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
@@ -31,6 +32,7 @@ const Members = () => {
     setSearch(querySearch);
   }, [querySearch]);
   const [loading, setLoading] = useState(false);
+  const [importErrors, setImportErrors] = useState([]);
   const [viewMode, setViewMode] = useState("table"); // table, card
   const navigate = useNavigate();
   const [ptViewMemberId, setPtViewMemberId] = useState(null);
@@ -151,12 +153,50 @@ const Members = () => {
     toast.success("Exported successfully");
   };
 
+  const downloadTemplate = () => {
+    const template = [
+      {
+        "Full Name": "John Doe",
+        "Phone Number": "9876543210",
+        "Email Address": "john@example.com",
+        "Gender": "Male",
+        "Height (cm)": "175",
+        "Weight (kg)": "70",
+        "BMI": "22.9",
+        "Plan": "Gold Plan",
+        "Duration": "3",
+        "Join Date": "2023-01-01",
+        "Expiry Date": "2023-04-01",
+        "Status": "active",
+        "Home Address": "123 Street, City",
+        "Additional Notes": "New member",
+        "Password": "password123"
+      }
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
+    XLSX.writeFile(workbook, "Member_Import_Template.xlsx");
+    toast.success("Template downloaded!");
+  };
+
   /* ================= IMPORT FROM EXCEL ================= */
   const excelDateToJSDate = (value) => {
     if (!value) return null;
-    if (typeof value === "string") return value;
-    const date = new Date((value - 25569) * 86400 * 1000);
-    return date.toISOString().split("T")[0];
+    
+    // If it's a number, it's an Excel serial date
+    if (typeof value === "number") {
+      const date = new Date((value - 25569) * 86400 * 1000);
+      return dayjs(date).format("YYYY-MM-DD");
+    }
+    
+    // If it's a string, try to parse it with dayjs
+    const parsed = dayjs(value);
+    if (parsed.isValid()) {
+      return parsed.format("YYYY-MM-DD");
+    }
+    
+    return null;
   };
 
   const handleImport = async (e) => {
@@ -172,18 +212,21 @@ const Members = () => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        console.log("Parsed Excel Data:", jsonData);
 
         let successCount = 0;
         let failCount = 0;
+        const errors = [];
 
         for (const row of jsonData) {
           const email = row["Email Address"] || row.Email || row.email || "";
           const phone = String(row["Phone Number"] || row.Phone || row.phone || row.Mobile || "");
-          const name = row["Full Name"] || row.Name || row.name || "Unknown Member";
-          
-          if (!phone && !email) {
-             failCount++;
-             continue; // Must have at least phone or email
+          const name = row["Full Name"] || row.Name || row.name || "";
+
+          if (!name || !phone) {
+            errors.push({ name: name || "Unknown", reason: "Missing Name or Phone" });
+            failCount++;
+            continue;
           }
 
           const username = row.Username || row.username || (email ? email.split('@')[0] : name.replace(/\s+/g, '').toLowerCase());
@@ -226,25 +269,34 @@ const Members = () => {
             status: row.Status || row.status || "active",
             address: row["Home Address"] || row.Address || row.address || "",
             notes: row["Additional Notes"] || row.Notes || row.notes || "",
-            password: row.Password || row.password || phone || "123456"
+            password: row.Password || row.password || phone || "123456",
+            dob: excelDateToJSDate(row.DOB || row["Date of Birth"] || row.dob),
+            age: row.Age || row.age || "",
+            employer: row.Employer || row.employer || "",
+            occupation: row.Occupation || row.occupation || "",
+            emergency_contact_name: row["Emergency Contact Name"] || row.emergency_contact_name || "",
+            emergency_contact_phone_home: row["Emergency Phone"] || row.emergency_contact_phone || ""
           };
 
           try {
             await api.post("/members", payload);
             successCount++;
           } catch (rowErr) {
-            console.error("Failed to import row:", row.Name, rowErr.response?.data || rowErr.message);
+            const errorMsg = rowErr.response?.data?.message || rowErr.response?.data?.error || rowErr.message;
+            console.error(`Import error for ${name || 'Unknown'}:`, errorMsg, rowErr.response?.data);
+            errors.push({ name: name, reason: errorMsg });
             failCount++;
           }
         }
 
+        setImportErrors(errors);
         if (successCount > 0) {
           toast.success(`Imported ${successCount} members successfully.`);
         }
         if (failCount > 0) {
-          toast.error(`Failed to import ${failCount} rows (duplicates or missing info).`);
+          toast.error(`Failed to import ${failCount} rows. See summary below.`, { duration: 5000 });
         }
-        
+
         fetchMembers();
       } catch (err) {
         console.error(err);
@@ -260,6 +312,26 @@ const Members = () => {
 
   return (
     <div className="min-h-screen px-0 py-8">
+
+      {/* IMPORT ERRORS SUMMARY */}
+      {importErrors.length > 0 && (
+        <div className="mx-4 sm:mx-0 mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-red-500 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+              <Trash2 size={16} /> Import Failures ({importErrors.length})
+            </h3>
+            <button onClick={() => setImportErrors([])} className="text-white/40 hover:text-white text-xs">Clear</button>
+          </div>
+          <div className="max-h-32 overflow-y-auto space-y-1 custom-scrollbar">
+            {importErrors.map((err, i) => (
+              <p key={i} className="text-white/60 text-xs flex justify-between gap-4">
+                <span className="font-medium">{err.name}</span>
+                <span className="text-red-400/80 italic">{err.reason}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 px-4 sm:px-0">
@@ -277,9 +349,40 @@ const Members = () => {
 
         {/* ➕ ADD MEMBER + IMPORT/EXPORT */}
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <button
+            onClick={downloadTemplate}
+            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
+            bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex-1 sm:flex-none"
+            title="Download Import Template"
+          >
+            <Download size={16} className="text-blue-500" />
+            Template
+          </button>
 
+          <button
+            onClick={() => document.getElementById("importExcel").click()}
+            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
+            bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex-1 sm:flex-none"
+          >
+            <Import size={16} className="text-emerald-500" />
+            Import
+          </button>
+          <input
+            type="file"
+            id="importExcel"
+            className="hidden"
+            accept=".xlsx, .xls"
+            onChange={handleImport}
+          />
 
-
+          <button
+            onClick={exportToExcel}
+            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
+            bg-white/5 border border-white/10 hover:bg-white/20 transition-all flex-1 sm:flex-none"
+          >
+            <Download size={16} className="text-purple-500" />
+            Export
+          </button>
 
           <button
             onClick={() => navigate("/admin/pt-form")}
