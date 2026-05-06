@@ -31,7 +31,7 @@ function App() {
     const timer = setTimeout(() => {
       setInitialLoading(false);
       sessionStorage.setItem("app_loaded", "true");
-    }, 800);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, []);
@@ -56,7 +56,7 @@ function App() {
               className="h-full bg-gradient-to-r from-red-600 to-orange-500"
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
-              transition={{ duration: 1.1, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
             />
           </div>
         </div>
