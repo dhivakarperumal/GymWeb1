@@ -547,7 +547,13 @@ ${items
                     ? JSON.parse(selectedOrder.shipping || "{}")
                     : selectedOrder.shipping;
 
-                  return ship && (
+                  // Hide if order is PICKUP or if address fields are empty
+                  const isPickup = selectedOrder.order_type === "PICKUP" || ship?.address === "SHOP PICKUP";
+                  const hasAddress = ship && ship.address && ship.address.trim() !== "" && ship.address !== "SHOP PICKUP";
+
+                  if (isPickup || !hasAddress) return null;
+
+                  return (
                     <div className="border border-red-500/20 rounded-xl p-4 mb-6 bg-black">
                       <h4 className="font-semibold mb-2 text-red-500">
                         Delivery Address
