@@ -44,7 +44,6 @@ const AddWorkout = () => {
     memberEmail: "",
     memberMobile: "",
     level: "Beginner",
-    category: "Weight Training",
     goal: "",
     durationWeeks: "",
   });
@@ -112,7 +111,6 @@ const AddWorkout = () => {
           memberId: data.member_id,
           memberName: data.member_name,
           level: data.level,
-          category: data.category || "Weight Training",
           goal: data.goal || "",
           durationWeeks: data.duration_weeks,
         });
@@ -214,7 +212,6 @@ const AddWorkout = () => {
           memberEmail: form.memberEmail,
           memberMobile: form.memberMobile,
           level: form.level,
-          category: form.category,
           goal: form.goal,
           durationWeeks: calculatedWeeks,
           days,
@@ -239,7 +236,6 @@ const AddWorkout = () => {
               memberEmail: m.email,
               memberMobile: m.mobile,
               level: form.level,
-              category: form.category,
               goal: form.goal,
               durationWeeks: calculatedWeeks,
               days,
@@ -336,7 +332,7 @@ const AddWorkout = () => {
       toast.error("Upload failed");
     }
   };
-  
+
   /* ---------------- EXCEL IMPORT ---------------- */
   const handleExcelImport = (e) => {
     const file = e.target.files[0];
@@ -363,21 +359,18 @@ const AddWorkout = () => {
             const goal = row.Goal || row.goal || row["Workout Goal"];
             const duration = row.Duration || row["Duration (Weeks)"] || row.duration || row["Weeks"];
 
-            if (level || category || goal || duration) {
               setForm(prev => ({
                 ...prev,
                 ...(level && { level: level.charAt(0).toUpperCase() + level.slice(1).toLowerCase() }),
-                ...(category && { category }),
                 ...(goal && { goal }),
                 ...(duration && { durationWeeks: String(duration) }),
               }));
-            }
           }
 
           // 2. Build Exercises Structure
           const dayKey = row.Day || row.day || "Day1";
           if (!importedDays[dayKey]) importedDays[dayKey] = [];
-          
+
           const exercise = {
             time: row.Time || row.time || "",
             type: row.Type || row.type || "Weight Training",
@@ -387,7 +380,7 @@ const AddWorkout = () => {
             media: row.Media || row.media || "",
             mediaType: "url"
           };
-          
+
           if (exercise.name) {
             importedDays[dayKey].push(exercise);
           }
@@ -429,13 +422,12 @@ const AddWorkout = () => {
   const downloadExcelTemplate = () => {
     // If we have members, create a row for each. Otherwise use samples.
     let template = [];
-    
+
     if (members && members.length > 0) {
       template = members.map(m => ({
         "Member Name": m.name || "",
         "Mobile": m.mobile || "",
         "Training Level": "Beginner",
-        "Training Category": "Weight Training",
         "Workout Goal": "General Fitness",
         "Duration (Weeks)": "12",
         "Day": "Day1",
@@ -449,18 +441,18 @@ const AddWorkout = () => {
     } else {
       // Fallback to 10-day sample if no members loaded
       template = [
-        { "Member Name": "Sakthivel", "Mobile": "9876543210", "Training Level": "Beginner", "Training Category": "Weight Training", "Workout Goal": "Muscle Gain", "Duration (Weeks)": "12", "Day": "Day1", "Time": "10:00", "Type": "Weight Training", "Exercise Name": "Bench Press", "Sets": "3", "Count": "12", "Media": "" },
+        { "Member Name": "Sakthivel", "Mobile": "9876543210", "Training Level": "Beginner", "Workout Goal": "Muscle Gain", "Duration (Weeks)": "12", "Day": "Day1", "Time": "10:00", "Type": "Weight Training", "Exercise Name": "Bench Press", "Sets": "3", "Count": "12", "Media": "" },
         { "Member Name": "Sakthivel", "Mobile": "9876543210", "Day": "Day2", "Time": "10:00", "Type": "Cardio", "Exercise Name": "Running", "Sets": "1", "Count": "20 mins", "Media": "" },
         { "Member Name": "Nishanth", "Mobile": "8887776665", "Day": "Day1", "Time": "10:00", "Type": "HIIT", "Exercise Name": "Burpees", "Sets": "4", "Count": "20", "Media": "" }
       ];
     }
 
     const ws = XLSX.utils.json_to_sheet(template);
-    
+
     // Set column widths
     const wscols = [
-      {wch: 15}, {wch: 12}, {wch: 15}, {wch: 18}, {wch: 18}, {wch: 15},
-      {wch: 10}, {wch: 10}, {wch: 15}, {wch: 20}, {wch: 8}, {wch: 12}, {wch: 20}
+      { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
+      { wch: 10 }, { wch: 10 }, { wch: 15 }, { wch: 20 }, { wch: 8 }, { wch: 12 }, { wch: 20 }
     ];
     ws['!cols'] = wscols;
 
@@ -541,9 +533,9 @@ const AddWorkout = () => {
                   <Users size={18} className="text-orange-400" />
                   Select Members ({selected.size} / {members.length})
                 </label>
-                
+
                 <div className="flex items-center gap-2">
-                  <div 
+                  <div
                     onClick={selectAll}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5"
                   >
@@ -561,10 +553,10 @@ const AddWorkout = () => {
                   <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 cursor-pointer transition border border-indigo-500/20">
                     <FileText size={16} />
                     <span className="text-xs font-bold uppercase tracking-tight">Import Excel</span>
-                    <input 
-                      type="file" 
-                      accept=".xlsx, .xls" 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      className="hidden"
                       onChange={handleExcelImport}
                     />
                   </label>
@@ -635,7 +627,7 @@ const AddWorkout = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-white/50 ml-1">Training Level</label>
@@ -649,21 +641,6 @@ const AddWorkout = () => {
                 <option>Beginner</option>
                 <option>Intermediate</option>
                 <option>Advanced</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Training Category</label>
-              <select
-                className={inputClass}
-                value={form.category}
-                onChange={(e) =>
-                  setForm({ ...form, category: e.target.value })
-                }
-              >
-                {workoutTypes.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
               </select>
             </div>
 
@@ -696,198 +673,198 @@ const AddWorkout = () => {
           {Object.keys(days)
             .sort((a, b) => parseInt(a.slice(3)) - parseInt(b.slice(3)))
             .map((dayKey) => (
-            <div key={dayKey} className="bg-black/40 p-4 rounded-xl">
-              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                <h3 className="font-semibold text-orange-400">
-                  {dayKey}
-                </h3>
-                {dayKey === "Day1" && Object.keys(days).length > 1 && (
-                  <button
-                    type="button"
-                    onClick={copyDay1ToAll}
-                    className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
+              <div key={dayKey} className="bg-black/40 p-4 rounded-xl">
+                <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                  <h3 className="font-semibold text-orange-400">
+                    {dayKey}
+                  </h3>
+                  {dayKey === "Day1" && Object.keys(days).length > 1 && (
+                    <button
+                      type="button"
+                      onClick={copyDay1ToAll}
+                      className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
+                    >
+                      Copy to All Days
+                    </button>
+                  )}
+                </div>
+
+                {days[dayKey].map((item, index) => (
+                  <div
+                    key={index}
+                    className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4 space-y-4 shadow-inner"
                   >
-                    Copy to All Days
-                  </button>
-                )}
-              </div>
-
-              {days[dayKey].map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4 space-y-4 shadow-inner"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Time Slot */}
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Time Slot</label>
-                      <input
-                        type="time"
-                        className={inputClass}
-                        value={item.time}
-                        onChange={(e) =>
-                          updateExercise(dayKey, index, "time", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    {/* Workout Type */}
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Type</label>
-                      <select
-                        className={inputClass}
-                        value={item.type}
-                        onChange={(e) =>
-                          updateExercise(dayKey, index, "type", e.target.value)
-                        }
-                      >
-                        {workoutTypes.map((t) => (
-                          <option key={t}>{t}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Exercise Name */}
-                    <div className="space-y-1 lg:col-span-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Exercise Name</label>
-                      <input
-                        className={inputClass}
-                        placeholder="e.g. Bench Press"
-                        value={item.name}
-                        onChange={(e) =>
-                          updateExercise(dayKey, index, "name", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    {/* Sets */}
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Sets</label>
-                      <input
-                        type="number"
-                        className={inputClass}
-                        placeholder="No. of Sets"
-                        value={item.sets}
-                        onChange={(e) =>
-                          updateExercise(dayKey, index, "sets", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    {/* Count/Reps */}
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Count / Reps</label>
-                      <input
-                        className={inputClass}
-                        placeholder="e.g. 12 reps / 30s"
-                        value={item.count}
-                        onChange={(e) =>
-                          updateExercise(dayKey, index, "count", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    {/* Media Type & Input */}
-                    <div className="space-y-1 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Exercise Media (Image/Video)</label>
-                        <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/10">
-                          <button
-                            type="button"
-                            onClick={() => updateExercise(dayKey, index, "mediaType", "url")}
-                            className={`px-3 py-1 text-[10px] rounded-md transition ${item.mediaType === 'url' ? 'bg-orange-500 text-white' : 'text-white/40'}`}
-                          >
-                            URL
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateExercise(dayKey, index, "mediaType", "upload")}
-                            className={`px-3 py-1 text-[10px] rounded-md transition ${item.mediaType === 'upload' ? 'bg-orange-500 text-white' : 'text-white/40'}`}
-                          >
-                            Upload
-                          </button>
-                        </div>
-                      </div>
-
-                      {item.mediaType === 'url' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Time Slot */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Time Slot</label>
                         <input
+                          type="time"
                           className={inputClass}
-                          placeholder="Paste image or video URL (YouTube, MP4, JPG, etc.)"
-                          value={item.media}
+                          value={item.time}
                           onChange={(e) =>
-                            updateExercise(dayKey, index, "media", e.target.value)
+                            updateExercise(dayKey, index, "time", e.target.value)
                           }
                         />
-                      ) : (
-                        <div className="relative group">
-                          <input
-                            type="file"
-                            accept="image/*,video/*"
-                            onChange={(e) => handleFileUpload(dayKey, index, e)}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                          />
-                          <div className={inputClass + " flex items-center justify-center border-dashed border-2 hover:border-orange-500/50 transition"}>
-                            <span className="text-white/40 text-xs">Click to upload Image or Video (Max 20MB for video)</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Media Preview if content exists */}
-                  {item.media && (
-                    <div className="mt-2 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="text-[10px] text-orange-400 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-                          Media attached
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => updateExercise(dayKey, index, "media", "")}
-                          className="text-[10px] text-red-400 hover:underline"
-                        >
-                          Clear Media
-                        </button>
                       </div>
 
-                      <div className="relative w-full aspect-video max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20">
-                        {item.media.startsWith('data:video') || item.media.match(/\.(mp4|webm|ogg)$/i) || item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
-                          item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
-                            <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white/40">
-                              YouTube Preview Disabled in Editor
-                            </div>
-                          ) : (
-                            <video src={item.media} className="w-full h-full object-cover" controls />
-                          )
+                      {/* Workout Type */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Type</label>
+                        <select
+                          className={inputClass}
+                          value={item.type}
+                          onChange={(e) =>
+                            updateExercise(dayKey, index, "type", e.target.value)
+                          }
+                        >
+                          {workoutTypes.map((t) => (
+                            <option key={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Exercise Name */}
+                      <div className="space-y-1 lg:col-span-1">
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Exercise Name</label>
+                        <input
+                          className={inputClass}
+                          placeholder="e.g. Bench Press"
+                          value={item.name}
+                          onChange={(e) =>
+                            updateExercise(dayKey, index, "name", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* Sets */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Sets</label>
+                        <input
+                          type="number"
+                          className={inputClass}
+                          placeholder="No. of Sets"
+                          value={item.sets}
+                          onChange={(e) =>
+                            updateExercise(dayKey, index, "sets", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* Count/Reps */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Count / Reps</label>
+                        <input
+                          className={inputClass}
+                          placeholder="e.g. 12 reps / 30s"
+                          value={item.count}
+                          onChange={(e) =>
+                            updateExercise(dayKey, index, "count", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* Media Type & Input */}
+                      <div className="space-y-1 lg:col-span-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Exercise Media (Image/Video)</label>
+                          <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/10">
+                            <button
+                              type="button"
+                              onClick={() => updateExercise(dayKey, index, "mediaType", "url")}
+                              className={`px-3 py-1 text-[10px] rounded-md transition ${item.mediaType === 'url' ? 'bg-orange-500 text-white' : 'text-white/40'}`}
+                            >
+                              URL
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateExercise(dayKey, index, "mediaType", "upload")}
+                              className={`px-3 py-1 text-[10px] rounded-md transition ${item.mediaType === 'upload' ? 'bg-orange-500 text-white' : 'text-white/40'}`}
+                            >
+                              Upload
+                            </button>
+                          </div>
+                        </div>
+
+                        {item.mediaType === 'url' ? (
+                          <input
+                            className={inputClass}
+                            placeholder="Paste image or video URL (YouTube, MP4, JPG, etc.)"
+                            value={item.media}
+                            onChange={(e) =>
+                              updateExercise(dayKey, index, "media", e.target.value)
+                            }
+                          />
                         ) : (
-                          <img src={item.media} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="relative group">
+                            <input
+                              type="file"
+                              accept="image/*,video/*"
+                              onChange={(e) => handleFileUpload(dayKey, index, e)}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className={inputClass + " flex items-center justify-center border-dashed border-2 hover:border-orange-500/50 transition"}>
+                              <span className="text-white/40 text-xs">Click to upload Image or Video (Max 20MB for video)</span>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
-                  )}
 
-                  <div className="flex justify-end pt-2 border-t border-white/5">
-                    <button
-                      type="button"
-                      onClick={() => removeExercise(dayKey, index)}
-                      className="text-xs text-red-400/60 hover:text-red-400 transition flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-red-500/10"
-                    >
-                      <X size={14} /> Remove Exercise
-                    </button>
+                    {/* Media Preview if content exists */}
+                    {item.media && (
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-[10px] text-orange-400 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                            Media attached
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => updateExercise(dayKey, index, "media", "")}
+                            className="text-[10px] text-red-400 hover:underline"
+                          >
+                            Clear Media
+                          </button>
+                        </div>
+
+                        <div className="relative w-full aspect-video max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20">
+                          {item.media.startsWith('data:video') || item.media.match(/\.(mp4|webm|ogg)$/i) || item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
+                            item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
+                              <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white/40">
+                                YouTube Preview Disabled in Editor
+                              </div>
+                            ) : (
+                              <video src={item.media} className="w-full h-full object-cover" controls />
+                            )
+                          ) : (
+                            <img src={item.media} alt="Preview" className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end pt-2 border-t border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => removeExercise(dayKey, index)}
+                        className="text-xs text-red-400/60 hover:text-red-400 transition flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-red-500/10"
+                      >
+                        <X size={14} /> Remove Exercise
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
-              <button
-                type="button"
-                onClick={() => addExercise(dayKey)}
-                className="text-sm text-orange-400 mt-2"
-              >
-                + Add Exercise
-              </button>
-            </div>
-          ))}
+                <button
+                  type="button"
+                  onClick={() => addExercise(dayKey)}
+                  className="text-sm text-orange-400 mt-2"
+                >
+                  + Add Exercise
+                </button>
+              </div>
+            ))}
 
           <button
             type="button"

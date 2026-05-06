@@ -29,10 +29,9 @@ const AllWorkouts = () => {
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [viewMode, setViewMode] = useState("table"); // 'table' or 'card'
-  const navigate=useNavigate();
+  const navigate = useNavigate();
 
   const filteredWorkouts = useMemo(() => {
     return workouts.filter((w) => {
@@ -41,12 +40,11 @@ const AllWorkouts = () => {
         .toLowerCase()
         .includes(search.toLowerCase());
 
-      const matchesCategory = categoryFilter ? w.category === categoryFilter : true;
       const matchesLevel = levelFilter ? w.level === levelFilter : true;
 
-      return matchesSearch && matchesCategory && matchesLevel;
+      return matchesSearch && matchesLevel;
     });
-  }, [workouts, search, categoryFilter, levelFilter]);
+  }, [workouts, search, levelFilter]);
 
   /* ---------------- FETCH WORKOUT PROGRAMS ---------------- */
   useEffect(() => {
@@ -64,7 +62,6 @@ const AllWorkouts = () => {
           trainerSource: w.trainer_source,
           memberId: w.member_id,
           memberName: w.member_name,
-          category: w.category,
           level: w.level,
           goal: w.goal,
           durationWeeks: w.duration_weeks || Math.ceil(Object.keys(typeof w.days === 'string' ? JSON.parse(w.days || '{}') : (w.days || {})).length / 7) || 1,
@@ -109,7 +106,6 @@ const AllWorkouts = () => {
       "Member Name": w.memberName || "N/A",
       "Trainer Name": w.trainerName || "N/A",
       "Level": w.level || "N/A",
-      "Category": w.category || "N/A",
       "Goal": w.goal || "N/A",
       "Duration (Weeks)": w.durationWeeks || 0,
       "Created At": w.createdAt ? new Date(w.createdAt).toLocaleDateString() : "N/A",
@@ -147,16 +143,6 @@ const AllWorkouts = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full md:w-44 px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all text-sm cursor-pointer"
-              >
-                <option value="">All Categories</option>
-                {[...new Set(workouts.map(w => w.category).filter(Boolean))].map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
 
               <select
                 value={levelFilter}
@@ -175,18 +161,16 @@ const AllWorkouts = () => {
             <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 h-fit">
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-2.5 rounded-xl transition-all ${
-                  viewMode === "table" ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "text-gray-500 hover:text-white"
-                }`}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === "table" ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "text-gray-500 hover:text-white"
+                  }`}
                 title="Table View"
               >
                 <List size={20} />
               </button>
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-2.5 rounded-xl transition-all ${
-                  viewMode === "card" ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "text-gray-500 hover:text-white"
-                }`}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === "card" ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "text-gray-500 hover:text-white"
+                  }`}
                 title="Card View"
               >
                 <LayoutGrid size={20} />
@@ -261,14 +245,14 @@ const AllWorkouts = () => {
             {filteredWorkouts.map((w, i) => (
               <div key={w.id} className="group relative bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-orange-500/50 transition-all duration-500 shadow-xl overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 bg-orange-500/10 rounded-bl-[100px] -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-all" />
-                
+
                 <div className="flex justify-between items-start mb-6">
                   <div className="bg-orange-500/20 p-4 rounded-2xl text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-all">
                     <Eye size={24} />
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
-                      #{ (i+1).toString().padStart(2, '0') }
+                      #{(i + 1).toString().padStart(2, '0')}
                     </span>
                   </div>
                 </div>
@@ -278,7 +262,7 @@ const AllWorkouts = () => {
                     <h4 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-orange-400 transition-colors">
                       {w.memberName}
                     </h4>
-                    <p className="text-gray-400 text-sm font-medium mt-1">{w.category || 'Workout Program'}</p>
+                    <p className="text-gray-400 text-sm font-medium mt-1">Workout Program</p>
                   </div>
 
                   <div className="flex items-center gap-4">
@@ -321,7 +305,7 @@ const AllWorkouts = () => {
         {/* VIEW MODAL (selectedWorkout) */}
         {selectedWorkout && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50" onClick={() => setSelectedWorkout(null)}>
-            <div 
+            <div
               className="bg-gray-950/90 border border-white/10 w-full max-w-7xl rounded-3xl p-5 md:p-7 overflow-hidden shadow-2xl backdrop-blur-2xl flex flex-col max-h-[95vh]"
               onClick={(e) => e.stopPropagation()}
             >
@@ -357,18 +341,17 @@ const AllWorkouts = () => {
                             <button
                               key={i}
                               onClick={() => setSelectedWeek(i + 1)}
-                              className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all duration-300 ${
-                                selectedWeek === i + 1
+                              className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all duration-300 ${selectedWeek === i + 1
                                   ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
                                   : "text-gray-500 hover:bg-white/5 hover:text-white"
-                              }`}
+                                }`}
                             >
                               Week {i + 1}
                             </button>
                           ))}
                         </div>
                       </div>
-                      
+
                       <button
                         onClick={() => setSelectedWorkout(null)}
                         className="p-3 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all duration-300 w-fit self-end md:self-auto"
