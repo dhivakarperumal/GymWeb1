@@ -465,7 +465,7 @@ const Members = () => {
 
                     <td className="px-4 py-5 flex gap-2">
                       <button
-                        onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`/admin/member_details/${m.id || m.member_id}`)}
                         className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
                         title="View Details"
                       >
@@ -533,7 +533,7 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`/admin/member_details/${m.id || m.member_id}`)}
                         className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
                         title="View Details"
                       >

@@ -138,6 +138,18 @@ const MemberDetails = () => {
     }
   };
 
+  const handleToggleStatus = async () => {
+    const newStatus = member.status === 'active' ? 'inactive' : 'active';
+    try {
+      const res = await api.put(`/members/${id}`, { ...member, status: newStatus });
+      setMember(res.data);
+      toast.success(`Member set to ${newStatus}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update status");
+    }
+  };
+
   return (
     <div className="min-h-screen pb-12 text-white">
       {/* Header */}
@@ -194,10 +206,14 @@ const MemberDetails = () => {
                 <h2 className="text-2xl font-bold text-white mb-1">{member.name}</h2>
                 <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">ID: #{member.id}</p>
                 
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl ${member.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                <button 
+                  onClick={handleToggleStatus}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl transition-all hover:scale-105 active:scale-95 ${member.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}
+                  title={`Click to set as ${member.status === 'active' ? 'Inactive' : 'Active'}`}
+                >
                   <div className={`w-2 h-2 rounded-full ${member.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`} />
                   <span className="text-xs font-bold uppercase">{member.status || 'Active'}</span>
-                </div>
+                </button>
               </div>
 
               {/* Trainer Card */}

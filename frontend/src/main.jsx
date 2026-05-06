@@ -154,7 +154,7 @@ const router = createBrowserRouter([
       { path: "orders", element: <AllOrders /> },
       { path: "orders/:id", element: <OrderDetails /> },
       { path: "members", element: <Members /> },
-      { path: "member-details/:id", element: <MemberDetails /> },
+      { path: "member_details/:id", element: <MemberDetails /> },
       { path: "expiry-members", element: <ExpiryMembers /> },
       { path: "addmembers", element: <AddMember /> },
       { path: "addmembers/:id", element: <AddMember /> },

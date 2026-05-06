@@ -80,10 +80,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   /* ================= ACTIVE ROUTE MAP ================= */
   const activeRouteMap = {
-    "/admin/members": ["/admin/members", "/admin/addmembers"],
+    "/admin/members": ["/admin/members", "/admin/addmembers", "/admin/member_details", "/admin/expiry-members"],
     "/admin/equipment": ["/admin/equipment", "/admin/addequipment"],
-    "/admin/staff": ["/admin/staff", "/admin/addstaff"],
-    "/admin/products": ["/admin/products", "/admin/addproducts"],
+    "/admin/staff": ["/admin/staff", "/admin/addstaff", "/admin/viewstaff"],
+    "/admin/products": ["/admin/products", "/admin/addproducts", "/admin/productdetail"],
     "/admin/plansall": ["/admin/plansall", "/admin/addplan"],
     "/admin/fecilities": ["/admin/fecilities", "/admin/addfecilities"],
     "/admin/stockdetails": ["/admin/stockdetails", "/admin/add-stock"],
@@ -95,12 +95,17 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   /* ================= HELPERS ================= */
   const isRouteActive = (basePath) => {
     const paths = activeRouteMap[basePath];
-    if (!paths) {
-      if (basePath === "/admin") return location.pathname === "/admin";
-      if (basePath === "/") return location.pathname === "/";
-      return location.pathname.startsWith(basePath);
+    if (paths) {
+      return paths.some((p) => 
+        location.pathname === p || location.pathname.startsWith(p + "/")
+      );
     }
-    return paths.some((p) => location.pathname.startsWith(p));
+    
+    if (basePath === "/admin" || basePath === "/") {
+      return location.pathname === basePath;
+    }
+    
+    return location.pathname === basePath || location.pathname.startsWith(basePath + "/");
   };
 
   /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */

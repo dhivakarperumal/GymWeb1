@@ -75,6 +75,7 @@ const pageInfo = {
   "/admin/commenworkoutdiet": { title: "Workout & Diet", icon: HeartPulse },
   "/admin/users": { title: "Users", icon: Users },
   "/admin/pt-form": { title: "Personal Training Form", icon: HeartPulse },
+  "/admin/member_details": { title: "Member Details", icon: User },
   "/admin/plan-history": { title: "Plan History", icon: Clock },
   "/admin/expiry-members": { title: "Plan Expiry Details", icon: Clock },
 };
@@ -166,10 +167,13 @@ const Header = ({ onMenuClick }) => {
     alerts.registrations.length;
 
   const getPageInfo = () => {
-    if (pageInfo[location.pathname]) return pageInfo[location.pathname];
+    // Sort paths by length descending to match more specific routes first
+    const sortedPaths = Object.entries(pageInfo).sort((a, b) => b[0].length - a[0].length);
 
-    for (const [path, info] of Object.entries(pageInfo)) {
-      if (location.pathname.startsWith(path + "/")) return info;
+    for (const [path, info] of sortedPaths) {
+      if (location.pathname === path || location.pathname.startsWith(path + "/")) {
+        return info;
+      }
     }
 
     return { title: "Dashboard", icon: LayoutDashboard };
@@ -225,22 +229,21 @@ const Header = ({ onMenuClick }) => {
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
 
         {/* LEFT */}
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
           <button
             onClick={onMenuClick}
             className="lg:hidden p-2 rounded-xl 
             bg-white/10 hover:bg-white/20 
-            text-white transition"
+            text-white transition shrink-0"
           >
-            <Menu className="w-4 h-4 sm:w-6 sm:h-6" />
+            <Menu className="w-5 h-5" />
           </button>
 
-          <h1 className="text-lg sm:text-xl  lg:text-2xl font-semibold 
-  text-white tracking-wide hidden  md:flex items-center gap-2 whitespace-nowrap">
-            <PageIcon className="w-4 h-4 sm:w-5 sm:h-5  text-orange-500" />
-            {currentPageTitle}
+          <h1 className="text-sm sm:text-lg lg:text-2xl font-bold 
+            text-white tracking-tight flex items-center gap-2 truncate">
+            <PageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF3131] shrink-0" />
+            <span className="truncate">{currentPageTitle}</span>
           </h1>
-
         </div>
 
         {/* RIGHT */}
@@ -251,7 +254,7 @@ const Header = ({ onMenuClick }) => {
             <button
 
               onClick={() => toggleDropdown('orders')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'orders' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`p-2 rounded-xl transition relative ${activeDropdown === 'orders' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Today's Orders"
             >
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -277,7 +280,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             <button
               onClick={() => toggleDropdown('stock')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'stock' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`p-2 rounded-xl transition relative ${activeDropdown === 'stock' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Low Stock Alerts"
             >
               <Package className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -303,7 +306,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             <button
               onClick={() => toggleDropdown('expiry')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'expiry' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`p-2 rounded-xl transition relative ${activeDropdown === 'expiry' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="Expiring Memberships"
             >
               <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -331,7 +334,7 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             <button
               onClick={() => toggleDropdown('members')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'members' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`p-2 rounded-xl transition relative ${activeDropdown === 'members' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
               title="New Members Today"
             >
               <User className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -449,7 +452,7 @@ const Header = ({ onMenuClick }) => {
       {showSearch && (
         <div className="absolute inset-0 z-50 bg-gray-950 flex items-center px-4 sm:px-6 animate-in slide-in-from-top duration-300">
           <form onSubmit={handleSearch} className="flex-1 flex items-center gap-4 max-w-4xl mx-auto">
-            <Search className="w-6 h-6 text-orange-500" />
+            <Search className="w-6 h-6 text-[#FF3131]" />
             <input
               ref={searchInputRef}
               type="text"
@@ -552,7 +555,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
           <div className="p-10 text-center text-gray-500 text-xs">No active alerts for this category</div>
         )}
       </div>
-      <Link to={type === 'orders' ? "/admin/orders" : type === 'stock' ? "/admin/products" : "/admin/expiry-members"} onClick={onClose} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
+      <Link to={type === 'orders' ? "/admin/orders" : type === 'stock' ? "/admin/products" : "/admin/expiry-members"} onClick={onClose} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-[#FF3131] hover:text-red-400 transition uppercase tracking-widest">
         View All Records
       </Link>
     </div>
