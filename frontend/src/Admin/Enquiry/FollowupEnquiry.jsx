@@ -626,22 +626,22 @@ const FollowupEnquiry = () => {
             ) : (
               /* TABLE VIEW */
               <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm text-gray-200">
-            <thead className="border-b border-white/10">
+          <table className="w-full min-w-[700px] text-base text-gray-200">
+            <thead className="bg-white/10 text-white">
                     <tr>
-                      <th className="px-3 py-5 border-b border-white/5 w-12 text-center">S.No</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Name</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Mobile</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Organization</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Plan</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Status</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Date</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Assigned Trainer</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-left">Last Updated By</th>
-                      <th className="px-3 py-5 border-b border-white/5 text-right">Actions</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Mobile</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Organization</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Assigned Trainer</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Last Updated By</th>
+                      <th className="px-4 py-4 text-right text-sm font-semibold">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-white/10">
                     {loading ? (
                       <tr><td colSpan="5" className="py-30 text-center"><div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
                     ) : paginatedEnquiries.length > 0 ? (
@@ -654,60 +654,60 @@ const FollowupEnquiry = () => {
                             setShowForm(true);
                           }}
                         >
-                          <td className="px-3 py-4 text-[10px] font-bold text-white/40 text-center">
+                          <td className="px-4 py-4 text-base text-gray-400 text-center">
                             {(currentPage - 1) * itemsPerPage + paginatedEnquiries.indexOf(enquiry) + 1}
                           </td>
-                          <td className="px-3 py-4">
+                          <td className="px-4 py-4">
                             <div className="flex flex-col">
-                              <span className="text-white font-bold text-sm group-hover:text-orange-400 transition-colors truncate max-w-[150px]">
+                              <span className="text-white font-medium text-base group-hover:text-orange-400 transition-colors truncate max-w-[150px]">
                                 {enquiry.name}
                               </span>
-                              <span className="flex items-center gap-1 text-white/30 text-[9px] font-bold uppercase tracking-tight truncate max-w-[150px]">
+                              <span className="flex items-center gap-1 text-gray-400 text-sm font-medium truncate max-w-[150px]">
                                 {enquiry.email || 'No Email'}
                               </span>
                             </div>
                           </td>
-                          <td className="px-3 py-4">
-                            <span className="flex items-center gap-1 text-white/60 text-xs font-bold">
+                          <td className="px-4 py-4">
+                            <span className="flex items-center gap-1 text-gray-300 text-base font-medium">
                               {enquiry.phone || 'N/A'}
                             </span>
                           </td>
-                          <td className="px-3 py-4 text-[10px] font-bold text-white/40 truncate max-w-[100px]">
+                          <td className="px-4 py-4 text-base text-gray-300 truncate max-w-[100px]">
                             {enquiry.organization || enquiry.employer || 'Direct'}
                           </td>
-                          <td className="px-3 py-4">
+                          <td className="px-4 py-4">
                             {enquiry.plan_name ? (
                               <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-white/70 truncate max-w-[120px]">{enquiry.plan_name}</span>
-                                {enquiry.plan_price && <span className="text-[9px] font-black text-orange-500">₹{enquiry.plan_price}</span>}
+                                <span className="text-sm font-medium text-white truncate max-w-[120px]">{enquiry.plan_name}</span>
+                                {enquiry.plan_price && <span className="text-xs font-semibold text-orange-400">₹{enquiry.plan_price}</span>}
                               </div>
                             ) : (
-                              <span className="text-[10px] text-white/20 italic">No Plan</span>
+                              <span className="text-sm text-gray-500 italic">No Plan</span>
                             )}
                           </td>
-                          <td className="px-3 py-4">
+                          <td className="px-4 py-4">
                             {getStatusBadge(enquiry.status)}
                           </td>
-                          <td className="px-3 py-4 text-[9px] text-white/40 font-bold">
+                          <td className="px-4 py-4 text-sm text-gray-300 font-medium">
                             {dayjs(enquiry.created_at).format('DD/MM/YY')}
                           </td>
-                          <td className="px-3 py-4">
+                          <td className="px-4 py-4">
                             {enquiry.trainer_name ? (
-                              <div className="flex items-center gap-2 text-orange-400 font-bold text-xs">
-                                <Users size={12} className="text-orange-500" />
+                              <div className="flex items-center gap-2 text-orange-400 font-medium text-sm">
+                                <Users size={14} className="text-orange-500" />
                                 <span className="truncate max-w-[100px]">{enquiry.trainer_name}</span>
                               </div>
                             ) : (
-                              <span className="text-white/10 italic text-[10px]">Unassigned</span>
+                              <span className="text-gray-500 italic text-sm">Unassigned</span>
                             )}
                           </td>
-                          <td className="px-3 py-4">
+                          <td className="px-4 py-4">
                             <div className="flex flex-col">
-                              <span className="text-[10px] font-bold text-white/60 truncate max-w-[80px]">{enquiry.updated_by || 'Admin'}</span>
-                              <span className="text-[8px] text-white/20 uppercase font-black">{getStaffRole(enquiry.updated_by)}</span>
+                              <span className="text-sm font-medium text-gray-300 truncate max-w-[80px]">{enquiry.updated_by || 'Admin'}</span>
+                              <span className="text-xs text-gray-500 uppercase font-semibold">{getStaffRole(enquiry.updated_by)}</span>
                             </div>
                           </td>
-                          <td className="px-3 py-4 text-right">
+                          <td className="px-4 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}

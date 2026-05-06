@@ -151,29 +151,29 @@ const AllDietPlans = () => {
         {viewMode === "table" ? (
           <div className="hidden sm:block overflow-x-auto rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-white/5 text-gray-400 uppercase text-[10px] tracking-widest font-black">
+              <thead className="bg-white/10 text-white">
                 <tr>
-                  <th className="px-6 py-5 border-b border-white/5">S No</th>
-                  <th className="px-6 py-5 border-b border-white/5">Member</th>
-                  <th className="px-6 py-5 border-b border-white/5">Title</th>
-                  <th className="px-6 py-5 border-b border-white/5 text-emerald-500">Calories</th>
-                  <th className="px-6 py-5 border-b border-white/5">Duration</th>
-                  <th className="px-6 py-5 border-b border-white/5 text-center">Action</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Title</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Calories</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Duration</th>
+                  <th className="px-4 py-4 text-sm font-semibold text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="text-sm">
+              <tbody>
                 {filteredDietPlans.map((d, i) => (
-                  <tr key={d.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-5 text-gray-500 font-mono">{(i + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-6 py-5 font-bold text-white uppercase tracking-tight">{d.memberName}</td>
-                    <td className="px-6 py-5 text-gray-300 font-medium">{d.title}</td>
-                    <td className="px-6 py-5">
+                  <tr key={d.id} className="border-b border-white/10 hover:bg-white/5 transition group">
+                    <td className="px-4 py-4 text-base text-gray-400">{i + 1}</td>
+                    <td className="px-4 py-4 text-base font-medium text-white">{d.memberName}</td>
+                    <td className="px-4 py-4 text-base text-gray-300">{d.title}</td>
+                    <td className="px-4 py-4 text-base">
                       <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/20">
                         {d.calories} KCAL
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-gray-400 font-medium">{d.duration} Days</td>
-                    <td className="px-6 py-5">
+                    <td className="px-4 py-4 text-base text-gray-400">{d.duration} Days</td>
+                    <td className="px-4 py-4">
                       <div className="flex justify-center items-center gap-3">
                         <button
                           onClick={() => { 
@@ -227,7 +227,7 @@ const AllDietPlans = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
-                      #{ (i+1).toString().padStart(2, '0') }
+                      #{ i + 1 }
                     </span>
                   </div>
                 </div>
