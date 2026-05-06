@@ -66,7 +66,13 @@ export default function Checkout() {
     const fetchAddresses = async () => {
       try {
         const res = await api.get(`/addresses/user/${userId}`);
-        setSavedAddresses(Array.isArray(res.data) ? res.data : []);
+        const list = Array.isArray(res.data) ? res.data : [];
+        setSavedAddresses(list);
+        
+        // Auto-select first address if none selected and list not empty
+        if (list.length > 0 && !selectedAddressId) {
+          selectAddress(list[0]);
+        }
       } catch (err) {
         console.error("failed to fetch addresses", err);
       }
@@ -75,6 +81,15 @@ export default function Checkout() {
   }, [userId]);
 
   const selectAddress = (addr) => {
+    const isPickup = addr.address === "SHOP PICKUP";
+    
+    // If fromAllProducts is true, we only allow PICKUP
+    if (fromAllProducts && !isPickup) {
+      toast.error("Only shop pickup is available for these products");
+      return;
+    }
+
+    setOrderType(isPickup ? "PICKUP" : "DELIVERY");
     setShipping({
       name: addr.name,
       email: addr.email || "",
@@ -123,6 +138,28 @@ export default function Checkout() {
     zip: "",
     country: "India",
   });
+
+  // Pre-fill user data
+  useEffect(() => {
+    if (!userId) return;
+    const fetchUserData = async () => {
+      try {
+        const res = await api.get(`/users/${userId}`);
+        const data = res.data;
+        if (data) {
+          setShipping(prev => ({
+            ...prev,
+            name: prev.name || data.full_name || data.username || "",
+            email: prev.email || data.email || "",
+            phone: prev.phone || data.mobile || "",
+          }));
+        }
+      } catch (err) {
+        console.error("failed to pre-fill user data", err);
+      }
+    };
+    fetchUserData();
+  }, [userId]);
 
   /* LOAD CART OR BUY NOW ITEM */
   useEffect(() => {
