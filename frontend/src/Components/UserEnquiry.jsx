@@ -16,7 +16,6 @@ const UserEnquiry = () => {
   const location = useLocation();
   const prefilledPlan = location.state?.selectedPlan;
   const [enquiries, setEnquiries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
@@ -136,8 +135,6 @@ const UserEnquiry = () => {
       console.error('Error fetching enquiries:', error);
       setError('Failed to load enquiries');
       setEnquiries([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -322,13 +319,6 @@ const UserEnquiry = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -632,7 +622,7 @@ const UserEnquiry = () => {
                     disabled={isNewSubmissionBlocked}
                     className={`flex-[2] px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(234,88,12,0.3)] flex items-center justify-center gap-3 ${isNewSubmissionBlocked ? 'opacity-50 cursor-not-allowed bg-gray-700 from-gray-600 to-gray-700 shadow-none' : 'hover:from-orange-500 hover:to-red-500 hover:shadow-[0_15px_40px_rgba(234,88,12,0.4)] active:scale-95'}`}
                   >
-                    {selectedEnquiry ? 'Update Enquiry' : 'Submit Enquiry'} <Plus className="w-5 h-5" />
+                    {selectedEnquiry ? 'Update Enquiry' : 'Submit Join'} <Plus className="w-5 h-5" />
                   </button>
                 </div>
               </form>
