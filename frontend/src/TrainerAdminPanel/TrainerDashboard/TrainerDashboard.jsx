@@ -319,26 +319,26 @@ const TrainerDashboard = () => {
 
             {/* DESKTOP TABLE */}
             <div className="hidden sm:block overflow-x-auto custom-scrollbar">
-              <table className="min-w-[640px] w-full text-sm text-gray-200">
+              <table className="min-w-[640px] w-full text-base text-gray-200">
 
                 <thead className="bg-white/20">
                   <tr>
-                    <th className="px-4 py-4 text-left">S No</th>
-                    <th className="px-4 py-4 text-left">Member</th>
-                    <th className="px-4 py-4 text-left">Email</th>
-                    <th className="px-4 py-4 text-left">Mobile</th>
-                    <th className="px-4 py-4 text-left">Plan</th>
-                    <th className="px-4 py-4 text-left">Start Date</th>
-                    <th className="px-4 py-4 text-left">End Date</th>
-                    <th className="px-4 py-4 text-left">PT Form</th>
-                    <th className="px-4 py-4 text-left">Status</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Email</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Mobile</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Start Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">End Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">PT Form</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {assignedMembers.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-6 text-gray-400">
+                      <td colSpan="8" className="text-center py-6 text-base text-gray-400">
                         No members assigned
                       </td>
                     </tr>
@@ -349,31 +349,31 @@ const TrainerDashboard = () => {
                         className="border-b border-white/10 hover:bg-white/5"
                       >
 
-                        <td className="px-4 py-4">{(currentPage - 1) * itemsPerPage + ind + 1}</td>
+                        <td className="px-4 py-4 text-base">{(currentPage - 1) * itemsPerPage + ind + 1}</td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-base font-medium">
                           {m.username || m.user_name || "No Name"}
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-base">
                           {m.userEmail || m.user_email || "-"}
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-base">
                           {m.userMobile || m.user_mobile || "-"}
                         </td>
 
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 text-base">
                           <span className="text-orange-400 font-medium">
                             {m.planName || m.plan_name || "-"}
                           </span>
                         </td>
 
-                        <td className="px-4 py-4 text-gray-400">
+                        <td className="px-4 py-4 text-base text-gray-400">
                           {m.planStartDate ? new Date(m.planStartDate).toLocaleDateString() : "-"}
                         </td>
 
-                        <td className="px-4 py-4 text-gray-400">
+                        <td className="px-4 py-4 text-base text-gray-400">
                           {m.planEndDate ? new Date(m.planEndDate).toLocaleDateString() : "-"}
                         </td>
 

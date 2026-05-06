@@ -171,22 +171,22 @@ const Reports = () => {
 
       {/* TABLE (desktop) */}
       <div className="hidden sm:block rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
-          <table className="min-w-[640px] w-full text-sm text-white">
+          <table className="min-w-[640px] w-full text-base text-white">
           <thead className="bg-white/10">
             <tr>
               {["#", "Report", "Type", "Month", "Actions"].map(h => (
-                <th key={h} className="px-4 py-4 text-left">{h}</th>
+                <th key={h} className="px-4 py-4 text-left text-sm font-semibold uppercase tracking-wide">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filteredReports.map((r, i) => (
-              <tr key={i} className="border-b border-white/10">
-                <td className="px-4 py-3">{i + 1}</td>
-                <td className="px-4 py-3">{r.name}</td>
-                <td className="px-4 py-3">{r.type}</td>
-                <td className="px-4 py-3">{dayjs(r.month).format("MMM YYYY")}</td>
-                <td className="px-4 py-3 flex gap-2">
+              <tr key={i} className="border-b border-white/10 hover:bg-white/5">
+                <td className="px-4 py-4 text-base">{i + 1}</td>
+                <td className="px-4 py-4 text-base font-medium">{r.name}</td>
+                <td className="px-4 py-4 text-base">{r.type}</td>
+                <td className="px-4 py-4 text-base">{dayjs(r.month).format("MMM YYYY")}</td>
+                <td className="px-4 py-4 flex gap-2">
                   <button onClick={() => setSelectedReport(r)} className="px-3 py-1 bg-orange-500 text-white rounded text-xs flex gap-1"><FaEye /> View</button>
                   <button onClick={() => downloadPDF(r)} className="px-3 py-1 bg-white/10 rounded text-xs">PDF</button>
                   <button onClick={() => downloadExcel(r)} className="px-3 py-1 bg-white/10 rounded text-xs">Excel</button>
@@ -237,20 +237,20 @@ const Reports = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm text-white">
+              <table className="min-w-full text-base text-white">
                 <thead className="bg-white/10">
                   <tr>
-                    <th className="px-4 py-3">#</th>
-                    <th className="px-4 py-3">Member</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold uppercase tracking-wide">#</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold uppercase tracking-wide">Member</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold uppercase tracking-wide">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedReport.items.map((i, idx) => (
-                    <tr key={idx} className="border-b border-white/10">
-                      <td className="px-4 py-3">{idx + 1}</td>
-                      <td className="px-4 py-3">{i.name || i.memberName}</td>
-                      <td className="px-4 py-3">{i.status || i.level}</td>
+                    <tr key={idx} className="border-b border-white/10 hover:bg-white/5">
+                      <td className="px-4 py-4 text-base">{idx + 1}</td>
+                      <td className="px-4 py-4 text-base font-medium">{i.name || i.memberName}</td>
+                      <td className="px-4 py-4 text-base">{i.status || i.level}</td>
                     </tr>
                   ))}
                 </tbody>

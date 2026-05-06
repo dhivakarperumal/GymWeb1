@@ -462,13 +462,13 @@ const OverallAttendance = () => {
       <div className="bg-white/5 rounded-3xl border border-white/10 overflow-hidden backdrop-blur-xl">
         <div className="overflow-x-auto overflow-y-auto max-h-[600px] hide-scrollbar">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-white/5 text-gray-400 text-xs uppercase tracking-widest">
+            <thead className="bg-white/10 text-white text-base">
               <tr>
-                <th className="px-8 py-5">Member Name</th>
-                <th className="px-8 py-5 text-center">Status</th>
-                <th className="px-8 py-5">Log Time</th>
-                <th className="px-8 py-5">Trace</th>
-                <th className="px-8 py-5 text-center">Edit</th>
+                <th className="px-8 py-4 text-sm font-semibold uppercase tracking-wide">Member Name</th>
+                <th className="px-8 py-4 text-sm font-semibold uppercase tracking-wide text-center">Status</th>
+                <th className="px-8 py-4 text-sm font-semibold uppercase tracking-wide">Log Time</th>
+                <th className="px-8 py-4 text-sm font-semibold uppercase tracking-wide">Trace</th>
+                <th className="px-8 py-4 text-sm font-semibold uppercase tracking-wide text-center">Edit</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -479,13 +479,13 @@ const OverallAttendance = () => {
               ) : (
                 filteredRecords.map(r => (
                   <tr key={r.id} className="hover:bg-white/5 transition group">
-                    <td className="px-8 py-5 font-bold group-hover:text-orange-400">{r.name || r.member_id}</td>
-                    <td className="px-8 py-5 text-center">
+                    <td className="px-8 py-4 text-base font-semibold group-hover:text-orange-400">{r.name || r.member_id}</td>
+                    <td className="px-8 py-4 text-center">
                       <div className="flex justify-center">
                         <StatusBadge status={r.status} />
                       </div>
                     </td>
-                    <td className="px-8 py-5 text-sm text-gray-400">
+                    <td className="px-8 py-4 text-base text-gray-400">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
                         {date === "All" && r.check_in
@@ -494,18 +494,18 @@ const OverallAttendance = () => {
                         }
                       </div>
                     </td>
-                    <td className="px-8 py-5">
+                    <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
                         <MapPin className={`w-4 h-4 ${r.lat ? 'text-green-500' : 'text-white/10'}`} />
                         <div>
-                          <p className="text-[10px] font-black text-gray-400 uppercase leading-none">{r.location_name || (r.lat ? 'Verified Location' : 'No GPS')}</p>
-                          <p className="text-[10px] font-bold text-gray-600 mt-1 flex items-center gap-1">
+                          <p className="text-base font-semibold text-gray-300 leading-none">{r.location_name || (r.lat ? 'Verified Location' : 'No GPS')}</p>
+                          <p className="text-xs font-medium text-gray-500 mt-1 flex items-center gap-1">
                             <Clock className="w-3 h-3"/> {r.check_in ? dayjs(r.check_in).format("h:mm A") : "-"}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-5 text-center">
+                    <td className="px-8 py-4 text-center">
                       <button
                         onClick={() => openEditMember(r)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover:scale-105 transition-all"
