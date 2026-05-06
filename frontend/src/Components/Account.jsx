@@ -11,7 +11,7 @@ import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
-import { Shield, Key, Eye, EyeOff, CalendarCheck } from "lucide-react";
+import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone } from "lucide-react";
 
 
 const Account = () => {
@@ -107,25 +107,60 @@ const Account = () => {
     switch (activeTab) {
       case "personal":
         return (
-          <div className="flex justify-center w-full py-4">
-            <div className="max-w-md w-full space-y-4">
-              <h2 className="text-xl font-bold text-red-500">
-                Personal Details
-              </h2>
-
-              {["username", "email", "mobile"].map((field) => (
-                <div key={field}>
-                  <label className="text-sm text-gray-400 capitalize">
-                    {field}
-                  </label>
-
-                  <input
-                    value={userInfo[field] || ""}
-                    readOnly
-                    className="w-full bg-gray-900 border border-gray-700 p-3 rounded mt-1"
-                  />
+          <div className="flex justify-center w-full py-4 px-4 sm:px-0" data-aos="fade-up">
+            <div className="max-w-2xl w-full">
+              {/* Profile Header */}
+              <div className="flex items-center gap-6 mb-8 p-6 bg-gradient-to-r from-gray-900 to-black border border-red-500/10 rounded-3xl">
+                <div className="w-20 h-20 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/20">
+                  <span className="text-3xl font-black text-white uppercase">
+                    {userInfo.username?.[0] || userInfo.email?.[0] || "?"}
+                  </span>
                 </div>
-              ))}
+                <div>
+                  <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+                    {userInfo.username || "User Profile"}
+                  </h2>
+                  <p className="text-gray-500 text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    Member since {new Date(userInfo.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  { label: "Username", value: userInfo.username, icon: User },
+                  { label: "Email Address", value: userInfo.email, icon: Mail },
+                  { label: "Phone Number", value: userInfo.mobile, icon: Phone },
+                  { label: "Account Role", value: userInfo.role, icon: Shield },
+                ].map((item, idx) => (
+                  <div key={idx} className="bg-gray-900/50 border border-white/5 rounded-2xl p-5 hover:border-red-500/20 transition-all group">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-black/40 rounded-xl group-hover:text-red-500 transition-colors">
+                        <item.icon size={20} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{item.label}</p>
+                        <p className="text-white font-medium break-words">{item.value || "Not Provided"}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Status Badge */}
+              <div className="mt-8 flex items-center justify-between p-6 bg-black/40 border border-white/5 rounded-2xl">
+                <div>
+                  <h4 className="text-white font-bold text-sm mb-1">Account Status</h4>
+                  <p className="text-gray-500 text-xs">Your account is currently {userInfo.status || "active"}</p>
+                </div>
+                <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                  userInfo.status === "inactive" ? "bg-gray-500/20 text-gray-500" : "bg-green-500/20 text-green-500"
+                }`}>
+                  {userInfo.status || "Active"}
+                </div>
+              </div>
             </div>
           </div>
         );
