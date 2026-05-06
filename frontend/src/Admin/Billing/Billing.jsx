@@ -484,37 +484,45 @@ const Billing = () => {
       {/* CART (desktop) */}
       <div className="hidden sm:block overflow-x-auto bg-white/5 rounded-xl">
         <table className="min-w-full text-sm">
-          <thead className="bg-white/10 border-b border-white/20">
+          <thead className="bg-white/10 text-white">
             <tr>
-              <th className="px-4 py-4 text-left">S.No</th>
-              <th className="px-4 py-4 text-left">Product</th>
-              <th className="px-4 py-4 text-left">Variant</th>
-              <th className="px-4 py-4 text-left">Qty</th>
-              <th className="px-4 py-4 text-left">Price</th>
-              <th className="px-4 py-4 text-left">Total</th>
-              <th className="px-4 py-4 text-left">Action</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Img</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Product</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Variant</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Qty</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Price</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Total</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>
             {cart.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-4 py-6 text-center text-gray-400">
+                <td colSpan="8" className="px-4 py-8 text-center text-gray-500 font-medium uppercase tracking-widest text-xs">
                   No items in cart
                 </td>
               </tr>
             ) : (
               cart.map((i, idx) => (
-                <tr key={idx} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="px-4 py-4">{idx + 1}</td>
-                  <td className="px-4 py-4">{i.name}</td>
-                  <td className="px-4 py-4 text-sm text-gray-300">{i.variant}</td>
-                  <td className="px-4 py-4">{i.quantity}</td>
-                  <td className="px-4 py-4">₹{i.price.toFixed(2)}</td>
-                  <td className="px-4 py-4 font-semibold">₹{i.total.toFixed(2)}</td>
+                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-all group">
+                  <td className="px-4 py-4 text-base font-medium text-gray-400">{idx + 1}</td>
+                  <td className="px-4 py-4">
+                    <img
+                      src={i.image || "https://via.placeholder.com/40x40?text=No+Img"}
+                      alt={i.name}
+                      className="w-10 h-10 object-cover rounded-lg border border-white/10"
+                    />
+                  </td>
+                  <td className="px-4 py-4 text-base font-medium text-white group-hover:text-orange-400 transition-colors">{i.name}</td>
+                  <td className="px-4 py-4 text-base font-medium text-gray-300">{i.variant}</td>
+                  <td className="px-4 py-4 text-base font-medium text-white">{i.quantity}</td>
+                  <td className="px-4 py-4 text-base font-medium text-gray-300">₹{i.price.toFixed(2)}</td>
+                  <td className="px-4 py-4 text-base font-medium text-orange-400">₹{i.total.toFixed(2)}</td>
                   <td className="px-4 py-4">
                     <button
                       onClick={() => removeItem(idx)}
-                      className="text-red-400 hover:text-red-300 transition"
+                      className="text-red-400 hover:text-red-300 font-medium transition"
                     >
                       Remove
                     </button>
