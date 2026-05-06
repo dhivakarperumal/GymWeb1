@@ -97,17 +97,25 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const activeRouteMap = {
     "/trainer/alladdworkouts": ["/trainer/alladdworkouts", "/trainer/addworkouts"],
     "/trainer/alladddietplans": ["/trainer/alladddietplans", "/trainer/adddietplans"],
+    "/trainer/session-tracking": ["/trainer/session-tracking"],
+    "/trainer/overall-attendance": ["/trainer/overall-attendance"],
+    "/trainer/pt-form": ["/trainer/pt-form"],
   };
 
   /* ================= HELPERS ================= */
   const isRouteActive = (basePath) => {
     const paths = activeRouteMap[basePath];
-    if (!paths) {
-      if (basePath === "/trainer") return location.pathname === "/trainer";
-      if (basePath === "/") return location.pathname === "/";
-      return location.pathname.startsWith(basePath);
+    if (paths) {
+      return paths.some((p) => 
+        location.pathname === p || location.pathname.startsWith(p + "/")
+      );
     }
-    return paths.some((p) => location.pathname.startsWith(p));
+    
+    if (basePath === "/trainer" || basePath === "/") {
+      return location.pathname === basePath;
+    }
+    
+    return location.pathname === basePath || location.pathname.startsWith(basePath + "/");
   };
 
   /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */

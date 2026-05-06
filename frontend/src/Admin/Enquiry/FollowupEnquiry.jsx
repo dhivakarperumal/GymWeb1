@@ -643,7 +643,7 @@ const FollowupEnquiry = () => {
                   </thead>
                   <tbody className="divide-y divide-white/10">
                     {loading ? (
-                      <tr><td colSpan="5" className="py-30 text-center"><div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
+                      <tr><td colSpan="10" className="py-32 text-center"><div className="animate-spin w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
                     ) : paginatedEnquiries.length > 0 ? (
                       paginatedEnquiries.map((enquiry) => (
                         <tr
@@ -736,7 +736,7 @@ const FollowupEnquiry = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="6" className="py-20 text-center">
+                        <td colSpan="10" className="py-32 text-center">
                           <div className="flex flex-col items-center gap-3 text-white/20">
                             <History size={48} strokeWidth={1} />
                             <p className="text-sm font-medium">No records found</p>

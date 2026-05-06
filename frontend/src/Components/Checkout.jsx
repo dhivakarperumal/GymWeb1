@@ -56,25 +56,45 @@ export default function Checkout() {
 
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [loadingInitialData, setLoadingInitialData] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // load user addresses from API
-  useEffect(() => {
-    if (!userId) return;
-    const fetchAddresses = async () => {
-      try {
-        const res = await api.get(`/addresses/user/${userId}`);
-        setSavedAddresses(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error("failed to fetch addresses", err);
-      }
-    };
-    fetchAddresses();
-  }, [userId]);
+  const [items, setItems] = useState([]);
+  const [placing, setPlacing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [orderType, setOrderType] = useState("DELIVERY");
+  const [shipping, setShipping] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "India",
+  });
+
+  // Check if user came from meal plan (forces restrictions)
+  const fromMealPlan = location.state?.fromMealPlan || false;
+
+  // Check if user came from all products (forces shop pickup and COD only)
+  const fromAllProducts = location.pathname.includes('/products') || location.state?.fromAllProducts || false;
+
+  // Check if any item is food category
+  const hasFoodItems = items.some(item => item.category === 'Food');
 
   const selectAddress = (addr) => {
+    const isPickup = addr.address === "SHOP PICKUP";
+    
+    // If fromAllProducts is true, we only allow PICKUP
+    if (fromAllProducts && !isPickup) {
+      toast.error("Only shop pickup is available for these products");
+      return;
+    }
+
+    setOrderType(isPickup ? "PICKUP" : "DELIVERY");
     setShipping({
       name: addr.name,
       email: addr.email || "",
@@ -89,19 +109,48 @@ export default function Checkout() {
     setSelectedAddressId(addr.id);
   };
 
-  const [items, setItems] = useState([]);
-  const [placing, setPlacing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("CASH");
-  const [orderType, setOrderType] = useState("DELIVERY");
+  // load user data and addresses from API
+  useEffect(() => {
+    if (!userId) {
+      setLoadingInitialData(false);
+      return;
+    }
+    
+    const fetchData = async () => {
+      setLoadingInitialData(true);
+      try {
+        // Run both fetches in parallel
+        const [addrRes, userRes] = await Promise.all([
+          api.get(`/addresses/user/${userId}`),
+          api.get(`/users/${userId}`)
+        ]);
 
-  // Check if user came from meal plan (forces restrictions)
-  const fromMealPlan = location.state?.fromMealPlan || false;
+        const addrList = Array.isArray(addrRes.data) ? addrRes.data : [];
+        const userData = userRes.data;
 
-  // Check if user came from all products (forces shop pickup and COD only)
-  const fromAllProducts = location.pathname.includes('/products') || location.state?.fromAllProducts || false;
+        setSavedAddresses(addrList);
 
-  // Check if any item is food category
-  const hasFoodItems = items.some(item => item.category === 'Food');
+        // Priority 1: Auto-select first saved address
+        if (addrList.length > 0) {
+          selectAddress(addrList[0]);
+        } 
+        // Priority 2: Pre-fill from user profile if no address selected
+        else if (userData) {
+          setShipping(prev => ({
+            ...prev,
+            name: userData.full_name || userData.username || "",
+            email: userData.email || "",
+            phone: userData.mobile || "",
+          }));
+        }
+      } catch (err) {
+        console.error("failed to fetch initial checkout data", err);
+      } finally {
+        setLoadingInitialData(false);
+      }
+    };
+    fetchData();
+  }, [userId, fromAllProducts]);
 
   // For meal plan purchases, force CASH payment and SHOP pickup
   // For all products purchases, also force CASH payment and SHOP pickup
@@ -112,18 +161,6 @@ export default function Checkout() {
       setOrderType("PICKUP");
     }
   }, [fromMealPlan, hasFoodItems, fromAllProducts]);
-
-  const [shipping, setShipping] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    country: "India",
-  });
-
   /* LOAD CART OR BUY NOW ITEM */
   useEffect(() => {
     if (!userId) return;
@@ -348,7 +385,7 @@ export default function Checkout() {
           {/* SHIPPING */}
           <div className="bg-[#0b0c10]/90 backdrop-blur-xl rounded-3xl border-2 border-red-500/70 p-8 shadow-[0_0_40px_rgba(255,0,0,0.25)]">
             {/* ⚠️ WARNING BANNER - Show when fields incomplete */}
-            {!areDeliveryFieldsFilled() && (
+            {!loadingInitialData && !areDeliveryFieldsFilled() && (
               <div className="mb-6 p-4 rounded-xl bg-red-600/30 border border-red-500 flex gap-3">
                 <span className="text-xl">⚠️</span>
                 <div>
