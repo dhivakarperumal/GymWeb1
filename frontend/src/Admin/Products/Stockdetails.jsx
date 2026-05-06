@@ -91,12 +91,12 @@ const StockDetails = () => {
 
       <div className="hidden sm:block overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
         <table className="min-w-full text-sm text-white">
-          <thead className="bg-white/10">
+          <thead className="bg-white/10 text-white">
             <tr>
-              <th className="px-4 py-3 text-left">S No</th>
-              <th className="px-4 py-3 text-left">Product</th>
-              <th className="px-4 py-3 text-left">Total Stock</th>
-              <th className="px-4 py-3 text-left">Action</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Product</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Total Stock</th>
+              <th className="px-4 py-4 text-left text-sm font-semibold">Action</th>
             </tr>
           </thead>
 
@@ -105,27 +105,27 @@ const StockDetails = () => {
               <Fragment key={p.id}>
                 {/* MAIN ROW */}
                 <tr className="border-t border-white/10 hover:bg-white/5">
-                  <td className="px-4 py-3 text-yellow-400 font-semibold">
+                  <td className="px-4 py-4 text-base font-medium text-yellow-400">
                     {i + 1}
                   </td>
 
                   <td
-                    className="px-4 py-3 cursor-pointer"
+                    className="px-4 py-4 cursor-pointer"
                     onClick={() =>
                       setExpanded(expanded === p.id ? null : p.id)
                     }
                   >
-                    <div className="font-semibold">{p.name}</div>
+                    <div className="text-base font-medium text-white">{p.name}</div>
                     <div className="text-xs text-gray-400">
                       {p.productId}
                     </div>
                   </td>
 
-                  <td className="px-4 py-3 text-yellow-400 font-semibold">
+                  <td className="px-4 py-4 text-base font-medium text-yellow-400">
                     {totalStock(p.stock)}
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-4">
                     <button
                       className="text-blue-400 hover:underline"
                       onClick={() =>
@@ -148,15 +148,15 @@ const StockDetails = () => {
                           key={fieldKey}
                           className="bg-black/30 border-t border-white/5"
                         >
-                          <td className="px-8 py-2 text-gray-300">
+                          <td className="px-8 py-3 text-base font-medium text-gray-300">
                             └ {key}
                           </td>
 
-                          <td className="px-4 py-2 text-green-400">
+                          <td className="px-4 py-3 text-base font-medium text-green-400">
                             {value.qty}
                           </td>
 
-                          <td className="px-4 py-2 flex gap-2">
+                          <td className="px-4 py-3 flex gap-2">
                             <input
                               type="number"
                               min="1"

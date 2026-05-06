@@ -405,28 +405,28 @@ const AllProducts = () => {
         {viewMode === "table" && (
           <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="min-w-full text-sm text-left">
-              <thead className="bg-white/10 text-gray-300">
+              <thead className="bg-white/10 text-white">
                 <tr>
-                  <th className="px-4 py-3">S.No</th>
-                  <th className="px-4 py-3">Img</th>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">MRP</th>
-                  <th className="px-4 py-3">Offer Price</th>
-                  <th className="px-4 py-3">Rating</th>
-                  <th className="px-4 py-3 text-center">Actions</th>
-                  <th className="px-4 py-3 text-center">Status</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Img</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Category</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">MRP</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Offer Price</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Rating</th>
+                  <th className="px-4 py-4 text-center text-sm font-semibold">Actions</th>
+                  <th className="px-4 py-4 text-center text-sm font-semibold">Status</th>
                 </tr>
               </thead>
 
               <tbody>
                 {paginated.map((p, index) => (
                   <tr key={p.id} className="border-b border-white/10 hover:bg-white/5 transition">
-                    <td className="px-4 py-3 text-gray-200">
+                    <td className="px-4 py-4 text-base font-medium text-gray-400">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <img
                         src={getImage(p)}
                         alt={p.name}
@@ -434,9 +434,9 @@ const AllProducts = () => {
                       />
                     </td>
 
-                    <td className="px-4 py-3 text-gray-200">{p.name}</td>
+                    <td className="px-4 py-4 text-base font-medium text-white">{p.name}</td>
 
-                    <td className="px-4 py-3 text-gray-200">
+                    <td className="px-4 py-4 text-base font-medium text-gray-300">
                       {p.category}
                       {p.subcategory && (
                         <span className="text-gray-400 text-xs">
@@ -446,14 +446,14 @@ const AllProducts = () => {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-gray-200">₹{getMrp(p)}</td>
-                    <td className="px-4 py-3 font-semibold text-green-400">
+                    <td className="px-4 py-4 text-base font-medium text-gray-300">₹{getMrp(p)}</td>
+                    <td className="px-4 py-4 text-base font-medium text-green-400">
                       ₹{getOfferPrice(p)}
                     </td>
-                    <td className="px-4 py-3 text-gray-200">
+                    <td className="px-4 py-4 text-base font-medium text-gray-300">
                       ⭐ {p.ratings || 0}
                     </td>
-                    <td className="px-4 py-3 flex justify-center gap-2">
+                    <td className="px-4 py-4 flex justify-center gap-2">
                       <button
                         onClick={() =>
                           navigate(`/admin/addproducts/${p.id}`)
@@ -470,7 +470,7 @@ const AllProducts = () => {
                         <Trash2 size={14} />
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-4 text-center">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${p.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                         {p.status || 'Active'}
                       </span>

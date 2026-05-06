@@ -211,25 +211,25 @@ const FacilitiesAll = () => {
             ))}
           </div>
         ) : (
-          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto w-full">
-            <table className="w-full min-w-[700px] text-sm text-gray-200">
-              <thead className="border-b border-white/10">
+          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden overflow-x-auto w-full">
+            <table className="w-full min-w-[700px] text-sm text-gray-200 border-collapse">
+              <thead className="bg-white/10 text-white">
                 <tr>
-                  <th className="p-4 text-left font-medium">S No</th>
-                  <th className="p-4 text-left font-medium">Title</th>
-                  <th className="p-4 text-left font-medium">Description</th>
-                  <th className="p-4 text-left font-medium">Equipments</th>
-                  <th className="p-4 text-left font-medium">Status</th>
-                  <th className="p-4 text-center font-medium">Actions</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Title</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Description</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Equipments</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
+                  <th className="px-4 py-4 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((f, index) => (
                   <tr key={f.id} className="border-b border-white/5 hover:bg-white/5 transition">
-                    <td className="p-4 text-gray-400">{index + 1}</td>
-                    <td className="p-4 font-semibold text-white">{f.title}</td>
-                    <td className="p-4 text-gray-400 truncate max-w-xs">{f.shortDesc}</td>
-                    <td className="p-4 text-gray-400">
+                    <td className="px-4 py-4 text-base font-medium text-gray-400">{index + 1}</td>
+                    <td className="px-4 py-4 text-base font-medium text-white">{f.title}</td>
+                    <td className="px-4 py-4 text-base font-medium text-gray-400 truncate max-w-xs">{f.shortDesc}</td>
+                    <td className="px-4 py-4 text-gray-400">
                       <div className="flex flex-wrap gap-1">
                         {f.equipments?.slice(0, 2).map((e, i) => (
                           <span key={i} className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded truncate max-w-[80px]">
@@ -239,7 +239,7 @@ const FacilitiesAll = () => {
                         {f.equipments?.length > 2 && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">+{f.equipments.length - 2}</span>}
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="px-4 py-4">
                       <span
                         className={`px-2.5 py-1 text-[10px] uppercase rounded-lg font-bold
                           ${f.active
@@ -250,7 +250,7 @@ const FacilitiesAll = () => {
                         {f.active ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="p-4 flex justify-center items-center gap-2">
+                    <td className="px-4 py-4 flex justify-center items-center gap-2">
                       <FaCheckCircle
                         onClick={() => toggleStatus(f.id, f.active)}
                         className={`cursor-pointer text-xl transition ${f.active

@@ -268,30 +268,30 @@ const PlansAll = () => {
           ))}
         </div>
       ) : (
-        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm text-gray-200">
-            <thead className="border-b border-white/10">
+        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[700px] text-sm text-gray-200 border-collapse">
+            <thead className="bg-white/10 text-white">
               <tr>
-                <th className="p-4 text-left font-medium">S No</th>
-                <th className="p-4 text-left font-medium">Plan Name</th>
-                <th className="p-4 text-left font-medium">Duration</th>
-                <th className="p-4 text-left font-medium">Price</th>
-                <th className="p-4 text-left font-medium">Facilities</th>
-                <th className="p-4 text-left font-medium">Status</th>
-                <th className="p-4 text-center font-medium">Actions</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Plan Name</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Duration</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Price</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Facilities</th>
+                <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
+                <th className="px-4 py-4 text-center text-sm font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredPlans.map((p, index) => (
                 <tr key={p.id} className="border-b border-white/5 hover:bg-white/5 transition">
-                  <td className="p-4 text-gray-400">{index + 1}</td>
-                  <td className="p-4 font-semibold text-white">{p.name}</td>
-                  <td className="p-4 text-gray-300">{p.duration}</td>
-                  <td className="p-4 text-gray-300">
+                  <td className="px-4 py-4 text-base font-medium text-gray-400">{index + 1}</td>
+                  <td className="px-4 py-4 text-base font-medium text-white">{p.name}</td>
+                  <td className="px-4 py-4 text-base font-medium text-gray-300">{p.duration}</td>
+                  <td className="px-4 py-4 text-base font-medium text-gray-300">
                     ₹{p.finalPrice ?? p.final_price ?? p.price}
                     {p.discount > 0 && <span className="ml-1 text-[10px] text-emerald-400">({p.discount}% OFF)</span>}
                   </td>
-                  <td className="p-4 text-gray-400">
+                  <td className="px-4 py-4 text-gray-400">
                     <div className="flex flex-wrap gap-1">
                       {p.facilities?.slice(0, 2).map((f) => (
                         <span key={f} className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded truncate max-w-[80px]">
@@ -301,7 +301,7 @@ const PlansAll = () => {
                       {p.facilities?.length > 2 && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">+{p.facilities.length - 2}</span>}
                     </div>
                   </td>
-                  <td className="p-4">
+                  <td className="px-4 py-4">
                     <span
                       className={`px-2.5 py-1 text-[10px] uppercase rounded-lg font-bold
                         ${p.active
@@ -312,7 +312,7 @@ const PlansAll = () => {
                       {p.active ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="p-4 flex justify-center gap-2">
+                  <td className="px-4 py-4 flex justify-center gap-2">
                     <button
                       onClick={() => navigate(`/admin/addplan/${p.id}`)}
                       className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white transition"
