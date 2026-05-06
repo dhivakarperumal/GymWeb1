@@ -41,7 +41,7 @@ const navItems = [
 
   { path: "/admin/assignedtrainers", label: "Assigned Trainers", icon: UserCheck },
 
-   { path: "/admin/payments", label: "Payments", icon: CreditCard },
+  { path: "/admin/payments", label: "Payments", icon: CreditCard },
 
   { path: "/admin/send-message", label: "Send Message", icon: Send },
 
@@ -56,19 +56,19 @@ const navItems = [
     ],
   },
 
-{ path: "/admin/billing", label: "Billing", icon: Receipt },
-  
+  { path: "/admin/billing", label: "Billing", icon: Receipt },
+
   { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
- 
-  
 
-  
 
-  
+
+
+
+
   // { path: "/admin/commenworkoutdiet", label: "Workout & Diet", icon: HeartPulse },
   // { path: "/admin/reports", label: "Reports & Analytics", icon: BarChart3 },
   // { path: "/admin/equipment", label: "Gym Equipment", icon: Activity },
-  
+
   { path: "/", label: "Back Home", icon: Home },
 ];
 
@@ -147,7 +147,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center shadow-lg shrink-0">
             <img
-              src="/images/logo-dark.png"
+              src="/images/logo-dark1.png"
               alt="Logo"
               className="w-10 h-10 object-contain"
             />
@@ -194,9 +194,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                       <>
                         <span className="flex-1 text-left">{item.label}</span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${
-                            isMenuOpen ? "rotate-180" : ""
-                          }`}
+                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""
+                            }`}
                         />
                       </>
                     )}
@@ -218,10 +217,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           onClick={() => isOpen && onClose()}
                           className={`
                             flex items-center gap-2 px-3 py-2 rounded-lg text-sm
-                            ${
-                              isActive
-                                ? "bg-orange-500 text-white"
-                                : "text-white/70 hover:bg-white/20"
+                            ${isActive
+                              ? "bg-orange-500 text-white"
+                              : "text-white/70 hover:bg-white/20"
                             }
                           `}
                         >
@@ -246,10 +244,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 onClick={() => isOpen && onClose()}
                 className={`
                   flex items-center gap-3 px-4 py-2.5 rounded-xl
-                  ${
-                    isActive
-                      ? "bg-orange-500 text-white"
-                      : "text-white/80 hover:bg-white/20"
+                  ${isActive
+                    ? "bg-orange-500 text-white"
+                    : "text-white/80 hover:bg-white/20"
                   }
                 `}
               >
@@ -273,9 +270,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           "
         >
           <ChevronLeft
-            className={`w-4 h-4 transition-transform ${
-              collapsed ? "rotate-180" : ""
-            }`}
+            className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
+              }`}
           />
         </button>
       </aside>
