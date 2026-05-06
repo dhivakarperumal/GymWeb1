@@ -83,7 +83,6 @@ export default function Workouts() {
               <table className="w-full border border-zinc-800 rounded-lg overflow-hidden">
                 <thead className="bg-gray-900 text-gray-300 text-sm uppercase border-b border-red-500/20">
                   <tr>
-                    <th className="px-6 py-4 text-left">Category</th>
                     <th className="px-6 py-4 text-left">Goal</th>
                     <th className="px-6 py-4 text-left">Duration</th>
                     <th className="px-6 py-4 text-left">Level</th>
@@ -95,10 +94,6 @@ export default function Workouts() {
                   {workouts.map((item, index) => (
                     <React.Fragment key={index}>
                       <tr className="border-t border-zinc-700 hover:bg-gray-800 transition">
-                        <td className="px-6 py-4 font-semibold">
-                          {item.category}
-                        </td>
-
                         <td className="px-6 py-4 text-gray-400">{item.goal}</td>
 
                         <td className="px-6 py-4 text-gray-400">
@@ -125,7 +120,7 @@ export default function Workouts() {
 
                       {openWorkout === item.id && (
                         <tr className="bg-gray-800 border-t border-red-500/60">
-                          <td colSpan="5" className="px-8 py-6">
+                          <td colSpan="4" className="px-8 py-6">
                             {/* WORKOUT DETAILS */}
 
                             <div className="grid md:grid-cols-3 gap-6 mb-6">
