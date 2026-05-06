@@ -622,7 +622,7 @@ const UserEnquiry = () => {
                     disabled={isNewSubmissionBlocked}
                     className={`flex-[2] px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(234,88,12,0.3)] flex items-center justify-center gap-3 ${isNewSubmissionBlocked ? 'opacity-50 cursor-not-allowed bg-gray-700 from-gray-600 to-gray-700 shadow-none' : 'hover:from-orange-500 hover:to-red-500 hover:shadow-[0_15px_40px_rgba(234,88,12,0.4)] active:scale-95'}`}
                   >
-                    {selectedEnquiry ? 'Update Enquiry' : 'Submit Join'} <Plus className="w-5 h-5" />
+                    {selectedEnquiry ? 'Update Join' : 'Submit Join Now'} <Plus className="w-5 h-5" />
                   </button>
                 </div>
               </form>

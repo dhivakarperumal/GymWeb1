@@ -12,7 +12,7 @@ import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
 import { Shield, Key, Eye, EyeOff, CalendarCheck } from "lucide-react";
-import UserAttendance from "./UserAttendance";
+
 
 const Account = () => {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const Account = () => {
   const [userInfo, setUserInfo] = useState({});
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
-  
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -86,13 +86,13 @@ const Account = () => {
   const tabs = [
     { key: "personal", label: "Personal Details" },
     { key: "plans", label: "My Plans" },
-    { key: "attendance", label: "Attendance" },
+
     ...(hasActivePlan
       ? [
-          { key: "diet", label: "Diet Chart" },
-          { key: "workouts", label: "Workouts" },
-          { key: "ptform", label: "PT Form" },
-        ]
+        { key: "diet", label: "Diet Chart" },
+        { key: "workouts", label: "Workouts" },
+        { key: "ptform", label: "PT Form" },
+      ]
       : []),
     { key: "orders", label: "My Orders" },
     { key: "address", label: "Address" },
@@ -148,15 +148,13 @@ const Account = () => {
       case "ptform":
         return <PTFormUser />;
 
-      case "attendance":
-        return <UserAttendance userId={userId} />;
 
       case "workouts":
         return <Workouts />;
 
       case "notifications": // Added
         return <UserNotifications userEmail={userInfo.email} />;
-      
+
       case "security":
         return (
           <div className="max-w-md space-y-6">
