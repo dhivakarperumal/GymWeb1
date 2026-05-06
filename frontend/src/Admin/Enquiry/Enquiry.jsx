@@ -615,19 +615,19 @@ const Enquiry = () => {
           ) : (
             /* TABLE VIEW */
             <div className="backdrop-blur-xl bg-white/5 mt-5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm text-gray-200">
-            <thead className="border-b border-white/10">
+          <table className="w-full min-w-[700px] text-base text-gray-200">
+            <thead className="bg-white/10 text-white">
                   <tr>
-                    <th className="px-3 py-5 border-b border-white/5 w-12 text-center">S.No</th>
-                    <th className="px-3 py-5 border-b border-white/5 text-left">Customer</th>
-                    <th className="px-3 py-5 border-b border-white/5 text-left">Mobile</th>
-                    <th className="px-3 py-5 border-b border-white/5 text-left">Location</th>
-                    <th className="px-3 py-5 border-b border-white/5 text-left">Status</th>
-                    <th className="px-3 py-5 border-b border-white/5 text-left">Date</th>
-                    <th className="px-3 py-5 border-b border-white/5 text-right">Actions</th>
+                    <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Customer</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Mobile</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Location</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
+                    <th className="px-4 py-4 text-right text-sm font-semibold">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-white/10">
                   {paginatedEnquiries.length > 0 ? (
                     paginatedEnquiries.map((enquiry, ind) => (
                       <tr
@@ -635,42 +635,42 @@ const Enquiry = () => {
                         className="group hover:bg-white/5 transition-all cursor-pointer"
                         onClick={() => handleEdit(enquiry)}
                       >
-                        <td className="px-3 py-4 text-[10px] font-bold text-white/40 text-center">
+                        <td className="px-4 py-4 text-base text-gray-400 text-center">
                           {startIndex + ind + 1}
                         </td>
-                        <td className="px-3 py-4">
+                        <td className="px-4 py-4">
                           <div className="flex flex-col">
-                            <span className="text-white font-bold text-sm group-hover:text-orange-400 transition-colors truncate max-w-[150px]">
+                            <span className="text-white font-medium text-base group-hover:text-orange-400 transition-colors truncate max-w-[150px]">
                               {enquiry.name}
                             </span>
-                            <span className="text-white/30 text-[9px] font-bold uppercase tracking-tight truncate max-w-[150px]">
+                            <span className="text-gray-400 text-sm font-medium truncate max-w-[150px]">
                               {enquiry.email || 'No Email'}
                             </span>
                             {enquiry.trainer_name && (
-                              <span className="text-orange-500 text-[9px] font-black uppercase truncate max-w-[150px]">
+                              <span className="text-orange-400 font-medium text-sm truncate max-w-[150px]">
                                 Trainer: {enquiry.trainer_name}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-4">
-                          <span className="text-white/60 text-xs font-bold">
+                        <td className="px-4 py-4">
+                          <span className="text-gray-300 text-base font-medium">
                             {enquiry.phone || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-3 py-4 text-[10px] font-bold text-white/40 truncate max-w-[120px]">
+                        <td className="px-4 py-4 text-base text-gray-300 truncate max-w-[120px]">
                           {enquiry.location || 'Direct Lead'}
                         </td>
-                        <td className="px-3 py-4">
+                        <td className="px-4 py-4">
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold ${getStatusColor(enquiry.status)}`}>
                             {getStatusIcon(enquiry.status)}
                             {enquiry.status}
                           </span>
                         </td>
-                        <td className="px-3 py-4 text-[9px] text-white/40 font-bold">
+                        <td className="px-4 py-4 text-sm text-gray-300 font-medium">
                           {dayjs(enquiry.created_at).format('DD/MM/YY')}
                         </td>
-                        <td className="px-3 py-4 text-right">
+                        <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleEdit(enquiry)}
