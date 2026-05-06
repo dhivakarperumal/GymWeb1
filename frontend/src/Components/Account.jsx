@@ -98,7 +98,7 @@ const Account = () => {
     { key: "orders", label: "My Orders" },
     { key: "address", label: "Address" },
     { key: "notifications", label: "Notifications" },
-    { key: "security", label: "Security" },
+    { key: "security", label: "Set Password" },
   ];
 
   /* ================= CONTENT ================= */
