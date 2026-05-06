@@ -18,7 +18,7 @@ const AssingnedTrainers = () => {
   const [assignments, setAssignments] = useState({});
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("unassigned"); // all, assigned, unassigned
-  const [viewMode, setViewMode] = useState("card"); // card, table
+  const [viewMode, setViewMode] = useState("table"); // card, table
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
@@ -448,14 +448,14 @@ const AssingnedTrainers = () => {
           /* ================= TABLE VIEW ================= */
           <div className="overflow-x-auto bg-white/5 rounded-2xl border border-white/20 backdrop-blur-xl">
             <table className="min-w-full text-sm">
-              <thead className="bg-white/10 border-b border-white/10">
+              <thead className="bg-white/10 text-white">
                 <tr>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-300">S No</th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-300">Member</th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-300">Trainer</th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-300">Plan</th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-300">Dates</th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-300">Status</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Trainer</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Dates</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -463,20 +463,20 @@ const AssingnedTrainers = () => {
                   const assigned = assignments[m.uid] || [];
                   return (
                     <tr key={m.uid} className="hover:bg-white/5 transition">
-                      <td className="px-6 py-4 text-white font-medium">
+                      <td className="px-4 py-4 text-gray-400 text-base font-medium">
                         {startIndex + index + 1}
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-white">{m.username}</p>
-                        <p className="text-xs text-gray-400">{m.email}</p>
+                      <td className="px-4 py-4">
+                        <p className="font-medium text-base text-white">{m.username}</p>
+                        <p className="text-sm text-gray-400">{m.email}</p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         {assigned.length > 0 ? (
                           assigned.map((a) => (
                             <div
                               key={a.id}
                               onClick={() => handleQuickAssign(m.uid, true)}
-                              className="text-green-300 font-medium cursor-pointer hover:text-white transition-colors flex items-center gap-2"
+                              className="text-green-400 text-base font-medium cursor-pointer hover:text-white transition-colors flex items-center gap-2"
                               title="Click to Reassign"
                             >
                               <Dumbbell size={12} /> {a.trainerName}
@@ -485,30 +485,30 @@ const AssingnedTrainers = () => {
                         ) : (
                           <button
                             onClick={() => handleQuickAssign(m.uid, false)}
-                            className="text-red-400 hover:text-red-300 hover:underline transition-all font-bold"
+                            className="text-red-400 text-base hover:text-red-300 hover:underline transition-all font-medium"
                             title="Click to Assign"
                           >
                             Unassigned
                           </button>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         {m.plans?.map((p) => (
                           <div key={p.id}>
-                            <p className="text-blue-300 font-medium">{p.planName}</p>
-                            <p className="text-[10px] text-gray-500">{p.duration} • ₹{p.pricePaid}</p>
+                            <p className="text-blue-300 text-base font-medium">{p.planName}</p>
+                            <p className="text-sm text-gray-400">{p.duration} • ₹{p.pricePaid}</p>
                           </div>
                         ))}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         {m.plans?.map((p) => (
-                          <div key={p.id} className="text-[10px] text-gray-400">
+                          <div key={p.id} className="text-sm font-medium text-gray-400">
                             <div>S: {new Date(p.startDate).toLocaleDateString()}</div>
                             <div>E: {new Date(p.endDate).toLocaleDateString()}</div>
                           </div>
                         ))}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-black ${assigned.length > 0 ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
                           }`}>
                           {assigned.length > 0 ? "Assigned" : "Pending"}

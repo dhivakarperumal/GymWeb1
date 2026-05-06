@@ -776,9 +776,9 @@ const Payments = () => {
           <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px] text-sm text-left text-gray-200 border-collapse">
-                <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border-b border-white/10 z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
+                <thead className="bg-white/10 text-white">
                   <tr>
-                    <th className="px-6 py-4 border-b border-white/5">
+                    <th className="px-4 py-4 text-center">
                       <input
                         type="checkbox"
                         checked={selectAll}
@@ -786,39 +786,19 @@ const Payments = () => {
                         className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
                       />
                     </th>
-                    <th className="px-6 py-4 border-b border-white/5">S.No</th>
-                    <th className="px-6 py-4 border-b border-white/5">Name</th>
-                    <th className="px-6 py-4 border-b border-white/5">Plan</th>
-                    <th className="px-6 py-4 border-b border-white/5">
-                      Total Amount
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5">
-                      Initial Amount
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5">
-                      Second Payment
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5 text-blue-400">
-                      Remaining
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5">
-                      Start Date
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5">
-                      End Date
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5">
-                      Days Left
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5 text-center">
-                      Payment
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5 text-center">
-                      Status / Action
-                    </th>
-                    <th className="px-6 py-4 border-b border-white/5 text-center">
-                      Receipt
-                    </th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Total Amount</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Remaining</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Start Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">End Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Days Left</th>
+                    <th className="px-4 py-4 text-center text-sm font-semibold">Payment</th>
+                    <th className="px-4 py-4 text-center text-sm font-semibold">Status / Action</th>
+                    <th className="px-4 py-4 text-center text-sm font-semibold">Receipt</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -833,7 +813,7 @@ const Payments = () => {
                         key={`${member.uid}_${plan.id}`}
                         className="border-b border-white/5 last:border-b-0 hover:bg-white/5 transition-all group"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4 text-center">
                           <input
                             type="checkbox"
                             checked={selectedRows.includes(member.uid)}
@@ -841,50 +821,50 @@ const Payments = () => {
                             className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
                           />
                         </td>
-                        <td className="px-6 py-4 font-bold text-white/40">
+                        <td className="px-4 py-4 text-base font-medium text-gray-400">
                           {getSerialNumber(index)}
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-white group-hover:text-orange-400 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-white group-hover:text-orange-400 transition-colors">
                             {member.username}
                           </div>
-                          <div className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">
+                          <div className="text-[11px] text-gray-400 mt-1">
                             {member.email}
                           </div>
                         </td>
-                        <td className="px-6 py-4 font-semibold text-white/80">
+                        <td className="px-4 py-4 text-base font-medium text-gray-300">
                           {plan.planName}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-orange-400 font-black">
+                        <td className="px-4 py-4">
+                          <span className="text-base font-medium text-orange-400">
                             ₹{totalAmount}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-green-400 font-black">
+                        <td className="px-4 py-4">
+                          <span className="text-base font-medium text-green-400">
                             ₹{plan.pricePaid}
                           </span>
                         </td>
 
-                        <td className="px-6 py-4">
-                          <span className="text-cyan-300 font-black">
+                        <td className="px-4 py-4">
+                          <span className="text-base font-medium text-cyan-300">
                             ₹{plan.secondPaymentPaid || 0}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           {remainingAmount > 0 ? (
-                            <span className="text-blue-400 font-black">₹{remainingAmount.toFixed(2)}</span>
+                            <span className="text-base font-medium text-blue-400">₹{remainingAmount.toFixed(2)}</span>
                           ) : (
                             <span className="text-white/20 text-xs">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">
+                        <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
                           {formatDate(plan.startDate)}
                         </td>
-                        <td className="px-6 py-4 text-white/60 font-medium whitespace-nowrap">
+                        <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
                           {formatDate(plan.endDate)}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <span
                             className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                               getRemainingDays(plan.endDate) === "Expired"
@@ -897,7 +877,7 @@ const Payments = () => {
                             {getRemainingDays(plan.endDate)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-4 text-center">
                           {(() => {
                             const status = plan.paymentStatus;
                             if (status === "Paid") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
@@ -906,7 +886,7 @@ const Payments = () => {
                             return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20">{status || "—"}</span>;
                           })()}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-4 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <button
                               onClick={() =>
@@ -928,7 +908,7 @@ const Payments = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-4 text-center">
                           <button
                             onClick={() => handlePrintReceipt(member, plan)}
                             className="p-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg hover:bg-blue-500 hover:text-white transition-all inline-flex"
