@@ -359,12 +359,12 @@ const AddWorkout = () => {
             const goal = row.Goal || row.goal || row["Workout Goal"];
             const duration = row.Duration || row["Duration (Weeks)"] || row.duration || row["Weeks"];
 
-              setForm(prev => ({
-                ...prev,
-                ...(level && { level: level.charAt(0).toUpperCase() + level.slice(1).toLowerCase() }),
-                ...(goal && { goal }),
-                ...(duration && { durationWeeks: String(duration) }),
-              }));
+            setForm(prev => ({
+              ...prev,
+              ...(level && { level: level.charAt(0).toUpperCase() + level.slice(1).toLowerCase() }),
+              ...(goal && { goal }),
+              ...(duration && { durationWeeks: String(duration) }),
+            }));
           }
 
           // 2. Build Exercises Structure
