@@ -16,7 +16,14 @@ async function getUserById(req, res) {
     const idNum = parseInt(id, 10);
 
     const [rows] = await db.query(
-      'SELECT id, username, email, mobile, role, status, created_at FROM users WHERE id = ?',
+      `SELECT u.id, u.username, u.email, u.mobile, u.role, u.status, u.created_at, 
+              (u.password_hash IS NOT NULL) AS hasPassword,
+              COALESCE(gm.name, s.name, u.username) as full_name
+       FROM users u
+       LEFT JOIN gym_members gm ON u.mobile = gm.phone OR u.email = gm.email
+       LEFT JOIN staff s ON u.mobile = s.phone OR u.email = s.email
+       WHERE u.id = ?
+       LIMIT 1`,
       [idNum]
     );
 

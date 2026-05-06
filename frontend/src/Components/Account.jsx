@@ -118,7 +118,7 @@ const Account = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-white tracking-tight uppercase">
-                    {userInfo.username || "User Profile"}
+                    {userInfo.full_name || userInfo.username || "User Profile"}
                   </h2>
                   <p className="text-gray-500 text-sm flex items-center gap-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
