@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import BmiCalculator from "../Components/BmiCalculator";
-import TrainerSwiper from "../Components/TrainerSwiper";
 import About from "../Components/About";
-import FacilitiesSwiper from "../Components/FacilitiesSwiper";
-import PricingSwiper from "../Components/PricingSwiper";
-import ProductSwiper from "../Components/ProductSwiper";
-import ServiceSwiper from "../Components/ServicesSwiper";
 import FollowupEnquiryModal from "../Components/FollowupEnquiryModal";
+
+// Lazy load components that fetch data
+const FacilitiesSwiper = lazy(() => import("../Components/FacilitiesSwiper"));
+const PricingSwiper = lazy(() => import("../Components/PricingSwiper"));
+const TrainerSwiper = lazy(() => import("../Components/TrainerSwiper"));
+const ProductSwiper = lazy(() => import("../Components/ProductSwiper"));
+const ServiceSwiper = lazy(() => import("../Components/ServicesSwiper"));
 
 
 
@@ -122,22 +124,32 @@ export default function Home() {
         <About />
       </div>
       <div>
-        <FacilitiesSwiper />
+        <Suspense fallback={<div className="text-center text-white py-10">Loading facilities...</div>}>
+          <FacilitiesSwiper />
+        </Suspense>
       </div>
       <div>
-        <PricingSwiper />
+        <Suspense fallback={<div className="text-center text-white py-10">Loading pricing...</div>}>
+          <PricingSwiper />
+        </Suspense>
       </div>
       <div>
-        <TrainerSwiper />
+        <Suspense fallback={<div className="text-center text-white py-10">Loading trainers...</div>}>
+          <TrainerSwiper />
+        </Suspense>
       </div>
       <div>
-        <ProductSwiper />
+        <Suspense fallback={<div className="text-center text-white py-10">Loading products...</div>}>
+          <ProductSwiper />
+        </Suspense>
       </div>
       <div>
         <BmiCalculator />
       </div>
       <div>
-        <ServiceSwiper />
+        <Suspense fallback={<div className="text-center text-white py-10">Loading services...</div>}>
+          <ServiceSwiper />
+        </Suspense>
       </div>
       <FollowupEnquiryModal visible={showFollowupModal} onClose={() => setShowFollowupModal(false)} />
     </>
