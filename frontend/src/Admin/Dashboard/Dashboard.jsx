@@ -361,17 +361,12 @@ export default function Dashboard() {
 
 
   /* -------------------- UI -------------------- */
-  if (loading && !cache.dashboardStats) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 gap-6 bg-white/5 rounded-3xl border border-white/10">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
-          <div className="absolute inset-0 bg-red-500/10 blur-xl rounded-full animate-pulse" />
-        </div>
-        <p className="text-white/40 text-xs uppercase tracking-[0.4em] animate-pulse">Initializing Command Center</p>
-      </div>
-    );
-  }
+  // Initialize stats with cache if available to prevent empty dashboard
+  useEffect(() => {
+    if (cache.dashboardStats) {
+      setStats(cache.dashboardStats);
+    }
+  }, []);
 
   return (
     <div className="p-0 space-y-8 relative min-h-[80vh]">

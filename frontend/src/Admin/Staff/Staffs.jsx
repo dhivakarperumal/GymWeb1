@@ -117,17 +117,7 @@ const Staffs = () => {
   const inactiveStaff = staff.filter(s => s.status !== "active").length;
   const departments = new Set(staff.map(s => s.department)).size;
 
-  if (loading && !cache.adminStaff) {
-    return (
-      <div className="flex flex-col items-center justify-center py-40 gap-6">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
-          <div className="absolute inset-0 bg-red-500/10 blur-xl rounded-full animate-pulse" />
-        </div>
-        <p className="text-white/40 text-xs uppercase tracking-[0.4em] animate-pulse">Scanning Personnel Records</p>
-      </div>
-    );
-  }
+
 
   return (
     <div className="p-0 min-h-screen space-y-6">

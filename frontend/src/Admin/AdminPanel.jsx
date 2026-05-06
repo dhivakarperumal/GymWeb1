@@ -26,15 +26,7 @@ const AdminLayout = () => {
 
   const location = useLocation();
   const isPrintPage = location.pathname.includes('/admin/pt-form/print/');
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  useEffect(() => {
-    setIsTransitioning(true);
-    const timer = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 180);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
 
   return (
     <div className={`admin-root flex min-h-screen ${isPrintPage ? 'bg-white' : 'bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e]'} text-white`}>
@@ -59,19 +51,6 @@ const AdminLayout = () => {
       >
         {/* Header */}
         {!isPrintPage && <Header onMenuClick={() => setSidebarOpen(true)} />}
-
-        {/* ⚡ ROUTE PROGRESS BAR */}
-        <AnimatePresence>
-          {isTransitioning && (
-            <motion.div 
-              initial={{ width: "0%", opacity: 1 }}
-              animate={{ width: "100%", opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-red-600 to-orange-500 z-[99999] shadow-[0_0_10px_rgba(239,68,68,0.5)]"
-            />
-          )}
-        </AnimatePresence>
 
         {/* Page Content */}
         <main className={`flex-1 ${isPrintPage ? 'p-0' : 'p-4 sm:p-5 lg:p-6'} overflow-y-auto`}>
