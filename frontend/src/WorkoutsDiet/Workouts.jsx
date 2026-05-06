@@ -168,12 +168,62 @@ export default function Workouts() {
                                   {exercises.map((ex, j) => (
                                     <div
                                       key={j}
-                                      className="flex justify-between text-sm border-b border-red-500/30 py-2"
+                                      className="border border-red-500/30 rounded-lg p-4 mb-4 bg-gray-800/50 hover:bg-gray-800 transition"
                                     >
-                                      <span>{ex.name}</span>
-                                      <span className="text-gray-400">
-                                        {ex.time}
-                                      </span>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {/* LEFT: Image */}
+                                        <div className="md:col-span-1 flex items-center justify-center">
+                                          {ex.media ? (
+                                            <div className="w-full aspect-square rounded-lg overflow-hidden border border-red-500/20 bg-black/40">
+                                              {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
+                                                ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
+                                                  <div className="w-full h-full flex items-center justify-center text-xs text-white/40">
+                                                    <FaDumbbell size={24} className="text-red-500" />
+                                                  </div>
+                                                ) : (
+                                                  <video src={ex.media} className="w-full h-full object-cover" controls />
+                                                )
+                                              ) : (
+                                                <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-red-600/20 to-red-900/20 flex items-center justify-center border border-red-500/20">
+                                              <FaDumbbell size={24} className="text-red-500" />
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* RIGHT: Details */}
+                                        <div className="md:col-span-2 space-y-3">
+                                          <div>
+                                            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Exercise Name</p>
+                                            <p className="text-lg font-bold text-white">{ex.name}</p>
+                                          </div>
+
+                                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
+                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Time</p>
+                                              <p className="text-white font-semibold">{ex.time || "—"}</p>
+                                            </div>
+
+                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
+                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Sets</p>
+                                              <p className="text-white font-semibold">{ex.sets || "—"}</p>
+                                            </div>
+
+                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
+                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Reps</p>
+                                              <p className="text-white font-semibold">{ex.count || "—"}</p>
+                                            </div>
+
+                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
+                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Type</p>
+                                              <p className="text-orange-400 font-semibold text-xs">{ex.type || "—"}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
