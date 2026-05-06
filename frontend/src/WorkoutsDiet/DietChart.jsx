@@ -120,7 +120,11 @@ const DietChart = () => {
                 : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
           >
-            {day}
+            {(() => {
+              const s = day.toString();
+              if (/^\d+$/.test(s)) return `Day ${parseInt(s) + 1}`;
+              return s.replace(/^Day(\d+)$/, (_, n) => `Day ${n}`);
+            })()}
           </button>
         ))}
       </div>
