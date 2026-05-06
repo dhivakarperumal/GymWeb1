@@ -621,7 +621,7 @@ const Enquiry = () => {
                     <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Customer</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Mobile</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Location</th>
+
                     <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
                     <th className="px-4 py-4 text-right text-sm font-semibold">Actions</th>
@@ -658,9 +658,7 @@ const Enquiry = () => {
                             {enquiry.phone || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-base text-gray-300 truncate max-w-[120px]">
-                          {enquiry.location || 'Direct Lead'}
-                        </td>
+
                         <td className="px-4 py-4">
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold ${getStatusColor(enquiry.status)}`}>
                             {getStatusIcon(enquiry.status)}

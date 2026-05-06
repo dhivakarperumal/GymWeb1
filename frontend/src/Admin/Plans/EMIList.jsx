@@ -322,19 +322,19 @@ const EMIList = () => {
             /* ================= TABLE VIEW ================= */
             <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
               <table className="w-full min-w-[900px] text-sm text-left text-gray-200 border-collapse">
-                <thead className="sticky top-0 bg-white/5 backdrop-blur-xl border-b border-white/10 z-10 text-white/40 uppercase text-[10px] tracking-[0.2em] font-black">
+                <thead className="bg-white/10 text-white">
                   <tr>
-                    <th className="px-6 py-4 border-b border-white/5">S.No</th>
-                    <th className="px-6 py-4 border-b border-white/5">Member</th>
-                    <th className="px-6 py-4 border-b border-white/5">Phone</th>
-                    <th className="px-6 py-4 border-b border-white/5">Plan</th>
-                    <th className="px-6 py-4 border-b border-white/5">Total Price</th>
-                    <th className="px-6 py-4 border-b border-white/5">Initial Payment</th>
-                    <th className="px-6 py-4 border-b border-white/5">Second Payment</th>
-                    <th className="px-6 py-4 border-b border-white/5">Remaining Due</th>
-                    <th className="px-6 py-4 border-b border-white/5">Created</th>
-                    <th className="px-6 py-4 border-b border-white/5">Payment</th>
-                    <th className="px-6 py-4 border-b border-white/5 text-center">Actions</th>
+                    <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Phone</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Total Price</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Initial Payment</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Remaining Due</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Created</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Payment</th>
+                    <th className="px-4 py-4 text-center text-sm font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -369,39 +369,39 @@ const EMIList = () => {
                         key={membership.id}
                         className="border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors"
                       >
-                        <td className="px-6 py-4 font-medium text-white">
+                        <td className="px-4 py-4 text-center text-base font-medium text-gray-400">
                           {(currentPage - 1) * itemsPerPage + idx + 1}
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-white group-hover:text-orange-400 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-base text-white group-hover:text-orange-400 transition-colors">
                             {membership.userName || membership.username || "Unknown"}
                           </div>
                         </td>
-                        <td className="px-6 py-4 font-semibold text-orange-400">
+                        <td className="px-4 py-4 text-base font-medium text-gray-300">
                           {membership.mobile || membership.phone || "N/A"}
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold">{membership.planName}</div>
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-gray-300">{membership.planName}</div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-emerald-400">
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-emerald-400">
                             ₹{totalPrice.toFixed(2)}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-green-400">
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-green-400">
                             ₹{initialPayment.toFixed(2)}
                           </div>
                           <div className="text-xs text-white/50">Paid today</div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-cyan-300">
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-cyan-300">
                             ₹{secondPayment.toFixed(2)}
                           </div>
                           <div className="text-xs text-white/50">Second payment</div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-blue-400">
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-blue-400">
                             {remainingDue <= 0 ? "₹0.00" : `₹${remainingDue.toFixed(2)}`}
                           </div>
                           <div className="text-xs text-white/50">
@@ -413,13 +413,13 @@ const EMIList = () => {
                                 })}`}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4 text-base font-medium text-gray-300">
                           {new Date(membership.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           {getPaymentStatusBadge(membership.paymentStatus)}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-4 text-center">
                           <div className="flex justify-center items-center gap-3">
                             <button
                               onClick={() => viewDetails(membership)}

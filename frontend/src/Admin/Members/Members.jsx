@@ -388,24 +388,23 @@ const Members = () => {
       {viewMode === "table" ? (
         /* ================= TABLE VIEW ================= */
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm text-gray-200">
-            <thead className="border-b border-white/10">
+          <table className="w-full min-w-[700px] text-base text-gray-200">
+            <thead className="bg-white/10 text-white">
               <tr>
-                <th className="p-4 text-left font-medium">S No</th>
-                <th className="p-4 text-left font-medium">Name</th>
-                <th className="p-4 text-left font-medium">Phone</th>
-                <th className="p-4 text-left font-medium">Email</th>
-                <th className="p-4 text-left font-medium">Height</th>
-                <th className="p-4 text-left font-medium">Weight</th>
-                <th className="p-4 text-left font-medium">BMI</th>
-                <th className="p-4 text-left font-medium">PT Form</th>
-                <th className="p-4 text-left font-medium">Plan</th>
-
-                <th className="p-4 text-left font-medium">Type</th>
-                <th className="p-4 text-left font-medium">Actions</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Phone</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Email</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Height</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Weight</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">BMI</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Type</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/10">
               {paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan="13" className="p-8 text-center text-gray-400">
@@ -415,18 +414,18 @@ const Members = () => {
               ) : (
                 paginatedData.map((m, index) => (
                   <tr key={m.id || `u-${m.u_id}`} className="border-b border-white/5 hover:bg-white/5 transition">
-                    <td className="p-4 font-medium text-white">{startIndex + index + 1}</td>
-                    <td className="p-4 font-medium text-white">{m.name || "N/A"}</td>
-                    <td className="p-4">{m.phone || "N/A"}</td>
-                    <td className="p-4">{m.email || m.user_email || "-"}</td>
-                    <td className="p-4 text-gray-400">{m.height ? `${m.height} cm` : "-"}</td>
-                    <td className="p-4 text-gray-400">{m.weight ? `${m.weight} kg` : "-"}</td>
-                    <td className="p-4">
+                    <td className="px-4 py-5 font-medium text-gray-400">{startIndex + index + 1}</td>
+                    <td className="px-4 py-5 font-medium text-white">{m.name || "N/A"}</td>
+                    <td className="px-4 py-5 text-gray-300 font-medium">{m.phone || "N/A"}</td>
+                    <td className="px-4 py-5 text-gray-400 text-sm font-medium">{m.email || m.user_email || "-"}</td>
+                    <td className="px-4 py-5 text-gray-400 text-sm">{m.height ? `${m.height} cm` : "-"}</td>
+                    <td className="px-4 py-5 text-gray-400 text-sm">{m.weight ? `${m.weight} kg` : "-"}</td>
+                    <td className="px-4 py-5">
                       <span className="px-2 py-1 rounded bg-white/10 text-orange-400 font-bold text-xs">
                         {m.bmi || "-"}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="px-4 py-5">
                       {!(m.plan && m.status === "active") ? (
                         <span className="text-white/30">-</span>
                       ) : m.pt_form_completed ? (
@@ -459,13 +458,13 @@ const Members = () => {
                       )}
                     </td>
 
-                    <td className="p-4">
+                    <td className="px-4 py-5">
                       <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
                         {m.plan || m.role || "Member"}
                       </span>
                     </td>
 
-                    <td className="p-4">
+                    <td className="px-4 py-5">
                       <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${m.source === "users"
                         ? "bg-blue-500/20 text-blue-400"
                         : "bg-purple-500/20 text-purple-400"
@@ -474,7 +473,7 @@ const Members = () => {
                       </span>
                     </td>
 
-                    <td className="p-4 flex gap-2">
+                    <td className="px-4 py-5 flex gap-2">
                       <button
                         onClick={() => navigate(`/admin/member-details/${m.id || m.member_id}`)}
                         className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
