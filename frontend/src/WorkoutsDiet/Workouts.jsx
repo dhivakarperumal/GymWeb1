@@ -47,10 +47,10 @@ export default function Workouts() {
   };
 
   return (
-    <div className="bg-black text-white min-h-screen flex flex-col">
-      <PageContainer className="max-w-none w-full px-10">
+    <div className="bg-black text-white min-h-full flex flex-col">
+      <PageContainer className="max-w-none w-full px-4 sm:px-6 lg:px-10 py-6">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 gap-6">
+          <div className="flex flex-col items-center justify-center py-20 gap-6">
             <div className="relative">
               <div className="w-16 h-16 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
               <div className="absolute inset-0 bg-red-500/10 blur-xl rounded-full animate-pulse" />
@@ -58,7 +58,7 @@ export default function Workouts() {
             <p className="text-white/40 text-xs uppercase tracking-[0.4em] animate-pulse">Assembling Routine</p>
           </div>
         ) : workouts.length === 0 ? (
-          <div className="flex flex-col items-center mt-20 text-center">
+          <div className="flex flex-col items-center mt-20 text-center px-4">
             <div className="w-28 h-28 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-700 mb-6">
               <FaDumbbell className="text-red-500 text-4xl" />
             </div>
@@ -66,8 +66,7 @@ export default function Workouts() {
             <h2 className="text-xl font-bold">No Workouts Assigned</h2>
 
             <p className="text-gray-400 mt-2 max-w-sm">
-              You don't have any workout plans yet. Subscribe to a plan to
-              unlock workouts.
+              You don't have any workout plans yet. Subscribe to a plan to unlock workouts.
             </p>
 
             <button
@@ -78,101 +77,66 @@ export default function Workouts() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto md:py-20">
-            <div className="bg-gray-900 rounded-xl shadow-2xl border border-red-500/20">
-              <table className="w-full border border-zinc-800 rounded-lg overflow-hidden">
-                <thead className="bg-gray-900 text-gray-300 text-sm uppercase border-b border-red-500/20">
-                  <tr>
-                    <th className="px-6 py-4 text-left">Goal</th>
-                    <th className="px-6 py-4 text-left">Duration</th>
-                    <th className="px-6 py-4 text-left">Level</th>
-                    <th className="px-6 py-4 text-center">Action</th>
-                  </tr>
-                </thead>
+          <>
+            <div className="hidden md:block overflow-x-auto md:py-10">
+              <div className="bg-gray-900 rounded-xl shadow-2xl border border-red-500/20 overflow-hidden">
+                <table className="min-w-full border border-zinc-800 table-auto">
+                  <thead className="bg-gray-900 text-gray-300 text-sm uppercase border-b border-red-500/20">
+                    <tr>
+                      <th className="px-6 py-4 text-left">Goal</th>
+                      <th className="px-6 py-4 text-left">Duration</th>
+                      <th className="px-6 py-4 text-left">Level</th>
+                      <th className="px-6 py-4 text-center">Action</th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {workouts.map((item, index) => (
-                    <React.Fragment key={index}>
-                      <tr className="border-t border-zinc-700 hover:bg-gray-800 transition">
-                        <td className="px-6 py-4 text-gray-400">{item.goal}</td>
+                  <tbody>
+                    {workouts.map((item, index) => (
+                      <React.Fragment key={index}>
+                        <tr className="border-t border-zinc-700 hover:bg-gray-800 transition">
+                          <td className="px-6 py-4 text-gray-400">{item.goal}</td>
+                          <td className="px-6 py-4 text-gray-400">{item.duration_weeks} Weeks</td>
+                          <td className="px-6 py-4 text-gray-400">{item.level}</td>
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              onClick={() => setOpenWorkout(openWorkout === item.id ? null : item.id)}
+                              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold"
+                            >
+                              {openWorkout === item.id ? "Close" : "View"}
+                            </button>
+                          </td>
+                        </tr>
 
-                        <td className="px-6 py-4 text-gray-400">
-                          {item.duration_weeks} Weeks
-                        </td>
-
-                        <td className="px-6 py-4 text-gray-400">
-                          {item.level}
-                        </td>
-
-                        <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() =>
-                              setOpenWorkout(
-                                openWorkout === item.id ? null : item.id,
-                              )
-                            }
-                            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold"
-                          >
-                            {openWorkout === item.id ? "Close" : "View"}
-                          </button>
-                        </td>
-                      </tr>
-
-                      {openWorkout === item.id && (
-                        <tr className="bg-gray-800 border-t border-red-500/60">
-                          <td colSpan="4" className="px-8 py-6">
-                            {/* WORKOUT DETAILS */}
-
-                            <div className="grid md:grid-cols-3 gap-6 mb-6">
-                              <div className="bg-gray-900 p-4 rounded-xl border border-red-500/60 text-center">
-                                <p className="text-gray-400 text-sm">Trainer</p>
-                                <p className="font-bold">{item.trainer_name}</p>
+                        {openWorkout === item.id && (
+                          <tr className="bg-gray-800 border-t border-red-500/60">
+                            <td colSpan="4" className="px-8 py-6">
+                              {/* WORKOUT DETAILS */}
+                              <div className="grid gap-4 lg:grid-cols-3 mb-6">
+                                {[
+                                  { title: 'Trainer', value: item.trainer_name },
+                                  { title: 'Level', value: item.level },
+                                  { title: 'Duration', value: `${item.duration_weeks} Weeks` },
+                                ].map((meta, idx) => (
+                                  <div key={idx} className="bg-gray-900 p-4 rounded-xl border border-red-500/60 text-center">
+                                    <p className="text-gray-400 text-sm">{meta.title}</p>
+                                    <p className="font-bold">{meta.value}</p>
+                                  </div>
+                                ))}
                               </div>
 
-                              <div className="bg-gray-900 p-4 rounded-xl border border-red-500/60 text-center">
-                                <p className="text-gray-400 text-sm">Level</p>
-                                <p className="font-bold">{item.level}</p>
-                              </div>
+                              <h3 className="text-lg font-bold mb-4">Weekly Schedule</h3>
 
-                              <div className="bg-gray-900 p-4 rounded-xl border border-red-500/60 text-center">
-                                <p className="text-gray-400 text-sm">
-                                  Duration
-                                </p>
-                                <p className="font-bold">
-                                  {item.duration_weeks} Weeks
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* WEEKLY SCHEDULE */}
-
-                            <h3 className="text-lg font-bold mb-4">
-                              Weekly Schedule
-                            </h3>
-
-                            {Object.entries(item.days || {}).map(
-                              ([day, exercises], i) => (
-                                <div
-                                  key={i}
-                                  className="bg-gray-900 rounded-xl p-4 mb-4 border border-red-500/60"
-                                >
-                                  <div className="flex justify-between mb-3">
-                                    <span className="text-red-500 font-bold">
-                                      {day}
-                                    </span>
-                                    <span className="text-gray-400 text-sm">
-                                      {exercises.length} Exercises
-                                    </span>
+                              {Object.entries(item.days || {}).map(([day, exercises], i) => (
+                                <div key={i} className="bg-gray-900 rounded-xl p-4 mb-4 border border-red-500/60">
+                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
+                                    <span className="text-red-500 font-bold">{day}</span>
+                                    <span className="text-gray-400 text-sm">{exercises.length} Exercises</span>
                                   </div>
 
                                   {exercises.map((ex, j) => (
-                                    <div
-                                      key={j}
-                                      className="border border-red-500/30 rounded-lg p-4 mb-4 bg-gray-800/50 hover:bg-gray-800 transition"
-                                    >
-                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {/* LEFT: Image */}
-                                        <div className="md:col-span-1 flex items-center justify-center">
+                                    <div key={j} className="border border-red-500/30 rounded-lg p-4 mb-4 bg-gray-800/50 hover:bg-gray-800 transition">
+                                      <div className="grid gap-4 lg:grid-cols-[150px_minmax(0,1fr)]">
+                                        <div className="flex items-center justify-center">
                                           {ex.media ? (
                                             <div className="w-full aspect-square rounded-lg overflow-hidden border border-red-500/20 bg-black/40">
                                               {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
@@ -188,56 +152,122 @@ export default function Workouts() {
                                               )}
                                             </div>
                                           ) : (
-                                            <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-red-600/20 to-red-900/20 flex items-center justify-center border border-red-500/20">
+                                            <div className="w-full aspect-square rounded-lg bg-linear-to-br from-red-600/20 to-red-900/20 flex items-center justify-center border border-red-500/20">
                                               <FaDumbbell size={24} className="text-red-500" />
                                             </div>
                                           )}
                                         </div>
 
-                                        {/* RIGHT: Details */}
-                                        <div className="md:col-span-2 space-y-3">
+                                        <div className="space-y-3">
                                           <div>
                                             <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Exercise Name</p>
                                             <p className="text-lg font-bold text-white">{ex.name}</p>
                                           </div>
 
-                                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
-                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Time</p>
-                                              <p className="text-white font-semibold">{ex.time || "—"}</p>
-                                            </div>
-
-                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
-                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Sets</p>
-                                              <p className="text-white font-semibold">{ex.sets || "—"}</p>
-                                            </div>
-
-                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
-                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Reps</p>
-                                              <p className="text-white font-semibold">{ex.count || "—"}</p>
-                                            </div>
-
-                                            <div className="bg-black/40 rounded-lg p-3 border border-red-500/20">
-                                              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Type</p>
-                                              <p className="text-orange-400 font-semibold text-xs">{ex.type || "—"}</p>
-                                            </div>
+                                          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                            {[
+                                              { label: 'Time', value: ex.time || '—' },
+                                              { label: 'Sets', value: ex.sets || '—' },
+                                              { label: 'Reps', value: ex.count || '—' },
+                                              { label: 'Type', value: ex.type || '—', highlight: true },
+                                            ].map((info, idx) => (
+                                              <div key={idx} className="bg-black/40 rounded-lg p-3 border border-red-500/20">
+                                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{info.label}</p>
+                                                <p className={`font-semibold ${info.highlight ? 'text-orange-400 text-xs' : 'text-white'}`}>{info.value}</p>
+                                              </div>
+                                            ))}
                                           </div>
                                         </div>
                                       </div>
                                     </div>
                                   ))}
                                 </div>
-                              ),
-                            )}
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
+                              ))}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            <div className="md:hidden space-y-4 py-6">
+              {workouts.map((item) => (
+                <div key={item.id || item.goal} className="bg-gray-900 rounded-2xl border border-red-500/20 p-4 shadow-xl">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Goal</p>
+                        <p className="text-lg font-semibold text-white">{item.goal}</p>
+                      </div>
+                      <button
+                        onClick={() => setOpenWorkout(openWorkout === item.id ? null : item.id)}
+                        className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em]"
+                      >
+                        {openWorkout === item.id ? 'Close' : 'View'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm text-gray-400">
+                      <div className="bg-black/40 rounded-2xl p-3 border border-red-500/20">
+                        <p className="text-[10px] uppercase tracking-widest">Duration</p>
+                        <p className="mt-1 text-white font-medium">{item.duration_weeks} Weeks</p>
+                      </div>
+                      <div className="bg-black/40 rounded-2xl p-3 border border-red-500/20">
+                        <p className="text-[10px] uppercase tracking-widest">Level</p>
+                        <p className="mt-1 text-white font-medium">{item.level}</p>
+                      </div>
+                    </div>
+
+                    {openWorkout === item.id && (
+                      <div className="space-y-4 pt-4 border-t border-red-500/10">
+                        <div className="grid gap-3">
+                          <p className="text-sm uppercase tracking-[0.18em] text-gray-400">Trainer</p>
+                          <p className="text-white font-semibold">{item.trainer_name}</p>
+                        </div>
+
+                        {Object.entries(item.days || {}).map(([day, exercises], idx) => (
+                          <div key={idx} className="bg-gray-800 rounded-2xl p-4 border border-red-500/20">
+                            <div className="flex items-center justify-between mb-3">
+                              <p className="font-semibold text-red-500">{day}</p>
+                              <span className="text-xs text-gray-400">{exercises.length} Exercises</span>
+                            </div>
+                            <div className="space-y-3">
+                              {exercises.map((ex, j) => (
+                                <div key={j} className="rounded-2xl border border-red-500/10 bg-black/40 p-3">
+                                  <p className="font-semibold text-white mb-2">{ex.name}</p>
+                                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                                    <div>
+                                      <p>Time</p>
+                                      <p className="text-white">{ex.time || '—'}</p>
+                                    </div>
+                                    <div>
+                                      <p>Sets</p>
+                                      <p className="text-white">{ex.sets || '—'}</p>
+                                    </div>
+                                    <div>
+                                      <p>Reps</p>
+                                      <p className="text-white">{ex.count || '—'}</p>
+                                    </div>
+                                    <div>
+                                      <p>Type</p>
+                                      <p className="text-orange-400">{ex.type || '—'}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </PageContainer>
     </div>

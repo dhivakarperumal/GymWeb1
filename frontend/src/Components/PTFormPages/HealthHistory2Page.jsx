@@ -51,7 +51,7 @@ const HealthHistory2Page = ({ data, onSubmit }) => {
 
   return (
     <div className="space-y-6">
-      <div className="border-2 border-white/20 rounded-2xl p-8 bg-white/[0.02] shadow-xl">
+      <div className="border-2 border-white/20 rounded-2xl p-8 bg-white/5 shadow-xl">
         <h3 className="text-orange-500 font-bold border-b border-white/10 pb-2 uppercase tracking-wider">
           Health History Questionnaire
         </h3>
@@ -61,11 +61,11 @@ const HealthHistory2Page = ({ data, onSubmit }) => {
             <p className="text-white/80 mb-6">Please fill out all information requested below</p>
             <div className="space-y-4">
               {questions.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-3 items-center border-b border-white/10 pb-3">
-                  <div className="col-span-7 md:col-span-8 text-sm md:text-base text-white">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center border-b border-white/10 pb-3">
+                  <div className="col-span-12 md:col-span-8 text-sm md:text-base text-white">
                     {index + 1}. {item}
                   </div>
-                  <div className="col-span-5 md:col-span-4 flex gap-6 justify-end">
+                  <div className="col-span-12 md:col-span-4 flex flex-wrap gap-4 justify-end">
                     <label className="flex items-center gap-2 text-white">
                       <input
                         type="radio"
