@@ -45,12 +45,18 @@ const TrainerSendMessage = () => {
 
         const assignedMembers = assignments
           .filter((a) => a.userEmail || a.user_email || a.userMobile || a.user_mobile)
-          .map((a) => ({
-            id: String(a.userId || a.user_id),
-            name: a.username || a.user_name || "Member",
-            email: a.userEmail || a.user_email || "",
-            phone: a.userMobile || a.user_mobile || "",
-          }));
+          .map((a) => {
+            const uId = a.userId || a.user_id || a.u_id;
+            const mId = a.gymMemberId || a.member_db_id || a.id;
+            return {
+              id: String(uId || mId),
+              userId: uId ? Number(uId) : null,
+              memberId: mId ? Number(mId) : null,
+              name: a.username || a.user_name || a.name || "Member",
+              email: a.userEmail || a.user_email || a.email || "",
+              phone: a.userMobile || a.user_mobile || a.phone || "",
+            };
+          });
 
         // Remove duplicates
         const uniqueIds = new Set();
@@ -119,6 +125,8 @@ const TrainerSendMessage = () => {
     setSending(true);
     const recipients = selectedMembers.map((m) => ({
       id: m.id,
+      userId: m.userId,
+      memberId: m.memberId,
       name: m.name || "Member",
       email: m.email || "",
       phone: m.phone || "",
@@ -333,7 +341,19 @@ const TrainerSendMessage = () => {
                   <div key={h.id} className="bg-black/40 border border-white/10 rounded-xl p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-white">{h.subject}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-white">{h.subject}</p>
+                          {h.memberId && (
+                            <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-lg border border-orange-500/20">
+                              Member #{h.memberId}
+                            </span>
+                          )}
+                          {h.userId && (
+                            <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-lg border border-blue-500/20">
+                              User #{h.userId}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-white/40 mt-0.5">
                           {new Date(h.sent_at).toLocaleString()}
                         </p>

@@ -17,8 +17,8 @@ async function sendMessages(req, res) {
 
     // Prepare recipients for storage
     const recipientsToStore = recipients.map(r => ({ 
-      memberId: r.memberId || r.id, // Support both formats
-      userId: r.userId || r.u_id,
+      memberId: r.memberId || null, 
+      userId: r.userId || null,
       name: r.name, 
       email: r.email, 
       phone: r.phone 
@@ -26,8 +26,8 @@ async function sendMessages(req, res) {
 
     // Determine if we should store individual IDs (if only 1 recipient)
     const singleRecipient = recipients.length === 1 ? recipients[0] : null;
-    const userId = singleRecipient ? (singleRecipient.userId || singleRecipient.u_id) : null;
-    const memberId = singleRecipient ? (singleRecipient.memberId || singleRecipient.id) : null;
+    const userId = singleRecipient ? singleRecipient.userId : null;
+    const memberId = singleRecipient ? singleRecipient.memberId : null;
 
     // Insert into message_history
     const [insertRes] = await db.query(
