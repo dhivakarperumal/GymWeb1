@@ -50,7 +50,6 @@ const Staffs = () => {
         email: r.email,
         phone: r.phone,
         role: r.role,
-        role: r.role,
         timeIn: r.time_in,
         timeOut: r.time_out,
         status: r.status,
@@ -249,10 +248,13 @@ const Staffs = () => {
     </thead>
 
     <tbody>
-      {staff.length === 0 && (
+      {filteredStaff.length === 0 && (
         <tr>
-          <td colSpan="9" className="text-center py-6 text-gray-500">
-            No staff records found
+          <td colSpan="9" className="text-center py-12">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <FaUsers className="text-white/10 text-4xl" />
+              <p className="text-white/40 font-medium italic">No staff records found</p>
+            </div>
           </td>
         </tr>
       )}
@@ -306,9 +308,10 @@ const Staffs = () => {
 
 {/* ===== MOBILE CARD VIEW ===== */}
 <div className="md:hidden space-y-4">
-  {staff.length === 0 && (
-    <div className="text-center text-gray-400 py-6">
-      No staff records found
+  {filteredStaff.length === 0 && (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 backdrop-blur-xl">
+      <FaUsers className="text-white/10 text-5xl" />
+      <p className="text-white/40 font-medium italic">No staff records found</p>
     </div>
   )}
 

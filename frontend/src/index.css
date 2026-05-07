@@ -21,7 +21,17 @@ textarea:-webkit-autofill:focus {
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Hide scrollbar but allow scrolling */
+/* Hide scrollbar globally but allow scrolling */
+html, body {
+  -ms-overflow-style: none; /* IE & Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+/* Specific utility for containers that need to hide scrollbars */
 .hide-scrollbar {
   -ms-overflow-style: none; /* IE & Edge */
   scrollbar-width: none; /* Firefox */
@@ -31,23 +41,13 @@ textarea:-webkit-autofill:focus {
   display: none; /* Chrome, Safari */
 }
 
-/* Hide scrollbar but allow scroll */
-.hide-scrollbar {
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE & Edge */
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;               /* Chrome, Safari */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 .small-caps {
@@ -139,3 +139,4 @@ textarea:-webkit-autofill:focus {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+

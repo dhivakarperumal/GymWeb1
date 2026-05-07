@@ -149,6 +149,16 @@ async function upsertAssignments(req, res) {
         `;
 
         await connection.query(sql, params);
+
+        // Also update existing diet/workout plans for this member to the new trainer
+        await connection.query(
+          'UPDATE diet_plans SET trainer_id = ?, trainer_name = ?, trainer_source = ? WHERE user_id = ?',
+          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', a.userId]
+        );
+        await connection.query(
+          'UPDATE workout_programs SET trainer_id = ?, trainer_name = ?, trainer_source = ? WHERE user_id = ?',
+          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', a.userId]
+        );
       }
 
       await connection.commit();

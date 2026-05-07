@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, Dumbbell } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api"
@@ -577,6 +577,13 @@ const Members = () => {
                         <Eye size={16} />
                       </button>
                       <button
+                        onClick={() => navigate(`/admin/assigned-trainers?search=${m.name || m.username}`)}
+                        className="p-2 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 text-white transition"
+                        title="Assign Trainer"
+                      >
+                        <Dumbbell size={16} />
+                      </button>
+                      <button
                         onClick={() => {
                           if (m.source === "users") {
                             navigate(`/admin/addmembers?user_id=${m.u_id}`);
@@ -643,6 +650,13 @@ const Members = () => {
                         title="View Details"
                       >
                         <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/assigned-trainers?search=${m.name || m.username}`)}
+                        className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition"
+                        title="Assign Trainer"
+                      >
+                        <Dumbbell size={14} />
                       </button>
                       <button
                         onClick={() => {
