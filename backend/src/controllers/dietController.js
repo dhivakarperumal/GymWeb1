@@ -9,17 +9,48 @@ function parseDiet(row) {
   };
 }
 
+async function resolveTrainerStaffId(trainerUserId) {
+  const [rows] = await db.query(
+    'SELECT s.id FROM staff s JOIN users u ON (s.email = u.email OR s.username = u.username) WHERE u.id = ? LIMIT 1',
+    [trainerUserId]
+  );
+  return rows.length > 0 ? rows[0].id : null;
+}
+
 async function getAllDiets(req, res) {
   try {
-    let sql = 'SELECT * FROM diet_plans';
+    let sql = 'SELECT DISTINCT dp.* FROM diet_plans dp';
     const params = [];
+    const conditions = [];
+    let join = '';
 
     if (req.query.trainerId) {
-      sql += ' WHERE trainer_id = ?';
-      params.push(req.query.trainerId);
+      const trainerId = req.query.trainerId;
+      const resolvedStaffId = await resolveTrainerStaffId(trainerId);
+
+      if (resolvedStaffId) {
+        join = ' LEFT JOIN trainer_assignments ta ON ta.user_id = dp.member_id AND ta.trainer_id = ?';
+        params.push(resolvedStaffId);
+      }
+
+      const trainerConditionParts = ['dp.trainer_id = ?'];
+      params.push(trainerId);
+      if (resolvedStaffId) {
+        trainerConditionParts.push('ta.user_id IS NOT NULL');
+      }
+      conditions.push(`(${trainerConditionParts.join(' OR ')})`);
     }
 
-    sql += ' ORDER BY created_at DESC';
+    if (req.query.memberId) {
+      conditions.push('dp.member_id = ?');
+      params.push(req.query.memberId);
+    }
+
+    sql += join;
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' ORDER BY dp.created_at DESC';
 
     const [rows] = await db.query(sql, params);
     res.json(rows.map(parseDiet));
