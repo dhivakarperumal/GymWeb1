@@ -93,10 +93,10 @@ const TrainerDashboard = () => {
 
         const assignedMemberIds = uniqueMembers.map(m => String(m.gymMemberId)).filter(id => id && id !== "null");
         const assignedUserIds = uniqueMembers.map(m => String(m.userId || m.user_id)).filter(id => id && id !== "null");
-        
+
         // Combine both to ensure we catch plans saved under either ID type
         const allAssociatedIds = [...new Set([...assignedMemberIds, ...assignedUserIds])];
-        
+
         console.log("👥 Assigned IDs (Combined):", allAssociatedIds.length);
 
         let workoutCount = 0;
@@ -108,7 +108,7 @@ const TrainerDashboard = () => {
           const workoutRes = await api.get(`/workouts?trainerId=${trainerId}`);
           const workoutData = workoutRes.data;
           const workoutsRaw = Array.isArray(workoutData) ? workoutData : workoutData?.data || [];
-          
+
           // Filter against any possible associated ID (gymMemberId or userId)
           const userWorkouts = allAssociatedIds.length > 0
             ? workoutsRaw.filter(w => allAssociatedIds.includes(String(w.member_id || w.memberId || w.user_id || w.userId)))
@@ -124,7 +124,7 @@ const TrainerDashboard = () => {
           const dietRes = await api.get(`/diet-plans?trainerId=${trainerId}`);
           const dietData = dietRes.data;
           const dietsRaw = Array.isArray(dietData) ? dietData : dietData?.data || [];
-          
+
           // Filter against any possible associated ID (gymMemberId or userId)
           const userDiets = allAssociatedIds.length > 0
             ? dietsRaw.filter(d => allAssociatedIds.includes(String(d.member_id || d.memberId || d.user_id || d.userId)))
@@ -217,7 +217,7 @@ const TrainerDashboard = () => {
               <h3 className="text-xs font-black uppercase tracking-widest text-white/50">Activity Overview</h3>
               <div className="p-2 bg-white/5 rounded-lg border border-white/10"><BarChart3 size={16} className="text-orange-400" /></div>
             </div>
-            
+
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={[
@@ -242,11 +242,18 @@ const TrainerDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis dataKey="name" stroke="#ffffff50" fontSize={10} tickLine={false} axisLine={false} dy={10} />
                   <YAxis stroke="#ffffff50" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} dx={-10} />
-                  <RechartsTooltip 
-                    cursor={{ fill: 'rgba(255, 255, 255, 0.02)' }} 
-                    contentStyle={{ backgroundColor: 'rgba(10,10,10,0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', fontSize: '12px', fontWeight: 'bold' }} 
+                  <RechartsTooltip
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.02)' }}
+                    contentStyle={{ backgroundColor: 'rgba(10,10,10,0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                    labelStyle={{ color: "#fff" }}
+                    itemStyle={{ color: "#fff" }}
                   />
-                  <Bar dataKey="count" radius={[8, 8, 8, 8]} barSize={40}>
+                  <Bar dataKey="count" radius={[8, 8, 8, 8]} barSize={40} label={{
+                    position: "top",
+                    fill: "#fff",
+                    fontSize: 14,
+                    fontWeight: "bold"
+                  }}>
                     {
                       [
                         { name: "Workouts", fill: "url(#colorWorkout)" },
@@ -264,8 +271,8 @@ const TrainerDashboard = () => {
 
           {/* PIE CHART: PT Form Completion */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full" />
-             <div className="flex items-center justify-between mb-6">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full" />
+            <div className="flex items-center justify-between mb-6">
               <h3 className="text-xs font-black uppercase tracking-widest text-white/50">PT Form Status</h3>
               <div className="p-2 bg-white/5 rounded-lg border border-white/10"><Activity size={16} className="text-blue-400" /></div>
             </div>
@@ -296,12 +303,14 @@ const TrainerDashboard = () => {
                     <Cell fill="#10b981" />
                     <Cell fill="#ef4444" />
                   </Pie>
-                  <RechartsTooltip 
-                    contentStyle={{ backgroundColor: 'rgba(10,10,10,0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', fontSize: '12px', fontWeight: 'bold' }} 
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: 'rgba(10,10,10,0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                    labelStyle={{ color: "#fff" }}
+                    itemStyle={{ color: "#fff" }}
                   />
-                  <Legend 
-                    wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }} 
-                    iconType="circle" 
+                  <Legend
+                    wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }}
+                    iconType="circle"
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -381,15 +390,14 @@ const TrainerDashboard = () => {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
-                              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all hover:scale-105 active:scale-95 ${
-                                m.ptFormCompleted 
-                                  ? "bg-green-500/10 text-green-400 border-green-500/20" 
-                                  : "bg-red-500/10 text-red-400 border-red-500/20"
-                              }`}
+                              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all hover:scale-105 active:scale-95 ${m.ptFormCompleted
+                                ? "bg-green-500/10 text-green-400 border-green-500/20"
+                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                                }`}
                             >
                               {m.ptFormCompleted ? "Completed" : "Pending"}
                             </button>
-                            
+
                             {m.ptFormCompleted ? (
                               <div className="flex items-center gap-1">
                                 <button
@@ -458,7 +466,7 @@ const TrainerDashboard = () => {
                         <p className="text-xs text-gray-400 mt-1">
                           Plan: <span className="text-orange-400">{m.planName || m.plan_name || "-"}</span>
                         </p>
-                        
+
                         <div className="flex gap-4 mt-2">
                           <div>
                             <p className="text-[10px] text-gray-500 uppercase">Starts</p>
@@ -472,12 +480,11 @@ const TrainerDashboard = () => {
 
                         <div className="mt-3">
                           <button
-                             onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
-                             className={`w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${
-                               m.ptFormCompleted 
-                                 ? "bg-green-500/10 text-green-400 border-green-500/20" 
-                                 : "bg-red-500/10 text-red-400 border-red-500/20"
-                             }`}
+                            onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
+                            className={`w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${m.ptFormCompleted
+                              ? "bg-green-500/10 text-green-400 border-green-500/20"
+                              : "bg-red-500/10 text-red-400 border-red-500/20"
+                              }`}
                           >
                             PT Form: {m.ptFormCompleted ? "Completed" : "Pending"}
                           </button>
@@ -521,17 +528,16 @@ const TrainerDashboard = () => {
                 >
                   Prev
                 </button>
-                
+
                 <div className="flex gap-1">
                   {Array.from({ length: totalPages }).map((_, i) => (
                     <button
                       key={i + 1}
                       onClick={() => setCurrentPage(i + 1)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                        currentPage === i + 1 
-                          ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" 
-                          : "hover:bg-white/10 text-white/60"
-                      }`}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentPage === i + 1
+                        ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                        : "hover:bg-white/10 text-white/60"
+                        }`}
                     >
                       {i + 1}
                     </button>
@@ -572,8 +578,8 @@ const TrainerDashboard = () => {
 
               <div className="flex items-center gap-3">
                 <button
-                   onClick={() => navigate(`/trainer/pt-form?member_id=${ptViewMember.gymMemberId}`)}
-                   className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-xl text-sm font-bold hover:bg-orange-500 hover:text-white transition-all"
+                  onClick={() => navigate(`/trainer/pt-form?member_id=${ptViewMember.gymMemberId}`)}
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-xl text-sm font-bold hover:bg-orange-500 hover:text-white transition-all"
                 >
                   <FaPencilAlt size={14} /> Edit Form
                 </button>

@@ -35,10 +35,7 @@ const AddWorkout = () => {
 
   const isEditMode = !!id;
 
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [form, setForm] = useState({
+  const initialForm = {
     memberId: "",
     memberName: "",
     memberEmail: "",
@@ -46,11 +43,17 @@ const AddWorkout = () => {
     level: "Beginner",
     goal: "",
     durationWeeks: "",
-  });
+  };
 
-  const [days, setDays] = useState({
+  const initialDays = {
     Day1: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", media: "", mediaType: "url" }],
-  });
+  };
+
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [form, setForm] = useState(initialForm);
+  const [days, setDays] = useState(initialDays);
 
   // For debugging - show all assignments
   const [allAssignments, setAllAssignments] = useState([]);
@@ -99,31 +102,48 @@ const AddWorkout = () => {
     fetchMembers();
   }, [user]);
 
+  useEffect(() => {
+    if (!isEditMode) {
+      setForm(initialForm);
+      setDays(initialDays);
+      setSelected(new Set());
+    }
+  }, [isEditMode]);
+
   /* ---------------- FETCH WORKOUT IF EDIT ---------------- */
   useEffect(() => {
     if (!isEditMode) return;
 
     const fetchWorkout = async () => {
       try {
+        setLoading(true);
+        setForm(initialForm);
+        setDays(initialDays);
+        setSelected(new Set());
+
         const res = await api.get(`/workouts/${id}`);
         const data = res.data;
         setForm({
           memberId: data.member_id,
           memberName: data.member_name,
+          memberEmail: data.member_email,
+          memberMobile: data.member_mobile,
           level: data.level,
           goal: data.goal || "",
           durationWeeks: data.duration_weeks,
         });
-        setDays(data.days || { Day1: [{ time: "", name: "" }] });
+        setDays(data.days || initialDays);
       } catch (err) {
         console.error(err);
         toast.error("Failed to load workout");
         navigate("/trainer/alladdworkouts");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchWorkout();
-  }, [id]);
+  }, [id, isEditMode]);
 
   /* ---------------- ADD DAY ---------------- */
   const addDay = () => {
