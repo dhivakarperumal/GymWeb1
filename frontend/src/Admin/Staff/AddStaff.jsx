@@ -197,6 +197,11 @@ const AddEditStaff = () => {
     setPreviewFile({ data: file, name: fileName });
   };
 
+  const handleDeleteFile = (field) => {
+    setForm((prev) => ({ ...prev, [field]: "" }));
+    toast.success("File removed");
+  };
+
   /* ---------------- VALIDATION FUNCTION ---------------- */
 
   const validateForm = () => {
@@ -648,91 +653,171 @@ const AddEditStaff = () => {
         </div>
 
         {/* PHOTO */}
-        <div>
+        <div className="relative">
           <label className="text-sm font-medium">Photo</label>
-          <input type="file" accept="image/*"
-            onChange={(e) => handleFileUpload(e, "photo")}
-            className={inputClass} />
-          {form.photo && (
-            <div className="mt-2 flex gap-2 items-center">
-              {form.photo.startsWith('data:image') ? (
-                <img src={form.photo} alt="Photo preview" className="h-24 rounded border border-gray-300" />
-              ) : (
-                <div className="p-2 bg-white/5 rounded border border-white/10 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                  Invalid Photo Data
+          <div className="relative group">
+            <input type="file" accept="image/*"
+              key={`photo-${form.photo ? 'filled' : 'empty'}`}
+              onChange={(e) => handleFileUpload(e, "photo")}
+              className={inputClass} />
+            
+            {form.photo && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-black/40 backdrop-blur-md p-1.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                {form.photo.startsWith('data:image') ? (
+                  <img src={form.photo} alt="Preview" className="h-10 w-10 rounded object-cover border border-white/20" />
+                ) : (
+                  <div className="h-10 w-10 flex items-center justify-center bg-white/5 rounded border border-white/10 text-[8px] text-gray-400">DOC</div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <button type="button" onClick={() => openPreview(form.photo, "photo.jpg")}
+                    className="px-2 py-0.5 bg-blue-500/80 text-white rounded text-[10px] hover:bg-blue-600">
+                    View
+                  </button>
+                  <button type="button" onClick={() => handleDeleteFile("photo")}
+                    className="px-2 py-0.5 bg-red-500/80 text-white rounded text-[10px] hover:bg-red-600">
+                    Del
+                  </button>
                 </div>
-              )}
-              <button type="button" onClick={() => openPreview(form.photo, "photo.jpg")}
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
-                Preview
-              </button>
-            </div>
-          )}
+              </div>
+            )}
+            
+            {/* Persistent Thumbnail when not hovering */}
+            {form.photo && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none group-hover:hidden transition-all">
+                 {form.photo.startsWith('data:image') ? (
+                  <img src={form.photo} alt="Preview" className="h-8 w-8 rounded-full object-cover border-2 border-orange-500/50 shadow-lg" />
+                ) : (
+                  <div className="h-8 w-8 flex items-center justify-center bg-orange-500/20 rounded-full border border-orange-500/50 text-[8px] text-orange-200">📄</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* AADHAR */}
-        <div>
+        <div className="relative">
           <label className="text-sm font-medium">Aadhar (Image/PDF)</label>
-          <input type="file" accept="image/*,.pdf,.doc,.docx"
-            onChange={(e) => handleFileUpload(e, "aadharDoc")}
-            className={inputClass} />
-          {form.aadharDoc && (
-            <div className="mt-2 flex gap-2 items-center">
-              {form.aadharDoc.startsWith('data:image') ? (
-                <img src={form.aadharDoc} alt="Aadhar preview" className="h-24 rounded border border-gray-300" />
-              ) : (
-                <div className="p-2 bg-gray-100 rounded border border-gray-300 text-sm">📄 Aadhar Doc</div>
-              )}
-              <button type="button" onClick={() => openPreview(form.aadharDoc, "aadhar")}
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
-                Preview
-              </button>
-            </div>
-          )}
+          <div className="relative group">
+            <input type="file" accept="image/*,.pdf,.doc,.docx"
+              key={`aadhar-${form.aadharDoc ? 'filled' : 'empty'}`}
+              onChange={(e) => handleFileUpload(e, "aadharDoc")}
+              className={inputClass} />
+            
+            {form.aadharDoc && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-black/40 backdrop-blur-md p-1.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                {form.aadharDoc.startsWith('data:image') ? (
+                  <img src={form.aadharDoc} alt="Preview" className="h-10 w-10 rounded object-cover border border-white/20" />
+                ) : (
+                  <div className="h-10 w-10 flex items-center justify-center bg-white/5 rounded border border-white/10 text-[8px] text-gray-400">PDF</div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <button type="button" onClick={() => openPreview(form.aadharDoc, "aadhar")}
+                    className="px-2 py-0.5 bg-blue-500/80 text-white rounded text-[10px] hover:bg-blue-600">
+                    View
+                  </button>
+                  <button type="button" onClick={() => handleDeleteFile("aadharDoc")}
+                    className="px-2 py-0.5 bg-red-500/80 text-white rounded text-[10px] hover:bg-red-600">
+                    Del
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Persistent Thumbnail */}
+            {form.aadharDoc && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none group-hover:hidden transition-all">
+                 {form.aadharDoc.startsWith('data:image') ? (
+                  <img src={form.aadharDoc} alt="Preview" className="h-8 w-8 rounded-full object-cover border-2 border-orange-500/50 shadow-lg" />
+                ) : (
+                  <div className="h-8 w-8 flex items-center justify-center bg-orange-500/20 rounded-full border border-orange-500/50 text-[8px] text-orange-200">📄</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ID */}
-        <div>
+        <div className="relative">
           <label className="text-sm font-medium">ID Proof (Image/PDF)</label>
-          <input type="file" accept="image/*,.pdf,.doc,.docx"
-            onChange={(e) => handleFileUpload(e, "idDoc")}
-            className={inputClass} />
-          {form.idDoc && (
-            <div className="mt-2 flex gap-2 items-center">
-              {form.idDoc.startsWith('data:image') ? (
-                <img src={form.idDoc} alt="ID Proof preview" className="h-24 rounded border border-gray-300" />
-              ) : (
-                <div className="p-2 bg-gray-100 rounded border border-gray-300 text-sm">📄 ID Proof</div>
-              )}
-              <button type="button" onClick={() => openPreview(form.idDoc, "idproof")}
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
-                Preview
-              </button>
-            </div>
-          )}
+          <div className="relative group">
+            <input type="file" accept="image/*,.pdf,.doc,.docx"
+              key={`idDoc-${form.idDoc ? 'filled' : 'empty'}`}
+              onChange={(e) => handleFileUpload(e, "idDoc")}
+              className={inputClass} />
+            
+            {form.idDoc && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-black/40 backdrop-blur-md p-1.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                {form.idDoc.startsWith('data:image') ? (
+                  <img src={form.idDoc} alt="Preview" className="h-10 w-10 rounded object-cover border border-white/20" />
+                ) : (
+                  <div className="h-10 w-10 flex items-center justify-center bg-white/5 rounded border border-white/10 text-[8px] text-gray-400">ID</div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <button type="button" onClick={() => openPreview(form.idDoc, "idproof")}
+                    className="px-2 py-0.5 bg-blue-500/80 text-white rounded text-[10px] hover:bg-blue-600">
+                    View
+                  </button>
+                  <button type="button" onClick={() => handleDeleteFile("idDoc")}
+                    className="px-2 py-0.5 bg-red-500/80 text-white rounded text-[10px] hover:bg-red-600">
+                    Del
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Persistent Thumbnail */}
+            {form.idDoc && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none group-hover:hidden transition-all">
+                 {form.idDoc.startsWith('data:image') ? (
+                  <img src={form.idDoc} alt="Preview" className="h-8 w-8 rounded-full object-cover border-2 border-orange-500/50 shadow-lg" />
+                ) : (
+                  <div className="h-8 w-8 flex items-center justify-center bg-orange-500/20 rounded-full border border-orange-500/50 text-[8px] text-orange-200">📄</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* CERTIFICATE */}
-        <div>
+        <div className="relative">
           <label className="text-sm font-medium">Certificate (Image/PDF)</label>
-          <input type="file" accept="image/*,.pdf,.doc,.docx"
-            onChange={(e) => handleFileUpload(e, "certificateDoc")}
-            className={inputClass} />
-          {form.certificateDoc && (
-            <div className="mt-2 flex gap-2 items-center">
-              {form.certificateDoc.startsWith('data:image') ? (
-                <img src={form.certificateDoc} alt="Certificate preview" className="h-24 rounded border border-gray-300" />
-              ) : (
-                <div className="p-2 bg-white/5 rounded border border-white/10 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                  📄 Certificate Doc
+          <div className="relative group">
+            <input type="file" accept="image/*,.pdf,.doc,.docx"
+              key={`cert-${form.certificateDoc ? 'filled' : 'empty'}`}
+              onChange={(e) => handleFileUpload(e, "certificateDoc")}
+              className={inputClass} />
+            
+            {form.certificateDoc && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-black/40 backdrop-blur-md p-1.5 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                {form.certificateDoc.startsWith('data:image') ? (
+                  <img src={form.certificateDoc} alt="Preview" className="h-10 w-10 rounded object-cover border border-white/20" />
+                ) : (
+                  <div className="h-10 w-10 flex items-center justify-center bg-white/5 rounded border border-white/10 text-[8px] text-gray-400">CERT</div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <button type="button" onClick={() => openPreview(form.certificateDoc, "certificate")}
+                    className="px-2 py-0.5 bg-blue-500/80 text-white rounded text-[10px] hover:bg-blue-600">
+                    View
+                  </button>
+                  <button type="button" onClick={() => handleDeleteFile("certificateDoc")}
+                    className="px-2 py-0.5 bg-red-500/80 text-white rounded text-[10px] hover:bg-red-600">
+                    Del
+                  </button>
                 </div>
-              )}
-              <button type="button" onClick={() => openPreview(form.certificateDoc, "certificate")}
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
-                Preview
-              </button>
-            </div>
-          )}
+              </div>
+            )}
+
+            {/* Persistent Thumbnail */}
+            {form.certificateDoc && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none group-hover:hidden transition-all">
+                 {form.certificateDoc.startsWith('data:image') ? (
+                  <img src={form.certificateDoc} alt="Preview" className="h-8 w-8 rounded-full object-cover border-2 border-orange-500/50 shadow-lg" />
+                ) : (
+                  <div className="h-8 w-8 flex items-center justify-center bg-orange-500/20 rounded-full border border-orange-500/50 text-[8px] text-orange-200">📄</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ACTIONS */}

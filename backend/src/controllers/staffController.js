@@ -140,7 +140,7 @@ async function createStaff(req, res) {
   } catch (err) {
     await connection.rollback();
     console.error('createStaff error', err);
-    res.status(500).json({ error: 'Failed to create staff' });
+    res.status(500).json({ error: 'Failed to create staff', message: err.message });
   } finally {
     connection.release();
   }

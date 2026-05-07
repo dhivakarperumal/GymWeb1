@@ -7,6 +7,15 @@ require("dotenv").config();
   try {
     const { runMigrations } = require("./src/config/migrate");
     await runMigrations();
+    
+    // Attempt to increase MySQL packet size globally for the server
+    const db = require("./src/config/db");
+    try {
+      await db.query("SET GLOBAL max_allowed_packet = 67108864"); // 64MB
+      console.log("✅ MySQL max_allowed_packet increased to 64MB");
+    } catch (dbErr) {
+      console.warn("⚠️ Could not set GLOBAL max_allowed_packet. If you get ECONNRESET, please set it manually in my.ini: ", dbErr.message);
+    }
   } catch (err) {
     console.error("migration startup error:", err.message);
   }
@@ -69,6 +78,7 @@ app.use(
 );
 
 app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Health check
 app.get("/api/health", (req, res) => res.json({ ok: true }));
