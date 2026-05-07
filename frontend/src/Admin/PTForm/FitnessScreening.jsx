@@ -110,52 +110,48 @@ const FitnessScreening = ({
   };
 
   const renderMuscleEnduranceRow = (label, namePrefix) => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center mb-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+    <div className="grid grid-cols-1 gap-4 items-center mb-4 p-4 bg-white/5 border border-white/10 rounded-lg md:grid-cols-4">
       <div className="font-medium text-white/80">{label}:</div>
-      <div>
+      <div className="min-w-0">
         <input
           type="text"
           name={`${namePrefix}_count`}
           value={localFormData[`${namePrefix}_count`]}
           onChange={handleChange}
-          
-          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="w-full min-w-0 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
           placeholder="Count/Value"
         />
       </div>
-      <div className="col-span-2 flex items-center gap-6">
-        <label className="flex items-center gap-2 cursor-pointer">
+      <div className="col-span-1 md:col-span-2 flex flex-wrap items-center gap-3 min-w-0">
+        <label className="w-full sm:w-auto flex items-center gap-2 cursor-pointer">
           <input
             type="radio"
             name={`${namePrefix}_level`}
             value="Superior"
             checked={normalizeValue(localFormData[`${namePrefix}_level`]) === "superior"}
             onChange={handleChange}
-            
             className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
           />
           <span className="text-white/80 text-sm">Superior</span>
         </label>
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="w-full sm:w-auto flex items-center gap-2 cursor-pointer">
           <input
             type="radio"
             name={`${namePrefix}_level`}
             value="Good"
             checked={normalizeValue(localFormData[`${namePrefix}_level`]) === "good"}
             onChange={handleChange}
-            
             className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
           />
           <span className="text-white/80 text-sm">Good</span>
         </label>
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="w-full sm:w-auto flex items-center gap-2 cursor-pointer">
           <input
             type="radio"
             name={`${namePrefix}_level`}
             value="Poor"
             checked={normalizeValue(localFormData[`${namePrefix}_level`]) === "poor"}
             onChange={handleChange}
-            
             className="w-4 h-4 text-orange-500 bg-gray-800 border-gray-600 focus:ring-orange-500"
           />
           <span className="text-white/80 text-sm">Poor</span>

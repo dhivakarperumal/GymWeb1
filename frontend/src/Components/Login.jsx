@@ -127,7 +127,7 @@ const Login = () => {
                         bg-gradient-to-br from-red-600 to-orange-500 text-white">
 
           <h1 className="text-4xl font-extrabold mb-4 tracking-wide">
-            POWER GYM
+            DAP Fitness Studio
           </h1>
 
           <p className="text-lg text-red-100 leading-relaxed">
