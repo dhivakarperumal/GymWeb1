@@ -10,6 +10,7 @@ async function getAllMembers(req, res) {
       SELECT 
         gm.id, 
         gm.member_id, 
+        gm.fingerprint_id,
         gm.name, 
         gm.phone, 
         gm.email, 
@@ -57,6 +58,7 @@ async function getAllMembers(req, res) {
       SELECT 
         NULL as id, 
         NULL as member_id, 
+        NULL as fingerprint_id,
         u.username as name, 
         u.mobile as phone, 
         u.email, 
@@ -196,7 +198,8 @@ async function createMember(req, res) {
     dob, age, employer, occupation,
     emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
     emergency_contact_phone_home, emergency_contact_phone_work,
-    fitness_goal, blood_group, pt_form_completed
+    fitness_goal, blood_group, pt_form_completed,
+    fingerprintId
   } = req.body;
 
   console.log('createMember received:', { name, phone, email, gender, height, weight, bmi, plan, duration, joinDate, expiryDate, status, photo: photo ? 'base64...' : null, notes, address, username });
@@ -255,8 +258,8 @@ async function createMember(req, res) {
        dob, age, employer, occupation,
        emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
        emergency_contact_phone_home, emergency_contact_phone_work,
-       fitness_goal, blood_group, pt_form_completed)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       fitness_goal, blood_group, pt_form_completed, fingerprint_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           [
             memberId, name, phone, email, gender, numHeight, numWeight, numBmi,
             plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
@@ -264,7 +267,8 @@ async function createMember(req, res) {
             emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
             emergency_contact_phone_home || null, emergency_contact_phone_work || null,
             fitness_goal || null, blood_group || null,
-            pt_form_completed ? 1 : 0
+            pt_form_completed ? 1 : 0,
+            fingerprintId || null
           ]
         );
         inserted = true;
@@ -359,7 +363,8 @@ async function updateMember(req, res) {
       dob, age, employer, occupation,
       emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
       emergency_contact_phone_home, emergency_contact_phone_work,
-      fitness_goal, blood_group, pt_form_completed } = req.body;
+      fitness_goal, blood_group, pt_form_completed,
+      fingerprintId } = req.body;
     // ensure numeric values are correctly typed
     const numHeight = height != null && !isNaN(height) ? Number(height) : null;
     const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
@@ -397,6 +402,7 @@ async function updateMember(req, res) {
         emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
         emergency_contact_phone_home=?, emergency_contact_phone_work=?,
         fitness_goal=?, blood_group=?, pt_form_completed=?,
+        fingerprint_id=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE id=?`;
       updateParams = [
@@ -408,6 +414,7 @@ async function updateMember(req, res) {
         emergency_contact_phone_home || null, emergency_contact_phone_work || null,
         fitness_goal || null, blood_group || null,
         pt_form_completed ? 1 : 0,
+        fingerprintId || null,
         idNum
       ];
     } else {
@@ -420,6 +427,7 @@ async function updateMember(req, res) {
         emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
         emergency_contact_phone_home=?, emergency_contact_phone_work=?,
         fitness_goal=?, blood_group=?, pt_form_completed=?,
+        fingerprint_id=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE member_id=?`;
       updateParams = [
@@ -431,6 +439,7 @@ async function updateMember(req, res) {
         emergency_contact_phone_home || null, emergency_contact_phone_work || null,
         fitness_goal || null, blood_group || null,
         pt_form_completed ? 1 : 0,
+        fingerprintId || null,
         id
       ];
     }

@@ -30,6 +30,7 @@ const AddMember = () => {
     notes: "",
     address: "",
     pt_form_completed: false,
+    fingerprintId: "",
   });
 
   const { id } = useParams();
@@ -65,6 +66,7 @@ const AddMember = () => {
             expiryDate: data.expiry_date
               ? dayjs(data.expiry_date).format("YYYY-MM-DD")
               : "",
+            fingerprintId: data.fingerprint_id || "",
           });
         } catch {
           toast.error("Failed to load member");
@@ -300,6 +302,17 @@ const AddMember = () => {
                 />
                 <span className="text-white text-sm font-medium">PT Form Completed</span>
               </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Fingerprint ID (For Biometric Attendance)</label>
+              <input 
+                name="fingerprintId" 
+                value={form.fingerprintId} 
+                onChange={handleChange} 
+                placeholder="e.g. 1001" 
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" 
+              />
             </div>
 
             {isEdit && (

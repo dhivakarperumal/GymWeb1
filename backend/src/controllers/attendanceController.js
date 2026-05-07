@@ -168,9 +168,87 @@ async function checkOut(req, res) {
   }
 }
 
+/**
+ * POST /api/attendance/biometric
+ * Fingerprint-based login/logout.
+ * Payload: { fingerprintId: string }
+ */
+async function biometricAttendance(req, res) {
+  try {
+    const { fingerprintId } = req.body;
+
+    if (!fingerprintId) {
+      return res.status(400).json({ error: 'Fingerprint ID required' });
+    }
+
+    // 1. Find member by fingerprint_id
+    const [members] = await db.query(
+      "SELECT id, name, expiry_date, status FROM gym_members WHERE fingerprint_id = ?",
+      [fingerprintId]
+    );
+
+    if (members.length === 0) {
+      return res.status(404).json({ error: 'Member not found with this fingerprint' });
+    }
+
+    const member = members[0];
+    const today = new Date().toISOString().split('T')[0];
+
+    // 2. Check Plan Validity
+    const expiryDate = new Date(member.expiry_date);
+    const now = new Date();
+    
+    if (member.status !== 'active' || expiryDate < now) {
+      return res.status(403).json({ 
+        error: 'Membership expired or inactive', 
+        name: member.name,
+        expiry: member.expiry_date 
+      });
+    }
+
+    // 3. Toggle Check-in / Check-out
+    // Check if there's an active check-in for today (where check_out is null)
+    const [existing] = await db.query(
+      "SELECT id FROM attendance WHERE member_id = ? AND check_out IS NULL ORDER BY check_in DESC LIMIT 1",
+      [member.id]
+    );
+
+    if (existing.length > 0) {
+      // Perform Check-out
+      await db.query(
+        "UPDATE attendance SET check_out = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [existing[0].id]
+      );
+      return res.json({ 
+        success: true, 
+        type: 'checkout',
+        message: `Goodbye, ${member.name}! Checked out successfully.`,
+        name: member.name
+      });
+    } else {
+      // Perform Check-in
+      await db.query(
+        "INSERT INTO attendance (member_id, status, `date`, check_in) VALUES (?, 'Present', ?, CURRENT_TIMESTAMP)",
+        [member.id, today]
+      );
+      return res.json({ 
+        success: true, 
+        type: 'checkin',
+        message: `Welcome, ${member.name}! Checked in successfully.`,
+        name: member.name
+      });
+    }
+
+  } catch (err) {
+    console.error('biometricAttendance error:', err);
+    res.status(500).json({ error: 'Server error during biometric attendance' });
+  }
+}
+
 module.exports = {
   getAttendance,
   markAttendance,
   reverseGeocode,
-  checkOut
+  checkOut,
+  biometricAttendance
 };
