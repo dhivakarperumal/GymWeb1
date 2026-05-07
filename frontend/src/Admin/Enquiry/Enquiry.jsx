@@ -13,12 +13,14 @@ const Enquiry = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [showForm, setShowForm] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [viewMode, setViewMode] = useState('table');
+  const [importErrors, setImportErrors] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -198,7 +200,62 @@ const Enquiry = () => {
     }
   };
 
-  /* ---------------- EXCEL IMPORT ---------------- */
+  /* ================= EXPORT TO EXCEL ================= */
+  const exportToExcel = () => {
+    if (enquiries.length === 0) {
+      toast.error("No enquiries to export");
+      return;
+    }
+
+    const dataToExport = enquiries.map((e, index) => ({
+      "S.No": index + 1,
+      Name: e.name || "N/A",
+      Phone: e.phone || "N/A",
+      Email: e.email || "-",
+      Subject: e.subject || "-",
+      Message: e.message || "-",
+      Status: e.status || "pending",
+      "Created At": dayjs(e.created_at).format("YYYY-MM-DD HH:mm"),
+      Gender: e.gender || "-",
+      "Date of Birth": e.dob ? dayjs(e.dob).format("YYYY-MM-DD") : "-",
+      Age: e.age || "-",
+      Height: e.height || "-",
+      Weight: e.weight || "-",
+      BMI: e.bmi || "-",
+      "Fitness Goal": e.fitness_goal || "-",
+      Address: e.address || "-",
+      Employer: e.employer || "-",
+      Occupation: e.occupation || "-",
+      "Emergency Contact": e.emergency_contact_name || "-",
+      "Emergency Phone": e.emergency_contact_phone_home || "-"
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Enquiries");
+    XLSX.writeFile(workbook, "enquiries_directory.xlsx");
+    toast.success("Exported successfully");
+  };
+
+  /* ================= IMPORT FROM EXCEL ================= */
+  const excelDateToJSDate = (value) => {
+    if (!value) return null;
+
+    // If it's a number, it's an Excel serial date
+    if (typeof value === "number") {
+      const date = new Date((value - 25569) * 86400 * 1000);
+      return dayjs(date).format("YYYY-MM-DD");
+    }
+
+    // If it's a string, try to parse it with dayjs
+    const parsed = dayjs(value);
+    if (parsed.isValid()) {
+      return parsed.format("YYYY-MM-DD");
+    }
+
+    return null;
+  };
+
   const handleExcelImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -212,63 +269,86 @@ const Enquiry = () => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        console.log("Excel Data:", jsonData);
 
         let successCount = 0;
         let failCount = 0;
+        const errors = [];
 
         for (const row of jsonData) {
-          const payload = {
-            name: row.Name || row["Customer Name"] || row.name || "",
-            email: row.Email || row.email || "",
-            phone: (row.Phone || row.Mobile || row.phone || "").toString().replace(/\D/g, '').slice(0, 10),
-            subject: row.Subject || "Inquiry",
-            message: row.Message || row.Notes || "",
-            height: row.Height || "",
-            weight: row.Weight || "",
-            bmi: row.BMI || "",
-            dob: row.DOB || row["Date of Birth"] || "",
-            age: row.Age || "",
-            address: row.Address || "",
-            employer: row.Employer || "",
-            occupation: row.Occupation || "",
-            emergency_contact_name: row["Emergency Contact Name"] || "",
-            emergency_contact_relationship: row["Emergency Relationship"] || "",
-            emergency_contact_address: row["Emergency Address"] || "",
-            emergency_contact_phone_home: (row["Emergency Home Phone"] || "").toString().replace(/\D/g, '').slice(0, 10),
-            emergency_contact_phone_work: (row["Emergency Work Phone"] || "").toString().replace(/\D/g, '').slice(0, 10),
-            fitness_goal: row["Fitness Goal"] || "",
-            blood_group: row["Blood Group"] || "",
-            gender: row.Gender || "",
-            status: "pending",
-            termsAccepted: true
-          };
+          // Skip rows that are essentially empty
+          if (!row || Object.keys(row).length === 0) continue;
 
-          if (!payload.name || !payload.phone) {
+          // Broad header mapping
+          const name = (row["Full Name"] || row.Name || row["Customer Name"] || row.name || row["customer name"] || "Unknown").toString().trim();
+          const email = (row["Email Address"] || row.Email || row.email || row["email address"] || "").toString().trim();
+          const rawPhone = row["Phone Number"] || row.Phone || row["Mobile Number"] || row.Mobile || row.phone || row.mobile || row["contact number"] || "";
+          const phone = rawPhone.toString().replace(/\D/g, '').slice(-10); // Take last 10 digits
+
+          if (name === "Unknown" || !phone || phone.length < 10) {
+            errors.push({ 
+              name: name === "Unknown" ? "Row with missing name" : name, 
+              reason: !phone ? "Missing Phone" : phone.length < 10 ? "Invalid Phone" : "Missing Name" 
+            });
             failCount++;
             continue;
           }
 
           // Check for duplicates in existing enquiries list
           const isDuplicate = enquiries.some(e =>
-            (payload.email && e.email?.toLowerCase() === payload.email.toLowerCase()) ||
-            (payload.phone && e.phone === payload.phone)
+            (email && e.email?.toLowerCase() === email.toLowerCase()) ||
+            (phone && e.phone === phone)
           );
 
           if (isDuplicate) {
+            errors.push({ name: name, reason: "Duplicate email or phone" });
             failCount++;
             continue;
           }
+
+          const payload = {
+            name: name,
+            email: email,
+            phone: phone,
+            subject: row.Subject || row.subject || "Inquiry",
+            message: row.Message || row.message || row.Notes || row.notes || "",
+            height: row.Height || row.height || "",
+            weight: row.Weight || row.weight || "",
+            bmi: row.BMI || row.bmi || "",
+            dob: excelDateToJSDate(row.DOB || row["Date of Birth"] || row.dob || row["date of birth"]),
+            age: row.Age || row.age || "",
+            address: row.Address || row.address || "",
+            employer: row.Employer || row.employer || "",
+            occupation: row.Occupation || row.occupation || "",
+            emergency_contact_name: row["Emergency Contact Name"] || row.emergency_contact_name || row["emergency contact"] || "",
+            emergency_contact_relationship: row["Emergency Relationship"] || row.emergency_contact_relationship || "",
+            emergency_contact_address: row["Emergency Address"] || row.emergency_contact_address || "",
+            emergency_contact_phone_home: (row["Emergency Home Phone"] || row.emergency_contact_phone_home || row["emergency phone"] || "").toString().replace(/\D/g, '').slice(-10),
+            emergency_contact_phone_work: (row["Emergency Work Phone"] || row.emergency_contact_phone_work || "").toString().replace(/\D/g, '').slice(-10),
+            fitness_goal: row["Fitness Goal"] || row.fitness_goal || row["fitness goal"] || "",
+            blood_group: row["Blood Group"] || row.blood_group || row["blood group"] || "",
+            gender: row.Gender || row.gender || "",
+            status: "pending",
+            termsAccepted: true
+          };
 
           try {
             await api.post('/enquiries', payload);
             successCount++;
           } catch (err) {
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message;
+            errors.push({ name: name, reason: errorMsg });
             failCount++;
           }
         }
 
-        toast.success(`Successfully imported ${successCount} enquiries!`);
-        if (failCount > 0) toast.error(`${failCount} enquiries failed to import.`);
+        setImportErrors(errors);
+        if (successCount > 0) {
+          toast.success(`Successfully imported ${successCount} enquiries!`);
+        }
+        if (failCount > 0) {
+          toast.error(`Failed to import ${failCount} enquiries. See summary below.`, { duration: 5000 });
+        }
         fetchEnquiries();
       } catch (err) {
         console.error(err);
@@ -317,7 +397,6 @@ const Enquiry = () => {
   };
 
   const handleMoveToMembers = async (enquiry) => {
-    if (!window.confirm('Convert this enquiry into a member?')) return;
     try {
       const memberData = {
         name: enquiry.name,
@@ -349,7 +428,7 @@ const Enquiry = () => {
       };
       // tell admin what the temporary password is
       await api.post('/members', memberData);
-      alert(`Member created successfully. Login using phone number as both identifier and password.`);
+      toast.success(`Member created successfully. Login using phone number as both identifier and password.`);
       await updateStatus(enquiry.id, 'completed');
     } catch (err) {
       console.error('Error moving to members:', err);
@@ -419,6 +498,25 @@ const Enquiry = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
+      {/* IMPORT ERRORS SUMMARY */}
+      {importErrors.length > 0 && (
+        <div className="mx-4 sm:mx-0 mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-red-500 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+              <Trash2 size={16} /> Import Failures ({importErrors.length})
+            </h3>
+            <button onClick={() => setImportErrors([])} className="text-white/40 hover:text-white text-xs">Clear</button>
+          </div>
+          <div className="max-h-32 overflow-y-auto space-y-1 custom-scrollbar">
+            {importErrors.map((err, i) => (
+              <p key={i} className="text-white/60 text-xs flex justify-between gap-4">
+                <span className="font-medium">{err.name}</span>
+                <span className="text-red-400/80 italic">{err.reason}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Header Area */}
       <div className="p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left Side: Search Only */}
@@ -439,20 +537,56 @@ const Enquiry = () => {
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
           <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
-          {/* Status Filter */}
-          <div className="relative group flex-1 sm:flex-none">
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-              className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[140px]"
+          {/* Status Filter (Custom Dropdown to match DateRangeFilter) */}
+          <div className="relative inline-block text-left flex-1 sm:flex-none">
+            <button
+              onClick={() => setIsStatusOpen(!isStatusOpen)}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/20 transition backdrop-blur-md w-full sm:w-auto"
             >
-              <option value="all" className="bg-neutral-900">All Status</option>
-              <option value="pending" className="bg-neutral-900">Pending</option>
-              <option value="completed" className="bg-neutral-900">Completed</option>
-              <option value="cancelled" className="bg-neutral-900">Cancelled</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
+              <Clock className="text-orange-500" size={16} />
+              <span className="text-sm font-medium uppercase tracking-wide">
+                {statusFilter === 'all' ? 'All Status' : statusFilter}
+              </span>
+              <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isStatusOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[90]" 
+                  onClick={() => setIsStatusOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                  {[
+                    { id: 'all', label: 'All Status', icon: <Users size={14} /> },
+                    { id: 'pending', label: 'Pending', icon: <Clock size={14} /> },
+                    { id: 'completed', label: 'Completed', icon: <CheckCircle size={14} /> },
+                    { id: 'cancelled', label: 'Cancelled', icon: <XCircle size={14} /> },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        setStatusFilter(option.id);
+                        setCurrentPage(1);
+                        setIsStatusOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        statusFilter === option.id 
+                          ? 'bg-orange-500 text-white shadow-lg' 
+                          : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <span className={statusFilter === option.id ? 'text-white' : 'text-orange-500'}>
+                        {option.icon}
+                      </span>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
+
 
           <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
             <button
@@ -478,7 +612,11 @@ const Enquiry = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest hidden xl:block">Import</span>
                 <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleExcelImport} />
               </label>
-              <button onClick={downloadExcelTemplate} className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all shadow-lg" title="Download Template">
+              <button
+                onClick={exportToExcel}
+                className="p-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl transition-all shadow-lg"
+                title="Export Excel"
+              >
                 <Download size={16} />
               </button>
             </div>
@@ -581,14 +719,14 @@ const Enquiry = () => {
                       {/* Card Actions */}
                       <div className="flex items-center gap-2 pt-2 border-t border-white/5 mt-auto">
                         <button
-                          onClick={() => handleEdit(enquiry)}
+                          onClick={(e) => { e.stopPropagation(); handleEdit(enquiry); }}
                           className="flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg bg-white/5 border border-white/10 text-white/50 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all"
                         >
                           Edit
                         </button>
                         {enquiry.status === 'pending' && (
                           <button
-                            onClick={() => handleMoveToMembers(enquiry)}
+                            onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
                             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
                             title="Move to Members"
                           >
@@ -596,7 +734,7 @@ const Enquiry = () => {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(enquiry.id)}
+                          onClick={(e) => { e.stopPropagation(); handleDelete(enquiry.id); }}
                           className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
                         >
                           <Trash2 size={12} />
@@ -671,14 +809,14 @@ const Enquiry = () => {
                         <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleEdit(enquiry)}
+                              onClick={(e) => { e.stopPropagation(); handleEdit(enquiry); }}
                               className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
                             >
                               <Eye size={14} />
                             </button>
                             {enquiry.status === 'pending' && (
                               <button
-                                onClick={() => handleMoveToMembers(enquiry)}
+                                onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
                                 className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
                                 title="Move to Members"
                               >
@@ -686,7 +824,7 @@ const Enquiry = () => {
                               </button>
                             )}
                             <button
-                              onClick={() => handleDelete(enquiry.id)}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(enquiry.id); }}
                               className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
                             >
                               <Trash2 size={14} />

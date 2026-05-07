@@ -208,28 +208,28 @@ async function createMember(req, res) {
   try {
     await connection.beginTransaction();
 
-    // Validate required fields
-    if (!name || !phone) {
-      await connection.rollback();
-      return res.status(400).json({ message: "Name and phone are required" });
-    }
+    // Use fallback values if name/phone are missing (allow all imports)
+    const resolvedName = name || "Unknown";
+    const resolvedPhone = phone || "";
 
-    // duplicate phone or email check in gym_members
-    const [existingMember] = await connection.query(
-      "SELECT id FROM gym_members WHERE phone = ? OR (email = ? AND email IS NOT NULL AND email != '')",
-      [phone, email]
-    );
+    // duplicate phone or email check in gym_members (skip if both are empty)
+    if (resolvedPhone || email) {
+      const [existingMember] = await connection.query(
+        "SELECT id FROM gym_members WHERE (phone = ? AND phone != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+        [resolvedPhone, email]
+      );
 
-    if (existingMember.length > 0) {
-      await connection.rollback();
-      return res.status(400).json({ message: "A member with this phone or email already exists" });
+      if (existingMember.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({ message: "A member with this phone or email already exists" });
+      }
     }
 
     // We no longer block creation if a user account already exists.
     // We just check if they exist so we can link/update their user account later.
     const [existingUser] = await connection.query(
-      "SELECT id FROM users WHERE mobile = ? OR (email = ? AND email IS NOT NULL AND email != '')",
-      [phone, email]
+      "SELECT id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+      [resolvedPhone, email]
     );
 
     // Parse numeric fields early so they can be used in insert loop
@@ -261,7 +261,7 @@ async function createMember(req, res) {
        fitness_goal, blood_group, pt_form_completed, fingerprint_id)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           [
-            memberId, name, phone, email, gender, numHeight, numWeight, numBmi,
+            memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
             plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
             dob || null, age || null, employer || null, occupation || null,
             emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
@@ -287,30 +287,32 @@ async function createMember(req, res) {
       throw new Error('Failed to generate unique member_id');
     }
 
-    // create or update user account for member
-    try {
-      const pwd = password || phone || '';
-      const hashed = pwd ? await bcrypt.hash(pwd, 10) : null;
+    // create or update user account for member (only if we have an email or phone)
+    if (email || resolvedPhone) {
+      try {
+        const pwd = password || resolvedPhone || '';
+        const hashed = pwd ? await bcrypt.hash(pwd, 10) : null;
 
-      if (existingUser.length > 0) {
-        // Update existing user login
-        await connection.query(
-          `UPDATE users SET password_hash = ?, username = ? WHERE id = ?`,
-          [hashed, username || null, existingUser[0].id]
-        );
-      } else {
-        await connection.query(
-          `INSERT INTO users (email, password_hash, role, username, mobile)
-             VALUES (?, ?, ?, ?, ?)`,
-          [email || null, hashed, 'user', username || null, phone || null]
-        );
-      }
-    } catch (userErr) {
-      if (userErr.code === 'ER_DUP_ENTRY') {
-        console.warn('createMember: user already exists, skipping user insert');
-      } else {
-        console.error('createMember user insert error', userErr);
-        throw userErr;
+        if (existingUser.length > 0) {
+          // Update existing user login
+          await connection.query(
+            `UPDATE users SET password_hash = ?, username = ? WHERE id = ?`,
+            [hashed, username || null, existingUser[0].id]
+          );
+        } else {
+          await connection.query(
+            `INSERT INTO users (email, password_hash, role, username, mobile)
+               VALUES (?, ?, ?, ?, ?)`,
+            [email || null, hashed, 'user', username || null, resolvedPhone || null]
+          );
+        }
+      } catch (userErr) {
+        if (userErr.code === 'ER_DUP_ENTRY') {
+          console.warn('createMember: user already exists, skipping user insert');
+        } else {
+          console.error('createMember user insert error', userErr);
+          throw userErr;
+        }
       }
     }
 

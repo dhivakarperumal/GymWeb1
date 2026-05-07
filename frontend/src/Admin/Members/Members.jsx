@@ -221,13 +221,7 @@ const Members = () => {
         for (const row of jsonData) {
           const email = row["Email Address"] || row.Email || row.email || "";
           const phone = String(row["Phone Number"] || row.Phone || row.phone || row.Mobile || "");
-          const name = row["Full Name"] || row.Name || row.name || "";
-
-          if (!name || !phone) {
-            errors.push({ name: name || "Unknown", reason: "Missing Name or Phone" });
-            failCount++;
-            continue;
-          }
+          const name = row["Full Name"] || row.Name || row.name || "Unknown";
 
           const username = row.Username || row.username || (email ? email.split('@')[0] : name.replace(/\s+/g, '').toLowerCase());
           const joinDate = excelDateToJSDate(row["Join Date"] || row.joinDate || row["JoinDate"]);
