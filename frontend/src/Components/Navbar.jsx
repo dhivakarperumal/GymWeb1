@@ -196,7 +196,7 @@ const Navbar = () => {
             <Link to="/" className="shrink-0 flex items-center">
               <img
                 src={logo}
-                alt="Power Gym"
+                alt="DAP Fitness Studio Logo"
                 className="h-18 w-auto object-contain"
               />
             </Link>
@@ -519,7 +519,7 @@ const Navbar = () => {
               <Link to="/" className="shrink-0 flex items-center">
                 <img
                   src={logo}
-                  alt="Power Gym"
+                  alt="DAP Fitness Studio Logo"
                   className="h-14 w-auto object-contain"
                 />
               </Link>

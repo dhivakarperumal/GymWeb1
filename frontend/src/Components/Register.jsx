@@ -60,7 +60,7 @@ const Register = () => {
         bg-gradient-to-br from-red-600 to-orange-500 text-white">
 
         <h1 className="text-4xl font-extrabold mb-4">
-          Welcome to Power Gym 💪
+          Welcome to DAP Fitness Studio 💪
         </h1>
 
         <p className="text-lg leading-relaxed text-white/90">
