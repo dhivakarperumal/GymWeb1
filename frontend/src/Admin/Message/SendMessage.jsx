@@ -127,6 +127,8 @@ const SendMessage = () => {
         type: messageType,
         message: message,
         recipients: validUsers.map(u => ({
+          memberId: u.id || u.member_id,
+          userId: u.u_id || u.user_id || u.userId,
           name: (activeTab === "membership" ? (u.username || u.userName) : u.name) || "User",
           email: activeTab === "membership" ? (u.email || u.userEmail) : u.email,
           phone: activeTab === "membership" ? (u.mobile || u.userPhone || u.phone) : (u.phone || u.mobile)

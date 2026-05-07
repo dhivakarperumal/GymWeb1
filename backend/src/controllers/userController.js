@@ -18,7 +18,8 @@ async function getUserById(req, res) {
     const [rows] = await db.query(
       `SELECT u.id, u.username, u.email, u.mobile, u.role, u.status, u.created_at, 
               (u.password_hash IS NOT NULL) AS hasPassword,
-              COALESCE(gm.name, s.name, u.username) as full_name
+              COALESCE(gm.name, s.name, u.username) as full_name,
+              gm.id as member_id
        FROM users u
        LEFT JOIN gym_members gm ON u.mobile = gm.phone OR u.email = gm.email
        LEFT JOIN staff s ON u.mobile = s.phone OR u.email = s.email

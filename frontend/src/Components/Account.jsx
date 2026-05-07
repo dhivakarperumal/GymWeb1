@@ -120,9 +120,21 @@ const Account = () => {
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
                     {userInfo.full_name || userInfo.username || "User Profile"}
                   </h2>
-                  <p className="text-gray-500 text-xs sm:text-sm flex items-center justify-center sm:justify-start gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    Member since {new Date(userInfo.created_at).toLocaleDateString()}
+                  <p className="text-gray-500 text-xs sm:text-sm flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      Member since {new Date(userInfo.created_at).toLocaleDateString()}
+                    </span>
+                    {userInfo.id && (
+                      <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-bold uppercase">
+                        User ID: #{userInfo.id}
+                      </span>
+                    )}
+                    {userInfo.member_id && (
+                      <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/20 rounded-md text-[10px] font-bold uppercase text-red-400">
+                        Member ID: #{userInfo.member_id}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -130,6 +142,8 @@ const Account = () => {
               {/* Information Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {[
+                  { label: "User ID", value: userInfo.id ? `#${userInfo.id}` : null, icon: Shield },
+                  { label: "Member ID", value: userInfo.member_id ? `#${userInfo.member_id}` : "Not a Gym Member", icon: User },
                   { label: "Username", value: userInfo.username, icon: User },
                   { label: "Email Address", value: userInfo.email, icon: Mail },
                   { label: "Phone Number", value: userInfo.mobile, icon: Phone },
@@ -190,7 +204,11 @@ const Account = () => {
         return <Workouts />;
 
       case "notifications":
-        return <UserNotifications userEmail={userInfo.email} />;
+        return <UserNotifications 
+          userEmail={userInfo.email} 
+          userId={userInfo.id} 
+          memberId={userInfo.member_id} 
+        />;
 
       case "security":
         return (

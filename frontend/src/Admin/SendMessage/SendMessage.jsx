@@ -109,7 +109,8 @@ const SendMessage = () => {
 
     setSending(true);
     const recipients = selectedMembers.map((m) => ({
-      id: m.id || m.u_id,
+      memberId: m.id,
+      userId: m.u_id,
       name: m.name || "Member",
       email: m.email || m.user_email,
       phone: m.phone || "",
@@ -372,7 +373,19 @@ const SendMessage = () => {
                 <div key={h.id} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-white">{h.subject}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-white">{h.subject}</p>
+                        {h.memberId && (
+                          <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-lg border border-orange-500/20">
+                            Member #{h.memberId}
+                          </span>
+                        )}
+                        {h.userId && (
+                          <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-lg border border-blue-500/20">
+                            User #{h.userId}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-white/40 mt-0.5">
                         {new Date(h.sent_at).toLocaleString("en-IN", {
                           day: "2-digit", month: "short", year: "numeric",

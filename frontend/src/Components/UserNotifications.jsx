@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../api";
 import { FaBell, FaEnvelopeOpen, FaTimes } from "react-icons/fa";
 
-const UserNotifications = ({ userEmail }) => {
+const UserNotifications = ({ userEmail, userId, memberId }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -17,10 +17,13 @@ const UserNotifications = ({ userEmail }) => {
         const allMessages = Array.isArray(res.data) ? res.data : [];
         setTotalMessages(allMessages.length);
         
-        console.log("DEBUG: Total messages fetched:", allMessages.length);
-        
-        // Filter messages where the user's email is in the recipients list
+        // Filter messages for this specific user
         const userMessages = allMessages.filter((msg) => {
+          // 1. Check direct top-level columns (Efficient for 1-to-1 messages)
+          if (userId && Number(msg.userId) === Number(userId)) return true;
+          if (memberId && Number(msg.memberId) === Number(memberId)) return true;
+
+          // 2. Check within recipients_json (For bulk or legacy messages)
           try {
             let recipients = msg.recipients_json;
             if (typeof recipients === 'string') {
@@ -29,18 +32,17 @@ const UserNotifications = ({ userEmail }) => {
             
             if (!Array.isArray(recipients)) return false;
 
-            // Log first recipient for debug
-            if (recipients.length > 0) {
-              console.log("Checking msg", msg.id, "recipients:", recipients[0].email);
-            }
-
             return recipients.some(r => {
+              // Check by ID inside JSON
+              if (userId && Number(r.userId || r.u_id) === Number(userId)) return true;
+              if (memberId && Number(r.memberId || r.id) === Number(memberId)) return true;
+
+              // Fallback to Email
               const rEmail = String(r.email || "").toLowerCase().trim();
               const uEmail = String(userEmail || "").toLowerCase().trim();
               return rEmail === uEmail && uEmail !== "";
             });
           } catch (e) {
-            console.error("Filter error:", e);
             return false;
           }
         });
@@ -54,10 +56,10 @@ const UserNotifications = ({ userEmail }) => {
       }
     };
 
-    if (userEmail) {
+    if (userEmail || userId || memberId) {
       fetchMessages();
     }
-  }, [userEmail]);
+  }, [userEmail, userId, memberId]);
 
   if (loading) {
     return <div className="text-gray-400">Loading notifications...</div>;
@@ -104,9 +106,16 @@ const UserNotifications = ({ userEmail }) => {
                 <h3 className="font-bold text-white group-hover:text-red-400 transition-colors">
                   {msg.subject}
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Sent on: {new Date(msg.sent_at).toLocaleDateString()} at {new Date(msg.sent_at).toLocaleTimeString()}
-                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-xs text-gray-500">
+                    {new Date(msg.sent_at).toLocaleDateString()} at {new Date(msg.sent_at).toLocaleTimeString()}
+                  </p>
+                  {msg.memberId && (
+                    <span className="text-[9px] bg-orange-500/10 text-orange-400 border border-orange-500/20 px-1.5 py-0.5 rounded uppercase font-bold">
+                      Member #{msg.memberId}
+                    </span>
+                  )}
+                </div>
                 <p className="text-gray-400 text-sm mt-2 line-clamp-1">
                   {msg.message}
                 </p>
@@ -142,9 +151,25 @@ const UserNotifications = ({ userEmail }) => {
 
             {/* Modal Body */}
             <div className="p-8">
-              <div className="mb-6">
-                <label className="text-[10px] uppercase tracking-widest text-red-500 font-bold">Subject</label>
-                <h2 className="text-2xl font-bold text-white mt-1">{selectedMessage.subject}</h2>
+              <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="text-[10px] uppercase tracking-widest text-red-500 font-bold">Subject</label>
+                  <h2 className="text-2xl font-bold text-white mt-1">{selectedMessage.subject}</h2>
+                </div>
+                <div className="flex gap-2 items-start mt-1">
+                  {selectedMessage.memberId && (
+                    <div className="bg-orange-500/10 border border-orange-500/20 rounded px-2 py-1">
+                       <p className="text-[8px] text-orange-500 uppercase font-bold leading-none">Member ID</p>
+                       <p className="text-xs text-white font-bold">#{selectedMessage.memberId}</p>
+                    </div>
+                  )}
+                  {selectedMessage.userId && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded px-2 py-1">
+                       <p className="text-[8px] text-blue-500 uppercase font-bold leading-none">User ID</p>
+                       <p className="text-xs text-white font-bold">#{selectedMessage.userId}</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="mb-6">

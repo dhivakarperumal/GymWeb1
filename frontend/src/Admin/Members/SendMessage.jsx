@@ -92,6 +92,8 @@ const SendMessage = () => {
         type: messageType,
         message: message,
         recipients: validUsers.map(m => ({
+          memberId: m.id,
+          userId: m.u_id,
           name: m.name,
           email: messageType === "email" ? (m.email || m.user_email) : null,
           phone: m.phone

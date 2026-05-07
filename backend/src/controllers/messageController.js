@@ -17,20 +17,28 @@ async function sendMessages(req, res) {
 
     // Prepare recipients for storage
     const recipientsToStore = recipients.map(r => ({ 
-      id: r.id, 
+      memberId: r.memberId || r.id, // Support both formats
+      userId: r.userId || r.u_id,
       name: r.name, 
       email: r.email, 
       phone: r.phone 
     }));
 
+    // Determine if we should store individual IDs (if only 1 recipient)
+    const singleRecipient = recipients.length === 1 ? recipients[0] : null;
+    const userId = singleRecipient ? (singleRecipient.userId || singleRecipient.u_id) : null;
+    const memberId = singleRecipient ? (singleRecipient.memberId || singleRecipient.id) : null;
+
     // Insert into message_history
     const [insertRes] = await db.query(
-      "INSERT INTO message_history (subject, message, sent_to, failed, recipients_json) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO message_history (subject, message, sent_to, failed, userId, memberId, recipients_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         subject || 'Message from Gym', 
         message, 
         recipients.length, 
         0, 
+        userId,
+        memberId,
         JSON.stringify(recipientsToStore)
       ]
     );
@@ -65,7 +73,7 @@ async function getMessageHistory(req, res) {
 
 async function sendSingleMessage(req, res) {
   try {
-    const { userId, phone, message, type } = req.body;
+    const { userId, memberId, phone, message, type } = req.body;
 
     if (!phone || !message) {
       return res.status(400).json({ success: false, error: 'Phone and message are required' });
@@ -73,14 +81,14 @@ async function sendSingleMessage(req, res) {
 
     // SIMULATE SENDING WHATSAPP/SMS MESSAGE HERE
     // For now, we will assume it succeeds immediately.
-    // In a real scenario, you'd call Twilio, WhatsApp Business API, or MSG91 here.
     const isSuccess = true; 
     const status = isSuccess ? 'sent' : 'failed';
 
     // Store the result in the messages collection
+    // Added memberId and ensuring userId is also stored
     const [result] = await db.query(
-      `INSERT INTO messages (userId, phone, message, type, status) VALUES (?, ?, ?, ?, ?)`,
-      [userId || null, phone, message, type || 'general', status]
+      `INSERT INTO messages (userId, memberId, phone, message, type, status) VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId || null, memberId || null, phone, message, type || 'general', status]
     );
 
     res.status(200).json({ 
