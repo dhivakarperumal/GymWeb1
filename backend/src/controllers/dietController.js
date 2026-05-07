@@ -22,23 +22,19 @@ async function getAllDiets(req, res) {
     let sql = 'SELECT DISTINCT dp.* FROM diet_plans dp';
     const params = [];
     const conditions = [];
-    let join = '';
 
     if (req.query.trainerId) {
       const trainerId = req.query.trainerId;
       const resolvedStaffId = await resolveTrainerStaffId(trainerId);
 
       if (resolvedStaffId) {
-        join = ' LEFT JOIN trainer_assignments ta ON ta.user_id = dp.member_id AND ta.trainer_id = ?';
+        conditions.push('dp.member_id IN (SELECT ta.user_id FROM trainer_assignments ta WHERE ta.trainer_id = ?)');
         params.push(resolvedStaffId);
+      } else {
+        // Fallback: if can't resolve staff id, just show plans created by this trainer
+        conditions.push('dp.trainer_id = ?');
+        params.push(trainerId);
       }
-
-      const trainerConditionParts = ['dp.trainer_id = ?'];
-      params.push(trainerId);
-      if (resolvedStaffId) {
-        trainerConditionParts.push('ta.user_id IS NOT NULL');
-      }
-      conditions.push(`(${trainerConditionParts.join(' OR ')})`);
     }
 
     if (req.query.memberId) {
@@ -46,7 +42,6 @@ async function getAllDiets(req, res) {
       params.push(req.query.memberId);
     }
 
-    sql += join;
     if (conditions.length > 0) {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
