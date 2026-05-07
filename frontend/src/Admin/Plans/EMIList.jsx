@@ -607,7 +607,7 @@ const EMIList = () => {
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto
+              className="w-full max-w-5xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden
         rounded-3xl border border-white/20
         bg-slate-950/95
         shadow-[0_30px_80px_rgba(0,0,0,0.6)] p-8"
@@ -734,43 +734,53 @@ const EMIList = () => {
                 </div>
               </div>
 
-              {/* Amount Input */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">
-                  Payment Amount for Remaining Balance
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-3 text-white font-semibold text-lg">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    value={updateAmount}
-                    onChange={(e) => setUpdateAmount(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-white/5 border border-white/20 focus:ring-2 focus:ring-orange-500 outline-none text-white placeholder-gray-600 hover:border-orange-500/50 transition-all"
-                    placeholder="Enter payment amount"
-                  />
+              {/* Payment Inputs Row */}
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                {/* Amount Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Payment Amount
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 text-white font-semibold text-lg">
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      value={updateAmount}
+                      onChange={(e) => setUpdateAmount(e.target.value)}
+                      className="w-full pl-8 pr-4 py-3 rounded-xl bg-white/5 border border-white/20 focus:ring-2 focus:ring-orange-500 outline-none text-white placeholder-gray-600 hover:border-orange-500/50 transition-all"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/50 mt-2">
+                    Matches remaining balance
+                  </p>
                 </div>
-                <p className="text-xs text-white/50 mt-2">
-                  Should match the remaining balance amount
-                </p>
-              </div>
 
-              {/* Reference Input */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-white mb-3">
-                  Payment Reference (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={paymentReference}
-                  onChange={(e) => setPaymentReference(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-white/5 border border-white/20 focus:ring-2 focus:ring-orange-500 outline-none text-white placeholder-gray-600 hover:border-orange-500/50 transition-all"
-                  placeholder="e.g., UPI Transaction ID, Cheque No."
-                />
-                <p className="text-xs text-white/50 mt-2">
-                  For tracking and records
-                </p>
+                {/* Mode Select */}
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Payment Mode
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={paymentReference}
+                      onChange={(e) => setPaymentReference(e.target.value)}
+                      className="w-full p-3 rounded-xl bg-white/5 border border-white/20 focus:ring-2 focus:ring-orange-500 outline-none text-white appearance-none cursor-pointer hover:border-orange-500/50 transition-all [&>option]:bg-slate-900"
+                    >
+                      <option value="">Select Mode</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Card">Card</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="Cheque">Cheque</option>
+                    </select>
+                  </div>
+                  <p className="text-[10px] text-white/50 mt-2">
+                    Method used for payment
+                  </p>
+                </div>
               </div>
 
               {/* Actions */}
@@ -806,7 +816,7 @@ const EMIList = () => {
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="w-full max-w-4xl max-h-[90vh] overflow-y-auto
+              className="w-full max-w-5xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden
         rounded-3xl border border-white/20
         bg-slate-950/95
         shadow-[0_30px_80px_rgba(0,0,0,0.6)] p-8"
