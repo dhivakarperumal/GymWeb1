@@ -23,4 +23,7 @@ router.post('/:id/convert', enquiryController.convertToUser);
 // DELETE /api/enquiries/:id - Delete enquiry
 router.delete('/:id', enquiryController.deleteEnquiry);
 
-module.exports = router;
+// DELETE /api/enquiries - Delete all enquiries
+router.delete('/', enquiryController.deleteAllEnquiries);
+
+module.exports = router;

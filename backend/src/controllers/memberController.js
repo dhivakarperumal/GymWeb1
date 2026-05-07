@@ -212,16 +212,16 @@ async function createMember(req, res) {
     const resolvedName = name || "Unknown";
     const resolvedPhone = phone || "";
 
-    // duplicate phone or email check in gym_members (skip if both are empty)
+    // duplicate phone or email check in gym_members
     if (resolvedPhone || email) {
       const [existingMember] = await connection.query(
-        "SELECT id FROM gym_members WHERE (phone = ? AND phone != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+        "SELECT id FROM gym_members WHERE (phone != '' AND phone = ?) OR (email IS NOT NULL AND email != '' AND email = ?)",
         [resolvedPhone, email]
       );
 
       if (existingMember.length > 0) {
         await connection.rollback();
-        return res.status(400).json({ message: "A member with this phone or email already exists" });
+        return res.status(400).json({ message: "A member with this phone or email already exists in members directory" });
       }
     }
 
@@ -290,8 +290,8 @@ async function createMember(req, res) {
     // create or update user account for member (only if we have an email or phone)
     if (email || resolvedPhone) {
       try {
-        const pwd = password || resolvedPhone || '';
-        const hashed = pwd ? await bcrypt.hash(pwd, 10) : null;
+        const pwd = password || resolvedPhone || 'Gym123'; // Fallback password to prevent NOT NULL error
+        const hashed = await bcrypt.hash(pwd, 10);
 
         if (existingUser.length > 0) {
           // Update existing user login
@@ -308,7 +308,9 @@ async function createMember(req, res) {
         }
       } catch (userErr) {
         if (userErr.code === 'ER_DUP_ENTRY') {
-          console.warn('createMember: user already exists, skipping user insert');
+          // If we hit a duplicate email/mobile in users that wasn't caught by existingUser query
+          // (e.g. concurrent insert), just warn and skip
+          console.warn('createMember: user already exists (duplicate entry), skipping user insert');
         } else {
           console.error('createMember user insert error', userErr);
           throw userErr;
@@ -641,4 +643,30 @@ async function getMemberPlans(req, res) {
   }
 }
 
-module.exports = { getAllMembers, getMemberById, getMemberByUserId, createMember, updateMember, deleteMember, getMemberPlans };
+async function deleteAllMembers(req, res) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.query('DELETE FROM gym_members');
+    await connection.query("DELETE FROM users WHERE role = 'user'");
+    await connection.commit();
+    res.json({ message: 'All members and user accounts deleted successfully' });
+  } catch (err) {
+    await connection.rollback();
+    console.error('deleteAllMembers error', err);
+    res.status(500).json({ error: 'Failed to delete all members' });
+  } finally {
+    connection.release();
+  }
+}
+
+module.exports = { 
+  getAllMembers, 
+  getMemberById, 
+  getMemberByUserId, 
+  createMember, 
+  updateMember, 
+  deleteMember, 
+  getMemberPlans,
+  deleteAllMembers
+};

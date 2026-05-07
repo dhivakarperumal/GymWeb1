@@ -309,6 +309,20 @@ const enquiryController = {
             console.error('Error converting enquiry to user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
+    },
+
+    // Delete all enquiries
+    deleteAllEnquiries: async (req, res) => {
+        try {
+            const [result] = await pool.query('DELETE FROM enquiries');
+            res.json({ 
+                message: 'All enquiries deleted successfully',
+                affectedRows: result.affectedRows 
+            });
+        } catch (error) {
+            console.error('Error deleting all enquiries:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 };
 

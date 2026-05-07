@@ -143,6 +143,20 @@ const followupMasterController = {
             console.error('Error deleting followup:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
+    },
+
+    // Delete all followups
+    deleteAllFollowups: async (req, res) => {
+        try {
+            const [result] = await pool.query('DELETE FROM followups');
+            res.json({ 
+                message: 'All followups deleted successfully',
+                affectedRows: result.affectedRows 
+            });
+        } catch (error) {
+            console.error('Error deleting all followups:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 };
 

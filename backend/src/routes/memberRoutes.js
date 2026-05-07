@@ -7,6 +7,7 @@ const {
   updateMember,
   deleteMember,
   getMemberPlans,
+  deleteAllMembers,
 } = require("../controllers/memberController.js");
 
 const router = express.Router();
@@ -52,5 +53,11 @@ router.get("/:id/plans", getMemberPlans);
  * @desc    Delete member
  */
 router.delete("/:id", deleteMember);
+
+/**
+ * @route   DELETE /api/members
+ * @desc    Delete all members
+ */
+router.delete("/", deleteAllMembers);
 
 module.exports = router;

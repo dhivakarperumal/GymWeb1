@@ -9,6 +9,7 @@ router.get('/:id', followupMasterController.getFollowupById);
 router.post('/', followupMasterController.createFollowup);
 router.put('/:id', followupMasterController.updateFollowup);
 router.delete('/:id', followupMasterController.deleteFollowup);
+router.delete('/', followupMasterController.deleteAllFollowups);
 
 // Followup Interaction Routes
 router.get('/:followupId/interactions', followupInteractionController.getInteractionsByFollowupId);
