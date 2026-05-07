@@ -393,15 +393,7 @@ const Members = () => {
             PT Form
           </button>
 
-          <button
-            onClick={() => navigate("/admin/addmembers")}
-            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
-            bg-gradient-to-r from-orange-500 to-orange-600
-            hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
-          >
-            <Plus size={16} />
-            Add Member
-          </button>
+          
 
           <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
@@ -424,6 +416,16 @@ const Members = () => {
               <List size={20} />
             </button>
           </div>
+
+          <button
+            onClick={() => navigate("/admin/addmembers")}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white
+            bg-gradient-to-r from-orange-500 to-orange-600
+            hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
+          >
+            <Plus size={16} />
+            Add Member
+          </button>
         </div>
       </div>
 
