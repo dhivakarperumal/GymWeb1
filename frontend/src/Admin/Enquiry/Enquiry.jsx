@@ -480,6 +480,37 @@ const Enquiry = () => {
     }
   };
 
+  // Helper function to get paginated page numbers with ellipsis
+  const getPaginationPages = () => {
+    const pages = [];
+    const showPages = 5; // Show 5 pages around current page
+    const leftSide = Math.max(1, currentPage - 2);
+    const rightSide = Math.min(totalPages, currentPage + 2);
+
+    // Always show first page
+    if (leftSide > 1) {
+      pages.push(1);
+      if (leftSide > 2) {
+        pages.push('...');
+      }
+    }
+
+    // Show pages around current page
+    for (let i = leftSide; i <= rightSide; i++) {
+      pages.push(i);
+    }
+
+    // Always show last page
+    if (rightSide < totalPages) {
+      if (rightSide < totalPages - 1) {
+        pages.push('...');
+      }
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -858,17 +889,23 @@ const Enquiry = () => {
               </button>
 
               <div className="flex items-center gap-1">
-                {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`w-8 h-8 rounded-lg border transition-all text-[10px] font-black ${currentPage === i + 1
-                        ? "bg-orange-500 border-orange-500 text-white"
-                        : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white"
-                      }`}
-                  >
-                    {i + 1}
-                  </button>
+                {getPaginationPages().map((page, i) => (
+                  page === '...' ? (
+                    <span key={`ellipsis-${i}`} className="w-8 h-8 flex items-center justify-center text-white/40 text-[10px] font-black">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg border transition-all text-[10px] font-black ${currentPage === page
+                          ? "bg-orange-500 border-orange-500 text-white"
+                          : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white"
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  )
                 ))}
               </div>
 
