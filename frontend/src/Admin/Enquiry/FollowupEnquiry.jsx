@@ -42,9 +42,12 @@ const FollowupEnquiry = () => {
 
   // Status filter
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [staffFilter, setStaffFilter] = useState('all');
+  const [isStaffOpen, setIsStaffOpen] = useState(false);
   const [assignedTrainerFilter, setAssignedTrainerFilter] = useState('all');
   const [trainers, setTrainers] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
 
   // Form Data
   const [formData, setFormData] = useState({
@@ -142,10 +145,10 @@ const FollowupEnquiry = () => {
         await api.delete(`/enquiries/${targetId}`);
         fetchEnquiries();
         if (showForm) setShowForm(false);
-        alert("Record deleted successfully!");
+        toast.success("Record deleted successfully!");
       } catch (err) {
         console.error("Error deleting enquiry", err);
-        alert("Failed to delete record");
+        toast.error("Failed to delete record");
       }
     }
   };
@@ -210,9 +213,9 @@ const FollowupEnquiry = () => {
       });
       fetchFollowups(selectedEnquiry.id);
       fetchEnquiries();
-      alert("Activity logged!");
+      toast.success("Activity logged!");
     } catch (err) {
-      alert("Error logging activity");
+      toast.error("Error logging activity");
     }
   };
 
@@ -230,6 +233,18 @@ const FollowupEnquiry = () => {
       trainer_id: (role !== 'admin' && currentStaff) ? currentStaff.id : "",
       trainer_name: (role !== 'admin' && currentStaff) ? (currentStaff.name || currentStaff.username) : ""
     });
+    setImportErrors([]);
+  };
+
+  const excelDateToJSDate = (serial) => {
+    if (!serial) return "";
+    if (typeof serial === 'string' && serial.includes('-')) return serial;
+    try {
+      const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+      return date.toISOString().split('T')[0];
+    } catch (e) {
+      return serial;
+    }
   };
 
   /* ---------------- EXCEL IMPORT ---------------- */
@@ -246,41 +261,70 @@ const FollowupEnquiry = () => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        console.log("Excel Data:", jsonData);
 
         let successCount = 0;
         let failCount = 0;
+        const errors = [];
 
         for (const row of jsonData) {
-          const payload = {
-            name: row.Name || row["Lead Name"] || row.name || "",
-            email: row.Email || row.email || "",
-            phone: (row.Phone || row.Mobile || row.phone || "").toString().replace(/\D/g, '').slice(0, 10),
-            subject: row.Subject || "General Inquiry",
-            message: row.Message || row.Notes || "",
-            gender: row.Gender || "",
-            dob: row.DOB || row["Date of Birth"] || "",
-            organization: row.Organization || row.Company || "",
-            status: (row.Status || "pending").toLowerCase(),
-            plan_name: row.Plan || row["Plan Name"] || "",
-            referred_by: row["Referred By"] || row.Referral || "",
-            updated_by: user?.username || "Admin"
-          };
+          if (!row || Object.keys(row).length === 0) continue;
 
-          if (!payload.name || !payload.phone) {
+          // Broad mapping
+          const name = (row["Lead Name"] || row["Full Name"] || row.Name || row["Customer Name"] || row.name || "Unknown").toString().trim();
+          const email = (row["Email Address"] || row.Email || row.email || "").toString().trim();
+          const rawPhone = row.Phone || row.Mobile || row["Phone Number"] || row["Mobile Number"] || row.phone || row.mobile || "";
+          const phone = rawPhone.toString().replace(/\D/g, '').slice(-10);
+
+          if (name === "Unknown" || !phone || phone.length < 10) {
+            errors.push({ 
+              name: name === "Unknown" ? "Row with missing name" : name, 
+              reason: !phone ? "Missing Phone" : phone.length < 10 ? "Invalid Phone" : "Missing Name" 
+            });
             failCount++;
             continue;
           }
+
+          // Check for duplicates
+          const isDuplicate = enquiries.some(e =>
+            (email && e.email?.toLowerCase() === email.toLowerCase()) ||
+            (phone && e.phone === phone)
+          );
+
+          if (isDuplicate) {
+            errors.push({ name: name, reason: "Duplicate lead" });
+            failCount++;
+            continue;
+          }
+
+          const payload = {
+            name: name,
+            email: email,
+            phone: phone,
+            subject: row.Subject || row.subject || "General Inquiry",
+            message: row.Message || row.message || row.Notes || row.notes || "",
+            gender: row.Gender || row.gender || "",
+            dob: excelDateToJSDate(row.DOB || row["Date of Birth"] || row.dob),
+            organization: row.Organization || row.Company || row.employer || row.Employer || "",
+            status: (row.Status || row.status || "pending").toLowerCase(),
+            plan_name: row.Plan || row["Plan Name"] || row.plan || "",
+            referred_by: row["Referred By"] || row.Referral || row.referral || "",
+            updated_by: user?.username || "Admin"
+          };
 
           try {
             await api.post("/followups", payload);
             successCount++;
           } catch (err) {
+            const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message;
+            errors.push({ name: name, reason: errorMsg });
             failCount++;
           }
         }
 
-        toast.success(`Successfully imported ${successCount} leads!`);
-        if (failCount > 0) toast.error(`${failCount} leads failed to import.`);
+        setImportErrors(errors);
+        if (successCount > 0) toast.success(`Successfully imported ${successCount} leads!`);
+        if (failCount > 0) toast.error(`Failed to import ${failCount} leads. See summary below.`);
         fetchEnquiries();
       } catch (err) {
         console.error(err);
@@ -290,6 +334,28 @@ const FollowupEnquiry = () => {
       }
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  const exportToExcel = () => {
+    const dataToExport = filteredEnquiries.map((e, index) => ({
+      "S.No": index + 1,
+      "Lead Name": e.name,
+      "Phone": e.phone,
+      "Email": e.email,
+      "Organization": e.organization || e.employer || "Direct",
+      "Plan": e.plan_name || "N/A",
+      "Status": e.status,
+      "Created Date": dayjs(e.created_at).format('YYYY-MM-DD'),
+      "Last Followup": e.last_interaction_date ? dayjs(e.last_interaction_date).format('YYYY-MM-DD HH:mm') : "None",
+      "Assigned Trainer": e.trainer_name || "Unassigned",
+      "Updated By": e.updated_by || "Admin"
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Followup_Enquiries");
+    XLSX.writeFile(wb, `Followup_Enquiries_${dayjs().format('YYYY-MM-DD')}.xlsx`);
+    toast.success("Data Exported Successfully!");
   };
 
   const downloadExcelTemplate = () => {
@@ -376,6 +442,25 @@ const FollowupEnquiry = () => {
     <>
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-h-0">
+        {/* IMPORT ERRORS SUMMARY */}
+        {importErrors.length > 0 && (
+          <div className="mx-4 sm:mx-0 mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-red-500 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                <Trash2 size={16} /> Import Failures ({importErrors.length})
+              </h3>
+              <button onClick={() => setImportErrors([])} className="text-white/40 hover:text-white text-xs">Clear</button>
+            </div>
+            <div className="max-h-32 overflow-y-auto space-y-1 custom-scrollbar">
+              {importErrors.map((err, i) => (
+                <p key={i} className="text-white/60 text-xs flex justify-between gap-4">
+                  <span className="font-medium">{err.name}</span>
+                  <span className="text-red-400/80 italic">{err.reason}</span>
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Header Area */}
         <div className="p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -397,38 +482,98 @@ const FollowupEnquiry = () => {
 
           <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 w-full lg:w-auto">
             {/* Status Filter */}
-            <div className="relative group flex-1 sm:flex-none">
-              <select
-                value={statusFilter}
-                onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[120px]"
+            <div className="relative inline-block text-left flex-1 sm:flex-none">
+              <button
+                onClick={() => setIsStatusOpen(!isStatusOpen)}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/20 transition backdrop-blur-md w-full sm:w-auto"
               >
-                <option value="all" className="bg-neutral-900">All Status</option>
-                <option value="pending" className="bg-neutral-900">Pending</option>
-                <option value="followup" className="bg-neutral-900">Followup</option>
-                <option value="completed" className="bg-neutral-900">Completed</option>
-                <option value="cancelled" className="bg-neutral-900">Cancelled</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
+                <Clock className="text-orange-500" size={16} />
+                <span className="text-sm font-medium uppercase tracking-wide">
+                  {statusFilter === 'all' ? 'All Status' : statusFilter}
+                </span>
+                <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isStatusOpen && (
+                <>
+                  <div className="fixed inset-0 z-[90]" onClick={() => setIsStatusOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                    {[
+                      { id: 'all', label: 'All Status', icon: <Users size={14} /> },
+                      { id: 'pending', label: 'Pending', icon: <Clock size={14} /> },
+                      { id: 'followup', label: 'Followup', icon: <RefreshCcw size={14} /> },
+                      { id: 'completed', label: 'Completed', icon: <CheckCircle size={14} /> },
+                      { id: 'cancelled', label: 'Cancelled', icon: <XCircle size={14} /> },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => {
+                          setStatusFilter(option.id);
+                          setCurrentPage(1);
+                          setIsStatusOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                          statusFilter === option.id 
+                            ? 'bg-orange-500 text-white shadow-lg' 
+                            : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <span className={statusFilter === option.id ? 'text-white' : 'text-orange-500'}>
+                          {option.icon}
+                        </span>
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Staff Filter (Updated By) */}
             {role === 'admin' && (
-              <div className="relative group flex-1 sm:flex-none">
-                <select
-                  value={staffFilter}
-                  onChange={(e) => { setStaffFilter(e.target.value); setCurrentPage(1); }}
-                  className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-xs focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5 w-full sm:min-w-[120px]"
+              <div className="relative inline-block text-left flex-1 sm:flex-none">
+                <button
+                  onClick={() => setIsStaffOpen(!isStaffOpen)}
+                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/20 transition backdrop-blur-md w-full sm:w-auto"
                 >
-                  <option value="all" className="bg-neutral-900">All Staff</option>
-                  <option value="Admin" className="bg-neutral-900">Admin</option>
-                  {trainers.map(s => (
-                    <option key={s.id} value={s.username || s.name} className="bg-neutral-900">
-                      {s.name || s.username}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
+                  <User className="text-orange-500" size={16} />
+                  <span className="text-sm font-medium uppercase tracking-wide truncate max-w-[100px]">
+                    {staffFilter === 'all' ? 'All Staff' : staffFilter}
+                  </span>
+                  <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isStaffOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isStaffOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[90]" onClick={() => setIsStaffOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                      {[
+                        { id: 'all', label: 'All Staff', icon: <Users size={14} /> },
+                        { id: 'Admin', label: 'Admin', icon: <User size={14} /> },
+                        ...trainers.map(s => ({ id: s.username || s.name, label: s.name || s.username, icon: <User size={14} /> }))
+                      ].map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            setStaffFilter(option.id);
+                            setCurrentPage(1);
+                            setIsStaffOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                            staffFilter === option.id 
+                              ? 'bg-orange-500 text-white shadow-lg' 
+                              : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          <span className={staffFilter === option.id ? 'text-white' : 'text-orange-500'}>
+                            {option.icon}
+                          </span>
+                          <span className="truncate">{option.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -462,7 +607,11 @@ const FollowupEnquiry = () => {
                   <span className="text-[10px] font-black uppercase tracking-widest hidden xl:block">Import</span>
                   <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleExcelImport} />
                 </label>
-                <button onClick={downloadExcelTemplate} className="p-2.5 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-xl transition-all" title="Download Template">
+                <button
+                  onClick={exportToExcel}
+                  className="p-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl transition-all shadow-lg"
+                  title="Export Excel"
+                >
                   <Download size={16} />
                 </button>
               </div>
@@ -583,16 +732,15 @@ const FollowupEnquiry = () => {
                           </span>
                         </div>
 
-                        {/* Card Actions */}
                         <div className="flex items-center gap-2 pt-2 border-t border-white/5">
                           <button
-                            onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
+                            onClick={(e) => { e.stopPropagation(); setSelectedEnquiry(enquiry); setShowForm(true); }}
                             className="flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg bg-white/5 border border-white/10 text-white/50 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteEnquiry(enquiry.id)}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteEnquiry(enquiry.id); }}
                             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
                           >
                             <Trash2 size={12} />
@@ -694,27 +842,27 @@ const FollowupEnquiry = () => {
                           </td>
                           <td className="px-4 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
-                                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
-                                title="View"
-                              >
-                                <Eye size={14} />
-                              </button>
-                              <button
-                                onClick={() => { setSelectedEnquiry(enquiry); setShowForm(true); }}
-                                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
-                                title="Edit"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteEnquiry(enquiry.id)}
-                                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
-                                title="Delete"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setSelectedEnquiry(enquiry); setShowForm(true); }}
+                                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-blue-400 hover:border-blue-400/50 transition-all"
+                                  title="View"
+                                >
+                                  <Eye size={14} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setSelectedEnquiry(enquiry); setShowForm(true); }}
+                                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
+                                  title="Edit"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteEnquiry(enquiry.id); }}
+                                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
                             </div>
                           </td>
                         </tr>
