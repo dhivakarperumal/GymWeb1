@@ -47,11 +47,15 @@ async function getAllMembers(req, res) {
       FROM gym_members gm
       LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
                         OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      LEFT JOIN memberships m_pay ON m_pay.id = (
-        SELECT MAX(id)
-        FROM memberships
-        WHERE userId = u.id
-      )
+      LEFT JOIN (
+        SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid
+        FROM memberships m
+        JOIN (
+          SELECT userId, MAX(id) AS max_id
+          FROM memberships
+          GROUP BY userId
+        ) mm ON m.userId = mm.userId AND m.id = mm.max_id
+      ) m_pay ON m_pay.userId = u.id
       
       UNION ALL
       
@@ -101,7 +105,60 @@ async function getAllMembers(req, res) {
       
       ORDER BY created_at DESC
     `;
-    const [rows] = await db.query(sql);
+    let rows;
+    try {
+      [rows] = await db.query(sql);
+      res.json(rows);
+      return;
+    } catch (err) {
+      console.warn('getAllMembers primary query failed, falling back to gym-members only query', err.message || err);
+    }
+
+    // Fallback to simpler gym-members only query
+    const fallbackSql = `
+      SELECT 
+        gm.id,
+        gm.member_id,
+        COALESCE(gm.fingerprint_id, NULL) AS fingerprint_id,
+        gm.name,
+        gm.phone,
+        gm.email,
+        gm.gender,
+        gm.height,
+        gm.weight,
+        gm.bmi,
+        gm.plan,
+        gm.status,
+        gm.address,
+        COALESCE(gm.dob, NULL) AS dob,
+        COALESCE(gm.age, NULL) AS age,
+        COALESCE(gm.employer, NULL) AS employer,
+        COALESCE(gm.occupation, NULL) AS occupation,
+        COALESCE(gm.emergency_contact_name, NULL) AS emergency_contact_name,
+        COALESCE(gm.emergency_contact_relationship, NULL) AS emergency_contact_relationship,
+        COALESCE(gm.emergency_contact_address, NULL) AS emergency_contact_address,
+        COALESCE(gm.emergency_contact_phone_home, NULL) AS emergency_contact_phone_home,
+        COALESCE(gm.emergency_contact_phone_work, NULL) AS emergency_contact_phone_work,
+        COALESCE(gm.fitness_goal, NULL) AS fitness_goal,
+        COALESCE(gm.blood_group, NULL) AS blood_group,
+        COALESCE(gm.pt_form_completed, 0) AS pt_form_completed,
+        u.id AS u_id,
+        u.email AS user_email,
+        u.role,
+        (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
+        (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
+        gm.created_at,
+        NULL AS paymentMode,
+        NULL AS price,
+        NULL AS pricePaid,
+        NULL AS secondPaymentPaid,
+        'members' AS source
+      FROM gym_members gm
+      LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '')
+                        OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+      ORDER BY gm.created_at DESC
+    `;
+    [rows] = await db.query(fallbackSql);
     res.json(rows);
   } catch (err) {
     console.error('getAllMembers error', err);
