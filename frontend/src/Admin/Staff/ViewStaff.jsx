@@ -111,7 +111,6 @@ const ViewStaff = () => {
               </InfoSection>
 
               <InfoSection title="Experience">
-                <DataRow label="DEPARTMENT" value={staff.department} />
                 <DataRow label="EXPERIENCE" value={staff.experience} />
                 <DataRow label="QUALIFICATION" value={staff.qualification} />
                 <DataRow label="JOINED" value={staff.joining_date} />

@@ -26,7 +26,6 @@ const Staffs = () => {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -51,7 +50,7 @@ const Staffs = () => {
         email: r.email,
         phone: r.phone,
         role: r.role,
-        department: r.department,
+        role: r.role,
         timeIn: r.time_in,
         timeOut: r.time_out,
         status: r.status,
@@ -75,10 +74,7 @@ const Staffs = () => {
     const matchesStatus =
       statusFilter === "all" || s.status === statusFilter;
 
-    const matchesDepartment =
-      departmentFilter === "all" || s.department === departmentFilter;
-
-    return matchesSearch && matchesStatus && matchesDepartment;
+    return matchesSearch && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredStaff.length / itemsPerPage);
@@ -96,7 +92,7 @@ const Staffs = () => {
   useEffect(() => {
     loadStaff();
     setCurrentPage(1);
-  }, [search, statusFilter, departmentFilter]);
+  }, [search, statusFilter]);
 
 
   const handleDelete = async (id) => {
@@ -115,13 +111,12 @@ const Staffs = () => {
   const totalStaff = staff.length;
   const activeStaff = staff.filter(s => s.status === "active").length;
   const inactiveStaff = staff.filter(s => s.status !== "active").length;
-  const departments = new Set(staff.map(s => s.department)).size;
 
 
 
   return (
-    <div className="p-0 min-h-screen space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
+    <div className="p-0 min-h-screen mt-5  space-y-6">
+      <div className="flex mb-10 flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/admin/settings")}
@@ -144,49 +139,38 @@ const Staffs = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
       {/* Total Staff */}
-<div className={statCard}>
-  <div>
-    <p className="text-sm text-white/60">Total Staff</p>
-    <h2 className="text-3xl font-bold text-white">{totalStaff}</h2>
-  </div>
-  <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-    <FaUsers className="text-blue-400 text-xl" />
-  </div>
-</div>
+      <div className={statCard}>
+        <div>
+          <p className="text-sm text-white/60">Total Staff</p>
+          <h2 className="text-3xl font-bold text-white">{totalStaff}</h2>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <FaUsers className="text-blue-400 text-xl" />
+        </div>
+      </div>
 
-{/* Active Staff */}
-<div className={statCard}>
-  <div>
-    <p className="text-sm text-white/60">Active Staff</p>
-    <h2 className="text-3xl font-bold text-white">{activeStaff}</h2>
-  </div>
-  <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-    <FaUserCheck className="text-green-400 text-xl" />
-  </div>
-</div>
+      {/* Active Staff */}
+      <div className={statCard}>
+        <div>
+          <p className="text-sm text-white/60">Active Staff</p>
+          <h2 className="text-3xl font-bold text-white">{activeStaff}</h2>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+          <FaUserCheck className="text-green-400 text-xl" />
+        </div>
+      </div>
 
-{/* Inactive Staff */}
-<div className={statCard}>
-  <div>
-    <p className="text-sm text-white/60">Inactive Staff</p>
-    <h2 className="text-3xl font-bold text-white">{inactiveStaff}</h2>
-  </div>
-  <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
-    <FaUserTimes className="text-red-400 text-xl" />
-  </div>
-</div>
-
-{/* Departments */}
-<div className={statCard}>
-  <div>
-    <p className="text-sm text-white/60">Departments</p>
-    <h2 className="text-3xl font-bold text-white">{departments}</h2>
-  </div>
-  <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-    <FaBuilding className="text-purple-400 text-xl" />
-  </div>
-</div>
-</div>
+      {/* Inactive Staff */}
+      <div className={statCard}>
+        <div>
+          <p className="text-sm text-white/60">Inactive Staff</p>
+          <h2 className="text-3xl font-bold text-white">{inactiveStaff}</h2>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+          <FaUserTimes className="text-red-400 text-xl" />
+        </div>
+      </div>
+      </div>
 
 
       {/* ===== SEARCH & FILTER BAR ===== */}
@@ -240,30 +224,6 @@ const Staffs = () => {
     <option value="active">Active</option>
     <option value="inactive">Inactive</option>
   </select>
-
-  {/* DEPARTMENT FILTER */}
-  <select
-    value={departmentFilter}
-    onChange={(e) => setDepartmentFilter(e.target.value)}
-    className="
-      px-4 py-2
-      rounded-lg
-      bg-white/10 text-white
-      border border-white/10
-      focus:ring-2 focus:ring-orange-500/60
-      focus:border-orange-400
-      transition
-      [&>option]:bg-white
-      [&>option]:text-black
-    "
-  >
-    <option value="all">All Depart</option>
-    {[...new Set(staff.map(s => s.department))].map((dept) => (
-      <option key={dept} value={dept}>
-        {dept}
-      </option>
-    ))}
-  </select>
 </div>
 
       </div>
@@ -281,7 +241,6 @@ const Staffs = () => {
         <th className="px-4 py-4 text-left font-semibold">Email</th>
         <th className="px-4 py-4 text-left font-semibold">Phone</th>
         <th className="px-4 py-4 text-left font-semibold">Role</th>
-        <th className="px-4 py-4 text-left font-semibold">Department</th>
         <th className="px-4 py-4 text-left font-semibold">Time In</th>
         <th className="px-4 py-4 text-left font-semibold">Time Out</th>
         <th className="px-4 py-4 text-left font-semibold">Status</th>
@@ -292,7 +251,7 @@ const Staffs = () => {
     <tbody>
       {staff.length === 0 && (
         <tr>
-          <td colSpan="10" className="text-center py-6 text-gray-500">
+          <td colSpan="9" className="text-center py-6 text-gray-500">
             No staff records found
           </td>
         </tr>
@@ -305,7 +264,6 @@ const Staffs = () => {
           <td className="px-4 py-4">{s.email}</td>
           <td className="px-4 py-4">{s.phone}</td>
           <td className="px-4 py-4">{s.role}</td>
-          <td className="px-4 py-4">{s.department}</td>
           <td className="px-4 py-4">{s.timeIn || "N/A"}</td>
           <td className="px-4 py-4">{s.timeOut || "N/A"}</td>
           <td className="px-4 py-4">
@@ -376,7 +334,6 @@ const Staffs = () => {
         <p><strong>Email:</strong> {s.email}</p>
         <p><strong>Phone:</strong> {s.phone}</p>
         <p><strong>Role:</strong> {s.role}</p>
-        <p><strong>Department:</strong> {s.department}</p>
         <p><strong>Time In:</strong> {s.timeIn || "N/A"}</p>
         <p><strong>Time Out:</strong> {s.timeOut || "N/A"}</p>
       </div>

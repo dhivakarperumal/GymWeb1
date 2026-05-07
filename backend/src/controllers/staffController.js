@@ -62,11 +62,11 @@ async function createStaff(req, res) {
     const body = req.body;
 
     const query = `INSERT INTO staff
-      (employee_id, username, name, email, phone, role, department, gender, blood_group,
+      (employee_id, username, name, email, phone, role, gender, blood_group,
        dob, joining_date, qualification, experience, shift, salary, address,
        emergency_name, emergency_phone, status, time_in, time_out,
        photo, aadhar_doc, id_doc, certificate_doc, created_at, updated_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
     const params = [
       body.employee_id || null,
@@ -75,7 +75,6 @@ async function createStaff(req, res) {
       body.email || null,
       body.phone || null,
       body.role || null,
-      body.department || null,
       body.gender || null,
       body.blood_group || null,
       body.dob || null,
@@ -167,7 +166,6 @@ async function updateStaff(req, res) {
       body.email || null,
       body.phone || null,
       body.role || null,
-      body.department || null,
       body.gender || null,
       body.blood_group || null,
       body.dob || null,
@@ -191,7 +189,7 @@ async function updateStaff(req, res) {
     if (isNum) {
       query = `UPDATE staff SET
         employee_id = ?, username = ?, name = ?, email = ?, phone = ?, role = ?,
-        department = ?, gender = ?, blood_group = ?, dob = ?, joining_date = ?,
+        gender = ?, blood_group = ?, dob = ?, joining_date = ?,
         qualification = ?, experience = ?, shift = ?, salary = ?, address = ?,
         emergency_name = ?, emergency_phone = ?, status = ?, time_in = ?, time_out = ?,
         photo = ?, aadhar_doc = ?, id_doc = ?, certificate_doc = ?, updated_at = CURRENT_TIMESTAMP
@@ -200,7 +198,7 @@ async function updateStaff(req, res) {
     } else {
       query = `UPDATE staff SET
         employee_id = ?, username = ?, name = ?, email = ?, phone = ?, role = ?,
-        department = ?, gender = ?, blood_group = ?, dob = ?, joining_date = ?,
+        gender = ?, blood_group = ?, dob = ?, joining_date = ?,
         qualification = ?, experience = ?, shift = ?, salary = ?, address = ?,
         emergency_name = ?, emergency_phone = ?, status = ?, time_in = ?, time_out = ?,
         photo = ?, aadhar_doc = ?, id_doc = ?, certificate_doc = ?, updated_at = CURRENT_TIMESTAMP
