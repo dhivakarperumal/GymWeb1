@@ -319,7 +319,7 @@ const Account = () => {
   /* ================= LAYOUT ================= */
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white pt-24 lg:pt-28">
+    <div className="flex flex-col min-h-screen bg-black text-white pt-[100px] lg:pt-[112px]">
       {/* HEADER */}
       <header className="relative z-20 bg-black/95 backdrop-blur-xl border-b border-red-500/20 px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
@@ -368,7 +368,7 @@ const Account = () => {
 
         {/* SIDEBAR */}
         <aside className={`
-          fixed lg:static inset-y-0 left-0 z-50
+          fixed lg:static inset-y-0 left-0 top-24 lg:top-0 z-50 lg:z-20
           w-64 bg-gray-900/95 backdrop-blur-xl border-r border-red-500/20
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}

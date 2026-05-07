@@ -50,7 +50,7 @@ const HealthHistoryPage = ({ data, onSubmit }) => {
 
   return (
     <div className="space-y-6">
-      <div className="border-2 border-white/20 rounded-2xl p-8 bg-white/[0.02] shadow-xl">
+      <div className="border-2 border-white/20 rounded-2xl p-8 bg-white/5 shadow-xl">
         <h3 className="text-orange-500 font-bold border-b border-white/10 pb-2 uppercase tracking-wider">
           Health History Questionnaire
         </h3>
@@ -58,7 +58,7 @@ const HealthHistoryPage = ({ data, onSubmit }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white/5 border border-white/10 rounded-xl p-6">
             <p className="mb-4 text-white">Are you taking any medications?</p>
-            <div className="flex gap-8 mb-5">
+            <div className="flex flex-col sm:flex-row gap-4 mb-5">
               <label className="flex items-center gap-2">
                 <input
                   type="radio"

@@ -474,7 +474,7 @@ ${items
                 <div className="grid grid-cols-1 gap-3">
                   {order.items.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-4 bg-gray-900/40 p-2 rounded-lg border border-white/5 hover:border-red-500/20 transition group">
-                      <div className="relative w-12 h-12 flex-shrink-0">
+                      <div className="relative w-12 h-12 shrink-0">
                         <img
                           src={makeImageUrl(item.image) || "https://via.placeholder.com/60"}
                           className="w-full h-full object-cover rounded-lg border border-white/10 group-hover:scale-105 transition"
@@ -523,11 +523,11 @@ ${items
 
             {selectedOrder ? (
               <>
-                <div className="flex justify-between mb-2">
-                  <p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between mb-2">
+                  <p className="wrap-break-word">
                     <b>Order ID:</b> {selectedOrder.order_id}
                   </p>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-start sm:items-end gap-2">
                     <span className="px-4 py-1 rounded-full bg-red-600 text-white text-sm">
                       {formatStatus(normalizeStatus(selectedOrder.status))}
                     </span>
@@ -573,15 +573,16 @@ ${items
                 })()}
 
                 {/* ITEMS */}
-                <table className="w-full text-sm mb-4">
-                  <thead className="bg-black border-b border-red-500/30">
-                    <tr>
-                      <th className="p-3 text-left text-red-500">Product</th>
-                      <th className="p-3 text-center text-red-500">Qty</th>
-                      <th className="p-3 text-center text-red-500">Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <div className="overflow-x-auto rounded-2xl border border-white/10 mb-4">
+                  <table className="w-full min-w-[320px] text-sm">
+                    <thead className="bg-black border-b border-red-500/30">
+                      <tr>
+                        <th className="p-3 text-left text-red-500">Product</th>
+                        <th className="p-3 text-center text-red-500">Qty</th>
+                        <th className="p-3 text-center text-red-500">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                     {(selectedOrder.items || []).map((item, i) => (
                       <tr key={i} className="border-b border-red-500/20">
                         <td className="p-3 flex items-center gap-3">
@@ -636,10 +637,11 @@ ${items
                         </td>
                       </tr>
                     ))}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
 
-                <div className="flex justify-between font-bold mb-6 border-t border-red-500/20 pt-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 font-bold mb-6 border-t border-red-500/20 pt-4">
                   <span>Total</span>
                   <span className="text-red-500">
                     ₹{selectedOrder.total}
@@ -668,14 +670,14 @@ ${items
                   const isCancelled = rawStatus?.toLowerCase() === "cancelled";
 
                   return (
-                    <div className="flex items-center justify-between w-full mt-6">
+                    <div className="flex flex-wrap gap-3 items-center justify-between w-full mt-6">
                       {ORDER_STEPS.map((step, index) => {
                         const completed = !isCancelled && index < currentIndex;
                         const isActive = index === currentIndex;
 
                         return (
                           <React.Fragment key={step}>
-                            <div className="flex flex-col items-center min-w-[70px]">
+                            <div className="flex flex-col items-center min-w-17.5">
                               <div
                                 className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold
                    ${isCancelled && index === currentIndex
