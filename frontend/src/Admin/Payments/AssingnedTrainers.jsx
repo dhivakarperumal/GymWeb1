@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api"; // backend HTTP client
 import cache from "../../cache";
-import { Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import { toast } from "react-hot-toast";
@@ -609,7 +609,16 @@ const AssingnedTrainers = () => {
       {/* ================= ASSIGN POPUP ================= */}
       {showAssignModal && (
         <div className="fixed inset-0 bg-black/70 z-9999 flex items-center justify-center p-4" dir="ltr">
-          <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
+          <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 w-full max-w-3xl shadow-2xl">
+            
+            {/* ✖️ CLOSE BUTTON */}
+            <button 
+              onClick={() => setShowAssignModal(false)}
+              className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors p-1"
+              title="Close"
+            >
+              <X size={24} />
+            </button>
 
             {/* 🔹 TITLE */}
             <h2 className="text-2xl font-bold mb-6 text-center">
