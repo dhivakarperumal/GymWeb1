@@ -68,22 +68,32 @@ const enquiryController = {
                 plan_name, plan_duration, consent_data, trainer_id, trainer_name
             } = req.body;
 
-            if (!name || !email) {
-                return res.status(400).json({ error: 'Name and email are required' });
+            if (!name) {
+                return res.status(400).json({ error: 'Name is required' });
             }
 
             // Check for duplicate email or phone
-            const checkQuery = phone 
-                ? 'SELECT id FROM enquiries WHERE email = ? OR phone = ?'
-                : 'SELECT id FROM enquiries WHERE email = ?';
-            const checkParams = phone ? [email, phone] : [email];
-            
-            const [existing] = await pool.query(checkQuery, checkParams);
+            let checkQuery = '';
+            let checkParams = [];
 
-            if (existing.length > 0) {
-                return res.status(400).json({ 
-                    error: 'An enquiry with this email or phone number already exists.' 
-                });
+            if (email && phone) {
+                checkQuery = 'SELECT id FROM enquiries WHERE email = ? OR phone = ?';
+                checkParams = [email, phone];
+            } else if (email) {
+                checkQuery = 'SELECT id FROM enquiries WHERE email = ?';
+                checkParams = [email];
+            } else if (phone) {
+                checkQuery = 'SELECT id FROM enquiries WHERE phone = ?';
+                checkParams = [phone];
+            }
+
+            if (checkQuery) {
+                const [existing] = await pool.query(checkQuery, checkParams);
+                if (existing.length > 0) {
+                    return res.status(400).json({ 
+                        error: 'An enquiry with this email or phone number already exists.' 
+                    });
+                }
             }
 
             const [result] = await pool.query(
@@ -95,7 +105,7 @@ const enquiryController = {
                     fitness_goal, blood_group, height, weight, bmi, gender, plan_name, plan_duration, terms_accepted, consent_data, trainer_id, trainer_name
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    name, email, phone, subject || null, message || null, location || null,
+                    name, email || null, phone, subject || null, message || null, location || null,
                     dob || null, age || null, address || null, employer || null, occupation || null,
                     emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
                     emergency_contact_phone_home || null, emergency_contact_phone_work || null,
