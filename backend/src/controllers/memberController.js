@@ -47,11 +47,11 @@ async function getAllMembers(req, res) {
       FROM gym_members gm
       LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
                         OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      LEFT JOIN (
-        SELECT userId, paymentMode, price, pricePaid, secondPaymentPaid
+      LEFT JOIN memberships m_pay ON m_pay.id = (
+        SELECT MAX(id)
         FROM memberships
-        WHERE id IN (SELECT MAX(id) FROM memberships GROUP BY userId)
-      ) m_pay ON m_pay.userId = u.id
+        WHERE userId = u.id
+      )
       
       UNION ALL
       
