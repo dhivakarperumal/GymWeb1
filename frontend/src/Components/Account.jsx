@@ -110,7 +110,7 @@ const Account = () => {
           <div className="w-full py-4 px-2 sm:px-4" data-aos="fade-up">
             <div className="max-w-4xl mx-auto">
               {/* Profile Header */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-gray-900 to-black border border-red-500/10 rounded-2xl sm:rounded-3xl">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-6 sm:mb-8 p-4 sm:p-6 bg-linear-to-r from-gray-900 to-black border border-red-500/10 rounded-2xl sm:rounded-3xl">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/20">
                   <span className="text-2xl sm:text-3xl font-black text-white uppercase">
                     {userInfo.username?.[0] || userInfo.email?.[0] || "?"}
@@ -137,12 +137,12 @@ const Account = () => {
                 ].map((item, idx) => (
                   <div key={idx} className="bg-gray-900/50 border border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:border-red-500/20 transition-all group">
                     <div className="flex items-start gap-3 sm:gap-4">
-                      <div className="p-2 sm:p-3 bg-black/40 rounded-lg sm:rounded-xl group-hover:text-red-500 transition-colors flex-shrink-0">
+                      <div className="p-2 sm:p-3 bg-black/40 rounded-lg sm:rounded-xl group-hover:text-red-500 transition-colors shrink-0">
                         <item.icon size={18} className="sm:w-5 sm:h-5" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{item.label}</p>
-                        <p className="text-white font-medium break-words text-sm sm:text-base">{item.value || "Not Provided"}</p>
+                        <p className="text-white font-medium wrap-break-word text-sm sm:text-base">{item.value || "Not Provided"}</p>
                       </div>
                     </div>
                   </div>
@@ -302,7 +302,7 @@ const Account = () => {
                     }
                   }}
                   disabled={loading}
-                  className="w-full py-3 sm:py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-600/20 disabled:opacity-50"
+                  className="w-full py-3 sm:py-4 bg-linear-to-r from-red-600 to-orange-600 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-600/20 disabled:opacity-50"
                 >
                   {loading ? "Updating..." : "Update Password"}
                 </button>
@@ -319,9 +319,9 @@ const Account = () => {
   /* ================= LAYOUT ================= */
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
+    <div className="flex flex-col min-h-screen bg-black text-white pt-24 lg:pt-28">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-xl border-b border-red-500/20 px-4 sm:px-6 py-4 flex justify-between items-center">
+      <header className="relative z-20 bg-black/95 backdrop-blur-xl border-b border-red-500/20 px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
           {/* Mobile Menu Button */}
           <button

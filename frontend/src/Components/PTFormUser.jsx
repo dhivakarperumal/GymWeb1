@@ -214,7 +214,7 @@ const PTFormUser = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full overflow-hidden">
       <h2 className="text-xl font-bold text-red-500">PT Forms</h2>
       {!member?.id && (
         <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-100">
@@ -222,7 +222,7 @@ const PTFormUser = () => {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 border-b border-white/10 pb-4">
+      <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4 overflow-x-auto">
         {[
           { key: 'enquiry', label: 'Enquiry Form' },
           { key: 'health1', label: 'Health History' },
@@ -234,7 +234,7 @@ const PTFormUser = () => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`py-2 px-4 rounded-md transition ${
+            className={`min-w-[140px] flex-shrink-0 py-2 px-3 sm:px-4 rounded-md text-sm transition ${
               activeTab === tab.key
                 ? 'border-b-2 border-red-500 text-red-500'
                 : 'text-gray-400 hover:text-white'
