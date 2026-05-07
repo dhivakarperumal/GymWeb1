@@ -48,9 +48,9 @@ export default function Contact() {
                     <FaMapMarkerAlt className="text-red-500" />
                   </div>
                   <span className="text-gray-300 text-sm">
-                    No 9, 2nd floor Rajivi Ghandhi Salai
+                    No 9, 2nd floor Rajiv Ghandhi Salai
                     (Next to Accenture Company)
-                    OMR, sholinganallur
+                    OMR, Sholinganallur
                     Chennai 600119
                   </span>
                 </div>

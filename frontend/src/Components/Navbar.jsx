@@ -358,7 +358,7 @@ const Navbar = () => {
                     >
                       Facilities
                     </NavLink>
-                    {showCalendar && (
+                    {/* {showCalendar && (
                       <NavLink
                         to="/calendar"
                         className={({ isActive }) =>
@@ -370,7 +370,7 @@ const Navbar = () => {
                       >
                         Calendar
                       </NavLink>
-                    )}
+                    )} */}
 
                     <NavLink
                       to="/contact"
@@ -559,9 +559,9 @@ const Navbar = () => {
                 { name: "Plan Offers 📋", path: "/offers/plans" },
                 { name: "Product Offers 📦", path: "/offers/products" },
 
-                ...(showCalendar
-                  ? [{ name: "Calendar", path: "/calendar" }]
-                  : []),
+                // ...(showCalendar
+                //   ? [{ name: "Calendar", path: "/calendar" }]
+                //   : []),
 
                 { name: "Contact Us", path: "/contact" },
               ].map((item) => (
