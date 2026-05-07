@@ -46,8 +46,11 @@ const EMIList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState({ type: "All Time", range: null });
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [trainerFilter, setTrainerFilter] = useState("all");
+  const [isTrainerOpen, setIsTrainerOpen] = useState(false);
   const [trainers, setTrainers] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
   const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -142,12 +145,66 @@ const EMIList = () => {
     toast.success("EMI report exported!");
   };
 
-  const handleImport = (e) => {
+  const handleImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    toast.success("Excel file received! Processing import...");
-    // Logic for importing EMI could be complex, for now we log it.
-    console.log("Importing file:", file.name);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        setLoading(true);
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        let successCount = 0;
+        let failCount = 0;
+        const errors = [];
+
+        for (const row of jsonData) {
+          if (!row || Object.keys(row).length === 0) continue;
+
+          // EMI import is complex because it involves memberships linked to users/plans
+          // For now we assume a basic membership creation or update logic
+          const username = row.Member || row.Username || row.username || "";
+          const phone = (row.Phone || row.Mobile || "").toString().replace(/\D/g, '').slice(-10);
+
+          if (!username || !phone || phone.length < 10) {
+            errors.push({ 
+              name: username || "Unknown Row", 
+              reason: !username ? "Missing Username" : "Invalid Phone" 
+            });
+            failCount++;
+            continue;
+          }
+
+          // In real EMI import, we'd need more data (planId, userId, etc.)
+          // This is a placeholder for the logic if the user expands this feature
+          try {
+            // Placeholder for API call
+            // await api.post("/memberships/emi-import", payload);
+            // successCount++;
+            errors.push({ name: username, reason: "Import logic not fully implemented for EMI" });
+            failCount++;
+          } catch (err) {
+            errors.push({ name: username, reason: err.message });
+            failCount++;
+          }
+        }
+
+        setImportErrors(errors);
+        if (successCount > 0) toast.success(`Successfully imported ${successCount} EMI records!`);
+        if (failCount > 0) toast.error(`Failed to import ${failCount} records. See summary.`);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to read Excel file");
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   const findPlanForMembership = (membership) => {
@@ -236,6 +293,25 @@ const EMIList = () => {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 p-4">
+      {/* IMPORT ERRORS SUMMARY */}
+      {importErrors.length > 0 && (
+        <div className="mx-4 sm:mx-0 mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-red-500 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+              <CreditCard size={16} /> EMI Import Failures ({importErrors.length})
+            </h3>
+            <button onClick={() => setImportErrors([])} className="text-white/40 hover:text-white text-xs">Clear</button>
+          </div>
+          <div className="max-h-32 overflow-y-auto space-y-1 custom-scrollbar">
+            {importErrors.map((err, i) => (
+              <p key={i} className="text-white/60 text-xs flex justify-between gap-4">
+                <span className="font-medium">{err.name}</span>
+                <span className="text-red-400/80 italic">{err.reason}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* Header Area */}
       <div className="p-2 flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -257,18 +333,47 @@ const EMIList = () => {
 
         <div className="flex items-center gap-3 flex-wrap">
           {/* Status Filter */}
-          <div className="relative group">
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-              className="py-2.5 pl-4 pr-10 bg-transparent border border-white/10 rounded-xl text-white text-sm focus:ring-2 focus:ring-orange-500/50 outline-none appearance-none cursor-pointer transition-all backdrop-blur-md hover:bg-white/5"
+          <div className="relative inline-block text-left">
+            <button
+              onClick={() => setIsStatusOpen(!isStatusOpen)}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl border border-white/10 transition backdrop-blur-md min-w-[130px]"
             >
-              <option value="all" className="bg-neutral-900">All Status</option>
-              <option value="active" className="bg-neutral-900">Active</option>
-              <option value="completed" className="bg-neutral-900">Completed</option>
-              <option value="expired" className="bg-neutral-900">Expired</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white transition-colors" />
+              <CreditCard className="text-orange-500" size={16} />
+              <span className="text-sm font-medium uppercase tracking-wide">
+                {statusFilter === 'all' ? 'All Status' : statusFilter}
+              </span>
+              <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isStatusOpen && (
+              <>
+                <div className="fixed inset-0 z-[90]" onClick={() => setIsStatusOpen(false)} />
+                <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                  {[
+                    { id: 'all', label: 'All Status' },
+                    { id: 'active', label: 'Active' },
+                    { id: 'completed', label: 'Completed' },
+                    { id: 'expired', label: 'Expired' },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        setStatusFilter(option.id);
+                        setCurrentPage(1);
+                        setIsStatusOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        statusFilter === option.id 
+                          ? 'bg-orange-500 text-white shadow-lg' 
+                          : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Import/Export */}
@@ -422,7 +527,7 @@ const EMIList = () => {
                         <td className="px-4 py-4 text-center">
                           <div className="flex justify-center items-center gap-3">
                             <button
-                              onClick={() => viewDetails(membership)}
+                              onClick={(e) => { e.stopPropagation(); viewDetails(membership); }}
                               className="p-2 rounded-lg bg-blue-500/20 border border-blue-500/20 text-blue-300 hover:bg-blue-500/40 transition"
                               title="View Details"
                             >
@@ -431,7 +536,7 @@ const EMIList = () => {
 
                             {membership.paymentStatus !== "Paid" && (
                               <button
-                                onClick={() => selectMembership(membership)}
+                                onClick={(e) => { e.stopPropagation(); selectMembership(membership); }}
                                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 font-bold text-xs whitespace-nowrap"
                                 title="Process Remaining Payment"
                               >
@@ -527,14 +632,14 @@ const EMIList = () => {
 
                     <div className="flex gap-2">
                       <button
-                        onClick={() => viewDetails(membership)}
+                        onClick={(e) => { e.stopPropagation(); viewDetails(membership); }}
                         className="flex-1 py-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2"
                       >
                         <Eye size={14} /> Details
                       </button>
                       {membership.paymentStatus !== "Paid" && (
                         <button
-                          onClick={() => selectMembership(membership)}
+                          onClick={(e) => { e.stopPropagation(); selectMembership(membership); }}
                           className="flex-2 py-2.5 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 text-xs"
                         >
                           <CreditCard size={14} /> Pay ₹{balanceDue.toFixed(0)}
