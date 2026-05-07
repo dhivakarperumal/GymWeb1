@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import toast from "react-hot-toast";
-import { Eye, Trash2, Edit2, Plus, LayoutGrid, List } from "lucide-react";
+import { Eye, Trash2, Edit2, Plus, LayoutGrid, List, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
@@ -162,143 +162,149 @@ const AllDietPlans = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDietPlans.map((d, i) => (
-                  <tr key={d.id} className="border-b border-white/10 hover:bg-white/5 transition group">
-                    <td className="px-4 py-4 text-base text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-4 text-base font-medium text-white">{d.memberName}</td>
-                    <td className="px-4 py-4 text-base text-gray-300">{d.title}</td>
-                    <td className="px-4 py-4 text-base">
-                      <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/20">
-                        {d.calories} KCAL
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-base text-gray-400">{d.duration} Days</td>
-                    <td className="px-4 py-4">
-                      <div className="flex justify-center items-center gap-3">
-                        <button
-                          onClick={() => { 
-                            let rawDays = d.days;
-                            let parsedDays = [];
-                            try {
-                              // Recursive parse to handle potential double-encoding
-                              while (typeof rawDays === 'string') {
-                                rawDays = JSON.parse(rawDays);
-                              }
-                              parsedDays = rawDays;
-                            } catch (e) {
-                              console.error("Parse error", e);
-                              parsedDays = [];
-                            }
-                            setSelectedPlan({ ...d, days: parsedDays }); 
-                            setActiveWeek(1); 
-                          }}
-                          className="p-2.5 rounded-xl bg-white/5 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-lg"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          onClick={() => navigate(`/trainer/adddietplans/${d.id}`)}
-                          className="p-2.5 rounded-xl bg-white/5 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-lg"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(d.id)}
-                          className="p-2.5 rounded-xl bg-white/5 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-lg"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
+                {filteredDietPlans.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-12 text-center text-gray-500 font-medium italic">
+                      No diet plans found
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredDietPlans.map((d, i) => (
+                    <tr key={d.id} className="border-b border-white/10 hover:bg-white/5 transition group">
+                      <td className="px-4 py-4 text-base text-gray-400">{i + 1}</td>
+                      <td className="px-4 py-4 text-base font-medium text-white">{d.memberName}</td>
+                      <td className="px-4 py-4 text-base text-gray-300">{d.title}</td>
+                      <td className="px-4 py-4 text-base">
+                        <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/20">
+                          {d.calories} KCAL
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-base text-gray-400">{d.duration} Days</td>
+                      <td className="px-4 py-4">
+                        <div className="flex justify-center items-center gap-3">
+                          <button
+                            onClick={() => { 
+                              let rawDays = d.days;
+                              let parsedDays = [];
+                              try {
+                                while (typeof rawDays === 'string') {
+                                  rawDays = JSON.parse(rawDays);
+                                }
+                                parsedDays = rawDays;
+                              } catch (e) {
+                                console.error("Parse error", e);
+                                parsedDays = [];
+                              }
+                              setSelectedPlan({ ...d, days: parsedDays }); 
+                              setActiveWeek(1); 
+                            }}
+                            className="p-2.5 rounded-xl bg-white/5 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-lg"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <button
+                            onClick={() => navigate(`/trainer/adddietplans/${d.id}`)}
+                            className="p-2.5 rounded-xl bg-white/5 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-lg"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(d.id)}
+                            className="p-2.5 rounded-xl bg-white/5 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-lg"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDietPlans.map((d, i) => (
-              <div key={d.id} className="group relative bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-emerald-500/50 transition-all duration-500 shadow-xl overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 bg-emerald-500/10 rounded-bl-[100px] -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-all" />
-                
-                <div className="flex justify-between items-start mb-6">
-                  <div className="bg-emerald-500/20 p-4 rounded-2xl text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                    <Eye size={24} />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
-                      #{ i + 1 }
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">
-                      {d.memberName}
-                    </h4>
-                    <p className="text-gray-400 text-sm font-medium mt-1">{d.title}</p>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/5">
-                      <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Calories</p>
-                      <p className="text-emerald-400 font-black">{d.calories} kcal</p>
-                    </div>
-                    <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/5">
-                      <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Duration</p>
-                      <p className="text-white font-black">{d.duration} Days</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={() => { 
-                        let rawDays = d.days;
-                        let parsedDays = [];
-                        try {
-                          while (typeof rawDays === 'string') {
-                            rawDays = JSON.parse(rawDays);
-                          }
-                          parsedDays = rawDays;
-                        } catch (e) {
-                          console.error("Parse error", e);
-                          parsedDays = [];
-                        }
-                        setSelectedPlan({ ...d, days: parsedDays }); 
-                        setActiveWeek(1); 
-                      }}
-                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-emerald-500/20"
-                    >
-                      View Plan
-                    </button>
-                    <button
-                      onClick={() => navigate(`/trainer/adddietplans/${d.id}`)}
-                      className="p-3 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 rounded-2xl transition-all border border-white/5"
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(d.id)}
-                      className="p-3 bg-white/5 text-red-400/50 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all border border-white/5"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
+            {filteredDietPlans.length === 0 ? (
+              <div className="col-span-full bg-white/5 border border-white/10 rounded-3xl p-20 text-center backdrop-blur-md">
+                <p className="text-gray-500 font-medium italic">No diet plans found</p>
               </div>
-            ))}
+            ) : (
+              filteredDietPlans.map((d, i) => (
+                <div key={d.id} className="group relative bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-emerald-500/50 transition-all duration-500 shadow-xl overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 bg-emerald-500/10 rounded-bl-[100px] -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-all" />
+                  
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="bg-emerald-500/20 p-4 rounded-2xl text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                      <Eye size={24} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
+                        #{ i + 1 }
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-xl font-black text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">
+                        {d.memberName}
+                      </h4>
+                      <p className="text-gray-400 text-sm font-medium mt-1">{d.title}</p>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/5">
+                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Calories</p>
+                        <p className="text-emerald-400 font-black">{d.calories} kcal</p>
+                      </div>
+                      <div className="flex-1 bg-white/5 rounded-2xl p-3 border border-white/5">
+                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Duration</p>
+                        <p className="text-white font-black">{d.duration} Days</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => { 
+                          let rawDays = d.days;
+                          let parsedDays = [];
+                          try {
+                            while (typeof rawDays === 'string') {
+                              rawDays = JSON.parse(rawDays);
+                            }
+                            parsedDays = rawDays;
+                          } catch (e) {
+                            console.error("Parse error", e);
+                            parsedDays = [];
+                          }
+                          setSelectedPlan({ ...d, days: parsedDays }); 
+                          setActiveWeek(1); 
+                        }}
+                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-emerald-500/20"
+                      >
+                        View Plan
+                      </button>
+                      <button
+                        onClick={() => navigate(`/trainer/adddietplans/${d.id}`)}
+                        className="p-3 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 rounded-2xl transition-all border border-white/5"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(d.id)}
+                        className="p-3 bg-white/5 text-red-400/50 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all border border-white/5"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 
-        {/* MOBILE FALLBACK (if viewMode isn't enough) */}
-        <div className="sm:hidden space-y-4">
-          {filteredDietPlans.length === 0 && (
-            <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/10 border-dashed">
-              <p className="text-gray-500 text-sm font-medium">No diet plans found matching your criteria.</p>
-            </div>
-          )}
-        </div>
+
         {/* VIEW MODAL - PREMIUM REDESIGN */}
         {selectedPlan && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50" onClick={() => setSelectedPlan(null)}>
@@ -344,9 +350,10 @@ const AllDietPlans = () => {
                 
                 <button
                   onClick={() => setSelectedPlan(null)}
-                  className="p-3 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all duration-300 w-fit self-end md:self-auto"
+                  className="absolute top-6 right-6 p-2 rounded-xl bg-white/5 text-white/40 hover:bg-red-500 hover:text-white transition-all duration-300 z-50"
+                  title="Close"
                 >
-                  <span className="text-xl leading-none">&times;</span>
+                  <X size={20} />
                 </button>
               </div>
 

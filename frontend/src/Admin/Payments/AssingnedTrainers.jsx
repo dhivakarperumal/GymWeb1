@@ -486,10 +486,10 @@ const AssingnedTrainers = () => {
                         ) : (
                           <button
                             onClick={() => handleQuickAssign(m.uid, false)}
-                            className="text-red-400 text-base hover:text-red-300 hover:underline transition-all font-medium"
+                            className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-xs font-bold uppercase tracking-widest"
                             title="Click to Assign"
                           >
-                            Unassigned
+                            Assign Trainer
                           </button>
                         )}
                       </td>

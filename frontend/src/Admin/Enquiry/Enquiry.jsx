@@ -485,7 +485,7 @@ const Enquiry = () => {
 
             <button
               onClick={() => { setSelectedEnquiry(null); setShowForm(true); }}
-              className="flex-1 lg:flex-none px-5 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-xl font-bold text-xs shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="flex-1 lg:flex-none px-5 py-2.5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-md font-bold text-md shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add New

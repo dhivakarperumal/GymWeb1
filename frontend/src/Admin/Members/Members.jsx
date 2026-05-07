@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, Dumbbell } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api"
@@ -393,15 +393,7 @@ const Members = () => {
             PT Form
           </button>
 
-          <button
-            onClick={() => navigate("/admin/addmembers")}
-            className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
-            bg-gradient-to-r from-orange-500 to-orange-600
-            hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
-          >
-            <Plus size={16} />
-            Add Member
-          </button>
+          
 
           <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
@@ -424,6 +416,16 @@ const Members = () => {
               <List size={20} />
             </button>
           </div>
+
+          <button
+            onClick={() => navigate("/admin/addmembers")}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white
+            bg-gradient-to-r from-orange-500 to-orange-600
+            hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
+          >
+            <Plus size={16} />
+            Add Member
+          </button>
         </div>
       </div>
 
@@ -575,6 +577,13 @@ const Members = () => {
                         <Eye size={16} />
                       </button>
                       <button
+                        onClick={() => navigate(`/admin/assigned-trainers?search=${m.name || m.username}`)}
+                        className="p-2 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 text-white transition"
+                        title="Assign Trainer"
+                      >
+                        <Dumbbell size={16} />
+                      </button>
+                      <button
                         onClick={() => {
                           if (m.source === "users") {
                             navigate(`/admin/addmembers?user_id=${m.u_id}`);
@@ -641,6 +650,13 @@ const Members = () => {
                         title="View Details"
                       >
                         <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/assigned-trainers?search=${m.name || m.username}`)}
+                        className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition"
+                        title="Assign Trainer"
+                      >
+                        <Dumbbell size={14} />
                       </button>
                       <button
                         onClick={() => {
