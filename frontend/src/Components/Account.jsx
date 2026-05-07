@@ -319,7 +319,7 @@ const Account = () => {
   /* ================= LAYOUT ================= */
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white pt-[100px] lg:pt-[112px]">
+    <div className="flex flex-col min-h-screen bg-black text-white pt-[90px] lg:pt-[80px]">
       {/* HEADER */}
       <header className="relative z-20 bg-black/95 backdrop-blur-xl border-b border-red-500/20 px-4 sm:px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
@@ -332,17 +332,17 @@ const Account = () => {
           </button>
 
           {/* Back Button for Mobile */}
-          <button
+          {/* <button
             onClick={() => navigate(-1)}
             className="lg:hidden p-2 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 transition-colors"
           >
             <ChevronLeft size={20} />
-          </button>
+          </button> */}
 
           <h1 className="text-lg sm:text-xl font-bold text-white">My Account</h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 text-sm text-gray-400">
             <span>Welcome back,</span>
             <span className="text-red-500 font-medium">{userInfo.username || userInfo.email}</span>
@@ -353,7 +353,7 @@ const Account = () => {
           >
             Logout
           </button>
-        </div>
+        </div> */}
       </header>
 
       {/* BODY */}
