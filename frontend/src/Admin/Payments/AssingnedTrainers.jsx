@@ -456,6 +456,7 @@ const AssingnedTrainers = () => {
                   <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
                   <th className="px-4 py-4 text-left text-sm font-semibold">Dates</th>
                   <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -513,6 +514,17 @@ const AssingnedTrainers = () => {
                           }`}>
                           {assigned.length > 0 ? "Assigned" : "Pending"}
                         </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <button
+                          onClick={() => handleQuickAssign(m.uid, assigned.length > 0)}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${assigned.length > 0
+                              ? "bg-blue-600/20 text-blue-400 border border-blue-400/30 hover:bg-blue-600/30"
+                              : "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                            }`}
+                        >
+                          {assigned.length > 0 ? "Reassign" : "Assign"}
+                        </button>
                       </td>
                     </tr>
                   );
