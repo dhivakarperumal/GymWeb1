@@ -438,8 +438,8 @@ const Enquiry = () => {
   };
 
   const filteredEnquiries = enquiries.filter(enquiry => {
-    const matchesSearch = enquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (enquiry.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (enquiry.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       enquiry.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       enquiry.location?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || enquiry.status === statusFilter;
