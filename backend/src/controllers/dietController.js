@@ -19,7 +19,12 @@ async function resolveTrainerStaffId(trainerUserId) {
 
 async function getAllDiets(req, res) {
   try {
-    let sql = 'SELECT DISTINCT dp.* FROM diet_plans dp';
+    let sql = `
+      SELECT dp.*, 
+             COALESCE(dp.user_id_uuid, u.user_id) AS user_id_uuid
+      FROM diet_plans dp
+      LEFT JOIN users u ON u.id = dp.user_id
+    `;
     const params = [];
     const conditions = [];
 
@@ -87,13 +92,17 @@ async function createDiet(req, res) {
       days,
       status,
     } = req.body;
+    
+    const targetUserId = userId || memberId;
+    const [userRows] = await db.query('SELECT user_id FROM users WHERE id = ?', [targetUserId]);
+    const userUuid = userRows[0] ? userRows[0].user_id : null;
 
     const [result] = await db.query(
       `INSERT INTO diet_plans
       (trainer_id, trainer_name, trainer_source,
        member_id, member_name, member_email, member_mobile, member_weight,
-       title, total_calories, duration, days, status, user_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       title, total_calories, duration, days, status, user_id, user_id_uuid)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         trainerId,
         trainerName || null,
@@ -109,6 +118,7 @@ async function createDiet(req, res) {
         JSON.stringify(days || {}),
         status || 'active',
         userId || memberId || null,
+        userUuid,
       ]
     );
 
@@ -144,7 +154,7 @@ async function updateDiet(req, res) {
       `UPDATE diet_plans SET
         trainer_id=?, trainer_name=?, trainer_source=?,
         member_id=?, member_name=?, member_email=?, member_mobile=?, member_weight=?,
-        title=?, total_calories=?, duration=?, days=?, status=?, user_id=?,
+        title=?, total_calories=?, duration=?, days=?, status=?, user_id=?, user_id_uuid=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE id=?`,
       [
@@ -162,6 +172,7 @@ async function updateDiet(req, res) {
         JSON.stringify(days || {}),
         status || 'active',
         userId || memberId || null,
+        userUuid,
         id,
       ]
     );

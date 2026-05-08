@@ -20,7 +20,12 @@ async function resolveTrainerStaffId(trainerUserId) {
 
 async function getAllWorkouts(req, res) {
   try {
-    let sql = 'SELECT DISTINCT wp.* FROM workout_programs wp';
+    let sql = `
+      SELECT wp.*, 
+             COALESCE(wp.user_id_uuid, u.user_id) AS user_id_uuid
+      FROM workout_programs wp
+      LEFT JOIN users u ON u.id = wp.user_id
+    `;
     const params = [];
     const conditions = [];
 
@@ -88,14 +93,18 @@ async function createWorkout(req, res) {
       days,
       status,
     } = req.body;
+    
+    const targetUserId = userId || memberId;
+    const [userRows] = await db.query('SELECT user_id FROM users WHERE id = ?', [targetUserId]);
+    const userUuid = userRows[0] ? userRows[0].user_id : null;
 
     const [result] = await db.query(
       `INSERT INTO workout_programs
       (trainer_id, trainer_name, trainer_source,
        member_id, member_name, member_email, member_mobile,
        category, level, goal,
-       duration_weeks, days, status, user_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       duration_weeks, days, status, user_id, user_id_uuid)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         trainerId,
         trainerName || null,
@@ -111,6 +120,7 @@ async function createWorkout(req, res) {
         JSON.stringify(days || {}),
         status || 'active',
         userId || memberId || null,
+        userUuid,
       ]
     );
 
@@ -141,13 +151,17 @@ async function updateWorkout(req, res) {
       days,
       status,
     } = req.body;
+    
+    const targetUserId = userId || memberId;
+    const [userRows] = await db.query('SELECT user_id FROM users WHERE id = ?', [targetUserId]);
+    const userUuid = userRows[0] ? userRows[0].user_id : null;
 
     const [result] = await db.query(
       `UPDATE workout_programs SET
         trainer_id=?, trainer_name=?, trainer_source=?,
         member_id=?, member_name=?, member_email=?, member_mobile=?,
         category=?, level=?, goal=?,
-        duration_weeks=?, days=?, status=?, user_id=?,
+        duration_weeks=?, days=?, status=?, user_id=?, user_id_uuid=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE id=?`,
       [
@@ -165,6 +179,7 @@ async function updateWorkout(req, res) {
         JSON.stringify(days || {}),
         status || 'active',
         userId || memberId || null,
+        userUuid,
         id,
       ]
     );

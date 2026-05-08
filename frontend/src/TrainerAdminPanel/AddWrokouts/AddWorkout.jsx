@@ -44,6 +44,7 @@ const AddWorkout = () => {
     level: "Beginner",
     goal: "",
     durationWeeks: "",
+    memberWeight: "",
   };
 
   const initialDays = {
@@ -88,6 +89,7 @@ const AddWorkout = () => {
           planName: a.planName || a.plan_name || "Plan",
           email: a.userEmail || a.user_email || "",
           mobile: a.userMobile || a.user_mobile || "",
+          weight: a.userWeight || a.member_weight || "",
           source: "assign",
         }));
 
@@ -135,6 +137,7 @@ const AddWorkout = () => {
           level: data.level,
           goal: data.goal || "",
           durationWeeks: data.duration_weeks,
+          memberWeight: data.member_weight || "",
         });
         setDays(data.days || initialDays);
       } catch (err) {
@@ -239,6 +242,7 @@ const AddWorkout = () => {
             level: form.level,
             goal: form.goal,
             durationWeeks: calculatedWeeks,
+            memberWeight: form.memberWeight,
             days,
             status: "active",
           };
@@ -258,8 +262,12 @@ const AddWorkout = () => {
                 trainerName,
                 memberId: m.gymMemberId || m.userId || m.id,
                 userId: m.userId || m.id,
-              durationWeeks: calculatedWeeks,
-              days,
+                memberName: m.name,
+                memberEmail: m.email,
+                memberMobile: m.mobile,
+                memberWeight: m.weight,
+                durationWeeks: calculatedWeeks,
+                days,
               status: "active",
             };
             await api.post(`/workouts`, payload);
@@ -303,7 +311,13 @@ const AddWorkout = () => {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(mId)) next.delete(mId);
-      else next.add(mId);
+      else {
+        next.add(mId);
+        const member = members.find(m => m.id === mId);
+        if (member && !isEditMode) {
+          setForm(prev => ({ ...prev, memberWeight: member.weight }));
+        }
+      }
       return next;
     });
   };

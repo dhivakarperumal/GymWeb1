@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { v4: uuidv4 } = require('uuid');
 
 async function generateEmployeeId(req, res) {
   const connection = await db.getConnection();
@@ -62,13 +63,15 @@ async function createStaff(req, res) {
     const body = req.body;
 
     const query = `INSERT INTO staff
-      (employee_id, username, name, email, phone, role, gender, blood_group,
+      (user_id, employee_id, username, name, email, phone, role, gender, blood_group,
        dob, joining_date, qualification, experience, shift, salary, address,
        emergency_name, emergency_phone, status, time_in, time_out,
        photo, aadhar_doc, id_doc, certificate_doc, created_at, updated_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
+    const staffUuid = uuidv4();
     const params = [
+      staffUuid,
       body.employee_id || null,
       body.username || null,
       body.name || null,
@@ -105,9 +108,9 @@ async function createStaff(req, res) {
       const hashed = passwordToHash ? await bcrypt.hash(passwordToHash, 10) : null;
       const userRole = body.role || 'trainer';
       await connection.query(
-        `INSERT INTO users (email, password_hash, role, username, mobile)
-           VALUES (?, ?, ?, ?, ?)`,
-        [body.email || null, hashed, userRole, body.username || null, body.phone || null]
+        `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+        [staffUuid, body.email || null, hashed, userRole, body.username || null, body.phone || null]
       );
     } catch (userErr) {
       // duplicate user entries should not block staff creation,

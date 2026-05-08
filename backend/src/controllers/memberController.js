@@ -35,7 +35,7 @@ async function getAllMembers(req, res) {
         gm.blood_group,
         gm.pt_form_completed,
         u.id AS u_id, 
-        u.user_id AS u_uuid,
+        COALESCE(gm.user_id, u.user_id) AS u_uuid,
         u.email AS user_email, 
         u.role,
         (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
@@ -88,7 +88,7 @@ async function getAllMembers(req, res) {
         NULL as blood_group,
         0 as pt_form_completed,
         u.id AS u_id, 
-        u.user_id AS u_uuid,
+        COALESCE(NULL, u.user_id) AS u_uuid,
         u.email AS user_email, 
         u.role,
         0 AS workout_count,
@@ -146,7 +146,7 @@ async function getAllMembers(req, res) {
         COALESCE(gm.blood_group, NULL) AS blood_group,
         COALESCE(gm.pt_form_completed, 0) AS pt_form_completed,
         u.id AS u_id,
-        u.user_id AS u_uuid,
+        COALESCE(gm.user_id, u.user_id) AS u_uuid,
         u.email AS user_email,
         u.role,
         (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
@@ -182,7 +182,7 @@ async function getMemberById(req, res) {
       sql = `
         SELECT gm.*,
                u.id AS u_id,
-               u.user_id AS u_uuid,
+               COALESCE(gm.user_id, u.user_id) AS u_uuid,
                u.email AS user_email,
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
@@ -195,7 +195,7 @@ async function getMemberById(req, res) {
       sql = `
         SELECT gm.*,
                u.id AS u_id,
-               u.user_id AS u_uuid,
+               COALESCE(gm.user_id, u.user_id) AS u_uuid,
                u.email AS user_email,
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
@@ -291,9 +291,16 @@ async function createMember(req, res) {
     // We no longer block creation if a user account already exists.
     // We just check if they exist so we can link/update their user account later.
     const [existingUser] = await connection.query(
-      "SELECT id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+      "SELECT id, user_id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
       [resolvedPhone, email]
     );
+
+    let userId_uuid = null;
+    if (existingUser.length > 0) {
+      userId_uuid = existingUser[0].user_id;
+    } else {
+      userId_uuid = uuidv4();
+    }
 
     // Parse numeric fields early so they can be used in insert loop
     const numHeight = height != null && !isNaN(height) ? Number(height) : null;
@@ -316,15 +323,15 @@ async function createMember(req, res) {
       try {
         [result] = await connection.query(
           `INSERT INTO gym_members
-      (member_id, name, phone, email, gender, height, weight, bmi, plan, duration,
+      (user_id, member_id, name, phone, email, gender, height, weight, bmi, plan, duration,
        join_date, expiry_date, status, photo, notes, address,
        dob, age, employer, occupation,
        emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
        emergency_contact_phone_home, emergency_contact_phone_work,
        fitness_goal, blood_group, pt_form_completed, fingerprint_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           [
-            memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
+            userId_uuid, memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
             plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
             dob || null, age || null, employer || null, occupation || null,
             emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
@@ -363,11 +370,10 @@ async function createMember(req, res) {
             [hashed, username || null, existingUser[0].id]
           );
         } else {
-          const userId = uuidv4();
           await connection.query(
             `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
                VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId, email || null, hashed, 'user', username || null, resolvedPhone || null]
+            [userId_uuid, email || null, hashed, 'user', username || null, resolvedPhone || null]
           );
         }
       } catch (userErr) {

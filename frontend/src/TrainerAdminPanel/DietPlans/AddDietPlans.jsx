@@ -651,8 +651,14 @@ const AddDietPlans = () => {
                 trainerSource: user?.role || "trainer",
                 memberId: m.gymMemberId || m.userId || m.id,
                 userId: m.userId || m.id,
-              duration: Number(form.duration) || form.days.length,
-              days: form.days,
+                memberName: m.name,
+                memberEmail: m.email,
+                memberMobile: m.mobile,
+                memberWeight: m.weight,
+                title: form.title,
+                totalCalories: Number(form.totalCalories) || 0,
+                duration: Number(form.duration) || form.days.length,
+                days: form.days,
               status: "active",
             };
             await api.post(`/diet-plans`, payload);

@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 
 const enquiryController = {
     // Get all enquiries
@@ -257,57 +258,107 @@ const enquiryController = {
 
     // Convert enquiry to user
     convertToUser: async (req, res) => {
+        const connection = await pool.getConnection();
         try {
             const { id } = req.params;
             
             // 1. Get Enquiry details
-            const [enquiries] = await pool.query('SELECT * FROM enquiries WHERE id = ?', [id]);
+            const [enquiries] = await connection.query('SELECT * FROM enquiries WHERE id = ?', [id]);
             if (enquiries.length === 0) {
                 return res.status(404).json({ error: 'Enquiry not found' });
             }
 
             const enquiry = enquiries[0];
-            if (!enquiry.email || !enquiry.phone) {
-                return res.status(400).json({ error: 'Enquiry must have an email and phone number to convert' });
+            if (!enquiry.phone) {
+                return res.status(400).json({ error: 'Enquiry must have a phone number to convert' });
             }
 
+            await connection.beginTransaction();
+
             // 2. Check if user already exists
-            const [existingUsers] = await pool.query(
-                'SELECT * FROM users WHERE email = ? OR mobile = ?',
+            const [existingUsers] = await connection.query(
+                'SELECT * FROM users WHERE (email = ? AND email IS NOT NULL AND email != "") OR mobile = ?',
                 [enquiry.email, enquiry.phone]
             );
 
+            let userId_uuid;
+            let db_userId_int;
+
             if (existingUsers.length > 0) {
-                // If user exists, we just update the enquiry status
-                await pool.query('UPDATE enquiries SET status = ? WHERE id = ?', ['converted', id]);
-                return res.status(400).json({ 
-                    error: 'A user with this email or phone already exists.',
-                    userExists: true
-                });
+                userId_uuid = existingUsers[0].user_id;
+                db_userId_int = existingUsers[0].id;
+                // If user exists, we might want to update their info, but for now let's just use the ID
+            } else {
+                // 3. Create the user if not exists
+                userId_uuid = uuidv4();
+                const defaultPassword = enquiry.phone.toString();
+                const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+                const [userResult] = await connection.query(
+                    `INSERT INTO users (user_id, username, email, mobile, password_hash, role, status, created_at)
+                     VALUES (?, ?, ?, ?, ?, 'member', 'active', NOW())`,
+                    [userId_uuid, enquiry.name, enquiry.email || null, enquiry.phone, passwordHash]
+                );
+                db_userId_int = userResult.insertId;
             }
 
-            // 3. Create the user
-            const defaultPassword = enquiry.phone.toString(); // Set password to phone number initially
-            const passwordHash = await bcrypt.hash(defaultPassword, 10);
-
-            const [userResult] = await pool.query(
-                `INSERT INTO users (username, email, mobile, password_hash, role, status, created_at)
-                 VALUES (?, ?, ?, ?, 'member', 'active', NOW())`,
-                [enquiry.name, enquiry.email, enquiry.phone, passwordHash]
+            // 4. Check if gym_member already exists
+            const [existingMembers] = await connection.query(
+                'SELECT id FROM gym_members WHERE phone = ? OR (email = ? AND email IS NOT NULL AND email != "")',
+                [enquiry.phone, enquiry.email]
             );
 
-            // 4. Update enquiry status
-            await pool.query('UPDATE enquiries SET status = ? WHERE id = ?', ['converted', id]);
+            if (existingMembers.length === 0) {
+                // 5. Create gym_member record
+                // Generate member_id (MBxxx)
+                const [maxResult] = await connection.query(
+                    "SELECT MAX(CAST(SUBSTRING(member_id,3) AS UNSIGNED)) as maxnum FROM gym_members"
+                );
+                let nextNumber = (maxResult[0].maxnum || 0) + 1;
+                let memberId = `MB${String(nextNumber).padStart(3, "0")}`;
+
+                await connection.query(
+                    `INSERT INTO gym_members (
+                        user_id, member_id, name, phone, email, gender, height, weight, bmi,
+                        plan, duration, join_date, status, address, dob, age,
+                        employer, occupation, emergency_contact_name, emergency_contact_relationship,
+                        emergency_contact_address, emergency_contact_phone_home, emergency_contact_phone_work,
+                        fitness_goal, blood_group
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        userId_uuid, memberId, enquiry.name, enquiry.phone, enquiry.email || null, enquiry.gender, 
+                        enquiry.height, enquiry.weight, enquiry.bmi, enquiry.plan_name, enquiry.plan_duration,
+                        enquiry.address, enquiry.dob, enquiry.age, enquiry.employer, enquiry.occupation,
+                        enquiry.emergency_contact_name, enquiry.emergency_contact_relationship,
+                        enquiry.emergency_contact_address, enquiry.emergency_contact_phone_home,
+                        enquiry.emergency_contact_phone_work, enquiry.fitness_goal, enquiry.blood_group
+                    ]
+                );
+            } else {
+                // Update existing member's user_id if missing
+                await connection.query(
+                    'UPDATE gym_members SET user_id = ? WHERE id = ? AND (user_id IS NULL OR user_id = "")',
+                    [userId_uuid, existingMembers[0].id]
+                );
+            }
+
+            // 6. Update enquiry status
+            await connection.query('UPDATE enquiries SET status = ? WHERE id = ?', ['converted', id]);
+
+            await connection.commit();
 
             res.status(201).json({
-                message: 'Enquiry successfully converted to User.',
-                userId: userResult.insertId,
-                defaultPassword: defaultPassword
+                message: 'Enquiry successfully converted to Member.',
+                user_id: userId_uuid,
+                memberExists: existingMembers.length > 0
             });
 
         } catch (error) {
+            if (connection) await connection.rollback();
             console.error('Error converting enquiry to user:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: 'Internal server error', details: error.message });
+        } finally {
+            if (connection) connection.release();
         }
     },
 

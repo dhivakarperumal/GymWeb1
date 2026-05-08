@@ -4,6 +4,7 @@ function normalizeAssignment(row) {
   return {
     id: row.id,
     userId: row.user_id,
+    userUuid: row.user_id_uuid,
     username: row.member_name || row.username,
     userEmail: row.member_email || row.user_email,
     userMobile: row.member_mobile || row.user_mobile,
@@ -65,6 +66,7 @@ async function getAllAssignments(req, res) {
 
     let sql = `
       SELECT a.*,
+             COALESCE(a.user_id_uuid, u.user_id) AS user_id_uuid,
              m.id as member_db_id,
              m.name as member_name,
              m.email as member_email,
@@ -75,7 +77,8 @@ async function getAllAssignments(req, res) {
              s.role as trainer_source
       FROM trainer_assignments a
       LEFT JOIN users u ON u.id = a.user_id
-      LEFT JOIN gym_members m ON (m.email = u.email AND m.email IS NOT NULL AND m.email != '') 
+      LEFT JOIN gym_members m ON (m.user_id = u.user_id AND u.user_id IS NOT NULL)
+                              OR (m.email = u.email AND m.email IS NOT NULL AND m.email != '') 
                               OR (m.phone = u.mobile AND m.phone IS NOT NULL AND m.phone != '')
       LEFT JOIN staff s ON s.id = a.trainer_id
     `;
@@ -113,6 +116,7 @@ async function upsertAssignments(req, res) {
         // simple upsert using unique(user_id, plan_id)
         const params = [
           a.userId,
+          a.userUuid || null,
           a.username || null,
           a.userEmail || null,
           a.planId || null,
@@ -130,8 +134,8 @@ async function upsertAssignments(req, res) {
 
         const sql = `
           INSERT INTO trainer_assignments
-          (user_id, username, user_email, plan_id, plan_name, plan_duration, plan_start_date, plan_end_date, plan_price, trainer_id, trainer_name, trainer_source, session_time, status)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+          (user_id, user_id_uuid, username, user_email, plan_id, plan_name, plan_duration, plan_start_date, plan_end_date, plan_price, trainer_id, trainer_name, trainer_source, session_time, status)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
           ON DUPLICATE KEY UPDATE
             username=VALUES(username),
             user_email=VALUES(user_email),
@@ -148,16 +152,19 @@ async function upsertAssignments(req, res) {
             updated_at=CURRENT_TIMESTAMP
         `;
 
+        const [userUuidResult] = await connection.query('SELECT user_id FROM users WHERE id = ?', [a.userId]);
+        const finalUuid = a.userUuid || (userUuidResult[0] ? userUuidResult[0].user_id : null);
+
         await connection.query(sql, params);
 
         // Also update existing diet/workout plans for this member to the new trainer
         await connection.query(
-          'UPDATE diet_plans SET trainer_id = ?, trainer_name = ?, trainer_source = ? WHERE user_id = ?',
-          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', a.userId]
+          'UPDATE diet_plans SET trainer_id = ?, trainer_name = ?, trainer_source = ?, user_id_uuid = ? WHERE user_id = ?',
+          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', finalUuid, a.userId]
         );
         await connection.query(
-          'UPDATE workout_programs SET trainer_id = ?, trainer_name = ?, trainer_source = ? WHERE user_id = ?',
-          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', a.userId]
+          'UPDATE workout_programs SET trainer_id = ?, trainer_name = ?, trainer_source = ?, user_id_uuid = ? WHERE user_id = ?',
+          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', finalUuid, a.userId]
         );
       }
 
