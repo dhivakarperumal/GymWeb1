@@ -24,6 +24,14 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS plans (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  price DECIMAL(10,2) NOT NULL,
+  duration_days INT
+);
+
 CREATE TABLE IF NOT EXISTS members (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT,
@@ -32,7 +40,8 @@ CREATE TABLE IF NOT EXISTS members (
   join_date DATE DEFAULT CURDATE(),
   is_active TINYINT(1) DEFAULT 1,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (branch_id) REFERENCES branches(id)
+  FOREIGN KEY (branch_id) REFERENCES branches(id),
+  FOREIGN KEY (membership_plan_id) REFERENCES plans(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS trainers (
@@ -43,14 +52,6 @@ CREATE TABLE IF NOT EXISTS trainers (
   hire_date DATE DEFAULT CURDATE(),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (branch_id) REFERENCES branches(id)
-);
-
-CREATE TABLE IF NOT EXISTS plans (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  description TEXT,
-  price DECIMAL(10,2) NOT NULL,
-  duration_days INT
 );
 
 CREATE TABLE IF NOT EXISTS attendance (
