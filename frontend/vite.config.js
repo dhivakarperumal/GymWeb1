@@ -10,7 +10,7 @@ export default defineConfig({
     port: 5173, // ensure consistent port for proxying
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:5000",
+        target: "https://dap.qtechx.com",
         changeOrigin: true,
         secure: false,
       },
