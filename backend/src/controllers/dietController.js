@@ -28,7 +28,7 @@ async function getAllDiets(req, res) {
       const resolvedStaffId = await resolveTrainerStaffId(trainerId);
 
       if (resolvedStaffId) {
-        conditions.push('dp.member_id IN (SELECT ta.user_id FROM trainer_assignments ta WHERE ta.trainer_id = ?)');
+        conditions.push('dp.user_id IN (SELECT ta.user_id FROM trainer_assignments ta WHERE ta.trainer_id = ?)');
         params.push(resolvedStaffId);
       } else {
         // Fallback: if can't resolve staff id, just show plans created by this trainer
@@ -38,8 +38,8 @@ async function getAllDiets(req, res) {
     }
 
     if (req.query.memberId) {
-      conditions.push('dp.member_id = ?');
-      params.push(req.query.memberId);
+      conditions.push('(dp.member_id = ? OR dp.user_id = ?)');
+      params.push(req.query.memberId, req.query.memberId);
     }
 
     if (conditions.length > 0) {
@@ -76,6 +76,7 @@ async function createDiet(req, res) {
       trainerName,
       trainerSource,
       memberId,
+      userId,
       memberName,
       memberEmail,
       memberMobile,
@@ -97,7 +98,7 @@ async function createDiet(req, res) {
         trainerId,
         trainerName || null,
         trainerSource || null,
-        memberId,
+        memberId || userId || null,
         memberName || null,
         memberEmail || null,
         memberMobile || null,
@@ -107,7 +108,7 @@ async function createDiet(req, res) {
         duration ? Number(duration) : null,
         JSON.stringify(days || {}),
         status || 'active',
-        memberId || null,
+        userId || memberId || null,
       ]
     );
 
@@ -127,6 +128,7 @@ async function updateDiet(req, res) {
       trainerName,
       trainerSource,
       memberId,
+      userId,
       memberName,
       memberEmail,
       memberMobile,
@@ -149,7 +151,7 @@ async function updateDiet(req, res) {
         trainerId,
         trainerName || null,
         trainerSource || null,
-        memberId,
+        memberId || userId || null,
         memberName || null,
         memberEmail || null,
         memberMobile || null,
@@ -159,7 +161,7 @@ async function updateDiet(req, res) {
         duration ? Number(duration) : null,
         JSON.stringify(days || {}),
         status || 'active',
-        memberId || null,
+        userId || memberId || null,
         id,
       ]
     );

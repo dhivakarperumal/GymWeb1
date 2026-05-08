@@ -43,6 +43,7 @@ const AddDietPlans = () => {
 
   const [form, setForm] = useState({
     memberId: "",
+    userId: "",
     memberName: "",
     memberEmail: "",
     memberMobile: "",
@@ -71,6 +72,8 @@ const AddDietPlans = () => {
 
         const formatted = assignments.map((d) => ({
           id: String(d.userId || d.user_id),
+          userId: String(d.userId || d.user_id),
+          gymMemberId: String(d.gymMemberId || d.member_db_id || ""),
           name: d.username || d.user_name || "Member",
           email: d.userEmail || d.user_email || "",
           mobile: d.userMobile || d.user_mobile || "",
@@ -203,6 +206,7 @@ const AddDietPlans = () => {
 
         setForm({
           memberId,
+          userId: data.user_id || data.userId || "",
           memberName,
           memberEmail: data.memberEmail || data.member_email || "",
           memberMobile: data.memberMobile || data.member_mobile || "",
@@ -619,38 +623,34 @@ const AddDietPlans = () => {
           trainerName,
           trainerSource: user?.role || "trainer",
           memberId: form.memberId,
-          memberName: form.memberName,
-          memberEmail: form.memberEmail,
-          memberMobile: form.memberMobile,
-          memberWeight: form.memberWeight,
-          title: form.title,
-          totalCalories: Number(form.totalCalories) || 0,
-          duration: Number(form.duration) || form.days.length,
-          days: form.days,
-          status: "active",
-        };
-        await api.put(`/diet-plans/${id}`, payload);
-        toast.success("Diet Plan Updated 🥗");
-        setTimeout(() => navigate("/trainer/alladddietplans"), 1200);
-      } else {
-        // Bulk Create
-        const selectedMembers = members.filter((m) => selected.has(m.id));
-        let successCount = 0;
-        let failCount = 0;
+            userId: form.userId || form.memberId,
+            memberName: form.memberName,
+            memberEmail: form.memberEmail,
+            memberMobile: form.memberMobile,
+            memberWeight: form.memberWeight,
+            title: form.title,
+            totalCalories: Number(form.totalCalories) || 0,
+            duration: Number(form.duration) || form.days.length,
+            days: form.days,
+            status: "active",
+          };
+          await api.put(`/diet-plans/${id}`, payload);
+          toast.success("Diet Plan Updated 🥗");
+          setTimeout(() => navigate("/trainer/alladddietplans"), 1200);
+        } else {
+          // Bulk Create
+          const selectedMembers = members.filter((m) => selected.has(m.id));
+          let successCount = 0;
+          let failCount = 0;
 
-        for (const m of selectedMembers) {
-          try {
-            const payload = {
-              trainerId,
-              trainerName,
-              trainerSource: user?.role || "trainer",
-              memberId: m.id,
-              memberName: m.name,
-              memberEmail: m.email,
-              memberMobile: m.mobile,
-              memberWeight: form.memberWeight,
-              title: form.title,
-              totalCalories: Number(form.totalCalories) || 0,
+          for (const m of selectedMembers) {
+            try {
+              const payload = {
+                trainerId,
+                trainerName,
+                trainerSource: user?.role || "trainer",
+                memberId: m.gymMemberId || m.userId || m.id,
+                userId: m.userId || m.id,
               duration: Number(form.duration) || form.days.length,
               days: form.days,
               status: "active",

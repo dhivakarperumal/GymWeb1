@@ -29,7 +29,7 @@ async function getAllWorkouts(req, res) {
       const resolvedStaffId = await resolveTrainerStaffId(trainerId);
 
       if (resolvedStaffId) {
-        conditions.push('wp.member_id IN (SELECT ta.user_id FROM trainer_assignments ta WHERE ta.trainer_id = ?)');
+        conditions.push('wp.user_id IN (SELECT ta.user_id FROM trainer_assignments ta WHERE ta.trainer_id = ?)');
         params.push(resolvedStaffId);
       } else {
         // Fallback: if can't resolve staff id, just show plans created by this trainer
@@ -39,8 +39,8 @@ async function getAllWorkouts(req, res) {
     }
 
     if (req.query.memberId) {
-      conditions.push('wp.member_id = ?');
-      params.push(req.query.memberId);
+      conditions.push('(wp.member_id = ? OR wp.user_id = ?)');
+      params.push(req.query.memberId, req.query.memberId);
     }
 
     if (conditions.length > 0) {
@@ -77,6 +77,7 @@ async function createWorkout(req, res) {
       trainerName,
       trainerSource,
       memberId,
+      userId,
       memberName,
       memberEmail,
       memberMobile,
@@ -99,7 +100,7 @@ async function createWorkout(req, res) {
         trainerId,
         trainerName || null,
         trainerSource || null,
-        memberId,
+        memberId || userId || null,
         memberName || null,
         memberEmail || null,
         memberMobile || null,
@@ -109,7 +110,7 @@ async function createWorkout(req, res) {
         durationWeeks ? Number(durationWeeks) : null,
         JSON.stringify(days || {}),
         status || 'active',
-        memberId || null,
+        userId || memberId || null,
       ]
     );
 
@@ -129,6 +130,7 @@ async function updateWorkout(req, res) {
       trainerName,
       trainerSource,
       memberId,
+      userId,
       memberName,
       memberEmail,
       memberMobile,
@@ -152,7 +154,7 @@ async function updateWorkout(req, res) {
         trainerId,
         trainerName || null,
         trainerSource || null,
-        memberId,
+        memberId || userId || null,
         memberName || null,
         memberEmail || null,
         memberMobile || null,
@@ -162,7 +164,7 @@ async function updateWorkout(req, res) {
         durationWeeks ? Number(durationWeeks) : null,
         JSON.stringify(days || {}),
         status || 'active',
-        memberId || null,
+        userId || memberId || null,
         id,
       ]
     );

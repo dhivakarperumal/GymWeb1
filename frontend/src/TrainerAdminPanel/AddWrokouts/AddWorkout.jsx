@@ -37,6 +37,7 @@ const AddWorkout = () => {
 
   const initialForm = {
     memberId: "",
+    userId: "",
     memberName: "",
     memberEmail: "",
     memberMobile: "",
@@ -81,6 +82,8 @@ const AddWorkout = () => {
 
         const assignedMembers = assignments.map((a) => ({
           id: String(a.userId || a.user_id),
+          userId: String(a.userId || a.user_id),
+          gymMemberId: String(a.gymMemberId || a.member_db_id || ""),
           name: a.username || a.user_name || "Member",
           planName: a.planName || a.plan_name || "Plan",
           email: a.userEmail || a.user_email || "",
@@ -125,6 +128,7 @@ const AddWorkout = () => {
         const data = res.data;
         setForm({
           memberId: data.member_id,
+          userId: data.user_id || data.userId || "",
           memberName: data.member_name,
           memberEmail: data.member_email,
           memberMobile: data.member_mobile,
@@ -228,35 +232,32 @@ const AddWorkout = () => {
           trainerId,
           trainerName,
           memberId: form.memberId,
-          memberName: form.memberName,
-          memberEmail: form.memberEmail,
-          memberMobile: form.memberMobile,
-          level: form.level,
-          goal: form.goal,
-          durationWeeks: calculatedWeeks,
-          days,
-          status: "active",
-        };
-        await api.put(`/workouts/${id}`, payload);
-        toast.success("Workout Updated ✅");
-        navigate("/trainer/alladdworkouts");
-      } else {
-        // Bulk Create
-        const selectedMembers = members.filter((m) => selected.has(m.id));
-        let successCount = 0;
-        let failCount = 0;
+            userId: form.userId || form.memberId,
+            memberName: form.memberName,
+            memberEmail: form.memberEmail,
+            memberMobile: form.memberMobile,
+            level: form.level,
+            goal: form.goal,
+            durationWeeks: calculatedWeeks,
+            days,
+            status: "active",
+          };
+          await api.put(`/workouts/${id}`, payload);
+          toast.success("Workout Updated ✅");
+          navigate("/trainer/alladdworkouts");
+        } else {
+          // Bulk Create
+          const selectedMembers = members.filter((m) => selected.has(m.id));
+          let successCount = 0;
+          let failCount = 0;
 
-        for (const m of selectedMembers) {
-          try {
-            const payload = {
-              trainerId,
-              trainerName,
-              memberId: m.id,
-              memberName: m.name,
-              memberEmail: m.email,
-              memberMobile: m.mobile,
-              level: form.level,
-              goal: form.goal,
+          for (const m of selectedMembers) {
+            try {
+              const payload = {
+                trainerId,
+                trainerName,
+                memberId: m.gymMemberId || m.userId || m.id,
+                userId: m.userId || m.id,
               durationWeeks: calculatedWeeks,
               days,
               status: "active",
