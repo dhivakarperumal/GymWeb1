@@ -127,7 +127,12 @@ const Account = () => {
                     </span>
                     {userInfo.id && (
                       <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-bold uppercase">
-                        User ID: #{userInfo.id}
+                        DB ID: #{userInfo.id}
+                      </span>
+                    )}
+                    {userInfo.user_id && (
+                      <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-bold uppercase">
+                        UID: {userInfo.user_id}
                       </span>
                     )}
                     {userInfo.member_id && (
@@ -142,7 +147,8 @@ const Account = () => {
               {/* Information Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {[
-                  { label: "User ID", value: userInfo.id ? `#${userInfo.id}` : null, icon: Shield },
+                  { label: "Internal ID", value: userInfo.id ? `#${userInfo.id}` : null, icon: Shield },
+                  { label: "Account UID", value: userInfo.user_id, icon: Shield },
                   { label: "Member ID", value: userInfo.member_id ? `#${userInfo.member_id}` : "Not a Gym Member", icon: User },
                   { label: "Username", value: userInfo.username, icon: User },
                   { label: "Email Address", value: userInfo.email, icon: Mail },
