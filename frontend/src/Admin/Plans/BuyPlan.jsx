@@ -6,6 +6,7 @@ import api from "../../api";
 import emailjs from "@emailjs/browser";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { Search, X } from "lucide-react";
 const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
 const MEMBERSHIP_API = "/memberships";
@@ -26,6 +27,11 @@ const BuyPlanadmin = () => {
   const [paymentType, setPaymentType] = useState("full");
   const [initialPayment, setInitialPayment] = useState("");
 
+  const [memberSearch, setMemberSearch] = useState("");
+  const [planSearch, setPlanSearch] = useState("");
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+  const [showPlanDropdown, setShowPlanDropdown] = useState(false);
+
   const today = new Date().toISOString().split("T")[0];
 
   const [form, setForm] = useState({
@@ -39,6 +45,56 @@ const BuyPlanadmin = () => {
     endDate: "",
     paymentMode: "cash",
   });
+
+  // ================= FILTER MEMBERS FOR DROPDOWN =================
+  const getFilteredMembers = () => {
+    const seenPhones = new Set();
+    return members
+      .filter((m) => {
+        // only gym members converted from enquiry should appear
+        if (m.source === "users") return false;
+
+        // 1. Skip if already has active plan
+        const hasPlan = m.status === "active" && m.plan;
+        if (hasPlan) return false;
+
+        // 2. Skip duplicates by phone
+        if (seenPhones.has(m.phone)) return false;
+        seenPhones.add(m.phone);
+
+        // 3. Filter by search term
+        const searchLower = memberSearch.toLowerCase().trim();
+        if (!searchLower) return true;
+
+        const name = (m.name || m.username || "").toLowerCase();
+        const phone = (m.phone || "").toLowerCase();
+        const email = (m.email || "").toLowerCase();
+
+        return (
+          name.includes(searchLower) ||
+          phone.includes(searchLower) ||
+          email.includes(searchLower)
+        );
+      });
+  };
+
+  // ================= FILTER PLANS FOR DROPDOWN =================
+  const getFilteredPlans = () => {
+    const searchLower = planSearch.toLowerCase().trim();
+    if (!searchLower) return plans;
+
+    return plans.filter((p) => {
+      const name = (p.name || "").toLowerCase();
+      const duration = (p.duration || "").toLowerCase();
+      const price = ((p.finalPrice ?? p.final_price ?? p.price) || "").toString();
+
+      return (
+        name.includes(searchLower) ||
+        duration.includes(searchLower) ||
+        price.includes(searchLower)
+      );
+    });
+  };
 
   const normalizePlanText = (text) =>
     text
@@ -467,81 +523,154 @@ const BuyPlanadmin = () => {
           {/* SELECT MEMBER */}
           <div className="mb-4">
             <label className="block text-sm text-gray-400 mb-1">Select Member</label>
-            <select
-              className="w-full p-3 bg-gray-900 rounded-lg border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              value={selectedUser ? `${selectedUser.source}-${selectedUser.id || selectedUser.u_id}` : ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (!val) {
-                  setSelectedUser(null);
-                  setSelectedPlan(null);
-                  return;
-                }
-                const [source, idStr] = val.split('-');
-                const id = Number(idStr);
-                const user = members.find(
-                  (m) => m.source === source && (m.id === id || m.u_id === id)
-                );
+            <div className="relative">
+              {/* Search Input */}
+              <div className="flex items-center gap-2 px-3 py-3 bg-gray-900 rounded-lg border border-white/10 focus-within:ring-2 focus-within:ring-orange-500">
+                <Search size={18} className="text-gray-500 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search by name, phone, or email..."
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  onFocus={() => setShowMemberDropdown(true)}
+                  className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm"
+                />
+                {memberSearch && (
+                  <button
+                    onClick={() => {
+                      setMemberSearch("");
+                      setSelectedUser(null);
+                      setSelectedPlan(null);
+                    }}
+                    className="text-gray-500 hover:text-white flex-shrink-0"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
 
-                setSelectedUser(user);
+              {/* Dropdown List */}
+              {showMemberDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-white/10 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {getFilteredMembers().length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      {memberSearch ? "No members found" : "No members available"}
+                    </div>
+                  ) : (
+                    getFilteredMembers().map((m) => {
+                      const uniqueKey = `${m.source}-${m.id || m.u_id}`;
+                      const isSelected =
+                        selectedUser?.source === m.source &&
+                        (selectedUser?.id === m.id || selectedUser?.u_id === m.u_id);
 
-                // FETCH HISTORY
-                if (user) {
-                  const uId = user.u_id || user.user_id || user.id;
-                  api.get(`/memberships/user/${uId}`)
-                    .then(res => setMemberHistory(Array.isArray(res.data) ? res.data : []))
-                    .catch(err => console.error("History fetch error:", err));
+                      return (
+                        <button
+                          key={uniqueKey}
+                          onClick={() => {
+                            const user = members.find(
+                              (member) =>
+                                member.source === m.source &&
+                                (member.id === m.id || member.u_id === m.u_id)
+                            );
 
-                  setForm((prev) => ({
-                    ...prev,
-                    phone: user.phone || "",
-                    email: user.email || "",
-                    address: user.address || "",
-                    height: user.height || "",
-                    weight: user.weight || "",
-                    bmi: user.bmi || "",
-                  }));
+                            setSelectedUser(user);
+                            setMemberSearch("");
+                            setShowMemberDropdown(false);
 
-                  const matchedPlan = findMatchingPlan(user, plans, enquiries);
-                  if (matchedPlan) {
-                    setSelectedPlan(matchedPlan);
-                    return;
-                  }
-                }
+                            // FETCH HISTORY
+                            if (user) {
+                              const uId = user.u_id || user.user_id || user.id;
+                              api.get(`/memberships/user/${uId}`)
+                                .then(res =>
+                                  setMemberHistory(
+                                    Array.isArray(res.data) ? res.data : []
+                                  )
+                                )
+                                .catch(err =>
+                                  console.error("History fetch error:", err)
+                                );
 
-                setSelectedPlan(null);
-              }}
-            >
-              <option value="">-- Choose a member --</option>
+                              setForm((prev) => ({
+                                ...prev,
+                                phone: user.phone || "",
+                                email: user.email || "",
+                                address: user.address || "",
+                                height: user.height || "",
+                                weight: user.weight || "",
+                                bmi: user.bmi || "",
+                              }));
 
-              {(() => {
-                const seenPhones = new Set();
-                return members
-                  .filter((m) => {
-                    // only gym members converted from enquiry should appear
-                    if (m.source === "users") return false;
+                              const matchedPlan = findMatchingPlan(
+                                user,
+                                plans,
+                                enquiries
+                              );
+                              if (matchedPlan) {
+                                setSelectedPlan(matchedPlan);
+                                return;
+                              }
+                            }
 
-                    // 1. Skip if already has active plan
-                    const hasPlan = m.status === "active" && m.plan;
-                    if (hasPlan) return false;
+                            setSelectedPlan(null);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0 ${
+                            isSelected
+                              ? "bg-orange-500/20 text-orange-400"
+                              : "text-white"
+                          }`}
+                        >
+                          <div className="font-medium">{m.name || "Unknown"}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {m.phone}
+                            {m.email && ` • ${m.email}`}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
 
-                    // 2. Skip duplicates by phone
-                    if (seenPhones.has(m.phone)) return false;
-                    seenPhones.add(m.phone);
-
-                    return true;
-                  })
-                  .map((m) => {
-                    const uniqueKey = `${m.source}-${m.id || m.u_id}`;
-                    return (
-                      <option key={uniqueKey} value={uniqueKey}>
-                        {m.name || "Unknown"} ({m.phone})
-                      </option>
-                    );
-                  });
-              })()}
-            </select>
+            {/* Selected Member Display */}
+            {selectedUser && (
+              <div className="mt-2 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    {selectedUser.name || selectedUser.username || "Member"}
+                  </p>
+                  <p className="text-xs text-gray-400">{selectedUser.phone}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedUser(null);
+                    setMemberSearch("");
+                    setSelectedPlan(null);
+                    setForm((prev) => ({
+                      ...prev,
+                      phone: "",
+                      email: "",
+                      address: "",
+                      height: "",
+                      weight: "",
+                      bmi: "",
+                    }));
+                  }}
+                  className="text-orange-400 hover:text-orange-300"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Close dropdown when clicking outside */}
+          {showMemberDropdown && (
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowMemberDropdown(false)}
+            />
+          )}
 
           {/* PHONE */}
           <div className="mb-4">
@@ -778,26 +907,97 @@ const BuyPlanadmin = () => {
 
           <div className="mb-4">
             <label className="block text-sm text-gray-400 mb-1">Gym Plan</label>
-            <select
-              className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-              value={selectedPlan ? selectedPlan.id : ""}
-              onChange={(e) => {
-                const plan = plans.find(
-                  (p) => p.id === Number(e.target.value)
-                );
-                setSelectedPlan(plan);
-              }}
-            >
-              <option value="">-- Choose a plan --</option>
+            <div className="relative">
+              {/* Search Input */}
+              <div className="flex items-center gap-2 px-3 py-3 bg-gray-900 rounded-lg border border-white/10 focus-within:ring-2 focus-within:ring-orange-500">
+                <Search size={18} className="text-gray-500 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search by plan name, duration, or price..."
+                  value={planSearch}
+                  onChange={(e) => setPlanSearch(e.target.value)}
+                  onFocus={() => setShowPlanDropdown(true)}
+                  className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm"
+                />
+                {planSearch && (
+                  <button
+                    onClick={() => {
+                      setPlanSearch("");
+                    }}
+                    className="text-gray-500 hover:text-white flex-shrink-0"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
 
-              {plans.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} - {p.duration} - ₹
-                  {p.finalPrice ?? p.final_price}
-                </option>
-              ))}
-            </select>
+              {/* Dropdown List */}
+              {showPlanDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-white/10 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {getFilteredPlans().length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      {planSearch ? "No plans found" : "No plans available"}
+                    </div>
+                  ) : (
+                    getFilteredPlans().map((p) => {
+                      const isSelected = selectedPlan?.id === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => {
+                            setSelectedPlan(p);
+                            setPlanSearch("");
+                            setShowPlanDropdown(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm hover:bg-white/10 transition-colors border-b border-white/5 last:border-b-0 ${
+                            isSelected
+                              ? "bg-orange-500/20 text-orange-400"
+                              : "text-white"
+                          }`}
+                        >
+                          <div className="font-medium">{p.name}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {p.duration} • ₹{p.finalPrice ?? p.final_price}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Selected Plan Display */}
+            {selectedPlan && (
+              <div className="mt-2 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    {selectedPlan.name}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {selectedPlan.duration} • ₹{selectedPlan.finalPrice ?? selectedPlan.final_price}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedPlan(null);
+                    setPlanSearch("");
+                  }}
+                  className="text-orange-400 hover:text-orange-300"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Close dropdown when clicking outside */}
+          {showPlanDropdown && (
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowPlanDropdown(false)}
+            />
+          )}
 
           {selectedPlan && (
             <div className="p-4 border border-red-400 rounded-lg">
