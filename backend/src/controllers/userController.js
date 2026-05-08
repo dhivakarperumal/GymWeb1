@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 async function getAllUsers(req, res) {
   try {
-    const [rows] = await db.query('SELECT id, username, email, mobile, role, status, created_at FROM users ORDER BY created_at DESC');
+    const [rows] = await db.query('SELECT id, user_id, username, email, mobile, role, status, created_at FROM users ORDER BY created_at DESC');
     res.json(rows);
   } catch (err) {
     console.error('getAllUsers error', err);
@@ -16,7 +16,7 @@ async function getUserById(req, res) {
     const idNum = parseInt(id, 10);
 
     const [rows] = await db.query(
-      `SELECT u.id, u.username, u.email, u.mobile, u.role, u.status, u.created_at, 
+      `SELECT u.id, u.user_id, u.username, u.email, u.mobile, u.role, u.status, u.created_at, 
               (u.password_hash IS NOT NULL) AS hasPassword,
               COALESCE(gm.name, s.name, u.username) as full_name,
               gm.id as member_id
@@ -88,7 +88,7 @@ async function updateUserRole(req, res) {
     }
 
     const [rows] = await db.query(
-      'SELECT id, username, email, mobile, role, status, created_at FROM users WHERE id = ?',
+      'SELECT id, user_id, username, email, mobile, role, status, created_at FROM users WHERE id = ?',
       [idNum]
     );
 

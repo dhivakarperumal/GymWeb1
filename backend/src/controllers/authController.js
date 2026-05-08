@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 const logger = require('../config/logger');
 
 // register a new user
@@ -32,14 +33,16 @@ async function register(req, res) {
     }
 
     const hashed = await bcrypt.hash(password, 10);
+    const userId = uuidv4();
     const [result] = await pool.query(
-      `INSERT INTO users (email, password_hash, role, username, mobile)
-         VALUES (?, ?, ?, ?, ?)`,
-      [email, hashed, 'user', username || null, mobile || null]
+      `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId, email, hashed, 'user', username || null, mobile || null]
     );
 
     const user = {
       id: result.insertId,
+      user_id: userId,
       email,
       role: 'user',
       username: username || null,
@@ -123,10 +126,11 @@ async function googleLogin(req, res) {
 
     if (rows.length === 0) {
       // Create user if not exists
+      const userId = uuidv4();
       const [result] = await pool.query(
-        `INSERT INTO users (email, username, role, google_id, picture)
-         VALUES (?, ?, ?, ?, ?)`,
-        [email, name || email.split('@')[0], 'user', googleId, picture]
+        `INSERT INTO users (user_id, email, username, role, google_id, picture)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [userId, email, name || email.split('@')[0], 'user', googleId, picture]
       );
       
       const [newRows] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);

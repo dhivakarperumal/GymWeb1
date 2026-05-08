@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 
 async function getAllMembers(req, res) {
   try {
@@ -34,6 +35,7 @@ async function getAllMembers(req, res) {
         gm.blood_group,
         gm.pt_form_completed,
         u.id AS u_id, 
+        u.user_id AS u_uuid,
         u.email AS user_email, 
         u.role,
         (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
@@ -86,6 +88,7 @@ async function getAllMembers(req, res) {
         NULL as blood_group,
         0 as pt_form_completed,
         u.id AS u_id, 
+        u.user_id AS u_uuid,
         u.email AS user_email, 
         u.role,
         0 AS workout_count,
@@ -143,6 +146,7 @@ async function getAllMembers(req, res) {
         COALESCE(gm.blood_group, NULL) AS blood_group,
         COALESCE(gm.pt_form_completed, 0) AS pt_form_completed,
         u.id AS u_id,
+        u.user_id AS u_uuid,
         u.email AS user_email,
         u.role,
         (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
@@ -178,6 +182,7 @@ async function getMemberById(req, res) {
       sql = `
         SELECT gm.*,
                u.id AS u_id,
+               u.user_id AS u_uuid,
                u.email AS user_email,
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
@@ -190,6 +195,7 @@ async function getMemberById(req, res) {
       sql = `
         SELECT gm.*,
                u.id AS u_id,
+               u.user_id AS u_uuid,
                u.email AS user_email,
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
@@ -215,7 +221,7 @@ async function getMemberByUserId(req, res) {
   try {
     const { user_id } = req.params;
     const [memberRows] = await db.query(
-      `SELECT gm.*, u.id AS u_id, u.email AS user_email
+      `SELECT gm.*, u.id AS u_id, u.user_id AS u_uuid, u.email AS user_email
        FROM gym_members gm
        JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '')
                     OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
@@ -229,7 +235,7 @@ async function getMemberByUserId(req, res) {
     }
 
     const [userRows] = await db.query(
-      `SELECT id AS u_id, username AS name, email, mobile AS phone, role
+      `SELECT id AS u_id, user_id AS u_uuid, username AS name, email, mobile AS phone, role
        FROM users
        WHERE id = ?`,
       [user_id]
@@ -357,10 +363,11 @@ async function createMember(req, res) {
             [hashed, username || null, existingUser[0].id]
           );
         } else {
+          const userId = uuidv4();
           await connection.query(
-            `INSERT INTO users (email, password_hash, role, username, mobile)
-               VALUES (?, ?, ?, ?, ?)`,
-            [email || null, hashed, 'user', username || null, resolvedPhone || null]
+            `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
+               VALUES (?, ?, ?, ?, ?, ?)`,
+            [userId, email || null, hashed, 'user', username || null, resolvedPhone || null]
           );
         }
       } catch (userErr) {
@@ -382,6 +389,7 @@ async function createMember(req, res) {
       `
       SELECT gm.*,
              u.id AS u_id,
+             u.user_id AS u_uuid,
              u.email AS user_email,
              0 AS workout_count,
              0 AS diet_count
@@ -519,6 +527,7 @@ async function updateMember(req, res) {
       sql = `
         SELECT gm.*,
                u.id AS u_id,
+               u.user_id AS u_uuid,
                u.email AS user_email,
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
@@ -531,6 +540,7 @@ async function updateMember(req, res) {
       sql = `
         SELECT gm.*,
                u.id AS u_id,
+               u.user_id AS u_uuid,
                u.email AS user_email,
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
