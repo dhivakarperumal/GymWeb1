@@ -81,7 +81,23 @@ const pageInfo = {
 };
 
 const Header = ({ onMenuClick }) => {
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'profile', 'notifications', 'orders', 'stock', 'expiry'
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [alerts, setAlerts] = useState({
+    orders: [],
+    lowStock: [],
+    expiring: [],
+    registrations: []
+  });
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+
+  // Refs
+  const dropdownRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const searchInputRef = useRef(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -132,22 +148,6 @@ const Header = ({ onMenuClick }) => {
     const interval = setInterval(fetchAllAlerts, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
-  const [activeDropdown, setActiveDropdown] = useState(null); // 'profile', 'notifications', 'orders', 'stock', 'expiry'
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const [alerts, setAlerts] = useState({
-    orders: [],
-    lowStock: [],
-    expiring: [],
-    registrations: []
-  });
-  const [loadingAlerts, setLoadingAlerts] = useState(false);
-
-  // Refs for dropdowns
-  const dropdownRef = useRef(null);
-  const searchContainerRef = useRef(null);
 
   // Click outside listener
   useEffect(() => {
