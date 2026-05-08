@@ -26,18 +26,32 @@ async function sendMessages(req, res) {
 
     // Determine if we should store individual IDs (if only 1 recipient)
     const singleRecipient = recipients.length === 1 ? recipients[0] : null;
-    const userId = singleRecipient ? singleRecipient.userId : null;
+    let userId = singleRecipient ? singleRecipient.userId : null;
     const memberId = singleRecipient ? singleRecipient.memberId : null;
+    
+    // Fetch the user_id (UUID) from users table if userId is provided
+    let userUuid = null;
+    if (userId) {
+      // Try to fetch using the userId as either the ID or the UUID
+      const [users] = await db.query(
+        "SELECT user_id FROM users WHERE id = ? OR user_id = ? LIMIT 1",
+        [userId, userId]
+      );
+      if (users.length > 0) {
+        userUuid = users[0].user_id;
+      }
+    }
 
     // Insert into message_history
     const [insertRes] = await db.query(
-      "INSERT INTO message_history (subject, message, sent_to, failed, userId, memberId, recipients_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO message_history (subject, message, sent_to, failed, userId, user_id, memberId, recipients_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [
         subject || 'Message from Gym', 
         message, 
         recipients.length, 
         0, 
         userId,
+        userUuid,
         memberId,
         JSON.stringify(recipientsToStore)
       ]
@@ -79,16 +93,28 @@ async function sendSingleMessage(req, res) {
       return res.status(400).json({ success: false, error: 'Phone and message are required' });
     }
 
+    // Fetch the user_id (UUID) from users table if userId is provided
+    let userUuid = null;
+    if (userId) {
+      const [users] = await db.query(
+        "SELECT user_id FROM users WHERE id = ? OR user_id = ? LIMIT 1",
+        [userId, userId]
+      );
+      if (users.length > 0) {
+        userUuid = users[0].user_id;
+      }
+    }
+
     // SIMULATE SENDING WHATSAPP/SMS MESSAGE HERE
     // For now, we will assume it succeeds immediately.
     const isSuccess = true; 
     const status = isSuccess ? 'sent' : 'failed';
 
     // Store the result in the messages collection
-    // Added memberId and ensuring userId is also stored
+    // Added memberId and ensuring userId is also stored, plus the user_id (UUID)
     const [result] = await db.query(
-      `INSERT INTO messages (userId, memberId, phone, message, type, status) VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId || null, memberId || null, phone, message, type || 'general', status]
+      `INSERT INTO messages (userId, user_id, memberId, phone, message, type, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [userId || null, userUuid || null, memberId || null, phone, message, type || 'general', status]
     );
 
     res.status(200).json({ 
