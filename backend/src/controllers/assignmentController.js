@@ -113,10 +113,14 @@ async function upsertAssignments(req, res) {
       await connection.beginTransaction();
 
       for (const a of assignments) {
+        // Resolve UUID if not provided
+        const [userUuidResult] = await connection.query('SELECT user_id FROM users WHERE id = ?', [a.userId]);
+        const finalUuid = a.userUuid || (userUuidResult[0] ? userUuidResult[0].user_id : null);
+
         // simple upsert using unique(user_id, plan_id)
         const params = [
           a.userId,
-          a.userUuid || null,
+          finalUuid,
           a.username || null,
           a.userEmail || null,
           a.planId || null,
@@ -137,6 +141,7 @@ async function upsertAssignments(req, res) {
           (user_id, user_id_uuid, username, user_email, plan_id, plan_name, plan_duration, plan_start_date, plan_end_date, plan_price, trainer_id, trainer_name, trainer_source, session_time, status)
           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
           ON DUPLICATE KEY UPDATE
+            user_id_uuid=VALUES(user_id_uuid),
             username=VALUES(username),
             user_email=VALUES(user_email),
             plan_name=VALUES(plan_name),
@@ -151,9 +156,6 @@ async function upsertAssignments(req, res) {
             status=VALUES(status),
             updated_at=CURRENT_TIMESTAMP
         `;
-
-        const [userUuidResult] = await connection.query('SELECT user_id FROM users WHERE id = ?', [a.userId]);
-        const finalUuid = a.userUuid || (userUuidResult[0] ? userUuidResult[0].user_id : null);
 
         await connection.query(sql, params);
 

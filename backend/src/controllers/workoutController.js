@@ -86,6 +86,7 @@ async function createWorkout(req, res) {
       memberName,
       memberEmail,
       memberMobile,
+      memberWeight,
       category,
       level,
       goal,
@@ -93,28 +94,51 @@ async function createWorkout(req, res) {
       days,
       status,
     } = req.body;
-    
+
     const targetUserId = userId || memberId;
-    const [userRows] = await db.query('SELECT user_id FROM users WHERE id = ?', [targetUserId]);
-    const userUuid = userRows[0] ? userRows[0].user_id : null;
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'User ID or Member ID is required' });
+    }
+
+    // Robust data lookup
+    const [userRows] = await db.query(`
+      SELECT 
+        COALESCE(u.user_id, gm.user_id) as uuid,
+        COALESCE(gm.name, u.username) as gm_name,
+        COALESCE(u.email, gm.email) as email,
+        COALESCE(u.mobile, gm.phone) as mobile,
+        gm.weight
+      FROM (SELECT ? as id) as input
+      LEFT JOIN users u ON u.id = input.id
+      LEFT JOIN gym_members gm ON gm.id = input.id OR (gm.user_id = u.user_id AND u.user_id IS NOT NULL)
+      LIMIT 1
+    `, [targetUserId]);
+
+    const uData = userRows[0] || {};
+    const finalMemberName = memberName || uData.gm_name || uData.username || 'Member';
+    const finalMemberEmail = memberEmail || uData.email || '';
+    const finalMemberMobile = memberMobile || uData.mobile || '';
+    const finalMemberWeight = memberWeight || uData.weight || '';
+    const userUuid = uData.uuid || null;
 
     const [result] = await db.query(
       `INSERT INTO workout_programs
       (trainer_id, trainer_name, trainer_source,
-       member_id, member_name, member_email, member_mobile,
+       member_id, member_name, member_email, member_mobile, member_weight,
        category, level, goal,
        duration_weeks, days, status, user_id, user_id_uuid)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         trainerId,
         trainerName || null,
         trainerSource || null,
         memberId || userId || null,
-        memberName || null,
-        memberEmail || null,
-        memberMobile || null,
+        finalMemberName,
+        finalMemberEmail,
+        finalMemberMobile,
+        finalMemberWeight,
         category || null,
-        level || null,
+        level || 'Beginner',
         goal || null,
         durationWeeks ? Number(durationWeeks) : null,
         JSON.stringify(days || {}),
@@ -128,7 +152,7 @@ async function createWorkout(req, res) {
     res.json(parseWorkout(rows[0]));
   } catch (err) {
     console.error('createWorkout error', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
 
@@ -144,6 +168,7 @@ async function updateWorkout(req, res) {
       memberName,
       memberEmail,
       memberMobile,
+      memberWeight,
       category,
       level,
       goal,
@@ -151,15 +176,37 @@ async function updateWorkout(req, res) {
       days,
       status,
     } = req.body;
-    
+
     const targetUserId = userId || memberId;
-    const [userRows] = await db.query('SELECT user_id FROM users WHERE id = ?', [targetUserId]);
-    const userUuid = userRows[0] ? userRows[0].user_id : null;
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'User ID or Member ID is required' });
+    }
+
+    // Robust data lookup
+    const [userRows] = await db.query(`
+      SELECT 
+        COALESCE(u.user_id, gm.user_id) as uuid,
+        COALESCE(gm.name, u.username) as gm_name,
+        COALESCE(u.email, gm.email) as email,
+        COALESCE(u.mobile, gm.phone) as mobile,
+        gm.weight
+      FROM (SELECT ? as id) as input
+      LEFT JOIN users u ON u.id = input.id
+      LEFT JOIN gym_members gm ON gm.id = input.id OR (gm.user_id = u.user_id AND u.user_id IS NOT NULL)
+      LIMIT 1
+    `, [targetUserId]);
+
+    const uData = userRows[0] || {};
+    const finalMemberName = memberName || uData.gm_name || uData.username || 'Member';
+    const finalMemberEmail = memberEmail || uData.email || '';
+    const finalMemberMobile = memberMobile || uData.mobile || '';
+    const finalMemberWeight = memberWeight || uData.weight || '';
+    const userUuid = uData.uuid || null;
 
     const [result] = await db.query(
       `UPDATE workout_programs SET
         trainer_id=?, trainer_name=?, trainer_source=?,
-        member_id=?, member_name=?, member_email=?, member_mobile=?,
+        member_id=?, member_name=?, member_email=?, member_mobile=?, member_weight=?,
         category=?, level=?, goal=?,
         duration_weeks=?, days=?, status=?, user_id=?, user_id_uuid=?,
         updated_at=CURRENT_TIMESTAMP
@@ -169,11 +216,12 @@ async function updateWorkout(req, res) {
         trainerName || null,
         trainerSource || null,
         memberId || userId || null,
-        memberName || null,
-        memberEmail || null,
-        memberMobile || null,
+        finalMemberName,
+        finalMemberEmail,
+        finalMemberMobile,
+        finalMemberWeight,
         category || null,
-        level || null,
+        level || 'Beginner',
         goal || null,
         durationWeeks ? Number(durationWeeks) : null,
         JSON.stringify(days || {}),
@@ -192,7 +240,7 @@ async function updateWorkout(req, res) {
     res.json(parseWorkout(rows[0]));
   } catch (err) {
     console.error('updateWorkout error', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
 

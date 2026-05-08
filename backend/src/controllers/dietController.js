@@ -92,10 +92,33 @@ async function createDiet(req, res) {
       days,
       status,
     } = req.body;
-    
+
     const targetUserId = userId || memberId;
-    const [userRows] = await db.query('SELECT user_id FROM users WHERE id = ?', [targetUserId]);
-    const userUuid = userRows[0] ? userRows[0].user_id : null;
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'User ID or Member ID is required' });
+    }
+
+    // Robust data lookup
+    const [userRows] = await db.query(`
+      SELECT 
+        COALESCE(u.user_id, gm.user_id) as uuid,
+        COALESCE(gm.name, u.username) as gm_name,
+        COALESCE(u.email, gm.email) as email,
+        COALESCE(u.mobile, gm.phone) as mobile,
+        gm.weight
+      FROM users u
+      LEFT JOIN gym_members gm ON (gm.user_id = u.user_id AND u.user_id IS NOT NULL)
+                               OR (gm.email = u.email AND u.email IS NOT NULL AND u.email != '')
+                               OR (gm.phone = u.mobile AND u.mobile IS NOT NULL AND u.mobile != '')
+      WHERE u.id = ?
+    `, [targetUserId]);
+
+    const uData = userRows[0] || {};
+    const finalMemberName = memberName || uData.gm_name || uData.username || 'Member';
+    const finalMemberEmail = memberEmail || uData.email || '';
+    const finalMemberMobile = memberMobile || uData.mobile || '';
+    const finalMemberWeight = memberWeight || uData.weight || '';
+    const userUuid = uData.uuid || null;
 
     const [result] = await db.query(
       `INSERT INTO diet_plans
@@ -108,10 +131,10 @@ async function createDiet(req, res) {
         trainerName || null,
         trainerSource || null,
         memberId || userId || null,
-        memberName || null,
-        memberEmail || null,
-        memberMobile || null,
-        memberWeight || null,
+        finalMemberName,
+        finalMemberEmail,
+        finalMemberMobile,
+        finalMemberWeight,
         title || null,
         totalCalories ? Number(totalCalories) : null,
         duration ? Number(duration) : null,
@@ -126,7 +149,7 @@ async function createDiet(req, res) {
     res.json(parseDiet(rows[0]));
   } catch (err) {
     console.error('createDiet error', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
 
@@ -150,6 +173,33 @@ async function updateDiet(req, res) {
       status,
     } = req.body;
 
+    const targetUserId = userId || memberId;
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'User ID or Member ID is required' });
+    }
+
+    // Robust data lookup
+    const [userRows] = await db.query(`
+      SELECT 
+        COALESCE(u.user_id, gm.user_id) as uuid,
+        COALESCE(gm.name, u.username) as gm_name,
+        COALESCE(u.email, gm.email) as email,
+        COALESCE(u.mobile, gm.phone) as mobile,
+        gm.weight
+      FROM users u
+      LEFT JOIN gym_members gm ON (gm.user_id = u.user_id AND u.user_id IS NOT NULL)
+                               OR (gm.email = u.email AND u.email IS NOT NULL AND u.email != '')
+                               OR (gm.phone = u.mobile AND u.mobile IS NOT NULL AND u.mobile != '')
+      WHERE u.id = ?
+    `, [targetUserId]);
+
+    const uData = userRows[0] || {};
+    const finalMemberName = memberName || uData.gm_name || uData.username || 'Member';
+    const finalMemberEmail = memberEmail || uData.email || '';
+    const finalMemberMobile = memberMobile || uData.mobile || '';
+    const finalMemberWeight = memberWeight || uData.weight || '';
+    const userUuid = uData.uuid || null;
+
     const [result] = await db.query(
       `UPDATE diet_plans SET
         trainer_id=?, trainer_name=?, trainer_source=?,
@@ -162,10 +212,10 @@ async function updateDiet(req, res) {
         trainerName || null,
         trainerSource || null,
         memberId || userId || null,
-        memberName || null,
-        memberEmail || null,
-        memberMobile || null,
-        memberWeight || null,
+        finalMemberName,
+        finalMemberEmail,
+        finalMemberMobile,
+        finalMemberWeight,
         title || null,
         totalCalories ? Number(totalCalories) : null,
         duration ? Number(duration) : null,
@@ -185,7 +235,7 @@ async function updateDiet(req, res) {
     res.json(parseDiet(rows[0]));
   } catch (err) {
     console.error('updateDiet error', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
 
