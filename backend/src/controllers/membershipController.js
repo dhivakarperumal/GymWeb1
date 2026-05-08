@@ -276,20 +276,15 @@ async function updateMembership(req, res) {
 async function getExpiringSoon(req, res) {
   try {
     const { trainerUserId } = req.query;
-    let staffId = null;
+    let trainerId = null;
 
     if (trainerUserId) {
       const [userRows] = await db.query(
-        'SELECT email, username FROM users WHERE id = ?',
+        'SELECT id FROM users WHERE id = ?',
         [trainerUserId]
       );
       if (userRows.length > 0) {
-        const u = userRows[0];
-        const [staffRows] = await db.query(
-          'SELECT id FROM staff WHERE email = ? OR username = ? LIMIT 1',
-          [u.email, u.username]
-        );
-        if (staffRows.length > 0) staffId = staffRows[0].id;
+        trainerId = trainerUserId;
       }
     }
 
@@ -301,17 +296,18 @@ async function getExpiringSoon(req, res) {
       LEFT JOIN users u ON m.userId = u.id
     `;
     
-    if (staffId) {
+    if (trainerId) {
       sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
     }
 
     // Add filter: expiring in next 5 days
     sql += ` WHERE m.status = 'active' 
+             AND m.endDate IS NOT NULL
              AND m.endDate >= CURDATE() 
              AND m.endDate <= DATE_ADD(CURDATE(), INTERVAL 5 DAY)
              ORDER BY m.endDate ASC `;
 
-    const [rows] = await db.query(sql, staffId ? [staffId] : []);
+    const [rows] = await db.query(sql, trainerId ? [trainerId] : []);
     res.json(rows);
   } catch (error) {
     console.error("Error fetching expiring memberships:", error);
@@ -325,7 +321,8 @@ async function getTodayRegistrations(req, res) {
     const [rows] = await db.query(`
       SELECT m.*, 
              COALESCE(m.userName, u.username) as username, 
-             COALESCE(m.userEmail, u.email) as email
+             COALESCE(m.userEmail, u.email) as email,
+             COALESCE(m.userPhone, u.mobile) as phone
       FROM memberships m
       LEFT JOIN users u ON m.userId = u.id
       WHERE DATE(m.createdAt) = CURDATE()
