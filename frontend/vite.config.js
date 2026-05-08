@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
 
   server: {
-    port: 5173, // ensure consistent port for proxying
+    port: 5173, 
     proxy: {
       "/api": {
         target: "https://dap.qtechx.com",
