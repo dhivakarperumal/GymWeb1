@@ -7,15 +7,6 @@ require("dotenv").config();
   try {
     const { runMigrations } = require("./src/config/migrate");
     await runMigrations();
-    
-    const db = require("./src/config/db");
-    try {
-      // Use SESSION instead of GLOBAL to avoid permission issues on shared hosting
-      await db.query("SET SESSION max_allowed_packet = 67108864"); 
-      console.log("✅ MySQL session max_allowed_packet increased to 64MB");
-    } catch (dbErr) {
-      console.warn("⚠️ Could not set max_allowed_packet session variable:", dbErr.message);
-    }
   } catch (err) {
     console.error("migration startup error:", err.message);
   }

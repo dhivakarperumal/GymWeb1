@@ -25,6 +25,17 @@ console.log("DB CONFIG:", {
 
 const pool = mysql.createPool(config);
 
+// Proper way to set session variables for every connection in a pool
+pool.on('connection', (connection) => {
+  connection.query("SET SESSION max_allowed_packet = 67108864")
+    .then(() => {
+      // console.log("✅ MySQL session max_allowed_packet increased to 64MB for new connection");
+    })
+    .catch((err) => {
+      console.warn("⚠️ Could not set max_allowed_packet on new connection:", err.message);
+    });
+});
+
 // Add error handling for the pool
 pool.on('error', (err) => {
   console.error('❌ DB Pool Error:', err.message);
