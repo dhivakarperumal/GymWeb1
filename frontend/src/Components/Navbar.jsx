@@ -43,9 +43,6 @@ const Navbar = () => {
     };
 
     fetchCartCount();
-    // Optionally refresh cart periodically
-    const interval = setInterval(fetchCartCount, 5000);
-    return () => clearInterval(interval);
   }, [user]);
 
   useEffect(() => {

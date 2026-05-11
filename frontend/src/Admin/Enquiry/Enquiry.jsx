@@ -568,14 +568,14 @@ const Enquiry = () => {
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
           <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
 
-          {/* Status Filter (Custom Dropdown to match DateRangeFilter) */}
-          <div className="relative inline-block text-left flex-1 sm:flex-none">
+          {/* Status Filter */}
+          <div className="relative inline-block text-left">
             <button
               onClick={() => setIsStatusOpen(!isStatusOpen)}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/20 transition backdrop-blur-md w-full sm:w-auto"
+              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl border border-white/10 transition-all backdrop-blur-md"
             >
-              <Clock className="text-orange-500" size={16} />
-              <span className="text-sm font-medium uppercase tracking-wide">
+              <Clock className="text-orange-500 w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-widest">
                 {statusFilter === 'all' ? 'All Status' : statusFilter}
               </span>
               <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
@@ -587,7 +587,7 @@ const Enquiry = () => {
                   className="fixed inset-0 z-[90]" 
                   onClick={() => setIsStatusOpen(false)}
                 />
-                <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#0f172a] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                   {[
                     { id: 'all', label: 'All Status', icon: <Users size={14} /> },
                     { id: 'pending', label: 'Pending', icon: <Clock size={14} /> },
@@ -601,15 +601,13 @@ const Enquiry = () => {
                         setCurrentPage(1);
                         setIsStatusOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
                         statusFilter === option.id 
-                          ? 'bg-orange-500 text-white shadow-lg' 
-                          : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                          ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
+                          : 'text-gray-400 hover:bg-white/5 hover:text-white'
                       }`}
                     >
-                      <span className={statusFilter === option.id ? 'text-white' : 'text-orange-500'}>
-                        {option.icon}
-                      </span>
+                      {option.icon}
                       {option.label}
                     </button>
                   ))}

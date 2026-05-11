@@ -7,14 +7,6 @@ require("dotenv").config();
   try {
     const { runMigrations } = require("./src/config/migrate");
     await runMigrations();
-    
-    const db = require("./src/config/db");
-    try {
-      await db.query("SET GLOBAL max_allowed_packet = 67108864"); 
-      console.log("✅ MySQL max_allowed_packet increased to 64MB");
-    } catch (dbErr) {
-      console.warn("⚠️ Could not set GLOBAL max_allowed_packet. If you get ECONNRESET, please set it manually in my.ini: ", dbErr.message);
-    }
   } catch (err) {
     console.error("migration startup error:", err.message);
   }
