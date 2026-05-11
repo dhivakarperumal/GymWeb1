@@ -1,0 +1,13 @@
+-- Migration 0065: Create messages table
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
+    memberId INT,
+    phone VARCHAR(20),
+    message TEXT,
+    type VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'pending',
+    sentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
