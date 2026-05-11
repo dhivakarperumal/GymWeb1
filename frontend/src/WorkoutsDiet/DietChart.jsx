@@ -35,16 +35,15 @@ const DietChart = () => {
     }
 
     try {
-      const res = await api.get("/diet-plans");
-      const data = res.data;
+      // Use the user's unique identifier (UUID preferred, then integer ID)
+      const identifier = user.user_id || user.id;
+      const res = await api.get(`/diet-plans?memberId=${identifier}`);
+      const userPlans = Array.isArray(res.data) ? res.data : [];
 
-      const userPlans = data.filter(
-        (item) =>
-          item.member_email &&
-          item.member_email.toLowerCase() === user.email.toLowerCase()
-      );
-
-      if (userPlans.length === 0) return;
+      if (userPlans.length === 0) {
+        setDiet(null);
+        return;
+      }
 
       const latestPlan = userPlans.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)

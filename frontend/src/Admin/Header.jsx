@@ -84,7 +84,6 @@ const Header = ({ onMenuClick }) => {
   const [activeDropdown, setActiveDropdown] = useState(null); // 'profile', 'notifications', 'orders', 'stock', 'expiry'
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const dropdownRef = useRef(null);
 
   const [alerts, setAlerts] = useState({
     orders: [],
@@ -94,7 +93,11 @@ const Header = ({ onMenuClick }) => {
   });
   const [loadingAlerts, setLoadingAlerts] = useState(false);
 
+  // Refs
+  const dropdownRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const searchInputRef = useRef(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -146,19 +149,22 @@ const Header = ({ onMenuClick }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Click outside listener
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // For all dropdowns (handled by one parent ref in Admin Header)
+      if (activeDropdown && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setActiveDropdown(null);
+      }
+      // For Search Overlay
+      if (showSearch && searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowSearch(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeDropdown, showSearch]);
 
   const totalAlerts =
     alerts.orders.length +
@@ -450,7 +456,7 @@ const Header = ({ onMenuClick }) => {
       </div>
       {/* SEARCH OVERLAY */}
       {showSearch && (
-        <div className="absolute inset-0 z-50 bg-gray-950 flex items-center px-4 sm:px-6 animate-in slide-in-from-top duration-300">
+        <div className="absolute inset-0 z-50 bg-gray-950 flex items-center px-4 sm:px-6 animate-in slide-in-from-top duration-300" ref={searchContainerRef}>
           <form onSubmit={handleSearch} className="flex-1 flex items-center gap-4 max-w-4xl mx-auto">
             <Search className="w-6 h-6 text-[#FF3131]" />
             <input

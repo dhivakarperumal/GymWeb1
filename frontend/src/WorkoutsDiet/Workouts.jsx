@@ -31,11 +31,10 @@ export default function Workouts() {
     }
 
     try {
-      const res = await api.get("/workouts");
-      const data = Array.isArray(res.data) ? res.data : [];
-      const myWorkouts = data.filter(
-        (item) => item.member_email === user.email,
-      );
+      // Use the user's unique identifier (UUID preferred, then integer ID)
+      const identifier = user.user_id || user.id;
+      const res = await api.get(`/workouts?memberId=${identifier}`);
+      const myWorkouts = Array.isArray(res.data) ? res.data : [];
       setWorkouts(myWorkouts);
       cache.workouts = myWorkouts;
     } catch (err) {

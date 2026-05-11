@@ -43,8 +43,8 @@ async function getAllDiets(req, res) {
     }
 
     if (req.query.memberId) {
-      conditions.push('(dp.member_id = ? OR dp.user_id = ?)');
-      params.push(req.query.memberId, req.query.memberId);
+      conditions.push('(dp.member_id = ? OR dp.user_id = ? OR dp.user_id_uuid = ?)');
+      params.push(req.query.memberId, req.query.memberId, req.query.memberId);
     }
 
     if (conditions.length > 0) {

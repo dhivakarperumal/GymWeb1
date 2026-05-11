@@ -66,8 +66,7 @@ const clearCheckin = () => localStorage.removeItem(CHECKIN_KEY);
 /* ------------------------------------------------------------------ */
 
 const Header = ({ onMenuClick }) => {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'notifications', 'profile'
   const [alerts, setAlerts] = useState([]);
   const [fetchingAlerts, setFetchingAlerts] = useState(false);
 
@@ -77,12 +76,28 @@ const Header = ({ onMenuClick }) => {
   const [checkinLocation, setCheckinLocation] = useState(""); // shown on button
   const [timeLeft, setTimeLeft] = useState("");               // countdown HH:MM
 
-  const searchInputRef = useRef(null);
+  const dropdownRef = useRef(null);
   const countdownRef = useRef(null);
 
   const { user, role, profileName, email, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const toggleDropdown = (name) => {
+    setActiveDropdown(prev => prev === name ? null : name);
+  };
+
+  // Click outside listener
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeDropdown && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeDropdown]);
 
   /* ---- On mount: restore check-in state from localStorage ---------- */
   useEffect(() => {
@@ -311,7 +326,7 @@ const Header = ({ onMenuClick }) => {
         </div>
 
         {/* RIGHT */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" ref={dropdownRef}>
 
           {/* ===== QUICK CHECK-IN BUTTON ===== */}
           {checkedIn ? (
@@ -367,8 +382,8 @@ const Header = ({ onMenuClick }) => {
           {/* EXPIRING PLANS ICON */}
           <div className="relative">
             <button
-              onClick={() => setShowNotifications(p => !p)}
-              className={`p-2 rounded-xl transition relative ${showNotifications ? "bg-orange-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}
+              onClick={() => toggleDropdown('notifications')}
+              className={`p-2 rounded-xl transition relative ${activeDropdown === 'notifications' ? "bg-orange-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}
               title="Member Alerts"
             >
               <Bell className="w-5 h-5" />
@@ -379,10 +394,8 @@ const Header = ({ onMenuClick }) => {
               )}
             </button>
 
-            {showNotifications && (
-              <>
-                <div onClick={() => setShowNotifications(false)} className="fixed inset-0 z-40" />
-                <div className="absolute right-0 mt-4 w-80 max-h-[450px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+            {activeDropdown === 'notifications' && (
+              <div className="absolute right-0 mt-4 w-80 max-h-[450px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
                   <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <Bell className="w-4 h-4 text-orange-500" /> Member Alerts
@@ -406,7 +419,7 @@ const Header = ({ onMenuClick }) => {
                               <Link
                                 key={idx}
                                 to="/trainer"
-                                onClick={() => setShowNotifications(false)}
+                                onClick={() => setActiveDropdown(null)}
                                 className="p-4 block border-b border-white/5 hover:bg-white/5 transition group"
                               >
                                 <div className="flex items-start gap-3">
@@ -438,7 +451,7 @@ const Header = ({ onMenuClick }) => {
                               <Link
                                 key={idx}
                                 to="/trainer"
-                                onClick={() => setShowNotifications(false)}
+                                onClick={() => setActiveDropdown(null)}
                                 className="p-4 block border-b border-white/5 hover:bg-white/5 transition group"
                               >
                                 <div className="flex items-start gap-3">
@@ -478,19 +491,18 @@ const Header = ({ onMenuClick }) => {
                   </div>
 
                   <div className="p-3 bg-white/5 border-t border-white/10 text-center">
-                    <Link to="/trainer" onClick={() => setShowNotifications(false)} className="text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
+                    <Link to="/trainer" onClick={() => setActiveDropdown(null)} className="text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
                       View My Assignments
                     </Link>
                   </div>
                 </div>
-              </>
             )}
           </div>
 
           {/* USER PROFILE */}
           <div className="relative">
             <button
-              onClick={() => setShowDropdown(p => !p)}
+              onClick={() => toggleDropdown('profile')}
               className="flex items-center gap-3 px-3 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 transition"
             >
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 flex items-center justify-center text-white font-semibold text-sm">
@@ -502,13 +514,11 @@ const Header = ({ onMenuClick }) => {
                 <p className="text-xs text-white/60">{userRole}</p>
               </div>
 
-              <ChevronDown className={`hidden sm:block w-4 h-4 text-white/70 transition ${showDropdown ? "rotate-180" : ""}`} />
+              <ChevronDown className={`hidden sm:block w-4 h-4 text-white/70 transition ${activeDropdown === 'profile' ? "rotate-180" : ""}`} />
             </button>
 
-            {showDropdown && (
-              <>
-                <div onClick={() => setShowDropdown(false)} className="fixed inset-0 z-40" />
-                <div className="absolute right-0 mt-4 w-56 bg-slate-800/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-2">
+            {activeDropdown === 'profile' && (
+              <div className="absolute right-0 mt-4 w-56 bg-slate-800/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 p-2">
                   <div className="px-3 py-2 border-b border-white/10">
                     <p className="text-sm font-semibold text-white">{userName}</p>
                     <p className="text-xs text-white/60">{userEmail}</p>
@@ -528,7 +538,6 @@ const Header = ({ onMenuClick }) => {
                     <LogOut className="w-4 h-4" /> Logout
                   </button>
                 </div>
-              </>
             )}
           </div>
         </div>
