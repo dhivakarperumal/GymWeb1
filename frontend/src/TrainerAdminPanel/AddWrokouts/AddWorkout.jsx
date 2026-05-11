@@ -351,29 +351,16 @@ const AddWorkout = () => {
     if (!file) return;
 
     try {
-      let result;
-      if (file.type.startsWith("image/")) {
-        const compressed = await imageCompression(file, {
-          maxSizeMB: 0.5,
-          maxWidthOrHeight: 800,
-        });
-        result = await imageCompression.getDataUrlFromFile(compressed);
-      } else if (file.type.startsWith("video/")) {
-        if (file.size > 20 * 1024 * 1024) {
-          toast.error("Video too large (max 20MB). Please use a URL instead.");
-          return;
-        }
-        result = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(file);
-        });
-      } else {
-        toast.error("Unsupported file type");
-        return;
-      }
+      const formData = new FormData();
+      formData.append('file', file);
 
-      updateExercise(dayKey, index, "media", result);
+      const response = await api.post('/workouts/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      updateExercise(dayKey, index, "media", response.data.url);
       toast.success("File uploaded successfully");
     } catch (err) {
       console.error(err);
@@ -852,7 +839,7 @@ const AddWorkout = () => {
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             />
                             <div className={inputClass + " flex items-center justify-center border-dashed border-2 hover:border-orange-500/50 transition"}>
-                              <span className="text-white/40 text-xs">Click to upload Image or Video (Max 20MB for video)</span>
+                              <span className="text-white/40 text-xs">Click to upload Image or Video (Max 50MB)</span>
                             </div>
                           </div>
                         )}

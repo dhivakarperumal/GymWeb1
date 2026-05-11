@@ -142,7 +142,7 @@ const FollowupEnquiry = () => {
 
     if (window.confirm("Are you sure you want to delete this record?")) {
       try {
-        await api.delete(`/enquiries/${targetId}`);
+        await api.delete(`/followups/${targetId}`);
         fetchEnquiries();
         if (showForm) setShowForm(false);
         toast.success("Record deleted successfully!");

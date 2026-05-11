@@ -57,13 +57,13 @@ async function getPlanById(req, res) {
 
 async function createPlan(req, res) {
   const {
-    name, image, description, duration, price, discount, finalPrice,
-    facilities, trainerIncluded, dietPlans, active
+    name, description, duration, price, discount, finalPrice,
+    facilities, trainerIncluded, dietPlans, active, features
   } = req.body;
 
   console.log('createPlan received:', {
-    name, image, description, duration, price, discount, finalPrice,
-    facilities: facilities?.length || 0, trainerIncluded, dietPlans: dietPlans?.length || 0, active
+    name, description, duration, price, discount, finalPrice,
+    facilities: facilities?.length || 0, trainerIncluded, dietPlans: dietPlans?.length || 0, active, features: features?.length || 0
   });
 
   try {
@@ -79,13 +79,13 @@ async function createPlan(req, res) {
 
     const [result] = await db.query(
       `INSERT INTO gym_plans
-      (plan_id, name, image, description, duration, price, discount, final_price, 
-       facilities, trainer_included, diet_plans, active)
+      (plan_id, name, description, duration, price, discount, final_price, 
+       facilities, trainer_included, diet_plans, active, features)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
-        planId, name, image || null, description, duration, Number(price), Number(discount),
+        planId, name, description, duration, Number(price), Number(discount),
         Number(finalPrice), JSON.stringify(facilities || []), trainerIncluded ? 1 : 0,
-        JSON.stringify(dietPlans || []), active !== false ? 1 : 0
+        JSON.stringify(dietPlans || []), active !== false ? 1 : 0, JSON.stringify(features || [])
       ]
     );
 
@@ -102,8 +102,8 @@ async function createPlan(req, res) {
 async function updatePlan(req, res) {
   const { id } = req.params;
   const {
-    name, image, description, duration, price, discount, finalPrice,
-    facilities, trainerIncluded, dietPlans, active
+    name, description, duration, price, discount, finalPrice,
+    facilities, trainerIncluded, dietPlans, active, features
   } = req.body;
 
   try {
@@ -115,23 +115,23 @@ async function updatePlan(req, res) {
     let params;
     
     const baseParams = [
-      name, image || null, description, duration, Number(price), Number(discount),
+      name, description, duration, Number(price), Number(discount),
       Number(finalPrice), JSON.stringify(facilities || []), trainerIncluded ? 1 : 0,
-      JSON.stringify(dietPlans || []), active !== false ? 1 : 0
+      JSON.stringify(dietPlans || []), active !== false ? 1 : 0, JSON.stringify(features || [])
     ];
 
     if (isNum) {
       query = `UPDATE gym_plans SET
-        name=?, image=?, description=?, duration=?, price=?, discount=?,
+        name=?, description=?, duration=?, price=?, discount=?,
         final_price=?, facilities=?, trainer_included=?, diet_plans=?,
-        active=?, updated_at=CURRENT_TIMESTAMP
+        active=?, features=?, updated_at=CURRENT_TIMESTAMP
        WHERE id=?`;
       params = [...baseParams, idNum];
     } else {
       query = `UPDATE gym_plans SET
-        name=?, image=?, description=?, duration=?, price=?, discount=?,
+        name=?, description=?, duration=?, price=?, discount=?,
         final_price=?, facilities=?, trainer_included=?, diet_plans=?,
-        active=?, updated_at=CURRENT_TIMESTAMP
+        active=?, features=?, updated_at=CURRENT_TIMESTAMP
        WHERE plan_id=?`;
       params = [...baseParams, id];
     }
