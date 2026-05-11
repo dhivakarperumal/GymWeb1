@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import PageHeader from "../Components/PageHeader";
 import PageContainer from "../Components/PageContainer";
 import api from "../api";
@@ -53,12 +53,12 @@ const PublicOffers = ({ offerType }) => {
 
   return (
     <div className="bg-black text-white">
-      {/* PAGE HEADER — same as Pricing, Services, etc. */}
+      {/* PAGE HEADER -- same as Pricing, Services, etc. */}
       <PageHeader
         title={isPlan ? "Plan Offers" : "Product Offers"}
         subtitle={
           isPlan
-            ? "Save big on membership plans — handpicked seasonal promotions just for you."
+            ? "Save big on membership plans -- handpicked seasonal promotions just for you."
             : "Grab the best deals on supplements & gym gear before they expire."
         }
         bgImage="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1600&q=80"
@@ -174,7 +174,7 @@ const PublicOffers = ({ offerType }) => {
                       {o.start_date && o.end_date && (
                         <li className="flex items-center gap-3 border-b border-red-500/10 pb-2">
                           <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(255,0,0,0.9)] flex-shrink-0" />
-                          Valid: {dayjs(o.start_date).format("MMM DD")} –{" "}
+                          Valid: {dayjs(o.start_date).format("MMM DD")} -{" "}
                           {dayjs(o.end_date).format("MMM DD, YYYY")}
                         </li>
                       )}
@@ -203,7 +203,7 @@ const PublicOffers = ({ offerType }) => {
           </section>
         )}
 
-        {/* BOTTOM CTA — same pattern as Pricing.jsx */}
+        {/* BOTTOM CTA -- same pattern as Pricing.jsx */}
         {!loading && displayedOffers.length > 0 && (
           <section className="py-20 text-center border-t border-red-500/20">
             <h2 className="text-3xl font-bold mb-6">

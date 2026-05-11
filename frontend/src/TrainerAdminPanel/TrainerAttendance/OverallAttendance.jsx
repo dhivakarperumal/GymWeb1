@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+﻿import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Calendar,
   Search,
@@ -155,7 +155,7 @@ const OverallAttendance = () => {
       });
       setAttendanceStates(states);
     } else {
-      // Fresh mark — reset all to absent
+      // Fresh mark -- reset all to absent
       const states = {};
       assignedMembers.forEach(m => {
         states[m.id] = false;

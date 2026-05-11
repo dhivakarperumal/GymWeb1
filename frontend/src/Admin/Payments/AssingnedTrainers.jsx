@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import api from "../../api"; // backend HTTP client
 import cache from "../../cache";
 import { X, Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
@@ -265,7 +265,7 @@ const AssingnedTrainers = () => {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-          {/* 🔍 Search Bar — Left */}
+          {/* 🔍 Search Bar -- Left */}
           <div className="relative w-full md:w-1/3">
             <Search className="absolute left-4 top-3 text-gray-400" size={20} />
             <input
@@ -277,7 +277,7 @@ const AssingnedTrainers = () => {
             />
           </div>
 
-          {/* 🎛 Filter Buttons — Right */}
+          {/* 🎛 Filter Buttons -- Right */}
           <div className="flex flex-wrap gap-3 justify-start md:justify-end items-center">
             <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
             <button

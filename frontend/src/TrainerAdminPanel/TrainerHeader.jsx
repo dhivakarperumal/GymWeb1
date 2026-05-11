@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -112,7 +112,7 @@ const Header = ({ onMenuClick }) => {
       setCheckedIn(true);
       setCheckinLocation(stored.locationName || GYM_LOCATION.name);
     } else {
-      // Cooldown expired — clear and allow next check-in
+      // Cooldown expired -- clear and allow next check-in
       clearCheckin();
     }
   }, [user?.id]);
@@ -330,7 +330,7 @@ const Header = ({ onMenuClick }) => {
 
           {/* ===== QUICK CHECK-IN BUTTON ===== */}
           {checkedIn ? (
-            /* ---- DISABLED: Already checked in — show location + countdown ---- */
+            /* ---- DISABLED: Already checked in -- show location + countdown ---- */
             <div className="hidden sm:flex items-center gap-3">
               <div className="flex flex-col items-start gap-0.5 px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 max-w-[180px]">
                 <div className="flex items-center gap-1.5">

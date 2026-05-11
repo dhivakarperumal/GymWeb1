@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search, ArrowLeft, Download, LayoutList, LayoutGrid,
@@ -40,9 +40,9 @@ const PlanHistory = () => {
   };
 
   const formatDate = (d) => {
-    if (!d) return "—";
+    if (!d) return "--";
     const date = new Date(d);
-    if (isNaN(date)) return "—";
+    if (isNaN(date)) return "--";
     return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
   };
 
@@ -119,17 +119,17 @@ const PlanHistory = () => {
       const paid = parseDecimal(m.pricePaid) + parseDecimal(m.secondPaymentPaid);
       return {
         "S.No": i + 1,
-        Member: m.userName || m.username || "—",
-        Email: m.userEmail || m.email || "—",
-        Plan: m.planName || "—",
+        Member: m.userName || m.username || "--",
+        Email: m.userEmail || m.email || "--",
+        Plan: m.planName || "--",
         "Total Price": total,
         "Initial Paid": parseDecimal(m.pricePaid),
         "Second Paid": parseDecimal(m.secondPaymentPaid),
         "Remaining": Math.max(0, total - paid),
-        "Payment Mode": m.paymentMode || "—",
+        "Payment Mode": m.paymentMode || "--",
         "Start Date": formatDate(m.startDate),
         "End Date": formatDate(m.endDate),
-        Status: m.status || "—",
+        Status: m.status || "--",
         "Created At": formatDate(m.createdAt),
       };
     });
@@ -148,7 +148,7 @@ const PlanHistory = () => {
   const getStatusBadge = (status) => {
     if (status === "active") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-500/20 text-green-400 border border-green-500/20"><CheckCircle2 size={10} /> Active</span>;
     if (status === "inactive") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20"><XCircle size={10} /> Inactive</span>;
-    return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20"><Clock size={10} /> {status || "—"}</span>;
+    return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20"><Clock size={10} /> {status || "--"}</span>;
   };
 
   return (
@@ -285,18 +285,18 @@ const PlanHistory = () => {
                   if (status === "Paid") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
                   if (status === "Pending") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20">Pending</span>;
                   if (status === "Partial") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">Partial</span>;
-                  return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20">{status || "—"}</span>;
+                  return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20">{status || "--"}</span>;
                 };
 
                 return (
                   <tr key={m.id || idx} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-all">
                     <td className="px-5 py-4 text-white/30 font-bold">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-white">{m.userName || m.username || "—"}</p>
-                      <p className="text-[10px] text-white/40">{m.userEmail || m.email || "—"}</p>
+                      <p className="font-semibold text-white">{m.userName || m.username || "--"}</p>
+                      <p className="text-[10px] text-white/40">{m.userEmail || m.email || "--"}</p>
                     </td>
-                    <td className="px-5 py-4 font-semibold text-white/80">{m.planName || "—"}</td>
-                    <td className="px-5 py-4 font-black text-orange-400">{total > 0 ? `₹${total.toFixed(2)}` : "—"}</td>
+                    <td className="px-5 py-4 font-semibold text-white/80">{m.planName || "--"}</td>
+                    <td className="px-5 py-4 font-black text-orange-400">{total > 0 ? `₹${total.toFixed(2)}` : "--"}</td>
                     <td className="px-5 py-4 font-black text-green-400">₹{parseDecimal(m.pricePaid).toFixed(2)}</td>
                     <td className="px-5 py-4 font-black text-cyan-400">₹{parseDecimal(m.secondPaymentPaid).toFixed(2)}</td>
                     <td className="px-5 py-4 font-black">
@@ -324,19 +324,19 @@ const PlanHistory = () => {
               <div key={m.id || idx} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-orange-500/30 transition-all">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <p className="font-bold text-white">{m.userName || m.username || "—"}</p>
-                    <p className="text-[10px] text-white/40">{m.userEmail || m.email || "—"}</p>
+                    <p className="font-bold text-white">{m.userName || m.username || "--"}</p>
+                    <p className="text-[10px] text-white/40">{m.userEmail || m.email || "--"}</p>
                   </div>
                   {getStatusBadge(m.status)}
                 </div>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-2 py-1 bg-orange-500/10 text-orange-400 rounded-lg text-xs font-semibold border border-orange-500/20">{m.planName || "—"}</span>
+                  <span className="px-2 py-1 bg-orange-500/10 text-orange-400 rounded-lg text-xs font-semibold border border-orange-500/20">{m.planName || "--"}</span>
                   {getPaymentBadge(m.paymentMode)}
                 </div>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="bg-white/5 p-2.5 rounded-xl text-center border border-white/5">
                     <p className="text-[9px] text-orange-400/70 uppercase font-black mb-1">Total</p>
-                    <p className="text-xs font-bold text-orange-400">{total > 0 ? `₹${total.toFixed(0)}` : "—"}</p>
+                    <p className="text-xs font-bold text-orange-400">{total > 0 ? `₹${total.toFixed(0)}` : "--"}</p>
                   </div>
                   <div className="bg-white/5 p-2.5 rounded-xl text-center border border-white/5">
                     <p className="text-[9px] text-green-400/70 uppercase font-black mb-1">Paid</p>

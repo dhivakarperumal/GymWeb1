@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiPrinter } from "react-icons/fi";
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -42,7 +42,7 @@ const normalizeStatus = (status) => {
     .toLowerCase()
     .replace(/[\s_-]+/g, "");
 
-  // ⚠️ Order matters — most specific first
+  // ⚠️ Order matters -- most specific first
   if (clean === "delivered") return "Delivered";
   if (clean === "cancelled" || clean === "canceled") return "Cancelled";
   if (clean === "shipped") return "Shipped";

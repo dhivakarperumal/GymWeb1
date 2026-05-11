@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -165,10 +165,10 @@ export default function Workouts() {
 
                                           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                                             {[
-                                              { label: 'Time', value: ex.time || '—' },
-                                              { label: 'Sets', value: ex.sets || '—' },
-                                              { label: 'Reps', value: ex.count || '—' },
-                                              { label: 'Type', value: ex.type || '—', highlight: true },
+                                              { label: 'Time', value: ex.time || '--' },
+                                              { label: 'Sets', value: ex.sets || '--' },
+                                              { label: 'Reps', value: ex.count || '--' },
+                                              { label: 'Type', value: ex.type || '--', highlight: true },
                                             ].map((info, idx) => (
                                               <div key={idx} className="bg-black/40 rounded-lg p-3 border border-red-500/20">
                                                 <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{info.label}</p>
@@ -240,19 +240,19 @@ export default function Workouts() {
                                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
                                     <div>
                                       <p>Time</p>
-                                      <p className="text-white">{ex.time || '—'}</p>
+                                      <p className="text-white">{ex.time || '--'}</p>
                                     </div>
                                     <div>
                                       <p>Sets</p>
-                                      <p className="text-white">{ex.sets || '—'}</p>
+                                      <p className="text-white">{ex.sets || '--'}</p>
                                     </div>
                                     <div>
                                       <p>Reps</p>
-                                      <p className="text-white">{ex.count || '—'}</p>
+                                      <p className="text-white">{ex.count || '--'}</p>
                                     </div>
                                     <div>
                                       <p>Type</p>
-                                      <p className="text-orange-400">{ex.type || '—'}</p>
+                                      <p className="text-orange-400">{ex.type || '--'}</p>
                                     </div>
                                   </div>
                                 </div>

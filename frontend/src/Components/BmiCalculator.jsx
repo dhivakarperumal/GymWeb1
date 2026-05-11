@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import PageContainer from "./PageContainer";
 import { useEffect } from "react";
 
 
 const activityLevels = [
   { label: "Little or no exercise (Desk job)", value: 1.2 },
-  { label: "Light exercise (1–3 days/week)", value: 1.375 },
-  { label: "Moderate exercise (3–5 days/week)", value: 1.55 },
-  { label: "Heavy exercise (6–7 days/week)", value: 1.725 },
+  { label: "Light exercise (1-3 days/week)", value: 1.375 },
+  { label: "Moderate exercise (3-5 days/week)", value: 1.55 },
+  { label: "Heavy exercise (6-7 days/week)", value: 1.725 },
   { label: "Very heavy exercise / physical job", value: 1.9 },
 ];
 
@@ -84,8 +84,8 @@ const BmiCalculator = () => {
 
                 {[
                   ["Below 18.5", "Underweight"],
-                  ["18.5 – 24.9", "Healthy"],
-                  ["25.0 – 29.9", "Overweight"],
+                  ["18.5 - 24.9", "Healthy"],
+                  ["25.0 - 29.9", "Overweight"],
                   ["30.0+", "Obese"],
                 ].map((row, i) => (
                   <div

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
   FaPlus,
   FaEdit,
@@ -137,7 +137,7 @@ const PlansAll = () => {
         className={`${glassCard} p-4 flex flex-col md:flex-row items-center justify-between gap-4`}
       >
         <div className="flex flex-col md:flex-row w-full gap-4 md:w-2/3">
-          {/* LEFT — SEARCH */}
+          {/* LEFT -- SEARCH */}
           <div className="relative w-full md:w-1/2">
             <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -148,7 +148,7 @@ const PlansAll = () => {
             />
           </div>
 
-          {/* MIDDLE — FILTER */}
+          {/* MIDDLE -- FILTER */}
           <div className="w-full md:w-1/2">
             <select
               value={filter}
@@ -162,7 +162,7 @@ const PlansAll = () => {
           </div>
         </div>
 
-        {/* RIGHT — VIEW TOGGLE */}
+        {/* RIGHT -- VIEW TOGGLE */}
         <div className="flex bg-white/10 p-1 rounded-xl border border-white/20">
           <button
             onClick={() => setViewMode("card")}

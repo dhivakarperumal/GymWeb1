@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TrainersCard from "./TrainersCard";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -93,7 +93,7 @@ export default function ServicesDetails() {
             </div>
 
             <div className="mt-20 grid lg:grid-cols-2 gap-10 items-start">
-              {/* LEFT – POINTS */}
+              {/* LEFT - POINTS */}
               <div className="space-y-4">
                 {Array.isArray(service.points) &&
   service.points.map((point, index) => (
@@ -118,7 +118,7 @@ export default function ServicesDetails() {
 ))}
               </div>
 
-              {/* RIGHT – WHY JOIN US */}
+              {/* RIGHT - WHY JOIN US */}
               <div className="relative bg-white/5 border border-white/10 rounded-3xl p-10 backdrop-blur-xl">
                 {/* Glow */}
                 <div className="absolute -inset-6 bg-red-500/20 blur-[60px] rounded-full"></div>

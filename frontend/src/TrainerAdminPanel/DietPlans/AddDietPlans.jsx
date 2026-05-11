@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -62,7 +62,7 @@ const AddDietPlans = () => {
       try {
         setLoading(true);
 
-        // Server-side filter — avoids users.id vs staff.id mismatch
+        // Server-side filter -- avoids users.id vs staff.id mismatch
         const res = await api.get(`/assignments?trainerUserId=${user.id}`);
         const data = res.data;
 

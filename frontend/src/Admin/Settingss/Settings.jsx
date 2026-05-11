@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   FaUserCog,
   FaUsers,
@@ -157,7 +157,7 @@ const Settings = () => {
         <SettingCard
           icon={<FaHistory />}
           title="Plan History"
-          desc="View full membership plan purchase history — all plans, payments, and balances across all members."
+          desc="View full membership plan purchase history -- all plans, payments, and balances across all members."
           path="/admin/plan-history"
         />
 
