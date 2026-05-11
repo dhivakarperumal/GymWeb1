@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import imageCompression from "browser-image-compression";
@@ -24,6 +24,19 @@ const workoutTypes = [
   "Cool Down",
   "Rest Day",
 ];
+
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return "";
+  let videoId = "";
+  if (url.includes("youtube.com/shorts/")) {
+    videoId = url.split("shorts/")[1].split("?")[0];
+  } else if (url.includes("youtube.com/watch?v=")) {
+    videoId = url.split("v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+};
 
 const AddWorkout = () => {
   const { user } = useAuth();
@@ -866,9 +879,13 @@ const AddWorkout = () => {
                         <div className="relative w-full aspect-video max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20">
                           {item.media.startsWith('data:video') || item.media.match(/\.(mp4|webm|ogg)$/i) || item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
                             item.media.includes('youtube.com') || item.media.includes('youtu.be') ? (
-                              <div className="absolute inset-0 flex items-center justify-center text-[10px] text-white/40">
-                                YouTube Preview Disabled in Editor
-                              </div>
+                              <iframe
+                                src={getYouTubeEmbedUrl(item.media)}
+                                className="w-full h-full border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title="YouTube preview"
+                              />
                             ) : (
                               <video src={item.media} className="w-full h-full object-cover" controls />
                             )
