@@ -236,6 +236,41 @@ export default function Workouts() {
                             <div className="space-y-3">
                               {exercises.map((ex, j) => (
                                 <div key={j} className="rounded-2xl border border-red-500/10 bg-black/40 p-3">
+
+                                  <div className="mb-3">
+                                    {ex.media ? (
+                                      <div className="w-full h-44 rounded-xl overflow-hidden border border-red-500/20 bg-black/40">
+                                        {ex.media.startsWith("data:video") ||
+                                          ex.media.match(/\.(mp4|webm|ogg)$/i) ||
+                                          ex.media.includes("youtube.com") ||
+                                          ex.media.includes("youtu.be") ? (
+                                          ex.media.includes("youtube.com") ||
+                                            ex.media.includes("youtu.be") ? (
+                                            <div className="w-full h-full flex items-center justify-center text-xs text-white/40">
+                                              <FaDumbbell size={28} className="text-red-500" />
+                                            </div>
+                                          ) : (
+                                            <video
+                                              src={ex.media}
+                                              className="w-full h-full object-cover"
+                                              controls
+                                            />
+                                          )
+                                        ) : (
+                                          <img
+                                            src={ex.media}
+                                            alt={ex.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="w-full h-44 rounded-xl bg-linear-to-br from-red-600/20 to-red-900/20 flex items-center justify-center border border-red-500/20">
+                                        <FaDumbbell size={28} className="text-red-500" />
+                                      </div>
+                                    )}
+                                  </div>
+
                                   <p className="font-semibold text-white mb-2">{ex.name}</p>
                                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
                                     <div>
