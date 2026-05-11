@@ -12,6 +12,23 @@ import { Toaster, toast } from "react-hot-toast";
 import UserEnquiry from "./Components/UserEnquiry.jsx";
 import PTFormUser from "./Components/PTFormUser.jsx";
 
+// 🔄 Helper for robust lazy loading (handles deployment version mismatches)
+const lazyWithRetry = (componentImport) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.error("Chunk load failed, reloading page...", error);
+      // Only reload once to avoid infinite loops
+      const hasReloaded = sessionStorage.getItem("chunk_reload_attempted");
+      if (!hasReloaded) {
+        sessionStorage.setItem("chunk_reload_attempted", "true");
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+
 // Lazy load components
 const Login = lazy(() => import("./Components/Login.jsx"));
 const Register = lazy(() => import("./Components/Register.jsx"));
@@ -71,7 +88,7 @@ const OrderDetails = lazy(() => import("./Admin/Orders/OrderDetails.jsx"));
 const ProductDetail = lazy(() => import("./Admin/Products/ProductDetail.jsx"));
 const MemberAttendance = lazy(() => import("./Admin/Staff/Memberattendance.jsx"));
 const BuyPlanadmin = lazy(() => import("./Admin/Plans/BuyPlan.jsx"));
-const EMIList = lazy(() => import("./Admin/Plans/EMIList.jsx"));
+const EMIList = lazyWithRetry(() => import("./Admin/Plans/EMIList.jsx"));
 const PlanHistory = lazy(() => import("./Admin/Plans/PlanHistory.jsx"));
 const MemberDetails = lazy(() => import("./Admin/Members/MemberDetails.jsx"));
 const ExpiryMembers = lazy(() => import("./Admin/Members/ExpiryMembers.jsx"));

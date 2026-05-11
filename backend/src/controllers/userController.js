@@ -48,11 +48,14 @@ async function updateUserRole(req, res) {
     const params = [];
 
     if (role) {
-      if (!['admin', 'trainer', 'staff', 'member'].includes(role)) {
+      const validRoles = ['admin', 'trainer', 'staff', 'member', 'user'];
+      if (!validRoles.includes(role)) {
         return res.status(400).json({ error: 'Invalid role' });
       }
+      // normalize legacy 'user' role to 'member'
+      const normalizedRole = role === 'user' ? 'member' : role;
       updates.push('role = ?');
-      params.push(role);
+      params.push(normalizedRole);
     }
 
     if (username) {

@@ -174,6 +174,7 @@ const UserManagement = () => {
             <option value="trainer">Trainer</option>
             <option value="staff">Staff</option>
             <option value="member">Member</option>
+            <option value="user">User</option>
           </select>
 
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={glassInput}>
@@ -226,6 +227,7 @@ const UserManagement = () => {
                         <option value="trainer">Trainer</option>
                         <option value="staff">Staff</option>
                         <option value="member">Member</option>
+                        <option value="user">User</option>
                       </select>
                       <button onClick={() => setEditingId(null)} className="text-red-400 hover:text-red-300">
                         <FaTimes size={12} />
@@ -284,30 +286,84 @@ const UserManagement = () => {
 
       {/* PAGINATION CONTROLS */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4 text-white">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
+        <div className="flex flex-col items-center gap-3 mt-4">
+          {/* Page info */}
+          <p className="text-xs text-gray-400">
+            Page <span className="text-white font-semibold">{page}</span> of{" "}
+            <span className="text-white font-semibold">{totalPages}</span>
+            &nbsp;&mdash;&nbsp;
+            <span className="text-white font-semibold">{filteredUsers.length}</span> users
+          </p>
+
+          {/* Buttons row */}
+          <div className="flex flex-wrap justify-center items-center gap-1.5 text-white">
+            {/* Prev */}
             <button
-              key={i}
-              onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 rounded ${page === i + 1 ? "bg-blue-500" : "bg-white/10 hover:bg-white/20"}`}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 text-sm font-medium transition"
             >
-              {i + 1}
+              ← Prev
             </button>
-          ))}
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50"
-          >
-            Next
-          </button>
+
+            {/* Smart page buttons */}
+            {(() => {
+              const delta = 2; // neighbours on each side
+              const range = [];
+              const pages = [];
+              let last = 0;
+
+              // build the set of page numbers to show
+              for (let i = Math.max(2, page - delta); i <= Math.min(totalPages - 1, page + delta); i++) {
+                range.push(i);
+              }
+
+              // always include first & last
+              const allPages = [1, ...range, totalPages].filter(
+                (v, i, a) => a.indexOf(v) === i // dedupe
+              );
+
+              allPages.forEach((p) => {
+                if (last && p - last > 1) {
+                  pages.push("ellipsis-" + last); // gap
+                }
+                pages.push(p);
+                last = p;
+              });
+
+              return pages.map((item) =>
+                typeof item === "string" ? (
+                  <span
+                    key={item}
+                    className="px-2 py-1 text-gray-400 text-sm select-none"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setPage(item)}
+                    className={`w-9 h-9 rounded-lg text-sm font-semibold transition
+                      ${page === item
+                        ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105"
+                        : "bg-white/10 hover:bg-white/20 text-gray-300"
+                      }`}
+                  >
+                    {item}
+                  </button>
+                )
+              );
+            })()}
+
+            {/* Next */}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 text-sm font-medium transition"
+            >
+              Next →
+            </button>
+          </div>
         </div>
       )}
 
