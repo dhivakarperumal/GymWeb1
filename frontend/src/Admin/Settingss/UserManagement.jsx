@@ -174,6 +174,7 @@ const UserManagement = () => {
             <option value="trainer">Trainer</option>
             <option value="staff">Staff</option>
             <option value="member">Member</option>
+            <option value="user">User</option>
           </select>
 
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={glassInput}>
@@ -226,6 +227,7 @@ const UserManagement = () => {
                         <option value="trainer">Trainer</option>
                         <option value="staff">Staff</option>
                         <option value="member">Member</option>
+                        <option value="user">User</option>
                       </select>
                       <button onClick={() => setEditingId(null)} className="text-red-400 hover:text-red-300">
                         <FaTimes size={12} />
