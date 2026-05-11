@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
   collection,
   setDoc,
@@ -118,7 +118,7 @@ const GymWorkoutManager = () => {
           </h2>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {/* LEFT — WORKOUTS */}
+            {/* LEFT -- WORKOUTS */}
             <div>
               <h3 className="text-lg mb-2">🏋️ Workouts</h3>
               <div className="overflow-x-auto">
@@ -162,7 +162,7 @@ const GymWorkoutManager = () => {
               </button>
             </div>
 
-            {/* RIGHT — DIET */}
+            {/* RIGHT -- DIET */}
             <div>
               <h3 className="text-lg mb-2">🥗 Diet Plan</h3>
               <div className="overflow-x-auto">

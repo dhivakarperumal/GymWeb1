@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useState, useMemo } from "react";
 import api from "../../api";
 import cache from "../../cache";
 import {
@@ -45,7 +45,7 @@ const normalizeStatus = (status) => {
     .toLowerCase()
     .replace(/[\s_-]+/g, "");
 
-  // ⚠️ Order matters — most specific first
+  // ⚠️ Order matters -- most specific first
   if (clean === "delivered") return "Delivered";
   if (clean === "cancelled" || clean === "canceled") return "Cancelled";
   if (clean === "shipped") return "Shipped";

@@ -1,4 +1,4 @@
-/* Trainer Dashboard (simplified) */
+﻿/* Trainer Dashboard (simplified) */
 import React, { useEffect, useState } from "react";
 import {
   FaUsers,
@@ -67,7 +67,7 @@ const TrainerDashboard = () => {
       try {
         setLoading(true);
 
-        /* FETCH ASSIGNMENTS — server filters by this trainer's user ID */
+        /* FETCH ASSIGNMENTS -- server filters by this trainer's user ID */
         const memberRes = await api.get(`/assignments?trainerUserId=${trainerId}`);
         const membersRaw = Array.isArray(memberRes.data)
           ? memberRes.data
@@ -80,7 +80,7 @@ const TrainerDashboard = () => {
           (m) => !m.status || (m.status || "").toLowerCase() === "active"
         );
 
-        /* remove duplicates — use gymMemberId as primary key, fall back to userId */
+        /* remove duplicates -- use gymMemberId as primary key, fall back to userId */
         const seen = new Set();
         const uniqueMembers = activeMembers.filter((m) => {
           const key = String(m.gymMemberId || m.gym_member_id || m.userId || m.user_id || m.id || "");

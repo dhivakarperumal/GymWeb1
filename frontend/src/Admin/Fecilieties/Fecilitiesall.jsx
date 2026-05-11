@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -87,7 +87,7 @@ const FacilitiesAll = () => {
       {/* HEADER & CONTROLS */}
       <div className={`${glassCard} p-4 flex flex-col md:flex-row justify-between items-center gap-4`}>
         
-        {/* LEFT — SEARCH */}
+        {/* LEFT -- SEARCH */}
         <div className="relative w-full md:w-1/3">
           <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
           <input
@@ -98,7 +98,7 @@ const FacilitiesAll = () => {
           />
         </div>
 
-        {/* RIGHT — BUTTONS & TOGGLE */}
+        {/* RIGHT -- BUTTONS & TOGGLE */}
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           
           <button

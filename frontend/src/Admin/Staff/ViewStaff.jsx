@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaMobileAlt, FaEnvelope, FaMapMarkerAlt, FaIdCard, FaUserTie } from "react-icons/fa";
 import api from "../../api";
@@ -178,7 +178,7 @@ const InfoSection = ({ title, children }) => (
 const DataRow = ({ label, value }) => (
   <div className="flex justify-between items-center py-2 border-b border-white/5">
     <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{label}</span>
-    <span className="text-sm font-black text-white">{value || "—"}</span>
+    <span className="text-sm font-black text-white">{value || "--"}</span>
   </div>
 );
 

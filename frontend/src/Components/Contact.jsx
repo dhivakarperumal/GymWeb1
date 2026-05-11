@@ -1,4 +1,4 @@
-import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
+﻿import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
 import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 import AOS from "aos";
@@ -20,7 +20,7 @@ export default function Contact() {
     <>
       <PageHeader
         title="Contact Us"
-        subtitle="Let’s build a stronger, healthier you together"
+        subtitle="Let's build a stronger, healthier you together"
         bgImage="https://images.unsplash.com/photo-1517960413843-0aee8e2b3285?auto=format&fit=crop&w=1600&q=80"
       />
       <section className="bg-[#05060c] py-24">
@@ -31,7 +31,7 @@ export default function Contact() {
               <p className="text-red-500 tracking-widest mb-4">CONTACT US</p>
 
               <h2 className="text-white text-4xl md:text-5xl font-bold leading-tight">
-                Let’s talk about
+                Let's talk about
                 <br />
                 your fitness goals
               </h2>

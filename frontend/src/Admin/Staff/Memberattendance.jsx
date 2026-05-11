@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+﻿import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Search,
   Download,
@@ -54,7 +54,7 @@ const MemberAttendance = () => {
   const [searchTerm, setSearchTerm]   = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  /* ─── Load active gym members (no trainers – role=user from /api/members) ─── */
+  /* ─── Load active gym members (no trainers - role=user from /api/members) ─── */
   useEffect(() => {
     const loadMembers = async () => {
       try {
@@ -378,7 +378,7 @@ const MemberAttendance = () => {
                           ? dayjs(r.date).format("DD MMM YYYY")
                           : r.check_in
                           ? dayjs(r.check_in).format("DD MMM YYYY")
-                          : "—"}
+                          : "--"}
                       </div>
                     </td>
                   </tr>

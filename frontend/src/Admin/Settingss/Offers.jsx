@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { 
   Plus, Search, Trash2, Edit2, Image as ImageIcon, ArrowLeft, 
   ChevronLeft, ChevronRight, History, MoreHorizontal, ChevronDown
@@ -208,7 +208,7 @@ const Offers = () => {
       {/* FILTERS BAR */}
       <div className="flex flex-wrap items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10 backdrop-blur-xl">
 
-        {/* SEARCH — left */}
+        {/* SEARCH -- left */}
         <div className="relative group w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
           <input 
@@ -362,7 +362,7 @@ const Offers = () => {
         {!loading && filteredOffers.length > 0 && (
           <div className="p-4 bg-white/5 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-white/10">
             <div className="text-[10px] text-white/30 font-black uppercase tracking-widest">
-              Showing <span className="text-white/60">{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredOffers.length)}</span> of <span className="text-white/60">{filteredOffers.length}</span> Campaigns
+              Showing <span className="text-white/60">{(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredOffers.length)}</span> of <span className="text-white/60">{filteredOffers.length}</span> Campaigns
             </div>
             <div className="flex items-center gap-3">
               <button

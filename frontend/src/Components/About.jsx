@@ -1,4 +1,4 @@
-// import { FaEnvelope } from "react-icons/fa";
+﻿// import { FaEnvelope } from "react-icons/fa";
 // import AboutAwards from "./AboutAwards";
 // import PageContainer from "./PageContainer";
 // import AOS from "aos";
@@ -222,7 +222,7 @@ export default function About() {
     <section className="bg-[#0b0c10] py-10">
       <PageContainer>
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* LEFT – AOS */}
+          {/* LEFT - AOS */}
           <div >
             <p className="text-gray-400 tracking-widest mb-4">WHO WE ARE</p>
 
@@ -238,7 +238,7 @@ export default function About() {
             </p>
           </div>
 
-          {/* RIGHT – AOS + BAR OBSERVER */}
+          {/* RIGHT - AOS + BAR OBSERVER */}
           <div
             ref={skillsRef}
             className="space-y-10"

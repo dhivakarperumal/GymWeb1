@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
   Send, Users, CheckSquare, Square, Search,
   Mail, Phone, X, CheckCircle,
@@ -38,7 +38,7 @@ const TrainerSendMessage = () => {
     const fetchAssignedMembers = async () => {
       try {
         setLoading(true);
-        // Server-side filter — avoids users.id vs staff.id mismatch
+        // Server-side filter -- avoids users.id vs staff.id mismatch
         const aRes = await api.get(`/assignments?trainerUserId=${user.id}`);
         const aData = aRes.data;
         const assignments = Array.isArray(aData) ? aData : aData.data || aData.assignments || [];

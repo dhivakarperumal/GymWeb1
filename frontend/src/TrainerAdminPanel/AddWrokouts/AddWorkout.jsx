@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import imageCompression from "browser-image-compression";
@@ -74,7 +74,7 @@ const AddWorkout = () => {
       try {
         setLoading(true);
 
-        // Server-side filter by trainer's user ID — avoids the users.id vs staff.id mismatch
+        // Server-side filter by trainer's user ID -- avoids the users.id vs staff.id mismatch
         const aRes = await api.get(`/assignments?trainerUserId=${user.id}`);
         const aData = aRes.data;
         const assignments = Array.isArray(aData)
