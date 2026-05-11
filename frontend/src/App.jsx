@@ -25,12 +25,14 @@ function App() {
     const hasLoaded = sessionStorage.getItem("app_loaded");
     if (hasLoaded) {
       setInitialLoading(false);
+      sessionStorage.removeItem("chunk_reload_attempted"); // Clear any pending reload flag
       return;
     }
 
     const timer = setTimeout(() => {
       setInitialLoading(false);
       sessionStorage.setItem("app_loaded", "true");
+      sessionStorage.removeItem("chunk_reload_attempted"); // Clear on first load too
     }, 300);
 
     return () => clearTimeout(timer);
