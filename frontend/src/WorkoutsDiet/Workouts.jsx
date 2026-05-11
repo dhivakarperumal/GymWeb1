@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -6,6 +6,19 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 import PageContainer from "../Components/PageContainer";
 import { FaDumbbell } from "react-icons/fa";
 import cache from "../cache";
+
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return "";
+  let videoId = "";
+  if (url.includes("youtube.com/shorts/")) {
+    videoId = url.split("shorts/")[1].split("?")[0];
+  } else if (url.includes("youtube.com/watch?v=")) {
+    videoId = url.split("v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+};
 
 export default function Workouts() {
   const navigate = useNavigate();
@@ -15,6 +28,7 @@ export default function Workouts() {
   const [loading, setLoading] = useState(true);
 
   const [openWorkout, setOpenWorkout] = useState(null);
+  const [playingVideo, setPlayingVideo] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -137,14 +151,24 @@ export default function Workouts() {
                                       <div className="grid gap-4 lg:grid-cols-[150px_minmax(0,1fr)]">
                                         <div className="flex items-center justify-center">
                                           {ex.media ? (
-                                            <div className="w-full aspect-square rounded-lg overflow-hidden border border-red-500/20 bg-black/40">
+                                            <div 
+                                              onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
+                                              className="w-full aspect-square rounded-lg overflow-hidden border border-red-500/20 bg-black/40 cursor-pointer hover:scale-105 transition group relative"
+                                            >
+                                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
+                                                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+                                                  <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1"></div>
+                                                </div>
+                                              </div>
                                               {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
                                                 ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
-                                                  <div className="w-full h-full flex items-center justify-center text-xs text-white/40">
-                                                    <FaDumbbell size={24} className="text-red-500" />
-                                                  </div>
+                                                  <iframe
+                                                    src={getYouTubeEmbedUrl(ex.media)}
+                                                    className="w-full h-full border-0 pointer-events-none"
+                                                    title="Exercise preview"
+                                                  />
                                                 ) : (
-                                                  <video src={ex.media} className="w-full h-full object-cover" controls />
+                                                  <video src={ex.media} className="w-full h-full object-cover" />
                                                 )
                                               ) : (
                                                 <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
@@ -236,6 +260,31 @@ export default function Workouts() {
                             <div className="space-y-3">
                               {exercises.map((ex, j) => (
                                 <div key={j} className="rounded-2xl border border-red-500/10 bg-black/40 p-3">
+                                  {ex.media && (
+                                    <div 
+                                      onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
+                                      className="w-full aspect-video rounded-xl overflow-hidden border border-red-500/20 mb-3 bg-black/60 relative cursor-pointer"
+                                    >
+                                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                         <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                                            <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
+                                         </div>
+                                      </div>
+                                      {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
+                                        ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
+                                          <iframe
+                                            src={getYouTubeEmbedUrl(ex.media)}
+                                            className="w-full h-full border-0 pointer-events-none"
+                                            title="Exercise preview"
+                                          />
+                                        ) : (
+                                          <video src={ex.media} className="w-full h-full object-cover" />
+                                        )
+                                      ) : (
+                                        <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
+                                      )}
+                                    </div>
+                                  )}
                                   <p className="font-semibold text-white mb-2">{ex.name}</p>
                                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
                                     <div>
@@ -269,6 +318,49 @@ export default function Workouts() {
           </>
         )}
       </PageContainer>
+
+      {/* VIDEO POPUP MODAL */}
+      {playingVideo && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6 lg:p-10">
+          <div 
+            className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+            onClick={() => setPlayingVideo(null)}
+          ></div>
+          
+          <div className="relative w-full max-w-4xl bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/40">
+              <h3 className="text-white font-bold tracking-tight">{playingVideo.name}</h3>
+              <button 
+                onClick={() => setPlayingVideo(null)}
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-all"
+              >
+                <span className="text-2xl font-light">&times;</span>
+              </button>
+            </div>
+
+            {/* Video Content */}
+            <div className="aspect-video w-full bg-black">
+              {playingVideo.url.includes('youtube.com') || playingVideo.url.includes('youtu.be') ? (
+                <iframe
+                  src={`${getYouTubeEmbedUrl(playingVideo.url)}?autoplay=1`}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="Video Player"
+                />
+              ) : (
+                <video 
+                  src={playingVideo.url} 
+                  className="w-full h-full object-contain" 
+                  controls 
+                  autoPlay 
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
