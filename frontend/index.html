@@ -10,8 +10,8 @@
     worker-src 'self' blob:;
     connect-src 'self' http://localhost:5000 http://localhost:5173 https://dap.qtechx.com https://mygym.qtechx.com https://api.razorpay.com https://lumberjack.razorpay.com https://*.googleapis.com https://*.gstatic.com https://*.firebaseio.com https://dhiva-deva-new-my-gym-2hs3.vercel.app https://csp.secureserver.net https://api.emailjs.com;
     frame-src 'self' data: blob: https://checkout.razorpay.com https://api.razorpay.com https://*.firebaseapp.com https://www.google.com https://www.youtube.com https://accounts.google.com;
-    img-src 'self' data: blob: https:;
-    media-src 'self' data: blob: https:;
+    img-src 'self' data: blob: https: http://localhost:5000;
+    media-src 'self' data: blob: https: http://localhost:5000;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src https://fonts.gstatic.com;
   " />
