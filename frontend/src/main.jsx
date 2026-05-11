@@ -12,6 +12,22 @@ import { Toaster, toast } from "react-hot-toast";
 import UserEnquiry from "./Components/UserEnquiry.jsx";
 import PTFormUser from "./Components/PTFormUser.jsx";
 
+// 🔄 Helper for robust lazy loading (handles deployment version mismatches)
+const lazyWithRetry = (componentImport) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.error("Chunk load failed, reloading page...", error);
+      const hasReloaded = sessionStorage.getItem("chunk_reload_attempted");
+      if (!hasReloaded) {
+        sessionStorage.setItem("chunk_reload_attempted", "true");
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+
 // Lazy load components
 const Login = lazy(() => import("./Components/Login.jsx"));
 const Register = lazy(() => import("./Components/Register.jsx"));
