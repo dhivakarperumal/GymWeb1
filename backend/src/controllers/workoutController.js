@@ -44,8 +44,18 @@ async function getAllWorkouts(req, res) {
     }
 
     if (req.query.memberId) {
-      conditions.push('(wp.member_id = ? OR wp.user_id = ? OR wp.user_id_uuid = ?)');
-      params.push(req.query.memberId, req.query.memberId, req.query.memberId);
+      conditions.push('(wp.member_id = ? OR wp.user_id = ? OR wp.user_id_uuid = ? OR wp.member_email = ? OR wp.member_mobile = ?)');
+      params.push(req.query.memberId, req.query.memberId, req.query.memberId, req.query.memberId, req.query.memberId);
+    }
+
+    if (req.query.email) {
+      conditions.push('wp.member_email = ?');
+      params.push(req.query.email);
+    }
+
+    if (req.query.mobile) {
+      conditions.push('wp.member_mobile = ?');
+      params.push(req.query.mobile);
     }
 
     if (conditions.length > 0) {
