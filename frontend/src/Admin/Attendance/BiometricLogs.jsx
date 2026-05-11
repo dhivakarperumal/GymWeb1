@@ -1,0 +1,283 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Activity, 
+  RefreshCw, 
+  Search, 
+  Calendar, 
+  Cpu, 
+  Database, 
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  User,
+  Settings
+} from 'lucide-react';
+import api from '../../api';
+import toast from 'react-hot-toast';
+
+const BiometricLogs = () => {
+  const [deviceIp, setDeviceIp] = useState('192.168.1.140');
+  const [serialNumber, setSerialNumber] = useState('BRM9202760325');
+  const [username, setUsername] = useState('Test');
+  const [password, setPassword] = useState('Test@1234');
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [dateRange, setDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 16).replace('T', ' '),
+    to: new Date().toISOString().slice(0, 16).replace('T', ' ')
+  });
+
+  const fetchExistingLogs = async () => {
+    try {
+      setLoading(true);
+      // Fetch recent biometric logs from DB
+      const res = await api.get('/attendance');
+      const biometricLogs = res.data.filter(log => log.location_name === 'Biometric Device');
+      setLogs(biometricLogs);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load logs from database');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExistingLogs();
+  }, []);
+
+  const handleSync = async () => {
+    try {
+      setSyncing(true);
+      const res = await api.post('/attendance/sync-device', {
+        deviceIp,
+        serialNumber,
+        username,
+        password,
+        fromDate: dateRange.from,
+        toDate: dateRange.to
+      });
+
+      if (res.data.success) {
+        toast.success(res.data.message);
+        fetchExistingLogs(); // Refresh the list
+      } else {
+        toast.error(res.data.error || 'Sync failed');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || 'Failed to connect to device. Check IP and network.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <Cpu className="text-orange-500 w-8 h-8" />
+            Biometric Device Integration
+          </h1>
+          <p className="text-white/60 mt-1">Manage and sync attendance logs from your physical biometric device.</p>
+        </div>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-bold shadow-lg shadow-orange-500/25 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+        >
+          {syncing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+          {syncing ? 'Syncing...' : 'Sync Device Logs'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Configuration Panel */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
+            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-orange-500" />
+              Device Configuration
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-white/50 uppercase tracking-wider ml-1">Device IP Address</label>
+                <div className="mt-1.5 relative group">
+                  <Activity className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+                  <input
+                    type="text"
+                    value={deviceIp}
+                    onChange={(e) => setDeviceIp(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    placeholder="192.168.1.140"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-white/50 uppercase tracking-wider ml-1">Serial Number</label>
+                <div className="mt-1.5 relative group">
+                  <Database className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+                  <input
+                    type="text"
+                    value={serialNumber}
+                    onChange={(e) => setSerialNumber(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    placeholder="BRM9202760325"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-white/50 uppercase tracking-wider ml-1">Username</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full mt-1.5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-white/50 uppercase tracking-wider ml-1">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full mt-1.5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                  />
+                </div>
+              </div>
+
+              <hr className="border-white/10 my-4" />
+
+              <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider ml-1">Sync Date Range</h3>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="relative group">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+                  <input
+                    type="text"
+                    value={dateRange.from}
+                    onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    placeholder="YYYY/MM/DD HH:mm"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-white/30">FROM</span>
+                </div>
+                <div className="relative group">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+                  <input
+                    type="text"
+                    value={dateRange.to}
+                    onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                    placeholder="YYYY/MM/DD HH:mm"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-white/30">TO</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-3xl p-6">
+            <div className="flex gap-4">
+              <AlertCircle className="text-orange-500 w-6 h-6 shrink-0" />
+              <div>
+                <h4 className="text-orange-500 font-bold text-sm">Device Connection Tip</h4>
+                <p className="text-white/60 text-xs mt-1 leading-relaxed">
+                  The biometric device must be on the same local network as your gym's server. 
+                  If you are using a cloud-hosted server, you may need a VPN or port forwarding configured on your local router.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Logs Table */}
+        <div className="lg:col-span-2">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full min-h-[600px]">
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Database className="w-5 h-5 text-orange-500" />
+                Synced Attendance Logs
+              </h2>
+              <div className="text-xs text-white/40 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+                {logs.length} Records Found
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto custom-scrollbar">
+              {loading ? (
+                <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-50">
+                  <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
+                  <p className="text-white font-medium">Fetching records...</p>
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center p-12 text-center">
+                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                    <Database className="w-10 h-10 text-white/20" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white/80">No Synced Logs Yet</h3>
+                  <p className="text-white/40 mt-2 max-w-xs mx-auto">
+                    Connect your device and click "Sync Device Logs" to fetch attendance data into your database.
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-white/10 text-white/50 text-[10px] uppercase font-black tracking-widest sticky top-0 z-10 backdrop-blur-md">
+                    <tr>
+                      <th className="px-6 py-4">Member</th>
+                      <th className="px-6 py-4">Timestamp</th>
+                      <th className="px-6 py-4 text-center">Status</th>
+                      <th className="px-6 py-4 text-right">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {logs.map((log) => (
+                      <tr key={log.id} className="hover:bg-white/5 transition-colors group">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center group-hover:border-orange-500/50 transition-colors">
+                              <User className="w-5 h-5 text-white/60" />
+                            </div>
+                            <div>
+                              <div className="text-white font-bold">{log.name}</div>
+                              <div className="text-[10px] text-white/40 uppercase font-bold tracking-wider">{log.role}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-white/80 font-medium">
+                            <Clock className="w-4 h-4 text-orange-500/50" />
+                            {new Date(log.check_in).toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            Present
+                          </span>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                            <span className="text-xs text-white/60 font-medium italic">Device Log</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BiometricLogs;

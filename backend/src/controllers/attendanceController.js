@@ -1,4 +1,6 @@
 const db = require('../config/db');
+const axios = require('axios');
+const xml2js = require('xml2js');
 
 /**
  * GET /api/attendance?date=YYYY-MM-DD&trainerId=...
@@ -245,10 +247,133 @@ async function biometricAttendance(req, res) {
   }
 }
 
+/**
+ * POST /api/attendance/sync-device
+ * Fetches logs from biometric device via SOAP and syncs to DB.
+ */
+async function syncBiometricLogs(req, res) {
+  try {
+    const { fromDate, toDate, serialNumber, username, password, deviceIp } = req.body;
+
+    const targetIp = deviceIp || '192.168.1.140';
+    const url = `http://${targetIp}/iclock/WebAPIService.asmx`;
+
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetTransactionsLog xmlns="http://tempuri.org/">
+      <FromDate>${fromDate || ''}</FromDate>
+      <ToDate>${toDate || ''}</ToDate>
+      <SerialNumber>${serialNumber || ''}</SerialNumber>
+      <UserName>${username || ''}</UserName>
+      <UserPassword>${password || ''}</UserPassword>
+      <strDataList></strDataList>
+    </GetTransactionsLog>
+  </soap:Body>
+</soap:Envelope>`;
+
+    console.log(`Syncing from device at ${url}...`);
+
+    let response;
+    try {
+      response = await axios.post(url, soapRequest, {
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'http://tempuri.org/GetTransactionsLog'
+        },
+        timeout: 8000 
+      });
+    } catch (netErr) {
+      console.error('Device Network Error:', netErr.message);
+      return res.status(502).json({ 
+        error: 'Device Unreachable', 
+        details: `Could not connect to ${targetIp}. Ensure the device is on and the IP is correct.`,
+        message: netErr.message 
+      });
+    }
+
+    const parser = new xml2js.Parser({ explicitArray: false, ignoreAttrs: true });
+    const result = await parser.parseStringPromise(response.data);
+
+    // Flexible path navigation for different SOAP styles
+    const body = result?.['soap:Envelope']?.['soap:Body'] || result?.['s:Envelope']?.['s:Body'] || result?.['Envelope']?.['Body'];
+    const responseBody = body?.['GetTransactionsLogResponse'];
+    const logData = responseBody?.strDataList;
+
+    if (!logData || logData === 'Balnk' || logData === 'We will Post data' || (typeof logData === 'object' && Object.keys(logData).length === 0)) {
+      return res.json({ success: true, message: 'No new logs found on device', raw: logData });
+    }
+
+    if (typeof logData !== 'string') {
+      console.log('Unexpected logData format:', logData);
+      return res.status(500).json({ error: 'Invalid data format from device', details: logData });
+    }
+
+    // Parse the log data string (assuming tab or comma separated)
+    // Common format: PIN \t Time \t Status \t VerifyMode
+    const lines = logData.split('\n').filter(line => line.trim());
+    let importedCount = 0;
+
+    for (const line of lines) {
+      const parts = line.split('\t');
+      if (parts.length < 2) continue;
+
+      const pin = parts[0].trim();
+      const timestamp = parts[1].trim(); // Format usually YYYY-MM-DD HH:mm:ss
+      
+      if (!pin || !timestamp) continue;
+
+      // 1. Find member by biometric PIN (fingerprint_id field)
+      const [members] = await db.query(
+        "SELECT id, name FROM gym_members WHERE fingerprint_id = ?",
+        [pin]
+      );
+
+      if (members.length > 0) {
+        const member = members[0];
+        const dateOnly = timestamp.split(' ')[0];
+
+        // Check if this specific log entry already exists to avoid duplicates
+        const [existing] = await db.query(
+          "SELECT id FROM attendance WHERE member_id = ? AND check_in = ?",
+          [member.id, timestamp]
+        );
+
+        if (existing.length === 0) {
+          // Insert as a new attendance record
+          // We treat device logs as check-ins if we can't determine check-out
+          // In a more complex sync, we would pair them up
+          await db.query(
+            "INSERT INTO attendance (member_id, status, `date`, check_in, location_name) VALUES (?, 'Present', ?, ?, 'Biometric Device')",
+            [member.id, dateOnly, timestamp]
+          );
+          importedCount++;
+        }
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Sync completed. Imported ${importedCount} new logs.`,
+      linesFound: lines.length,
+      imported: importedCount
+    });
+
+  } catch (err) {
+    console.error('syncBiometricLogs error:', err);
+    res.status(500).json({ 
+      error: 'Device sync failed', 
+      details: err.message,
+      help: 'Ensure the biometric device is powered on and accessible at the provided IP address.'
+    });
+  }
+}
+
 module.exports = {
   getAttendance,
   markAttendance,
   reverseGeocode,
   checkOut,
-  biometricAttendance
+  biometricAttendance,
+  syncBiometricLogs
 };

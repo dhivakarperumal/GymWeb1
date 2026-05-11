@@ -101,6 +101,8 @@ const SessionTracking = lazy(() => import("./TrainerAdminPanel/SessionTracking/S
 
 
 
+const BiometricLogs = lazyWithRetry(() => import("./Admin/Attendance/BiometricLogs.jsx"));
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -154,6 +156,8 @@ const router = createBrowserRouter([
       { path: "orders", element: <AllOrders /> },
       { path: "orders/:id", element: <OrderDetails /> },
       { path: "members", element: <Members /> },
+      { path: "member-attendance", element: <MemberAttendance /> },
+      { path: "biometric-logs", element: <BiometricLogs /> },
       { path: "member_details/:id", element: <MemberDetails /> },
       { path: "expiry-members", element: <ExpiryMembers /> },
       { path: "addmembers", element: <AddMember /> },
