@@ -10,10 +10,11 @@ require("dotenv").config();
     
     const db = require("./src/config/db");
     try {
-      await db.query("SET GLOBAL max_allowed_packet = 67108864"); 
-      console.log("✅ MySQL max_allowed_packet increased to 64MB");
+      // Use SESSION instead of GLOBAL to avoid permission issues on shared hosting
+      await db.query("SET SESSION max_allowed_packet = 67108864"); 
+      console.log("✅ MySQL session max_allowed_packet increased to 64MB");
     } catch (dbErr) {
-      console.warn("⚠️ Could not set GLOBAL max_allowed_packet. If you get ECONNRESET, please set it manually in my.ini: ", dbErr.message);
+      console.warn("⚠️ Could not set max_allowed_packet session variable:", dbErr.message);
     }
   } catch (err) {
     console.error("migration startup error:", err.message);
