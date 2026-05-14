@@ -291,7 +291,8 @@ const BuyPlanadmin = () => {
     const start = new Date(today);
     const end = new Date(start);
 
-    end.setMonth(start.getMonth() + durationMonths);
+    // Use 30 days per month for consistent plan durations
+    end.setDate(start.getDate() + (durationMonths * 30));
 
     setForm((prev) => ({
       ...prev,
