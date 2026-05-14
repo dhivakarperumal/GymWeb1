@@ -475,14 +475,15 @@ const Members = () => {
                 <th className="px-4 py-5 text-left text-sm font-semibold">Email</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Active Dates</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Start Date</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">End Date</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-400">
+                  <td colSpan="9" className="p-8 text-center text-gray-400">
                     {loading ? "Loading members..." : filtered.length === 0 ? "No records found" : "No data on this page"}
                   </td>
                 </tr>
@@ -534,24 +535,11 @@ const Members = () => {
                       </span>
                     </td>
 
-                    <td className="px-4 py-5 text-gray-400 text-xs font-medium">
-                      <div className="flex flex-col gap-0.5">
-                        {m.expiry_date ? (
-                          <div className="flex items-center gap-1.5 mb-1">
-                             <span className={`w-1.5 h-1.5 rounded-full ${dayjs().isAfter(dayjs(m.expiry_date)) ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
-                             <span className={`text-[10px] font-bold uppercase ${dayjs().isAfter(dayjs(m.expiry_date)) ? 'text-red-400' : 'text-emerald-400'}`}>
-                               {dayjs().isAfter(dayjs(m.expiry_date)) ? 'Expired' : 'Active'}
-                             </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 mb-1">
-                             <span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
-                             <span className="text-[10px] font-bold uppercase text-gray-500">No Plan</span>
-                          </div>
-                        )}
-                        <span className="text-white/60">S: {m.join_date ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}</span>
-                        <span className="text-white/60">E: {m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}</span>
-                      </div>
+                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
+                      {m.join_date ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}
+                    </td>
+                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
+                      {m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}
                     </td>
 
 
