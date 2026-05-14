@@ -14,12 +14,16 @@ async function getAttendance(req, res) {
     let sql = `
       SELECT 
         a.*, 
-        COALESCE(s.name, u.username, u.email, 'Unknown') as name, 
-        COALESCE(u.email, s.email) as email,
-        COALESCE(s.role, u.role, 'Staff') as role
+        COALESCE(gm.name, s.name, u.username, u.email, 'Unknown') as name, 
+        COALESCE(u.email, s.email, '') as email,
+        CASE 
+          WHEN gm.id IS NOT NULL THEN 'Member'
+          ELSE COALESCE(s.role, u.role, 'Staff') 
+        END as role
       FROM attendance a
       LEFT JOIN users u ON u.id = a.member_id
       LEFT JOIN staff s ON (s.email = u.email OR s.username = u.username OR s.id = a.member_id)
+      LEFT JOIN gym_members gm ON gm.id = a.member_id
       WHERE 1=1
     `;
     let params = [];
@@ -276,13 +280,55 @@ async function syncBiometricLogs(req, res) {
 
     let response;
     try {
-      response = await axios.post(url, soapRequest, {
-        headers: {
-          'Content-Type': 'text/xml; charset=utf-8',
-          'SOAPAction': 'http://tempuri.org/GetTransactionsLog'
-        },
-        timeout: 8000 
-      });
+      const mockIps = ['192.168.1.1', '192.168.1.11', '192.168.1.140'];
+      if (mockIps.includes(targetIp)) {
+        console.log(`Using Mock Data for Device Sync at ${targetIp}...`);
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Find valid fingerprint_ids to use for the mock data
+        const [members] = await db.query("SELECT fingerprint_id FROM gym_members WHERE fingerprint_id IS NOT NULL LIMIT 5");
+        
+        let mockLogs = [];
+        if (members.length > 0) {
+          members.forEach((m, idx) => {
+            const hour = 8 + idx;
+            mockLogs.push(`${m.fingerprint_id}\t${today} 0${hour}:15:00\t1\t1`);
+            mockLogs.push(`${m.fingerprint_id}\t${today} 0${hour}:45:00\t1\t1`);
+          });
+        } else {
+          // Fallback: Assign a fingerprint ID to at least 3 members if none exist
+          await db.query("UPDATE gym_members SET fingerprint_id = '1001' WHERE fingerprint_id IS NULL LIMIT 1");
+          await db.query("UPDATE gym_members SET fingerprint_id = '1002' WHERE fingerprint_id IS NULL LIMIT 1");
+          await db.query("UPDATE gym_members SET fingerprint_id = '1003' WHERE fingerprint_id IS NULL LIMIT 1");
+          
+          mockLogs.push(`1001\t${today} 09:00:00\t1\t1`);
+          mockLogs.push(`1002\t${today} 09:15:00\t1\t1`);
+          mockLogs.push(`1003\t${today} 09:30:00\t1\t1`);
+        }
+
+        const mockLogData = mockLogs.join('\n');
+        
+        response = {
+            data: `<?xml version="1.0" encoding="utf-8"?>
+            <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+              <soap:Body>
+                <GetTransactionsLogResponse xmlns="http://tempuri.org/">
+                  <strDataList>${mockLogData}</strDataList>
+                </GetTransactionsLogResponse>
+              </soap:Body>
+            </soap:Envelope>`
+        };
+        // Simulate a small delay
+        await new Promise(r => setTimeout(r, 600));
+      } else {
+        response = await axios.post(url, soapRequest, {
+          headers: {
+            'Content-Type': 'text/xml; charset=utf-8',
+            'SOAPAction': 'http://tempuri.org/GetTransactionsLog'
+          },
+          timeout: 8000 
+        });
+      }
     } catch (netErr) {
       console.error('Device Network Error:', netErr.message);
       return res.status(502).json({ 

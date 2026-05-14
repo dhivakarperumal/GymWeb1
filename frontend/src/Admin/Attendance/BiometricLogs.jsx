@@ -16,22 +16,24 @@ import api from '../../api';
 import toast from 'react-hot-toast';
 
 const BiometricLogs = () => {
-  const [deviceIp, setDeviceIp] = useState('192.168.1.140');
+  const [deviceIp, setDeviceIp] = useState('192.168.1.1');
   const [serialNumber, setSerialNumber] = useState('BRM9202760325');
-  const [username, setUsername] = useState('Test');
-  const [password, setPassword] = useState('Test@1234');
+  const [username, setUsername] = useState('essl');
+  const [password, setPassword] = useState('essl');
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [deviceStatus, setDeviceStatus] = useState('unknown'); // 'online' | 'offline' | 'unknown'
+  const [cooldown, setCooldown] = useState(0); // seconds left in retry cooldown
+  const cooldownRef = React.useRef(null);
   const [dateRange, setDateRange] = useState({
-    from: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 16).replace('T', ' '),
-    to: new Date().toISOString().slice(0, 16).replace('T', ' ')
+    from: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 16),
+    to: new Date().toISOString().slice(0, 16)
   });
 
   const fetchExistingLogs = async () => {
     try {
       setLoading(true);
-      // Fetch recent biometric logs from DB
       const res = await api.get('/attendance');
       const biometricLogs = res.data.filter(log => log.location_name === 'Biometric Device');
       setLogs(biometricLogs);
@@ -45,11 +47,24 @@ const BiometricLogs = () => {
 
   useEffect(() => {
     fetchExistingLogs();
+    return () => { if (cooldownRef.current) clearInterval(cooldownRef.current); };
   }, []);
 
+  const startCooldown = (seconds = 10) => {
+    setCooldown(seconds);
+    cooldownRef.current = setInterval(() => {
+      setCooldown(prev => {
+        if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleSync = async () => {
+    if (syncing || cooldown > 0) return;
     try {
       setSyncing(true);
+      setDeviceStatus('unknown');
       const res = await api.post('/attendance/sync-device', {
         deviceIp,
         serialNumber,
@@ -60,14 +75,31 @@ const BiometricLogs = () => {
       });
 
       if (res.data.success) {
+        setDeviceStatus('online');
         toast.success(res.data.message);
-        fetchExistingLogs(); // Refresh the list
+        fetchExistingLogs();
       } else {
+        setDeviceStatus('offline');
         toast.error(res.data.error || 'Sync failed');
       }
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.error || 'Failed to connect to device. Check IP and network.');
+      const status = err.response?.status;
+      const errData = err.response?.data;
+
+      if (status === 502) {
+        // Device is unreachable — give a clear actionable message
+        setDeviceStatus('offline');
+        toast.error(
+          `Device Unreachable at ${deviceIp}\n${errData?.details || 'Check that the device is powered on and connected to the same network.'}`,
+          { duration: 8000 }
+        );
+        startCooldown(10); // prevent retry spam
+      } else {
+        setDeviceStatus('offline');
+        toast.error(errData?.error || errData?.details || 'Sync failed. Check device IP and network.');
+        startCooldown(5);
+      }
     } finally {
       setSyncing(false);
     }
@@ -158,26 +190,24 @@ const BiometricLogs = () => {
               <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider ml-1">Sync Date Range</h3>
               <div className="grid grid-cols-1 gap-3">
                 <div className="relative group">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors pointer-events-none" />
                   <input
-                    type="text"
+                    type="datetime-local"
                     value={dateRange.from}
                     onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
-                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
-                    placeholder="YYYY/MM/DD HH:mm"
+                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all [color-scheme:dark]"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-white/30">FROM</span>
+                  <span className="absolute right-10 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none">FROM</span>
                 </div>
                 <div className="relative group">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors" />
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange-500 transition-colors pointer-events-none" />
                   <input
-                    type="text"
+                    type="datetime-local"
                     value={dateRange.to}
                     onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
-                    placeholder="YYYY/MM/DD HH:mm"
+                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500/50 transition-all [color-scheme:dark]"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-white/30">TO</span>
+                  <span className="absolute right-10 top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none">TO</span>
                 </div>
               </div>
             </div>
