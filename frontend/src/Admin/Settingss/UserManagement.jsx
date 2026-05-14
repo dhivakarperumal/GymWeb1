@@ -23,7 +23,7 @@ const UserManagement = () => {
   const { role: myRole } = useAuth();
   const [editingId, setEditingId] = useState(null);
   const [page, setPage] = useState(1);
-  const pageSize = 10; // items per page
+  const pageSize = 25; // items per page
   const navigate = useNavigate();
 
   useEffect(() => {
