@@ -160,8 +160,6 @@ const Members = () => {
         "Phone Number": "9876543210",
         "Email Address": "john@example.com",
         "Gender": "Male",
-        "Height (cm)": "175",
-        "Weight (kg)": "70",
         "BMI": "22.9",
         "Plan": "Gold Plan",
         "Duration": "3",
@@ -238,14 +236,7 @@ const Members = () => {
           }
 
           // Calculate BMI
-          const height = row["Height (cm)"] || row.Height || row.height || "";
-          const weight = row["Weight (kg)"] || row.Weight || row.weight || "";
           let bmi = row.BMI || row.bmi || "";
-          if (!bmi && height && weight) {
-            const h = Number(height) / 100;
-            const w = Number(weight);
-            if (h > 0) bmi = (w / (h * h)).toFixed(1);
-          }
 
           const payload = {
             name: name,
@@ -253,8 +244,6 @@ const Members = () => {
             phone: phone,
             email: email === "-" ? "" : email,
             gender: row.Gender || row.gender || "",
-            height: height,
-            weight: weight,
             bmi: bmi,
             plan: row.Plan || row.plan || "",
             duration: duration,
@@ -484,11 +473,9 @@ const Members = () => {
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Phone</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Email</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Height</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Weight</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">BMI</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Active Dates</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Type</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Actions</th>
               </tr>
@@ -496,7 +483,7 @@ const Members = () => {
             <tbody className="divide-y divide-white/10">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="13" className="p-8 text-center text-gray-400">
+                  <td colSpan="9" className="p-8 text-center text-gray-400">
                     {loading ? "Loading members..." : filtered.length === 0 ? "No records found" : "No data on this page"}
                   </td>
                 </tr>
@@ -507,13 +494,8 @@ const Members = () => {
                     <td className="px-4 py-5 font-medium text-white">{m.name || "N/A"}</td>
                     <td className="px-4 py-5 text-gray-300 font-medium">{m.phone || "N/A"}</td>
                     <td className="px-4 py-5 text-gray-400 text-sm font-medium">{m.email || m.user_email || "-"}</td>
-                    <td className="px-4 py-5 text-gray-400 text-sm">{m.height ? `${m.height} cm` : "-"}</td>
-                    <td className="px-4 py-5 text-gray-400 text-sm">{m.weight ? `${m.weight} kg` : "-"}</td>
-                    <td className="px-4 py-5">
-                      <span className="px-2 py-1 rounded bg-white/10 text-orange-400 font-bold text-xs">
-                        {m.bmi || "-"}
-                      </span>
-                    </td>
+
+
                     <td className="px-4 py-5">
                       {!(m.plan && m.status === "active") ? (
                         <span className="text-white/30">-</span>
@@ -551,6 +533,26 @@ const Members = () => {
                       <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
                         {m.plan || m.role || "Member"}
                       </span>
+                    </td>
+
+                    <td className="px-4 py-5 text-gray-400 text-xs font-medium">
+                      <div className="flex flex-col gap-0.5">
+                        {m.expiry_date ? (
+                          <div className="flex items-center gap-1.5 mb-1">
+                             <span className={`w-1.5 h-1.5 rounded-full ${dayjs().isAfter(dayjs(m.expiry_date)) ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                             <span className={`text-[10px] font-bold uppercase ${dayjs().isAfter(dayjs(m.expiry_date)) ? 'text-red-400' : 'text-emerald-400'}`}>
+                               {dayjs().isAfter(dayjs(m.expiry_date)) ? 'Expired' : 'Active'}
+                             </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 mb-1">
+                             <span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                             <span className="text-[10px] font-bold uppercase text-gray-500">No Plan</span>
+                          </div>
+                        )}
+                        <span className="text-white/60">S: {m.join_date ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}</span>
+                        <span className="text-white/60">E: {m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}</span>
+                      </div>
                     </td>
 
                     <td className="px-4 py-5">
@@ -717,18 +719,14 @@ const Members = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-white/10 mt-4">
+                <div className="grid grid-cols-1 gap-2 pt-4 border-t border-white/10 mt-4">
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center">
-                    <p className="text-[10px] text-gray-400 uppercase mb-1">Height</p>
-                    <p className="text-sm font-bold text-white">{m.height || "-"} <span className="text-[8px] font-normal opacity-50">cm</span></p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center">
-                    <p className="text-[10px] text-gray-400 uppercase mb-1">Weight</p>
-                    <p className="text-sm font-bold text-white">{m.weight || "-"} <span className="text-[8px] font-normal opacity-50">kg</span></p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center">
-                    <p className="text-[10px] text-gray-400 uppercase mb-1">BMI</p>
-                    <p className="text-sm font-bold text-orange-400">{m.bmi || "-"}</p>
+                    <p className="text-[10px] text-gray-400 uppercase mb-1">Validity</p>
+                    <div className="text-[10px] font-bold text-white flex flex-col">
+                      <span>{m.join_date ? dayjs(m.join_date).format("DD/MM/YY") : "-"}</span>
+                      <span className="text-gray-500">to</span>
+                      <span>{m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YY") : "-"}</span>
+                    </div>
                   </div>
                 </div>
               </div>
