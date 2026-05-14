@@ -292,8 +292,9 @@ async function syncBiometricLogs(req, res) {
         if (members.length > 0) {
           members.forEach((m, idx) => {
             const hour = 8 + idx;
-            mockLogs.push(`${m.fingerprint_id}\t${today} 0${hour}:15:00\t1\t1`);
-            mockLogs.push(`${m.fingerprint_id}\t${today} 0${hour}:45:00\t1\t1`);
+            // Provide a pair: Check-In and Check-Out
+            mockLogs.push(`${m.fingerprint_id}\t${today} 0${hour}:15:00\t0\t1`);
+            mockLogs.push(`${m.fingerprint_id}\t${today} ${hour + 1}:45:00\t1\t1`);
           });
         } else {
           // Fallback: Assign a fingerprint ID to at least 3 members if none exist
@@ -301,9 +302,12 @@ async function syncBiometricLogs(req, res) {
           await db.query("UPDATE gym_members SET fingerprint_id = '1002' WHERE fingerprint_id IS NULL LIMIT 1");
           await db.query("UPDATE gym_members SET fingerprint_id = '1003' WHERE fingerprint_id IS NULL LIMIT 1");
           
-          mockLogs.push(`1001\t${today} 09:00:00\t1\t1`);
-          mockLogs.push(`1002\t${today} 09:15:00\t1\t1`);
-          mockLogs.push(`1003\t${today} 09:30:00\t1\t1`);
+          mockLogs.push(`1001\t${today} 09:00:00\t0\t1`);
+          mockLogs.push(`1001\t${today} 17:00:00\t1\t1`);
+          mockLogs.push(`1002\t${today} 10:15:00\t0\t1`);
+          mockLogs.push(`1002\t${today} 11:45:00\t1\t1`);
+          mockLogs.push(`1003\t${today} 07:30:00\t0\t1`);
+          mockLogs.push(`1003\t${today} 09:00:00\t1\t1`);
         }
 
         const mockLogData = mockLogs.join('\n');
@@ -379,21 +383,42 @@ async function syncBiometricLogs(req, res) {
         const member = members[0];
         const dateOnly = timestamp.split(' ')[0];
 
-        // Check if this specific log entry already exists to avoid duplicates
+        // 2. Check for an existing record for this member on this date without a check-out
         const [existing] = await db.query(
-          "SELECT id FROM attendance WHERE member_id = ? AND check_in = ?",
-          [member.id, timestamp]
+          "SELECT id, check_in FROM attendance WHERE member_id = ? AND `date` = ? AND check_out IS NULL ORDER BY check_in DESC LIMIT 1",
+          [member.id, dateOnly]
         );
 
-        if (existing.length === 0) {
-          // Insert as a new attendance record
-          // We treat device logs as check-ins if we can't determine check-out
-          // In a more complex sync, we would pair them up
-          await db.query(
-            "INSERT INTO attendance (member_id, status, `date`, check_in, location_name) VALUES (?, 'Present', ?, ?, 'Biometric Device')",
-            [member.id, dateOnly, timestamp]
+        if (existing.length > 0) {
+          const checkInTime = new Date(existing[0].check_in);
+          const currentPunchTime = new Date(timestamp);
+
+          // If this punch is exactly the same as check-in, skip (duplicate)
+          if (existing[0].check_in === timestamp) continue;
+
+          // If this punch is later than check-in, treat it as Check-Out
+          if (currentPunchTime > checkInTime) {
+            await db.query(
+              "UPDATE attendance SET check_out = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+              [timestamp, existing[0].id]
+            );
+            importedCount++;
+          }
+        } else {
+          // 3. No active check-in found for today, so create a new one
+          // First, check if this EXACT punch already exists as a check_in to avoid duplicates
+          const [duplicate] = await db.query(
+            "SELECT id FROM attendance WHERE member_id = ? AND check_in = ?",
+            [member.id, timestamp]
           );
-          importedCount++;
+
+          if (duplicate.length === 0) {
+            await db.query(
+              "INSERT INTO attendance (member_id, status, `date`, check_in, location_name) VALUES (?, 'Present', ?, ?, 'Biometric Device')",
+              [member.id, dateOnly, timestamp]
+            );
+            importedCount++;
+          }
         }
       }
     }

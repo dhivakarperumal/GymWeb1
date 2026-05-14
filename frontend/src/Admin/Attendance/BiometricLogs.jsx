@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 
 const BiometricLogs = () => {
   const [deviceIp, setDeviceIp] = useState('192.168.1.1');
-  const [serialNumber, setSerialNumber] = useState('BRM9202760325');
+  const [serialNumber, setSerialNumber] = useState('DESKTOP-KM8GPUV\SQLEXPRESS');
   const [username, setUsername] = useState('essl');
   const [password, setPassword] = useState('essl');
   const [loading, setLoading] = useState(false);
@@ -26,6 +26,10 @@ const BiometricLogs = () => {
   const [deviceStatus, setDeviceStatus] = useState('unknown'); // 'online' | 'offline' | 'unknown'
   const [cooldown, setCooldown] = useState(0); // seconds left in retry cooldown
   const cooldownRef = React.useRef(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 16),
     to: new Date().toISOString().slice(0, 16)
@@ -105,6 +109,23 @@ const BiometricLogs = () => {
     }
   };
 
+  // Filter and Paginate logs
+  const filteredLogs = logs.filter(log => 
+    log.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const paginatedLogs = filteredLogs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -130,10 +151,24 @@ const BiometricLogs = () => {
         {/* Configuration Panel */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-orange-500" />
-              Device Configuration
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-orange-500" />
+                Device Configuration
+              </h2>
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
+                deviceStatus === 'online' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                deviceStatus === 'offline' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                'bg-white/5 text-white/40 border-white/10'
+              }`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  deviceStatus === 'online' ? 'bg-emerald-500 animate-pulse' :
+                  deviceStatus === 'offline' ? 'bg-red-500' :
+                  'bg-white/20'
+                }`} />
+                {deviceStatus}
+              </div>
+            </div>
             
             <div className="space-y-4">
               <div>
@@ -235,8 +270,23 @@ const BiometricLogs = () => {
                 <Database className="w-5 h-5 text-orange-500" />
                 Synced Attendance Logs
               </h2>
-              <div className="text-xs text-white/40 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-                {logs.length} Records Found
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <input
+                    type="text"
+                    placeholder="Search member..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-white outline-none focus:ring-1 focus:ring-orange-500/50 w-48 transition-all"
+                  />
+                </div>
+                <div className="text-xs text-white/40 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+                  {filteredLogs.length} Records Found
+                </div>
               </div>
             </div>
 
@@ -260,15 +310,20 @@ const BiometricLogs = () => {
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-white/10 text-white/50 text-[10px] uppercase font-black tracking-widest sticky top-0 z-10 backdrop-blur-md">
                     <tr>
+                      <th className="px-6 py-4 text-center w-16">S.No</th>
                       <th className="px-6 py-4">Member</th>
-                      <th className="px-6 py-4">Timestamp</th>
+                      <th className="px-6 py-4">Check In</th>
+                      <th className="px-6 py-4">Check Out</th>
                       <th className="px-6 py-4 text-center">Status</th>
                       <th className="px-6 py-4 text-right">Source</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {logs.map((log) => (
+                    {paginatedLogs.map((log, index) => (
                       <tr key={log.id} className="hover:bg-white/5 transition-colors group">
+                        <td className="px-6 py-5 text-center text-white/30 text-xs font-bold">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </td>
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center group-hover:border-orange-500/50 transition-colors">
@@ -282,8 +337,14 @@ const BiometricLogs = () => {
                         </td>
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-2 text-white/80 font-medium">
-                            <Clock className="w-4 h-4 text-orange-500/50" />
-                            {new Date(log.check_in).toLocaleString()}
+                            <Clock className="w-4 h-4 text-emerald-500/50" />
+                            {log.check_in ? new Date(log.check_in).toLocaleString() : '---'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-white/80 font-medium">
+                            <Clock className="w-4 h-4 text-red-500/50" />
+                            {log.check_out ? new Date(log.check_out).toLocaleString() : '---'}
                           </div>
                         </td>
                         <td className="px-6 py-5 text-center">
@@ -303,6 +364,46 @@ const BiometricLogs = () => {
                 </table>
               )}
             </div>
+
+            {/* Pagination Footer */}
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-white/10 bg-white/5 flex items-center justify-between">
+                <div className="text-xs text-white/40">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of {filteredLogs.length} entries
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 bg-white/5 border border-white/10 rounded-lg text-white disabled:opacity-30 hover:bg-white/10 transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4 rotate-180" />
+                  </button>
+                  <div className="flex gap-1">
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => handlePageChange(i + 1)}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                          currentPage === i + 1 
+                            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
+                            : 'bg-white/5 text-white/40 hover:bg-white/10'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 bg-white/5 border border-white/10 rounded-lg text-white disabled:opacity-30 hover:bg-white/10 transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
