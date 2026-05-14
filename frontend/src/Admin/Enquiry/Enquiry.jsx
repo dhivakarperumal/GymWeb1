@@ -16,7 +16,7 @@ const Enquiry = () => {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 25;
   const [showForm, setShowForm] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [viewMode, setViewMode] = useState('table');
