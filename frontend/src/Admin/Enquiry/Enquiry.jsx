@@ -259,6 +259,8 @@ const Enquiry = () => {
   const handleExcelImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    // Reset input so same file can be re-imported
+    e.target.value = "";
 
     const reader = new FileReader();
     reader.onload = async (evt) => {
@@ -268,91 +270,149 @@ const Enquiry = () => {
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        console.log("Excel Data:", jsonData);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        console.log("Excel Data rows:", jsonData.length);
 
-        let successCount = 0;
-        let failCount = 0;
+        if (jsonData.length === 0) {
+          toast.error("The Excel file is empty or has no valid rows.");
+          setLoading(false);
+          return;
+        }
+
+        // Build a case-insensitive, trimmed key lookup for each row
+        const normalizeRow = (row) => {
+          const normalized = {};
+          for (const key of Object.keys(row)) {
+            normalized[key.trim().toLowerCase()] = row[key];
+          }
+          return normalized;
+        };
+
+        // Helper: get value from normalized row trying multiple key variants
+        const getField = (norm, ...keys) => {
+          for (const k of keys) {
+            const val = norm[k.toLowerCase()];
+            if (val !== undefined && val !== null && val !== "") return val;
+          }
+          return "";
+        };
+
+        // Helper: extract clean 10-digit phone from any format
+        const extractPhone = (raw) => {
+          if (!raw && raw !== 0) return "";
+          // Strip all non-digits, then take last 10 digits (handles +91, 0 prefix, spaces, dashes)
+          const digits = raw.toString().replace(/\D/g, '');
+          if (digits.length >= 10) return digits.slice(-10);
+          return digits; // shorter than 10 — will fail validation below
+        };
+
+        // Pre-build a set of existing phones/emails for fast duplicate check
+        const existingPhones = new Set(enquiries.map(en => en.phone).filter(Boolean));
+        const existingEmails = new Set(enquiries.map(en => en.email?.toLowerCase()).filter(Boolean));
+
         const errors = [];
+        const validPayloads = [];
 
+        // --- Phase 1: validate all rows first ---
         for (const row of jsonData) {
-          // Skip rows that are essentially empty
           if (!row || Object.keys(row).length === 0) continue;
 
-          // Broad header mapping
-          const name = (row["Full Name"] || row.Name || row["Customer Name"] || row.name || row["customer name"] || "Unknown").toString().trim();
-          const email = (row["Email Address"] || row.Email || row.email || row["email address"] || "").toString().trim();
-          const rawPhone = row["Phone Number"] || row.Phone || row["Mobile Number"] || row.Mobile || row.phone || row.mobile || row["contact number"] || "";
-          const phone = rawPhone.toString().replace(/\D/g, '').slice(-10); // Take last 10 digits
+          const norm = normalizeRow(row);
 
-          if (name === "Unknown" || !phone || phone.length < 10) {
-            errors.push({ 
-              name: name === "Unknown" ? "Row with missing name" : name, 
-              reason: !phone ? "Missing Phone" : phone.length < 10 ? "Invalid Phone" : "Missing Name" 
-            });
-            failCount++;
+          const name = getField(norm,
+            "full name", "name", "customer name", "client name",
+            "member name", "contact name", "first name"
+          ).toString().trim();
+
+          const email = getField(norm,
+            "email", "email address", "e-mail", "mail"
+          ).toString().trim().toLowerCase();
+
+          const phone = extractPhone(getField(norm,
+            "phone", "phone number", "mobile", "mobile number",
+            "contact number", "cell", "cell number", "contact", "ph", "mob"
+          ));
+
+          if (!name) {
+            errors.push({ name: "Row with missing name", reason: "Missing Name" });
+            continue;
+          }
+          if (!phone || phone.length !== 10) {
+            errors.push({ name, reason: !phone ? "Missing Phone" : `Invalid Phone: ${phone} (need 10 digits)` });
+            continue;
+          }
+          if (existingPhones.has(phone)) {
+            errors.push({ name, reason: `Duplicate phone: ${phone}` });
+            continue;
+          }
+          if (email && existingEmails.has(email)) {
+            errors.push({ name, reason: `Duplicate email: ${email}` });
             continue;
           }
 
-          // Check for duplicates in existing enquiries list
-          const isDuplicate = enquiries.some(e =>
-            (email && e.email?.toLowerCase() === email.toLowerCase()) ||
-            (phone && e.phone === phone)
-          );
+          // Track to avoid duplicates within same import batch
+          existingPhones.add(phone);
+          if (email) existingEmails.add(email);
 
-          if (isDuplicate) {
-            errors.push({ name: name, reason: "Duplicate email or phone" });
-            failCount++;
-            continue;
-          }
-
-          const payload = {
-            name: name,
-            email: email,
-            phone: phone,
-            subject: row.Subject || row.subject || "Inquiry",
-            message: row.Message || row.message || row.Notes || row.notes || "",
-            height: row.Height || row.height || "",
-            weight: row.Weight || row.weight || "",
-            bmi: row.BMI || row.bmi || "",
-            dob: excelDateToJSDate(row.DOB || row["Date of Birth"] || row.dob || row["date of birth"]),
-            age: row.Age || row.age || "",
-            address: row.Address || row.address || "",
-            employer: row.Employer || row.employer || "",
-            occupation: row.Occupation || row.occupation || "",
-            emergency_contact_name: row["Emergency Contact Name"] || row.emergency_contact_name || row["emergency contact"] || "",
-            emergency_contact_relationship: row["Emergency Relationship"] || row.emergency_contact_relationship || "",
-            emergency_contact_address: row["Emergency Address"] || row.emergency_contact_address || "",
-            emergency_contact_phone_home: (row["Emergency Home Phone"] || row.emergency_contact_phone_home || row["emergency phone"] || "").toString().replace(/\D/g, '').slice(-10),
-            emergency_contact_phone_work: (row["Emergency Work Phone"] || row.emergency_contact_phone_work || "").toString().replace(/\D/g, '').slice(-10),
-            fitness_goal: row["Fitness Goal"] || row.fitness_goal || row["fitness goal"] || "",
-            blood_group: row["Blood Group"] || row.blood_group || row["blood group"] || "",
-            gender: row.Gender || row.gender || "",
+          validPayloads.push({
+            name,
+            email,
+            phone,
+            subject: getField(norm, "subject") || "Inquiry",
+            message: getField(norm, "message", "notes", "note", "remarks") || "",
+            height: getField(norm, "height") || "",
+            weight: getField(norm, "weight") || "",
+            bmi: getField(norm, "bmi") || "",
+            dob: excelDateToJSDate(getField(norm, "dob", "date of birth", "birth date", "birthdate") || null),
+            age: getField(norm, "age") || "",
+            address: getField(norm, "address") || "",
+            employer: getField(norm, "employer", "company") || "",
+            occupation: getField(norm, "occupation", "job", "profession") || "",
+            emergency_contact_name: getField(norm, "emergency contact name", "emergency name", "emergency contact") || "",
+            emergency_contact_relationship: getField(norm, "emergency relationship", "relationship") || "",
+            emergency_contact_address: getField(norm, "emergency address") || "",
+            emergency_contact_phone_home: extractPhone(getField(norm, "emergency home phone", "emergency phone", "emergency mobile")),
+            emergency_contact_phone_work: extractPhone(getField(norm, "emergency work phone")),
+            fitness_goal: getField(norm, "fitness goal", "goal") || "",
+            blood_group: getField(norm, "blood group", "blood type", "bloodgroup") || "",
+            gender: getField(norm, "gender", "sex") || "",
             status: "pending",
             termsAccepted: true
-          };
+          });
+        }
 
-          try {
-            await api.post('/enquiries', payload);
-            successCount++;
-          } catch (err) {
-            const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message;
-            errors.push({ name: name, reason: errorMsg });
-            failCount++;
-          }
+        // --- Phase 2: batch import valid rows (10 concurrent at a time) ---
+        let successCount = 0;
+        const BATCH_SIZE = 10;
+        for (let i = 0; i < validPayloads.length; i += BATCH_SIZE) {
+          const batch = validPayloads.slice(i, i + BATCH_SIZE);
+          const results = await Promise.allSettled(batch.map(p => api.post('/enquiries', p)));
+          results.forEach((result, idx) => {
+            if (result.status === 'fulfilled') {
+              successCount++;
+            } else {
+              const err = result.reason;
+              const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message || 'Server error';
+              errors.push({ name: batch[idx].name, reason: errorMsg });
+            }
+          });
         }
 
         setImportErrors(errors);
+        const failCount = errors.length;
         if (successCount > 0) {
-          toast.success(`Successfully imported ${successCount} enquiries!`);
+          toast.success(`✅ Imported ${successCount} of ${jsonData.length} rows successfully!`);
         }
         if (failCount > 0) {
-          toast.error(`Failed to import ${failCount} enquiries. See summary below.`, { duration: 5000 });
+          toast.error(`⚠️ ${failCount} row(s) failed — see summary above.`, { duration: 6000 });
+        }
+        if (successCount === 0 && failCount === 0) {
+          toast.error("No valid rows found in the file.");
         }
         fetchEnquiries();
       } catch (err) {
         console.error(err);
-        toast.error("Failed to read Excel file");
+        toast.error("Failed to read Excel file. Ensure it is a valid .xlsx or .xls file.");
       } finally {
         setLoading(false);
       }
@@ -364,27 +424,59 @@ const Enquiry = () => {
     const template = [
       {
         "Customer Name": "Jane Doe",
-        "Phone": "9876543211",
+        "Phone": "9876543210",
         "Email": "jane@example.com",
         "Gender": "Female",
         "Date of Birth": "1998-10-20",
-        "Address": "456 Fitness Ave, New York",
+        "Age": "25",
+        "Address": "456 Fitness Ave, Chennai",
         "Height": "165",
         "Weight": "60",
+        "BMI": "22.0",
+        "Blood Group": "A+",
         "Fitness Goal": "Weight Loss & Toning",
+        "Subject": "Gym Membership Enquiry",
+        "Message": "Interested in joining the gym",
+        "Employer": "Tech Global",
+        "Occupation": "Designer",
         "Emergency Contact Name": "John Doe",
         "Emergency Relationship": "Spouse",
         "Emergency Home Phone": "9998887776",
-        "Blood Group": "A+",
-        "Employer": "Tech Global",
-        "Occupation": "Designer"
+        "Emergency Work Phone": "",
+        "Emergency Address": "456 Fitness Ave, Chennai"
+      },
+      {
+        "Customer Name": "Ravi Kumar",
+        "Phone": "9123456780",
+        "Email": "ravi@example.com",
+        "Gender": "Male",
+        "Date of Birth": "1995-03-15",
+        "Age": "29",
+        "Address": "12 Main Street, Coimbatore",
+        "Height": "175",
+        "Weight": "80",
+        "BMI": "26.1",
+        "Blood Group": "B+",
+        "Fitness Goal": "Muscle Building",
+        "Subject": "Personal Training",
+        "Message": "Looking for a personal trainer",
+        "Employer": "Infosys",
+        "Occupation": "Software Engineer",
+        "Emergency Contact Name": "Priya Kumar",
+        "Emergency Relationship": "Wife",
+        "Emergency Home Phone": "9876501234",
+        "Emergency Work Phone": "",
+        "Emergency Address": "12 Main Street, Coimbatore"
       }
     ];
     const ws = XLSX.utils.json_to_sheet(template);
+    // Auto-fit column widths
+    const colWidths = Object.keys(template[0]).map(key => ({ wch: Math.max(key.length + 4, 20) }));
+    ws['!cols'] = colWidths;
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Enquiry_Template");
     XLSX.writeFile(wb, "Gym_Enquiry_Import_Template.xlsx");
-    toast.success("Enquiry Template Downloaded!");
+    toast.success("Template with all fields downloaded!");
   };
 
   const updateStatus = async (id, status) => {
