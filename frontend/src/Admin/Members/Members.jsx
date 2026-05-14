@@ -472,18 +472,19 @@ const Members = () => {
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">S No</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Phone</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Email</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
+                {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Start Date</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">End Date</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Remaining</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="p-8 text-center text-gray-400">
+                  <td colSpan="10" className="p-8 text-center text-gray-400">
                     {loading ? "Loading members..." : filtered.length === 0 ? "No records found" : "No data on this page"}
                   </td>
                 </tr>
@@ -493,8 +494,41 @@ const Members = () => {
                     <td className="px-4 py-5 font-medium text-gray-400">{startIndex + index + 1}</td>
                     <td className="px-4 py-5 font-medium text-white">{m.name || "N/A"}</td>
                     <td className="px-4 py-5 text-gray-300 font-medium">{m.phone || "N/A"}</td>
-                    <td className="px-4 py-5 text-gray-400 text-sm font-medium">{m.email || m.user_email || "-"}</td>
+                    {/* <td className="px-4 py-5 text-gray-400 text-sm font-medium">{m.email || m.user_email || "-"}</td> */}
 
+
+                    <td className="px-4 py-5">
+                      <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
+                        {m.plan || m.role || "Member"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
+                      {m.join_date ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}
+                    </td>
+                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
+                      {m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}
+                    </td>
+
+                    <td className="px-4 py-5">
+                      {(() => {
+                        if (!m.expiry_date) return <span className="text-white/30">-</span>;
+                        const days = dayjs(m.expiry_date).diff(dayjs(), "day");
+                        if (days < 0) {
+                          return (
+                            <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">
+                              Expired
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
+                            days > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"
+                          }`}>
+                            {days} Days
+                          </span>
+                        );
+                      })()}
+                    </td>
 
                     <td className="px-4 py-5">
                       {!(m.plan && m.status === "active") ? (
@@ -527,19 +561,6 @@ const Members = () => {
                           </span>
                         </button>
                       )}
-                    </td>
-
-                    <td className="px-4 py-5">
-                      <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
-                        {m.plan || m.role || "Member"}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {m.join_date ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}
-                    </td>
-                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}
                     </td>
 
 
