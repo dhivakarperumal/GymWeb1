@@ -512,8 +512,9 @@ const Members = () => {
                     <td className="px-4 py-5">
                       {(() => {
                         if (!m.expiry_date) return <span className="text-white/30">-</span>;
-                        const days = dayjs(m.expiry_date).diff(dayjs(), "day");
-                        if (days < 0) {
+                        // Use startOf('day') for both to ensure we count full days and add +1 for inclusive counting
+                        const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
+                        if (days <= 0) {
                           return (
                             <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">
                               Expired
@@ -524,7 +525,7 @@ const Members = () => {
                           <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
                             days > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"
                           }`}>
-                            {days} Days
+                            {days} {days === 1 ? 'Day' : 'Days'}
                           </span>
                         );
                       })()}
@@ -715,7 +716,7 @@ const Members = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 pt-4 border-t border-white/10 mt-4">
+                <div className="grid grid-cols-2 gap-2 pt-4 border-t border-white/10 mt-4">
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center">
                     <p className="text-[10px] text-gray-400 uppercase mb-1">Validity</p>
                     <div className="text-[10px] font-bold text-white flex flex-col">
@@ -723,6 +724,21 @@ const Members = () => {
                       <span className="text-gray-500">to</span>
                       <span>{m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YY") : "-"}</span>
                     </div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center flex flex-col justify-center items-center">
+                    <p className="text-[10px] text-gray-400 uppercase mb-1">Remaining</p>
+                    {(() => {
+                      if (!m.expiry_date) return <span className="text-white/30">-</span>;
+                      const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
+                      if (days <= 0) {
+                        return <span className="text-red-400 text-[10px] font-bold uppercase">Expired</span>;
+                      }
+                      return (
+                        <span className={`text-[10px] font-bold uppercase ${days > 10 ? "text-emerald-400" : "text-orange-400"}`}>
+                          {days} {days === 1 ? 'Day' : 'Days'}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

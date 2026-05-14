@@ -118,7 +118,7 @@ const ExpiryMembers = () => {
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMembers.map((m) => {
-            const daysLeft = dayjs(m.expiry_date).diff(dayjs(), 'day');
+            const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
             const isCritical = daysLeft <= 7;
 
             return (
@@ -133,8 +133,8 @@ const ExpiryMembers = () => {
                       <p className="text-white/30 text-[10px] uppercase font-black tracking-widest">ID: #{m.id}</p>
                     </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${isCritical ? 'bg-red-500/20 text-red-500' : 'bg-orange-500/20 text-orange-400'}`}>
-                    {daysLeft} Days Left
+                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${isCritical && daysLeft > 0 ? 'bg-red-500/20 text-red-500' : daysLeft <= 0 ? 'bg-gray-500/20 text-gray-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                    {daysLeft > 0 ? `${daysLeft} Days Left` : 'Expired'}
                   </div>
                 </div>
 
@@ -185,7 +185,7 @@ const ExpiryMembers = () => {
             </thead>
             <tbody className="divide-y divide-white/5 text-gray-200">
               {filteredMembers.map((m) => {
-                const daysLeft = dayjs(m.expiry_date).diff(dayjs(), 'day');
+                const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
                 const isCritical = daysLeft <= 7;
                 return (
                   <tr key={m.id} className="hover:bg-white/[0.03] transition-colors group">
@@ -203,8 +203,8 @@ const ExpiryMembers = () => {
                     <td className="px-6 py-4 font-medium">{m.plan || 'N/A'}</td>
                     <td className="px-6 py-4">{dayjs(m.expiry_date).format('DD MMM, YYYY')}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${isCritical ? 'bg-red-500/20 text-red-500' : 'bg-orange-500/20 text-orange-500'}`}>
-                        {daysLeft} Days
+                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${isCritical && daysLeft > 0 ? 'bg-red-500/20 text-red-500' : daysLeft <= 0 ? 'bg-gray-500/20 text-gray-400' : 'bg-orange-500/20 text-orange-500'}`}>
+                        {daysLeft > 0 ? `${daysLeft} Days` : 'Expired'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
