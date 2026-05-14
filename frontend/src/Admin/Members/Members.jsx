@@ -476,14 +476,13 @@ const Members = () => {
                 <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Active Dates</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Type</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="p-8 text-center text-gray-400">
+                  <td colSpan="8" className="p-8 text-center text-gray-400">
                     {loading ? "Loading members..." : filtered.length === 0 ? "No records found" : "No data on this page"}
                   </td>
                 </tr>
@@ -555,14 +554,7 @@ const Members = () => {
                       </div>
                     </td>
 
-                    <td className="px-4 py-5">
-                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${m.source === "users"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : "bg-purple-500/20 text-purple-400"
-                        }`}>
-                        {m.source === "users" ? "User" : "Gym Member"}
-                      </span>
-                    </td>
+
 
                     <td className="px-4 py-5 flex gap-2">
                       <button
@@ -681,12 +673,7 @@ const Members = () => {
                           ₹{m.price}
                         </span>
                       )}
-                      <span className={`px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold ring-1 ${m.source === "users"
-                        ? "bg-blue-500/20 text-blue-400 ring-blue-500/30"
-                        : "bg-purple-500/20 text-purple-400 ring-purple-500/30"
-                        }`}>
-                        {m.source === "users" ? "User" : "Gym Member"}
-                      </span>
+
 
                     </div>
                     <div className="flex items-center gap-2 pt-1">
