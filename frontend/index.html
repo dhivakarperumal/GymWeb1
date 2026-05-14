@@ -18,6 +18,7 @@
   <link rel="icon" type="image/png" href="/images/logo-dark.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DAP Fitness Studio</title>
+  <script type="module" src="/src/main.jsx"></script>
 </head>
 
 <body>
@@ -49,7 +50,15 @@
       <div class="loader-bar"><div class="loader-prog"></div></div>
     </div>
   </div>
-  <script type="module" src="/src/main.jsx"></script>
+  <script>
+    (function () {
+      const { pathname, search, hash } = window.location;
+      if (!hash && pathname !== "/" && pathname !== "/index.html") {
+        window.location.replace("/#" + pathname + search);
+      }
+    })();
+  </script>
+
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </body>
 

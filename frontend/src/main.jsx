@@ -2,7 +2,7 @@ import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import Home from "./Home/Home.jsx";
 import { AuthProvider } from "./PrivateRouter/AuthContext.jsx";
 import PrivateRoute from "./PrivateRouter/PrivateRouter.jsx";
@@ -119,7 +119,7 @@ const SessionTracking = lazy(() => import("./TrainerAdminPanel/SessionTracking/S
 
 const BiometricLogs = lazyWithRetry(() => import("./Admin/Attendance/BiometricLogs.jsx"));
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,
