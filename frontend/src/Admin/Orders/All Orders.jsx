@@ -142,7 +142,7 @@ const AllOrders = () => {
 
   /* PAGINATION */
   const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 10;
+  const ordersPerPage = 25;
 
   /* ================= LOAD ================= */
   useEffect(() => {

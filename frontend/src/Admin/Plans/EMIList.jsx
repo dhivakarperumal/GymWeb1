@@ -53,7 +53,7 @@ const EMIList = () => {
   const [importErrors, setImportErrors] = useState([]);
   const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 25;
 
   useEffect(() => {
     const fetchData = async () => {
