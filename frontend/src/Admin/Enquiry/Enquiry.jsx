@@ -516,11 +516,11 @@ const Enquiry = () => {
         status: 'pending',
         gender: enquiry.gender || null,
         // supply password explicitly so frontend knows credentials
-        password: enquiry.phone || ''
+        password: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : (enquiry.phone || '')
       };
       // tell admin what the temporary password is
       await api.post('/members', memberData);
-      toast.success(`Member created successfully. Login using phone number as both identifier and password.`);
+      toast.success(`Member created successfully. Login using Date of Birth (YYYY-MM-DD) as password.`);
       await updateStatus(enquiry.id, 'completed');
     } catch (err) {
       console.error('Error moving to members:', err);
