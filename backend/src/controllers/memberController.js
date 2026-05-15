@@ -314,12 +314,12 @@ async function createMember(req, res) {
     const numBmi = bmi != null && !isNaN(bmi) ? Number(bmi) : null;
     const numDuration = duration != null && !isNaN(duration) ? Number(duration) : null;
 
-    // generate member_id using max numeric suffix, more robust than simple count
     const [maxResult] = await connection.query(
-      "SELECT MAX(CAST(SUBSTRING(member_id,3) AS UNSIGNED)) as maxnum FROM gym_members"
+      "SELECT MAX(CAST(member_id AS UNSIGNED)) as maxnum FROM gym_members"
     );
+
     let nextNumber = (maxResult[0].maxnum || 0) + 1;
-    let memberId = `MB${String(nextNumber).padStart(3, "0")}`;
+    let memberId = String(nextNumber);
 
     // In rare case of duplicate (concurrent inserts), retry once
     let inserted = false;
@@ -353,7 +353,7 @@ async function createMember(req, res) {
         if (err.code === 'ER_DUP_ENTRY' && err.sqlMessage.includes('member_id')) {
           // regenerate memberId and retry
           nextNumber += 1;
-          memberId = `MB${String(nextNumber).padStart(3, "0")}`;
+          memberId = String(nextNumber);
         } else {
           throw err;
         }
@@ -739,13 +739,13 @@ async function deleteAllMembers(req, res) {
   }
 }
 
-module.exports = { 
-  getAllMembers, 
-  getMemberById, 
-  getMemberByUserId, 
-  createMember, 
-  updateMember, 
-  deleteMember, 
+module.exports = {
+  getAllMembers,
+  getMemberById,
+  getMemberByUserId,
+  createMember,
+  updateMember,
+  deleteMember,
   getMemberPlans,
   deleteAllMembers
 };
