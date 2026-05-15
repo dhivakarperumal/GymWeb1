@@ -3,13 +3,14 @@ import imageCompression from "browser-image-compression";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
 import api from "../../api";
 const API = `/members`;
 
 
 const AddMember = () => {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -18,6 +19,8 @@ const AddMember = () => {
     email: "",
     password: "",
     gender: "",
+    dob: "",
+    age: "",
     height: "",
     weight: "",
     bmi: "",
@@ -30,7 +33,7 @@ const AddMember = () => {
     notes: "",
     address: "",
     pt_form_completed: false,
-    fingerprintId: "",
+    fingerprintId: Math.floor(1000 + Math.random() * 9000).toString(),
   });
 
   const { id } = useParams();
@@ -56,6 +59,8 @@ const AddMember = () => {
             height: data.height || "",
             weight: data.weight || "",
             bmi: data.bmi || "",
+            dob: data.dob ? dayjs(data.dob).format("YYYY-MM-DD") : "",
+            age: data.age || "",
             plan: data.plan || "",
             duration: data.duration != null ? data.duration.toString() : "",
             status: data.status || "active",
@@ -66,7 +71,7 @@ const AddMember = () => {
             expiryDate: data.expiry_date
               ? dayjs(data.expiry_date).format("YYYY-MM-DD")
               : "",
-            fingerprintId: data.fingerprint_id || "",
+            fingerprintId: data.fingerprint_id || Math.floor(1000 + Math.random() * 9000).toString(),
           });
         } catch {
           toast.error("Failed to load member");
@@ -96,6 +101,16 @@ const AddMember = () => {
   }, [id, isEdit, location.search]);
 
   const [extensionDays, setExtensionDays] = useState(5);
+
+  // 🎂 AGE
+  useEffect(() => {
+    if (form.dob) {
+      const calculatedAge = dayjs().diff(dayjs(form.dob), 'year');
+      setForm((prev) => ({ ...prev, age: calculatedAge >= 0 ? calculatedAge.toString() : "" }));
+    } else {
+      setForm((prev) => ({ ...prev, age: "" }));
+    }
+  }, [form.dob]);
 
   // 📏 BMI
   useEffect(() => {
@@ -127,7 +142,9 @@ const AddMember = () => {
       setForm(prev => ({ ...prev, email: value, username: uname }));
     } else if (name === 'phone') {
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
-      setForm(prev => ({ ...prev, phone: numericValue, password: numericValue }));
+      setForm(prev => ({ ...prev, phone: numericValue, password: prev.dob || numericValue }));
+    } else if (name === 'dob') {
+      setForm(prev => ({ ...prev, dob: value, password: value }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -182,6 +199,7 @@ const AddMember = () => {
         height: form.height ? Number(form.height) : null,
         weight: form.weight ? Number(form.weight) : null,
         bmi: form.bmi ? Number(form.bmi) : null,
+        age: form.age ? Number(form.age) : null,
         duration: form.duration ? Number(form.duration) : null,
         // send password only when creating
         password: !isEdit ? form.password : undefined,
@@ -216,7 +234,7 @@ const AddMember = () => {
     <div>
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
+        className="flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
       >
         <FaArrowLeft /> Back
       </button>
@@ -250,18 +268,37 @@ const AddMember = () => {
               <input name="email" value={form.email} onChange={handleChange} placeholder="e.g. john@example.com" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
             </div>
 
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Date of Birth <span className="text-red-500">*</span></label>
+              <input type="date" name="dob" value={form.dob} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Age</label>
+              <input type="number" name="age" value={form.age} onChange={handleChange} placeholder="e.g. 25" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+
             {!isEdit && (
               <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as Phone)</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  readOnly
-                  disabled
-                  placeholder="Password"
-                  className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-500" 
-                />
+                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as DOB)</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={form.password}
+                    readOnly
+                    disabled
+                    placeholder="Password"
+                    className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-500 pr-10" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -306,13 +343,22 @@ const AddMember = () => {
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-white/70 ml-1">Fingerprint ID (For Biometric Attendance)</label>
-              <input 
-                name="fingerprintId" 
-                value={form.fingerprintId} 
-                onChange={handleChange} 
-                placeholder="e.g. 1001" 
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" 
-              />
+              <div className="flex gap-2">
+                <input 
+                  name="fingerprintId" 
+                  value={form.fingerprintId} 
+                  onChange={handleChange} 
+                  placeholder="e.g. 1001" 
+                  className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" 
+                />
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, fingerprintId: Math.floor(1000 + Math.random() * 9000).toString() }))}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-all whitespace-nowrap"
+                >
+                  Generate
+                </button>
+              </div>
             </div>
 
             {isEdit && (
