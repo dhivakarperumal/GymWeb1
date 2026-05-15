@@ -84,7 +84,7 @@ const Members = () => {
 
     // 2. Plan Filter
     let matchesPlanFilter = true;
-    const hasPlan = m.plan && m.status === 'active';
+    const hasPlan = m.plan && m.plan !== 'user' && m.status === 'active';
     if (filterType === "withPlan") matchesPlanFilter = hasPlan;
     if (filterType === "withoutPlan") matchesPlanFilter = !hasPlan;
 
@@ -503,15 +503,15 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {m.join_date ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}
+                      {(m.plan && m.plan !== 'user' && m.join_date) ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}
+                      {(m.plan && m.plan !== 'user' && m.expiry_date) ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}
                     </td>
 
                     <td className="px-4 py-5">
                       {(() => {
-                        if (!m.expiry_date) return <span className="text-white/30">-</span>;
+                        if (!(m.plan && m.plan !== 'user') || !m.expiry_date) return <span className="text-white/30">-</span>;
                         // Use startOf('day') for both to ensure we count full days and add +1 for inclusive counting
                         const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                         if (days <= 0) {
@@ -532,7 +532,7 @@ const Members = () => {
                     </td>
 
                     <td className="px-4 py-5">
-                      {!(m.plan && m.status === "active") ? (
+                      {!(m.plan && m.plan !== 'user' && m.status === "active") ? (
                         <span className="text-white/30">-</span>
                       ) : m.pt_form_completed ? (
                         <div className="flex items-center gap-2">
@@ -720,15 +720,15 @@ const Members = () => {
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center">
                     <p className="text-[10px] text-gray-400 uppercase mb-1">Validity</p>
                     <div className="text-[10px] font-bold text-white flex flex-col">
-                      <span>{m.join_date ? dayjs(m.join_date).format("DD/MM/YY") : "-"}</span>
+                      <span>{(m.plan && m.plan !== 'user' && m.join_date) ? dayjs(m.join_date).format("DD/MM/YY") : "-"}</span>
                       <span className="text-gray-500">to</span>
-                      <span>{m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YY") : "-"}</span>
+                      <span>{(m.plan && m.plan !== 'user' && m.expiry_date) ? dayjs(m.expiry_date).format("DD/MM/YY") : "-"}</span>
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center flex flex-col justify-center items-center">
                     <p className="text-[10px] text-gray-400 uppercase mb-1">Remaining</p>
                     {(() => {
-                      if (!m.expiry_date) return <span className="text-white/30">-</span>;
+                      if (!(m.plan && m.plan !== 'user') || !m.expiry_date) return <span className="text-white/30">-</span>;
                       const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                       if (days <= 0) {
                         return <span className="text-red-400 text-[10px] font-bold uppercase">Expired</span>;
