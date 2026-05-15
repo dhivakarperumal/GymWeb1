@@ -502,9 +502,6 @@ const Members = () => {
                     <td className="px-4 py-5 font-medium text-white">{m.name || "N/A"}</td>
                     <td className="px-4 py-5">
                       <div className="font-medium text-gray-300">{m.phone || "N/A"}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        DOB: {formatDobToDDMMYYYY(m.dob)}
-                      </div>
                     </td>
 
 
@@ -679,10 +676,6 @@ const Members = () => {
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <Phone size={14} className="text-orange-500" />
                       {m.phone || "No phone"}
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-300">
-                      <Calendar size={14} className="text-orange-500" />
-                      DOB: {m.dob ? dayjs(m.dob).format("DD/MM/YYYY") : "-"}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <Mail size={14} className="text-orange-500" />
