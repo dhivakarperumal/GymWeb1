@@ -173,7 +173,7 @@ const FollowupEnquiry = () => {
       return;
     }
     if (!formData.phone || formData.phone.length !== 10) {
-      toast.error("A valid 10-digit phone number is required");
+      toast.error("A valid 10-digit mobile number is required");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -273,7 +273,7 @@ const FollowupEnquiry = () => {
           // Broad mapping
           const name = (row["Lead Name"] || row["Full Name"] || row.Name || row["Customer Name"] || row.name || "Unknown").toString().trim();
           const email = (row["Email Address"] || row.Email || row.email || "").toString().trim();
-          const rawPhone = row.Phone || row.Mobile || row["Phone Number"] || row["Mobile Number"] || row.phone || row.mobile || "";
+          const rawPhone = row.Phone || row.Mobile || row["Mobile Number"] || row["Mobile Number"] || row.phone || row.mobile || "";
           const phone = rawPhone.toString().replace(/\D/g, '').slice(-10);
 
           if (name === "Unknown" || !phone || phone.length < 10) {
@@ -340,7 +340,7 @@ const FollowupEnquiry = () => {
     const dataToExport = filteredEnquiries.map((e, index) => ({
       "S.No": index + 1,
       "Lead Name": e.name,
-      "Phone": e.phone,
+      "Mobile Number": e.phone,
       "Email": e.email,
       "Organization": e.organization || e.employer || "Direct",
       "Plan": e.plan_name || "N/A",
@@ -362,7 +362,7 @@ const FollowupEnquiry = () => {
     const template = [
       {
         "Lead Name": "John Doe",
-        "Phone": "9876543210",
+        "Mobile Number": "9876543210",
         "Email": "john@example.com",
         "Organization": "ABC Corp",
         "Status": "pending",
@@ -1028,7 +1028,7 @@ const FollowupEnquiry = () => {
                     </div>
 
                     <div className="grid grid-cols-3 items-center gap-4">
-                      <label className="text-xs font-bold text-white/60">Work Phone</label>
+                      <label className="text-xs font-bold text-white/60">Work Mobile</label>
                       <input
                         type="tel"
                         value={formData.emergency_contact_phone_work}

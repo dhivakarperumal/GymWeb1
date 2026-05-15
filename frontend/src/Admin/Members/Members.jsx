@@ -141,7 +141,7 @@ const Members = () => {
     const dataToExport = members.map((m, index) => ({
       "S.No": index + 1,
       Name: m.name || "N/A",
-      Phone: m.phone || "N/A",
+      "Mobile Number": m.phone || "N/A",
       Email: m.email || m.user_email || "-",
       Role: m.role || m.plan || "Member",
       Source: m.source === "users" ? "User" : "Gym Member",
@@ -164,7 +164,7 @@ const Members = () => {
     const template = [
       {
         "Full Name": "John Doe",
-        "Phone Number": "9876543210",
+        "Mobile Number": "9876543210",
         "Email Address": "john@example.com",
         "Gender": "Male",
         "BMI": "22.9",
@@ -225,7 +225,7 @@ const Members = () => {
 
         for (const row of jsonData) {
           const email = row["Email Address"] || row.Email || row.email || "";
-          const phone = String(row["Phone Number"] || row.Phone || row.phone || row.Mobile || "");
+          const phone = String(row["Mobile Number"] || row["Phone Number"] || row.Phone || row.phone || row.Mobile || "");
           const name = row["Full Name"] || row.Name || row.name || "Unknown";
 
           const username = row.Username || row.username || (email ? email.split('@')[0] : name.replace(/\s+/g, '').toLowerCase());
@@ -265,7 +265,7 @@ const Members = () => {
             employer: row.Employer || row.employer || "",
             occupation: row.Occupation || row.occupation || "",
             emergency_contact_name: row["Emergency Contact Name"] || row.emergency_contact_name || "",
-            emergency_contact_phone_home: row["Emergency Phone"] || row.emergency_contact_phone || ""
+            emergency_contact_phone_home: row["Emergency Mobile"] || row["Emergency Phone"] || row.emergency_contact_phone || ""
           };
 
           try {

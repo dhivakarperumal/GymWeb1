@@ -129,7 +129,7 @@ const Reports = () => {
       icon: Users,
       color: "bg-blue-500/20 text-blue-400",
       data: filteredMembers,
-      headers: ["#", "Name", "Email", "Phone", "Plan", "Status", "Join Date"],
+      headers: ["#", "Name", "Email", "Mobile Number", "Plan", "Status", "Join Date"],
       rows: filteredMembers.map((m, i) => [
         i + 1,
         m.name || "N/A",
@@ -181,7 +181,7 @@ const Reports = () => {
       icon: MessageSquare,
       color: "bg-purple-500/20 text-purple-400",
       data: filteredEnquiries,
-      headers: ["#", "Name", "Email", "Phone", "Subject", "Status", "Date"],
+      headers: ["#", "Name", "Email", "Mobile Number", "Subject", "Status", "Date"],
       rows: filteredEnquiries.map((e, i) => [
         i + 1,
         e.name || "-",

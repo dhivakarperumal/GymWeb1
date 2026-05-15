@@ -135,12 +135,12 @@ const AddEditStaff = () => {
         username: usernameFromEmail, // Auto-set username from email
       }));
     }
-    // Auto-populate password from phone number
+    // Auto-populate password from mobile number
     else if (name === "phone") {
       setForm((prev) => ({
         ...prev,
         [name]: value,
-        password: value, // Auto-set password from phone number
+        password: value, // Auto-set password from mobile number
       }));
     }
     else {
@@ -230,11 +230,11 @@ const AddEditStaff = () => {
       }
     }
 
-    // Phone validation
+    // Mobile validation
     if (!form.phone?.trim()) {
-      newErrors.phone = "Phone number is required";
+      newErrors.phone = "Mobile number is required";
     } else if (!/^\d{10}$/.test(form.phone.replace(/\D/g, ""))) {
-      newErrors.phone = "Please enter a valid 10-digit phone number";
+      newErrors.phone = "Please enter a valid 10-digit mobile number";
     }
 
     // Username validation (auto-filled but check)
@@ -476,7 +476,7 @@ const AddEditStaff = () => {
         {!isEdit && (
           <div>
             <label className="text-sm font-medium">
-              Login Password <span className="text-xs text-gray-300">(defaults to phone number)</span>
+              Login Password <span className="text-xs text-gray-300">(defaults to mobile number)</span>
             </label>
             <div className="relative">
               <input 
@@ -493,10 +493,10 @@ const AddEditStaff = () => {
           </div>
         )}
 
-        {/* PHONE */}
+        {/* MOBILE */}
         <div>
-          <label className="text-sm font-medium">Phone *</label>
-          <input name="phone" placeholder="Enter Phone Number" value={form.phone} onChange={handleChange}
+          <label className="text-sm font-medium">Mobile Number *</label>
+          <input name="phone" placeholder="Enter Mobile Number" value={form.phone} onChange={handleChange}
             className={`${inputClass} ${errors.phone ? "border-red-500 focus:ring-red-500" : ""}`} />
           <ErrorText field="phone" />
         </div>
