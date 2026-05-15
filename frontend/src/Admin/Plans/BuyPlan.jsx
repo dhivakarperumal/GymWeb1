@@ -31,6 +31,7 @@ const BuyPlanadmin = () => {
   const [planSearch, setPlanSearch] = useState("");
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [showPlanDropdown, setShowPlanDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -329,7 +330,7 @@ const BuyPlanadmin = () => {
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text(`Name: ${selectedUser?.name || selectedUser?.username || "Member"}`, 15, 70);
-    doc.text(`Phone: ${form.phone}`, 15, 80);
+    doc.text(`Mobile: ${form.phone}`, 15, 80);
     doc.text(`Email: ${form.email}`, 15, 90);
 
     // Plan Info
@@ -420,6 +421,7 @@ const BuyPlanadmin = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const planTotal = getSelectedPlanTotal();
       const isEMI = paymentType === "emi" && isEMIAllowed;
@@ -510,6 +512,8 @@ const BuyPlanadmin = () => {
     } catch (err) {
       console.error(err);
       alert("Plan save failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -530,7 +534,7 @@ const BuyPlanadmin = () => {
                 <Search size={18} className="text-gray-500 flex-shrink-0" />
                 <input
                   type="text"
-                  placeholder="Search by name, phone, or email..."
+                  placeholder="Search by name, mobile, or email..."
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
                   onFocus={() => setShowMemberDropdown(true)}
@@ -675,11 +679,11 @@ const BuyPlanadmin = () => {
 
           {/* PHONE */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+            <label className="block text-sm text-gray-400 mb-1">Mobile Number</label>
             <input
               className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
               value={form.phone}
-              placeholder="Enter phone number"
+              placeholder="Enter mobile number"
               onChange={(e) =>
                 setForm({ ...form, phone: e.target.value })
               }
@@ -894,10 +898,12 @@ const BuyPlanadmin = () => {
 
           <button
             onClick={handleAssignPlan}
-            className="mt-5 w-full py-3 bg-orange-500 rounded-lg hover:bg-orange-600"
+            disabled={loading}
+            className="mt-5 w-full py-3 bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            Assign Plan ₹
-            {selectedPlan ? (paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal()) : 0}
+            {loading ? "Assigning Plan..." : <>
+              Assign Plan ₹{selectedPlan ? (paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal()) : 0}
+            </>}
           </button>
         </div>
 

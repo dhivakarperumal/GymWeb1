@@ -330,7 +330,7 @@ const Members = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search name or phone"
+            placeholder="Search name or mobile"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -478,7 +478,7 @@ const Members = () => {
               <tr>
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">S No</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Phone</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Mobile Number</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Start Date</th>
@@ -675,7 +675,7 @@ const Members = () => {
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <Phone size={14} className="text-orange-500" />
-                      {m.phone || "No phone"}
+                      {m.phone || "No mobile"}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <Mail size={14} className="text-orange-500" />

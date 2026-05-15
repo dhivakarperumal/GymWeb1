@@ -260,7 +260,7 @@ const AddMember = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70 ml-1">Phone Number <span className="text-red-500">*</span></label>
+                <label className="text-sm font-medium text-white/70 ml-1">Mobile Number <span className="text-red-500">*</span></label>
               <input name="phone" value={form.phone} onChange={handleChange} maxLength={10} placeholder="e.g. 9876543210" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
             </div>
 
