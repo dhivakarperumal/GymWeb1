@@ -59,7 +59,7 @@ const AddMember = () => {
             height: data.height || "",
             weight: data.weight || "",
             bmi: data.bmi || "",
-            dob: data.dob ? dayjs(data.dob).format("YYYY-MM-DD") : "",
+            dob: data.dob && data.dob !== '0000-00-00' ? (data.dob.includes('-') && data.dob.split('-')[2]?.length === 4 ? `${data.dob.split('-')[2]}-${data.dob.split('-')[1]}-${data.dob.split('-')[0]}` : dayjs(data.dob).format('YYYY-MM-DD')) : "",
             age: data.age || "",
             plan: data.plan || "",
             duration: data.duration != null ? data.duration.toString() : "",
@@ -142,9 +142,10 @@ const AddMember = () => {
       setForm(prev => ({ ...prev, email: value, username: uname }));
     } else if (name === 'phone') {
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
-      setForm(prev => ({ ...prev, phone: numericValue, password: prev.dob || numericValue }));
+      setForm(prev => ({ ...prev, phone: numericValue, password: prev.dob ? dayjs(prev.dob).format('DD-MM-YYYY') : numericValue }));
     } else if (name === 'dob') {
-      setForm(prev => ({ ...prev, dob: value, password: value }));
+      const formattedDob = value ? dayjs(value).format('DD-MM-YYYY') : "";
+      setForm(prev => ({ ...prev, dob: value, password: formattedDob }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -196,6 +197,7 @@ const AddMember = () => {
     try {
       const payload = {
         ...form,
+        dob: form.dob ? dayjs(form.dob).format('DD-MM-YYYY') : "",
         height: form.height ? Number(form.height) : null,
         weight: form.weight ? Number(form.weight) : null,
         bmi: form.bmi ? Number(form.bmi) : null,

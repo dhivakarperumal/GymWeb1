@@ -66,6 +66,8 @@ const Enquiry = () => {
     if (formData.dob) {
       const age = dayjs().diff(dayjs(formData.dob), 'year');
       setFormData(prev => ({ ...prev, age: age >= 0 ? age.toString() : "" }));
+    } else {
+      setFormData(prev => ({ ...prev, age: "" }));
     }
   }, [formData.dob]);
 
@@ -119,9 +121,14 @@ const Enquiry = () => {
     }
 
     try {
+      const payload = {
+        ...formData,
+        dob: formData.dob ? dayjs(formData.dob).format('DD-MM-YYYY') : ""
+      };
+
       if (selectedEnquiry) {
         // Update full enquiry
-        await api.put(`/enquiries/${selectedEnquiry.id}`, formData);
+        await api.put(`/enquiries/${selectedEnquiry.id}`, payload);
       } else {
         // Check for duplicates before creating new enquiry
         const isDuplicate = enquiries.some(e =>
@@ -135,7 +142,7 @@ const Enquiry = () => {
         }
 
         // Create new enquiry
-        await api.post('/enquiries', formData);
+        await api.post('/enquiries', payload);
       }
       fetchEnquiries();
       setShowForm(false);
@@ -169,7 +176,7 @@ const Enquiry = () => {
       height: enquiry.height || "",
       weight: enquiry.weight || "",
       bmi: enquiry.bmi || "",
-      dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : "",
+      dob: enquiry.dob && enquiry.dob !== '0000-00-00' ? (enquiry.dob.includes('-') && enquiry.dob.split('-')[2]?.length === 4 ? `${enquiry.dob.split('-')[2]}-${enquiry.dob.split('-')[1]}-${enquiry.dob.split('-')[0]}` : dayjs(enquiry.dob).format('YYYY-MM-DD')) : "",
       age: enquiry.age || "",
       address: enquiry.address || "",
       employer: enquiry.employer || "",
@@ -516,11 +523,11 @@ const Enquiry = () => {
         status: 'pending',
         gender: enquiry.gender || null,
         // supply password explicitly so frontend knows credentials
-        password: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : (enquiry.phone || '')
+        password: enquiry.dob ? dayjs(enquiry.dob).format('DD-MM-YYYY') : (enquiry.phone || '')
       };
       // tell admin what the temporary password is
       await api.post('/members', memberData);
-      toast.success(`Member created successfully. Login using Date of Birth (YYYY-MM-DD) as password.`);
+      toast.success(`Member created successfully. Login using Date of Birth (DD-MM-YYYY) as password.`);
       await updateStatus(enquiry.id, 'completed');
     } catch (err) {
       console.error('Error moving to members:', err);
@@ -785,7 +792,7 @@ const Enquiry = () => {
                       <Users size={10} className="text-orange-500" /> {enquiry.phone || 'N/A'}
                     </div>
                     <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
-                      <Clock size={10} className="text-orange-500" /> {dayjs(enquiry.created_at).format('DD/MM/YY')}
+                      <Clock size={10} className="text-orange-500" /> {dayjs(enquiry.created_at).format('DD MMM YYYY')}
                     </div>
                   </div>
                 </div>
@@ -925,7 +932,7 @@ const Enquiry = () => {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-300 font-medium">
-                          {dayjs(enquiry.created_at).format('DD/MM/YY')}
+                          {dayjs(enquiry.created_at).format('DD MMM YYYY')}
                         </td>
                         <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">

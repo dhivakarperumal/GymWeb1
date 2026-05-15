@@ -89,6 +89,8 @@ const UserEnquiry = () => {
     if (formData.dob) {
       const age = dayjs().diff(dayjs(formData.dob), 'year');
       setFormData(prev => ({ ...prev, age: age >= 0 ? age.toString() : "" }));
+    } else {
+      setFormData(prev => ({ ...prev, age: "" }));
     }
   }, [formData.dob]);
 
@@ -180,6 +182,7 @@ const UserEnquiry = () => {
     try {
       const payload = {
         ...formData,
+        dob: formData.dob ? dayjs(formData.dob).format('DD-MM-YYYY') : "",
         consent_data: {
           participant_name: formData.participant_name,
           agree: formData.consent_agree,
@@ -240,7 +243,7 @@ const UserEnquiry = () => {
       height: enquiry.height || "",
       weight: enquiry.weight || "",
       bmi: enquiry.bmi || "",
-      dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : "",
+      dob: enquiry.dob && enquiry.dob !== '0000-00-00' ? (enquiry.dob.includes('-') && enquiry.dob.split('-')[2]?.length === 4 ? `${enquiry.dob.split('-')[2]}-${enquiry.dob.split('-')[1]}-${enquiry.dob.split('-')[0]}` : dayjs(enquiry.dob).format('YYYY-MM-DD')) : "",
       age: enquiry.age || "",
       address: enquiry.address || "",
       employer: enquiry.employer || "",

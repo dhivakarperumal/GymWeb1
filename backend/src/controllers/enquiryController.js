@@ -291,7 +291,8 @@ const enquiryController = {
             } else {
                 // 3. Create the user if not exists
                 userId_uuid = uuidv4();
-                const defaultPassword = enquiry.phone.toString();
+                // Use dob as password if available (already in DD-MM-YYYY), fallback to phone
+                const defaultPassword = (enquiry.dob || enquiry.phone).toString();
                 const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
                 const [userResult] = await connection.query(
