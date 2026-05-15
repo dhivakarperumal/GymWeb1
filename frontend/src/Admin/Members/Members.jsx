@@ -11,8 +11,15 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import dayjs from "dayjs";
 
-
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
+
+const formatDobToDDMMYYYY = (dateString) => {
+  if (!dateString || dateString === '0000-00-00') return "-";
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) return dateString;
+  const parsed = dayjs(dateString);
+  if (parsed.isValid()) return parsed.format("DD-MM-YYYY");
+  return dateString;
+};
 
 const Members = () => {
   const [searchParams] = useSearchParams();
@@ -496,7 +503,7 @@ const Members = () => {
                     <td className="px-4 py-5">
                       <div className="font-medium text-gray-300">{m.phone || "N/A"}</div>
                       <div className="text-xs text-gray-500 mt-1">
-                        DOB: {m.dob ? dayjs(m.dob).format("DD/MM/YYYY") : "-"}
+                        DOB: {formatDobToDDMMYYYY(m.dob)}
                       </div>
                     </td>
 
@@ -507,10 +514,10 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.join_date) ? dayjs(m.join_date).format("DD/MM/YYYY") : "-"}
+                      {(m.plan && m.plan !== 'user' && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.expiry_date) ? dayjs(m.expiry_date).format("DD/MM/YYYY") : "-"}
+                      {(m.plan && m.plan !== 'user' && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
                     </td>
 
                     <td className="px-4 py-5">
@@ -526,9 +533,8 @@ const Members = () => {
                           );
                         }
                         return (
-                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
-                            days > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"
-                          }`}>
+                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${days > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"
+                            }`}>
                             {days} {days === 1 ? 'Day' : 'Days'}
                           </span>
                         );
