@@ -139,7 +139,7 @@ const Members = () => {
     }
 
     const dataToExport = members.map((m, index) => ({
-      "S.No": index + 1,
+      "Member ID": m.member_id || "-",
       Name: m.name || "N/A",
       "Mobile Number": m.phone || "N/A",
       Email: m.email || m.user_email || "-",
@@ -476,7 +476,9 @@ const Members = () => {
           <table className="w-full min-w-[700px] text-base text-gray-200">
             <thead className="bg-white/10 text-white">
               <tr>
-                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">
+                  Member ID
+                </th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Mobile Number</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
@@ -498,7 +500,9 @@ const Members = () => {
               ) : (
                 paginatedData.map((m, index) => (
                   <tr key={m.id || `u-${m.u_id}`} className="border-b border-white/5 hover:bg-white/5 transition">
-                    <td className="px-4 py-5 font-medium text-gray-400">{startIndex + index + 1}</td>
+                    <td className="px-4 py-5 font-medium text-gray-400">
+                      {m.member_id || "-"}
+                    </td>
                     <td className="px-4 py-5 font-medium text-white">{m.name || "N/A"}</td>
                     <td className="px-4 py-5">
                       <div className="font-medium text-gray-300">{m.phone || "N/A"}</div>
@@ -629,7 +633,9 @@ const Members = () => {
                       </div>
                       <div>
                         <p className="text-lg font-bold text-white line-clamp-1">{m.name || "N/A"}</p>
-                        <p className="text-xs text-gray-400">{startIndex + index + 1}. Member ID: #{m.id || "N/A"}</p>
+                        <p className="text-xs text-gray-400">
+                          Member ID: #{m.member_id || "N/A"}
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-2">
