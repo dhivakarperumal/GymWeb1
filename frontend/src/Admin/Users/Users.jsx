@@ -166,7 +166,7 @@ const Users = () => {
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input
             type="text"
-            placeholder="Search name, email or username"
+            placeholder="Search name, email or mobile"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-700 bg-white shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900 transition w-full pl-10"
@@ -208,7 +208,7 @@ const Users = () => {
                 <th className="px-4 py-4 text-left font-semibold">S No</th>
                 <th className="px-4 py-4 text-left font-semibold">Name</th>
                 <th className="px-4 py-4 text-left font-semibold">Email</th>
-                <th className="px-4 py-4 text-left font-semibold">Phone</th>
+                <th className="px-4 py-4 text-left font-semibold">Mobile Number</th>
                 <th className="px-4 py-4 text-left font-semibold">Username</th>
                 <th className="px-4 py-4 text-left font-semibold">Role</th>
                 <th className="px-4 py-4 text-left font-semibold">Status</th>
