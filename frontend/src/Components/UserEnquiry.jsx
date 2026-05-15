@@ -388,7 +388,7 @@ const UserEnquiry = () => {
                     <InputField label="Phone Number" type="tel" value={formData.phone} onChange={(val) => setFormData({ ...formData, phone: val.replace(/\D/g, '').slice(0, 10) })} required placeholder="e.g. 9876543210" />
 
                     <div className="grid grid-cols-2 gap-4">
-                      <InputField label="Date of Birth" type="date" value={formData.dob} onChange={(val) => setFormData({ ...formData, dob: val })} />
+                      <InputField label="Date of Birth" type="date" value={formData.dob} onChange={(val) => setFormData({ ...formData, dob: val })} required />
                       <InputField label="Current Age" type="number" value={formData.age} onChange={(val) => setFormData({ ...formData, age: val })} placeholder="Years" />
                     </div>
 

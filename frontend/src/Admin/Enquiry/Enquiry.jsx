@@ -1080,12 +1080,13 @@ const Enquiry = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1">Date of Birth</label>
+                      <label className="block text-sm font-medium text-white/80 mb-1">Date of Birth <span className="text-red-500">*</span></label>
                       <input
                         type="date"
                         value={formData.dob}
                         onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                         className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
                       />
                     </div>
                     <div>
