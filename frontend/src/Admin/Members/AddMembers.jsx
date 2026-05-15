@@ -142,10 +142,9 @@ const AddMember = () => {
       setForm(prev => ({ ...prev, email: value, username: uname }));
     } else if (name === 'phone') {
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
-      setForm(prev => ({ ...prev, phone: numericValue, password: prev.dob ? dayjs(prev.dob).format('DD-MM-YYYY') : numericValue }));
+      setForm(prev => ({ ...prev, phone: numericValue, password: numericValue }));
     } else if (name === 'dob') {
-      const formattedDob = value ? dayjs(value).format('DD-MM-YYYY') : "";
-      setForm(prev => ({ ...prev, dob: value, password: formattedDob }));
+      setForm(prev => ({ ...prev, dob: value }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -282,7 +281,7 @@ const AddMember = () => {
 
             {!isEdit && (
               <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as DOB)</label>
+                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as Mobile Number)</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}

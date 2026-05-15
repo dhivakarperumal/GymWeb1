@@ -523,11 +523,11 @@ const Enquiry = () => {
         status: 'pending',
         gender: enquiry.gender || null,
         // supply password explicitly so frontend knows credentials
-        password: enquiry.dob ? dayjs(enquiry.dob).format('DD-MM-YYYY') : (enquiry.phone || '')
+        password: enquiry.phone || ''
       };
       // tell admin what the temporary password is
       await api.post('/members', memberData);
-      toast.success(`Member created successfully. Login using Date of Birth (DD-MM-YYYY) as password.`);
+      toast.success(`Member created successfully. Login using Mobile Number as password.`);
       await updateStatus(enquiry.id, 'completed');
     } catch (err) {
       console.error('Error moving to members:', err);
