@@ -13,7 +13,7 @@ const glassInput =
   "w-full px-4 py-2 rounded-xl bg-white/10 text-white border border-white/20";
 
 /* ================= CONSTANTS ================= */
-const DURATIONS = ["1 Day", "1 Week", "1 Month", "3 Months", "6 Months", "1 Year"];
+const DURATIONS = ["1 Day", "1 Week", "1 Month","2 Months", "3 Months", "4 Months", "5 Months", "6 Months", "7 Months", "8 Months", "9 Months", "10 Months", "11 Months", "1 Year"];
 const FACILITIES = [
   "Cardio & HIIT Workouts",
       "Fat Loss Training Program",
