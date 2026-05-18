@@ -165,8 +165,8 @@ const followupMasterController = {
                 fitness_goal: followup.fitness_goal,
                 blood_group: followup.blood_group,
                 gender: followup.gender,
-                plan: followup.plan_name,
-                duration: followup.plan_duration,
+                plan: null,
+                duration: null,
                 status: 'active',
                 password: followup.phone || 'Gym123'
             };

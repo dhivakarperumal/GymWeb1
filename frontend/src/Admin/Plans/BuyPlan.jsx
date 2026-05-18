@@ -150,35 +150,14 @@ const BuyPlanadmin = () => {
     }
   }, [selectedPlan, paymentType]);
 
-  const findPreferredEnquiryPlan = (user, enquiryList) => {
-    if (!user || !Array.isArray(enquiryList)) return null;
-    const phone = user.phone?.toString().trim();
-    const email = user.email?.toString().trim().toLowerCase();
-    const candidates = enquiryList
-      .filter((q) => {
-        const qPhone = q.phone?.toString().trim();
-        const qEmail = q.email?.toString().trim().toLowerCase();
-        return (phone && qPhone === phone) || (email && qEmail === email);
-      })
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    const latest = candidates.find((q) => q.plan_name || q.plan_duration);
-    return latest ? { plan: latest.plan_name, duration: latest.plan_duration } : null;
-  };
-
   const findMatchingPlan = (user, planList, enquiryList) => {
     if (!user || !Array.isArray(planList)) return null;
 
     let planName = normalizePlanText(user.plan);
     let durationValue = parseDurationValue(user.duration);
 
-    if (!planName && durationValue == null && Array.isArray(enquiryList)) {
-      const fromEnquiry = findPreferredEnquiryPlan(user, enquiryList);
-      if (fromEnquiry) {
-        planName = normalizePlanText(fromEnquiry.plan);
-        durationValue = parseDurationValue(fromEnquiry.duration);
-      }
-    }
+    // Do not auto-select a plan from enquiry history for users without an active plan.
+    // Converted members should choose a plan explicitly in the Buy Plan flow.
 
     if (planName) {
       const exactByName = planList.find(
