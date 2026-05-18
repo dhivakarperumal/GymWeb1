@@ -28,6 +28,7 @@ const Account = () => {
   const [userInfo, setUserInfo] = useState({});
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
+  const isGymMember = Boolean(userInfo?.member_id);
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -89,7 +90,7 @@ const Account = () => {
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
     { key: "myplans", label: "My Plans", icon: CalendarCheck },
-    ...(!hasActivePlan
+    ...(!hasActivePlan && isGymMember
       ? [{ key: "buyplan", label: "Buy Plan", icon: CalendarCheck }]
       : []),
     ...(hasActivePlan
@@ -112,10 +113,14 @@ const Account = () => {
       setActiveTab("myplans");
     }
 
-    if (!hasActivePlan && ["diet", "workouts", "ptform"].includes(activeTab)) {
+    if (!hasActivePlan && !isGymMember && activeTab === "buyplan") {
+      setActiveTab("myplans");
+    }
+
+    if (!hasActivePlan && isGymMember && ["diet", "workouts", "ptform"].includes(activeTab)) {
       setActiveTab("buyplan");
     }
-  }, [hasActivePlan, activeTab]);
+  }, [hasActivePlan, activeTab, isGymMember]);
 
   const renderContent = () => {
     switch (activeTab) {
