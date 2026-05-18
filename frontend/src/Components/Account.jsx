@@ -8,6 +8,7 @@ import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
+import AccountBuyPlan from "./AccountBuyPlan";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
@@ -87,8 +88,9 @@ const Account = () => {
 
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
+    { key: "myplans", label: "My Plans", icon: CalendarCheck },
     ...(!hasActivePlan
-      ? [{ key: "plans", label: "Buy Plan", icon: CalendarCheck }]
+      ? [{ key: "buyplan", label: "Buy Plan", icon: CalendarCheck }]
       : []),
     ...(hasActivePlan
       ? [
@@ -106,14 +108,12 @@ const Account = () => {
   /* ================= CONTENT ================= */
 
   useEffect(() => {
-    if (hasActivePlan && activeTab === "plans") {
-      setActiveTab("personal");
+    if (hasActivePlan && activeTab === "buyplan") {
+      setActiveTab("myplans");
     }
-  }, [hasActivePlan, activeTab]);
 
-  useEffect(() => {
     if (!hasActivePlan && ["diet", "workouts", "ptform"].includes(activeTab)) {
-      setActiveTab("plans");
+      setActiveTab("buyplan");
     }
   }, [hasActivePlan, activeTab]);
 
@@ -200,8 +200,11 @@ const Account = () => {
       case "orders":
         return <UserOrders />;
 
-      case "plans":
+      case "myplans":
         return <MemberSBuyPlans preFetchedPlans={plans} />
+
+      case "buyplan":
+        return <AccountBuyPlan />;
 
       case "diet":
         return hasActivePlan ? (
