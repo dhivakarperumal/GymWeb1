@@ -5,12 +5,14 @@ import {
   AlertCircle, Clock, ArrowRight, User, LayoutGrid, Table as TableIcon
 } from "lucide-react";
 import api from "../../api";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
 
 const ExpiryMembers = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -21,12 +23,13 @@ const ExpiryMembers = () => {
 
   useEffect(() => {
     fetchExpiringMembers();
-  }, []);
+  }, [user?.id]);
 
   const fetchExpiringMembers = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/members");
+      const url = isTrainer && user?.id ? `/members?trainerUserId=${user.id}` : "/members";
+      const res = await api.get(url);
       const data = Array.isArray(res.data) ? res.data : [];
       
       // Filter members whose plans are expiring in the next 5 days
