@@ -8,9 +8,16 @@ async function getAllMemberships(req, res) {
              COALESCE(m.userName, u.username) as username, 
              COALESCE(m.userEmail, u.email) as email, 
              COALESCE(m.userPhone, u.mobile) as mobile, 
-             u.role
+             u.role,
+             gm.join_date as memberJoinDate,
+             gm.expiry_date as memberExpiryDate
       FROM memberships m
       LEFT JOIN users u ON m.userId = u.id
+      LEFT JOIN gym_members gm ON 
+        (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR 
+        (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '') OR
+        (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
+        (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
       ORDER BY m.createdAt DESC
     `);
     res.json(rows);
