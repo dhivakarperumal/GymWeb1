@@ -56,15 +56,15 @@ const navItems = [
     ],
   },
 
-  {
-    label: "Attendance",
-    icon: CalendarCheck,
-    children: [
-      { path: "/admin/overall-attendance", label: "Overall Attendance", icon: ClipboardList },
-      { path: "/admin/member-attendance", label: "Member Attendance", icon: UserCheck },
-      { path: "/admin/biometric-logs", label: "Biometric Logs", icon: Activity },
-    ],
-  },
+  // {
+  //   label: "Attendance",
+  //   icon: CalendarCheck,
+  //   children: [
+  //     { path: "/admin/overall-attendance", label: "Overall Attendance", icon: ClipboardList },
+  //     { path: "/admin/member-attendance", label: "Member Attendance", icon: UserCheck },
+  //     { path: "/admin/biometric-logs", label: "Biometric Logs", icon: Activity },
+  //   ],
+  // },
 
   { path: "/admin/billing", label: "Billing", icon: Receipt },
 
