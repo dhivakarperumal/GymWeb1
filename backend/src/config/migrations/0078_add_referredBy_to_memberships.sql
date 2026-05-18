@@ -1,0 +1,2 @@
+ALTER TABLE memberships
+  ADD COLUMN IF NOT EXISTS referredBy VARCHAR(255) NULL;
