@@ -505,6 +505,8 @@ const BuyPlan = () => {
                 </div>
               </div>
 
+            </div>
+
           </div>
 
         </PageContainer>
