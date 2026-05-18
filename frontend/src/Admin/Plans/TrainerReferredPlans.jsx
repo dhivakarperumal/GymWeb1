@@ -103,11 +103,10 @@ export default function TrainerReferredPlans() {
 
   return (
     <div className="text-white min-h-screen">
-     
-   
+      
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        {/* LEFT: Search & Filter */}
+        {/* LEFT: Search */}
         <div className="flex flex-wrap items-center gap-3">
           {/* SEARCH */}
           <div className="flex items-center gap-2 px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-orange-500 w-full sm:w-64">
@@ -164,14 +163,15 @@ export default function TrainerReferredPlans() {
           >
             <option value="pending" className="bg-gray-900">Pending</option>
             <option value="active" className="bg-gray-900">Approved (Active)</option>
+            <option value="completed" className="bg-gray-900">Completed</option>
             <option value="all" className="bg-gray-900">All</option>
           </select>
+        </div>
       </div>
-</div>
         
 
       {/* ── STATS STRIP ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           {
             icon: <Users size={20} className="text-orange-400" />,
@@ -179,10 +179,16 @@ export default function TrainerReferredPlans() {
             value: memberships.length,
           },
           {
+            icon: <CalendarDays size={20} className="text-yellow-400" />,
+            label: "Pending",
+            value: memberships.filter((m) => m.status === "pending").length,
+          },
+          {
             icon: <BadgeCheck size={20} className="text-green-400" />,
             label: "Approved Plans",
             value: memberships.filter((m) => m.status === "active").length,
           },
+         
           {
             icon: <IndianRupee size={20} className="text-amber-400" />,
             label: "Total Revenue",
@@ -300,7 +306,7 @@ export default function TrainerReferredPlans() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left bg-white/5 text-white/40 text-[11px] uppercase tracking-wider">
-                <th className="px-5 py-4">#</th>
+                <th className="px-5 py-4">S No</th>
                 <th className="px-5 py-4">Member</th>
                 <th className="px-5 py-4">Contact</th>
                 <th className="px-5 py-4">Plan</th>
