@@ -222,32 +222,32 @@ const FollowupEnquiry = () => {
   const handleMoveToMembers = async (enquiry) => {
     try {
       const memberData = {
-        name: enquiry.name || enquiry.organization || 'Unknown',
-        username: enquiry.name || enquiry.email || enquiry.phone || 'member',
-        email: enquiry.email || null,
-        phone: enquiry.phone || null,
-        address: enquiry.address || enquiry.location || enquiry.organization || null,
+        name: enquiry.name || enquiry.organization || enquiry.email || enquiry.phone || 'Unknown',
+        username: enquiry.email?.split?.('@')?.[0] || enquiry.phone || enquiry.name || 'member',
+        email: enquiry.email || enquiry.user_email || enquiry.email_address || enquiry.emailAddress || null,
+        phone: enquiry.phone || enquiry.mobile || enquiry.contact_number || enquiry.contact || null,
+        address: enquiry.address || enquiry.location || enquiry.organization || enquiry.website || null,
         notes: enquiry.message || enquiry.subject || enquiry.referred_by || enquiry.website || enquiry.best_time_to_reach || null,
-        height: enquiry.height || null,
-        weight: enquiry.weight || null,
+        height: enquiry.height || enquiry.h || null,
+        weight: enquiry.weight || enquiry.w || null,
         bmi: enquiry.bmi || null,
         dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : null,
         age: enquiry.age || null,
         employer: enquiry.employer || enquiry.organization || null,
         occupation: enquiry.occupation || null,
-        emergency_contact_name: enquiry.emergency_contact_name || null,
+        emergency_contact_name: enquiry.emergency_contact_name || enquiry.emergencyName || null,
         emergency_contact_relationship: enquiry.emergency_contact_relationship || null,
         emergency_contact_address: enquiry.emergency_contact_address || null,
-        emergency_contact_phone_home: enquiry.emergency_contact_phone_home || null,
+        emergency_contact_phone_home: enquiry.emergency_contact_phone_home || enquiry.emergency_phone || null,
         emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
         fitness_goal: enquiry.fitness_goal || null,
         blood_group: enquiry.blood_group || null,
         plan: enquiry.plan_name || enquiry.plan || null,
         duration: enquiry.plan_duration ? parseInt(enquiry.plan_duration, 10) || null : null,
         joinDate: enquiry.created_at ? dayjs(enquiry.created_at).format('YYYY-MM-DD') : new Date().toISOString().split('T')[0],
-        status: 'active',
+        status: enquiry.status === 'completed' ? 'active' : 'active',
         gender: enquiry.gender || null,
-        password: enquiry.phone || 'Gym123'
+        password: enquiry.phone || enquiry.mobile || 'Gym123'
       };
 
       await api.post('/members', memberData);
