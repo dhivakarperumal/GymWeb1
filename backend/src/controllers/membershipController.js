@@ -80,6 +80,7 @@ async function createMembership(req, res) {
       status,
       secondPaymentPaid,
       paymentStatus,
+      referredBy,
     } = req.body;
 
     const actualPricePaid = pricePaid !== undefined ? pricePaid : price;
@@ -97,8 +98,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status, paymentStatus)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status, paymentStatus, referredBy)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -118,6 +119,7 @@ async function createMembership(req, res) {
       paymentMode || null,
       status || 'active',
       finalPaymentStatus,
+      referredBy || null,
     ];
 
     const [result] = await db.query(query, values);

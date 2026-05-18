@@ -73,6 +73,11 @@ const navItems = [
     icon: DollarSign,
   },
   {
+    path: "/trainer/buyplanadmin",
+    label: "Buy Plans",
+    icon: Receipt,
+  },
+  {
     path: "/trainer/followupenquriy",
     label: "Followup Enquiry",
     icon: MessageSquare,

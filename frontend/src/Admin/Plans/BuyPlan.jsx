@@ -7,6 +7,7 @@ import emailjs from "@emailjs/browser";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Search, X } from "lucide-react";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
 const MEMBERSHIP_API = "/memberships";
@@ -14,6 +15,10 @@ const MEMBERSHIP_API = "/memberships";
 const BuyPlanadmin = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { profileName, user } = useAuth();
+
+  // Logged-in user's display name for Referred By
+  const loggedInName = profileName || user?.username || user?.name || "";
 
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -23,11 +28,12 @@ const BuyPlanadmin = () => {
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [selectedTrainer, setSelectedTrainer] = useState(null);
+  const [selectedTrainer, setSelectedTrainer] = useState("");
   const [sessionTime, setSessionTime] = useState("");
   const [paymentType, setPaymentType] = useState("full");
   const [initialPayment, setInitialPayment] = useState("");
   const [discount, setDiscount] = useState("");
+  const [referredBy, setReferredBy] = useState("");
 
   const [memberSearch, setMemberSearch] = useState("");
   const [planSearch, setPlanSearch] = useState("");
@@ -36,6 +42,11 @@ const BuyPlanadmin = () => {
   const [loading, setLoading] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
+
+  // Auto-fill Referred By with logged-in user name on mount
+  useEffect(() => {
+    if (loggedInName) setReferredBy(loggedInName);
+  }, [loggedInName]);
 
   const [form, setForm] = useState({
     phone: "",
@@ -214,8 +225,7 @@ const BuyPlanadmin = () => {
         const res = await api.get(MEMBERS_API);
         setMembers(res.data || []);
       } catch (err) {
-        console.error(err);
-        alert("Failed to load members");
+        console.error("Failed to load members:", err);
       }
     };
 
@@ -229,8 +239,7 @@ const BuyPlanadmin = () => {
         const res = await api.get(PLANS_API);
         setPlans((res.data || []).filter((p) => p.active));
       } catch (err) {
-        console.error(err);
-        alert("Failed to load plans");
+        console.error("Failed to load plans:", err);
       }
     };
 
@@ -262,15 +271,18 @@ const BuyPlanadmin = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const res = await api.get("/staff", { params: { role: "trainer" } });
+        const res = await api.get("/staff");
         const data = res.data || [];
+        // Filter trainer-role staff client-side to avoid query param dependency
         const normalized = Array.isArray(data)
-          ? data.map((t) => ({ id: t.id, name: t.name || t.username || "Trainer" }))
+          ? data
+              .filter((t) => !t.role || t.role.toLowerCase() === "trainer")
+              .map((t) => ({ id: t.id, name: t.name || t.username || "Trainer" }))
           : [];
         setTrainers(normalized);
       } catch (err) {
-        console.error(err);
-        alert("Failed to load trainers");
+        console.error("Failed to load trainers:", err);
+        // Non-critical: trainer dropdown will just show empty
       }
     };
 
@@ -496,6 +508,7 @@ const BuyPlanadmin = () => {
         paymentMode: paymentModeValue,
         paymentStatus: isEMI ? "Pending" : "Paid",
         status: "active",
+        referredBy: referredBy || null,
       };
 
       await api.post("/memberships", membershipData);
@@ -517,7 +530,7 @@ const BuyPlanadmin = () => {
       };
 
       // ===== OPTIONAL ASSIGN TRAINER =====
-      if (selectedTrainer) {
+      if (selectedTrainer && selectedTrainer !== "") {
         const assignPayload = {
           userId: selectedUser.u_id || selectedUser.id,
           username: selectedUser.username || selectedUser.name || "",
@@ -559,7 +572,7 @@ const BuyPlanadmin = () => {
       // sendWhatsApp();
       await sendEmailReceipt();
 
-      navigate("/admin/members");
+      navigate(location.pathname.startsWith("/trainer") ? "/trainer" : "/admin/members");
     } catch (err) {
       console.error(err);
       alert("Plan save failed");
@@ -892,6 +905,53 @@ const BuyPlanadmin = () => {
               }}
             />
           </div>
+
+          {/* OPTIONAL TRAINER ASSIGNMENT — trainer route only */}
+          {location.pathname.startsWith("/trainer") && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-1">Assign Trainer (Optional)</label>
+                <select
+                  className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+                  value={selectedTrainer}
+                  onChange={(e) => setSelectedTrainer(e.target.value)}
+                >
+                  <option value="">None / No Trainer</option>
+                  {trainers.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* SESSION TIME — only when trainer selected */}
+              {selectedTrainer && selectedTrainer !== "" && (
+                <div className="mb-4" data-aos="fade-up">
+                  <label className="block text-sm text-gray-400 mb-1">Session Time</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 6:00 AM - 7:00 AM"
+                    className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+                    value={sessionTime}
+                    onChange={(e) => setSessionTime(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* REFERRED BY */}
+              <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-1">Referred By</label>
+                <input
+                  type="text"
+                  placeholder="Enter referrer name (if any)"
+                  className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+                  value={referredBy}
+                  onChange={(e) => setReferredBy(e.target.value)}
+                />
+              </div>
+            </>
+          )}
 
           {selectedPlan && paymentType === "emi" && isEMIAllowed && (
             <div className="mb-4 p-6 rounded-2xl bg-gradient-to-br from-orange-900/30 to-orange-900/10 border border-orange-500/50 shadow-lg shadow-orange-500/20">

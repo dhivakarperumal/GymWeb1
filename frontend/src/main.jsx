@@ -239,7 +239,7 @@ const router = createHashRouter([
   {
     path: "/trainer",
     element: (
-      <PrivateRoute allowedRoles={["trainer"]}>
+      <PrivateRoute allowedRoles={["trainer", "admin"]}>
         <TrainerAdminPanel />
       </PrivateRoute>
     ),
@@ -273,6 +273,7 @@ const router = createHashRouter([
       { path: "pricing", element: <TrainerPricing /> },
       { path: "followupenquriy", element: <FollowupEnquiry /> },
       { path: "session-tracking", element: <SessionTracking /> },
+      { path: "buyplanadmin", element: <BuyPlanadmin /> },
     ],
 
   },

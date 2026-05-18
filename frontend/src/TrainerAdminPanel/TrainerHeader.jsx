@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -35,6 +35,7 @@ const pageTitles = {
   "/trainer/session-tracking": "Session Tracking",
   "/trainer/pricing": "Pricing",
   "/trainer/followupenquriy": "Follow-up Enquiry",
+  "/trainer/buyplanadmin": "Assign Plans",
 };
 
 /* ------------------------------------------------------------------ */
