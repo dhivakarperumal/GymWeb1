@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   ChevronLeft, Search, Calendar, Phone, Mail, 
   AlertCircle, Clock, ArrowRight, User, LayoutGrid, Table as TableIcon
@@ -10,10 +10,14 @@ import toast from "react-hot-toast";
 
 const ExpiryMembers = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("card");
+
+  const isTrainer = location.pathname.startsWith("/trainer");
+  const basePath = isTrainer ? "/trainer" : "/admin";
 
   useEffect(() => {
     fetchExpiringMembers();
@@ -67,9 +71,9 @@ const ExpiryMembers = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <button onClick={() => navigate("/admin/settings")} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-2">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-2">
             <ChevronLeft size={20} />
-            <span className="font-bold uppercase tracking-wider text-xs">Back to Settings</span>
+            <span className="font-bold uppercase tracking-wider text-xs">Back</span>
           </button>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Clock className="text-orange-500" />
@@ -155,13 +159,13 @@ const ExpiryMembers = () => {
 
                 <div className="flex gap-3 pt-4 border-t border-white/5">
                   <button 
-                    onClick={() => navigate(`/admin/member_details/${m.id}`)}
+                    onClick={() => navigate(`${basePath}/member_details/${m.id}`)}
                     className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-xs uppercase hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                   >
                     <User size={14} /> Profile
                   </button>
                   <button 
-                    onClick={() => navigate(`/admin/addmembers/${m.id}`)}
+                    onClick={() => navigate(`${basePath}/addmembers/${m.id}`)}
                     className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-xs uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
                   >
                     Renew <ArrowRight size={14} />
@@ -210,14 +214,14 @@ const ExpiryMembers = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button 
-                          onClick={() => navigate(`/admin/member_details/${m.id}`)}
+                          onClick={() => navigate(`${basePath}/member_details/${m.id}`)}
                           className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
                           title="View Profile"
                         >
                           <User size={14} />
                         </button>
                         <button 
-                          onClick={() => navigate(`/admin/addmembers/${m.id}`)}
+                          onClick={() => navigate(`${basePath}/addmembers/${m.id}`)}
                           className="p-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
                           title="Renew Membership"
                         >

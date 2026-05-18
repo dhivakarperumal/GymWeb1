@@ -90,6 +90,7 @@ const MemberAttendance = lazy(() => import("./Admin/Staff/Memberattendance.jsx")
 const BuyPlanadmin = lazy(() => import("./Admin/Plans/BuyPlan.jsx"));
 const EMIList = lazyWithRetry(() => import("./Admin/Plans/EMIList.jsx"));
 const PlanHistory = lazy(() => import("./Admin/Plans/PlanHistory.jsx"));
+const TrainerReferredPlans = lazy(() => import("./Admin/Plans/TrainerReferredPlans.jsx"));
 const MemberDetails = lazy(() => import("./Admin/Members/MemberDetails.jsx"));
 const ExpiryMembers = lazy(() => import("./Admin/Members/ExpiryMembers.jsx"));
 const Offers = lazy(() => import("./Admin/Settingss/Offers.jsx"));
@@ -227,6 +228,7 @@ const router = createHashRouter([
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
       { path: "emi", element: <EMIList /> },
       { path: "plan-history", element: <PlanHistory /> },
+      { path: "trainer-referred-plans", element: <TrainerReferredPlans /> },
       { path: "settings/offers", element: <Offers /> },
 
     ],
@@ -236,13 +238,14 @@ const router = createHashRouter([
   {
     path: "/trainer",
     element: (
-      <PrivateRoute allowedRoles={["trainer"]}>
+      <PrivateRoute allowedRoles={["trainer", "admin"]}>
         <TrainerAdminPanel />
       </PrivateRoute>
     ),
     children: [
       { index: true, element: <TrainerDashboard /> },
       { path: "reports", element: <TrainerReports /> },
+      { path: "expiry-members", element: <ExpiryMembers /> },
       { path: "overall-attendance", element: <TrainerOverallAttendance /> },
       { path: "addworkouts", element: <AddWorkout /> },
       { path: "addworkouts/:id", element: <AddWorkout /> },
@@ -270,6 +273,7 @@ const router = createHashRouter([
       { path: "pricing", element: <TrainerPricing /> },
       { path: "followupenquriy", element: <FollowupEnquiry /> },
       { path: "session-tracking", element: <SessionTracking /> },
+      { path: "buyplanadmin", element: <BuyPlanadmin /> },
     ],
 
   },

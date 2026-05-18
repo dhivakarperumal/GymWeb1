@@ -199,7 +199,12 @@ const UserEnquiry = () => {
         await api.post('/enquiries', payload);
       }
 
-      toast.success(selectedEnquiry ? 'Enquiry updated!' : 'Thank you! Your enquiry has been submitted.');
+      toast.success(
+        selectedEnquiry
+          ? "Enquiry updated!"
+          : "Registration successful! You can now log in using your Mobile Number as your password.",
+        { duration: 5000 }
+      );
 
       if (!selectedEnquiry) {
         setTimeout(() => navigate("/"), 1500);
@@ -221,7 +226,8 @@ const UserEnquiry = () => {
       });
     } catch (error) {
       console.error('Error saving enquiry:', error);
-      toast.error('Something went wrong. Please try again.');
+      const errMsg = error?.response?.data?.error || error?.response?.data?.message || 'Something went wrong. Please try again.';
+      toast.error(errMsg);
     }
   };
 

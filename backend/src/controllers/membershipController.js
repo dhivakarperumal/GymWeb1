@@ -8,9 +8,16 @@ async function getAllMemberships(req, res) {
              COALESCE(m.userName, u.username) as username, 
              COALESCE(m.userEmail, u.email) as email, 
              COALESCE(m.userPhone, u.mobile) as mobile, 
-             u.role
+             u.role,
+             gm.join_date as memberJoinDate,
+             gm.expiry_date as memberExpiryDate
       FROM memberships m
       LEFT JOIN users u ON m.userId = u.id
+      LEFT JOIN gym_members gm ON 
+        (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR 
+        (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '') OR
+        (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
+        (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
       ORDER BY m.createdAt DESC
     `);
     res.json(rows);
@@ -73,6 +80,7 @@ async function createMembership(req, res) {
       status,
       secondPaymentPaid,
       paymentStatus,
+      referredBy,
     } = req.body;
 
     const actualPricePaid = pricePaid !== undefined ? pricePaid : price;
@@ -90,8 +98,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status, paymentStatus)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status, paymentStatus, referredBy)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -111,6 +119,7 @@ async function createMembership(req, res) {
       paymentMode || null,
       status || 'active',
       finalPaymentStatus,
+      referredBy || null,
     ];
 
     const [result] = await db.query(query, values);

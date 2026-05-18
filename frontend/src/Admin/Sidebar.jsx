@@ -38,6 +38,7 @@ const navItems = [
   { path: "/admin/members", label: "Members", icon: Users },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
   { path: "/admin/emi", label: "EMI", icon: BarChart3 },
+  { path: "/admin/trainer-referred-plans", label: "Trainer Referred Plans", icon: UserCheck },
 
   { path: "/admin/assignedtrainers", label: "Assigned Trainers", icon: UserCheck },
 
@@ -56,15 +57,15 @@ const navItems = [
     ],
   },
 
-  {
-    label: "Attendance",
-    icon: CalendarCheck,
-    children: [
-      { path: "/admin/overall-attendance", label: "Overall Attendance", icon: ClipboardList },
-      { path: "/admin/member-attendance", label: "Member Attendance", icon: UserCheck },
-      { path: "/admin/biometric-logs", label: "Biometric Logs", icon: Activity },
-    ],
-  },
+  // {
+  //   label: "Attendance",
+  //   icon: CalendarCheck,
+  //   children: [
+  //     { path: "/admin/overall-attendance", label: "Overall Attendance", icon: ClipboardList },
+  //     { path: "/admin/member-attendance", label: "Member Attendance", icon: UserCheck },
+  //     { path: "/admin/biometric-logs", label: "Biometric Logs", icon: Activity },
+  //   ],
+  // },
 
   { path: "/admin/billing", label: "Billing", icon: Receipt },
 

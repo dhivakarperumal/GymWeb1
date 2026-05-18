@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -69,6 +69,9 @@ const Payments = () => {
               plans: [],
             });
           }
+
+          // Only show plans that are active
+          if (m.status !== "active") return;
 
           usersMap.get(uId).plans.push({
             id: m.id,
@@ -792,7 +795,7 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Remaining</th>
+                    
                     <th className="px-4 py-4 text-left text-sm font-semibold">Start Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">End Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Days Left</th>
@@ -851,13 +854,7 @@ const Payments = () => {
                             ₹{plan.secondPaymentPaid || 0}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          {remainingAmount > 0 ? (
-                            <span className="text-base font-medium text-blue-400">₹{remainingAmount.toFixed(2)}</span>
-                          ) : (
-                            <span className="text-white/20 text-xs">-</span>
-                          )}
-                        </td>
+                       
                         <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
                           {formatDate(plan.startDate)}
                         </td>
