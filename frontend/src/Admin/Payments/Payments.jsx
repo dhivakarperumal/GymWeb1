@@ -106,6 +106,7 @@ const Payments = () => {
             createdAt: m.createdAt,
             status: m.status || "active",
             paymentStatus: m.paymentStatus || (m.pricePaid >= m.price ? "Paid" : "Pending"),
+            referredBy: m.referredBy || "",
           });
         });
 
@@ -406,6 +407,7 @@ const Payments = () => {
         Name: member.username,
         Email: member.email,
         Plan: plan.planName,
+        "Collected By": plan.referredBy || "Admin",
         Amount: plan.pricePaid,
         "Start Date": formatDate(plan.startDate),
         "End Date": formatDate(plan.endDate),
@@ -762,6 +764,13 @@ const Payments = () => {
                         {formatDate(plan.endDate)}
                       </p>
                     </div>
+
+                    <div>
+                      <p className="text-gray-400">Collected By</p>
+                      <p className="font-semibold text-orange-400">
+                        {plan.referredBy || "Admin"}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="mt-4 flex flex-wrap justify-end gap-2">
@@ -814,6 +823,7 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
@@ -859,6 +869,9 @@ const Payments = () => {
                         </td>
                         <td className="px-4 py-4 text-base font-medium text-gray-300">
                           {plan.planName}
+                        </td>
+                        <td className="px-4 py-4 text-base font-medium text-orange-400">
+                          {plan.referredBy || "Admin"}
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-orange-400">

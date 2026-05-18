@@ -540,29 +540,7 @@ const BuyPlanadmin = () => {
       const amountNow = isEMI ? parseDecimal(initialPayment) : planTotal;
       const paymentModeValue = isEMI ? "emi" : form.paymentMode;
 
-      // ===== SAVE MEMBERSHIP HISTORY =====
-      const membershipData = {
-        userId: selectedUser.u_id || selectedUser.user_id || selectedUser.id,
-        userName: selectedUser.name || selectedUser.username,
-        userEmail: form.email,
-        userPhone: form.phone,
-        planId: selectedPlan.id,
-        planName: selectedPlan.name,
-        price: planTotal,
-        pricePaid: amountNow,
-        secondPaymentPaid: 0,
-        duration: selectedPlan.duration,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        paymentMode: paymentModeValue,
-        paymentStatus: isEMI ? "Pending" : "Paid",
-        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
-        referredBy: referredBy || null,
-      };
-
-      await api.post("/memberships", membershipData);
-
-      // ===== UPDATE MEMBER =====
+      // ===== UPDATE/CREATE MEMBER FIRST =====
       const updatedMember = {
         ...selectedUser,
         phone: form.phone,
@@ -578,10 +556,57 @@ const BuyPlanadmin = () => {
         status: location.pathname.startsWith("/trainer") ? "pending" : "active",
       };
 
+      let finalUserId = selectedUser.u_id || selectedUser.user_id || selectedUser.id;
+      let finalUserUuid = selectedUser.u_uuid || selectedUser.user_id;
+
+      try {
+        let memberRes;
+        if (selectedUser.id) {
+          memberRes = await api.put(`${MEMBERS_API}/${selectedUser.id}`, updatedMember);
+        } else {
+          // If no gym_member record exists, we create one
+          memberRes = await api.post(MEMBERS_API, updatedMember);
+        }
+
+        if (memberRes && memberRes.data) {
+          finalUserId = memberRes.data.u_id || memberRes.data.user_id || memberRes.data.id || finalUserId;
+          finalUserUuid = memberRes.data.u_uuid || memberRes.data.user_id || finalUserUuid;
+        }
+      } catch (error) {
+        const errMsg =
+          error?.response?.data?.message || error?.message || "Plan assign failed";
+        alert(errMsg);
+        return;
+      }
+
+      // ===== SAVE MEMBERSHIP HISTORY WITH CORRECT CUSTOMER ID & TRAINER USERNAME =====
+      const membershipData = {
+        userId: finalUserId,
+        userName: selectedUser.name || selectedUser.username,
+        userEmail: form.email,
+        userPhone: form.phone,
+        planId: selectedPlan.id,
+        planName: selectedPlan.name,
+        price: planTotal,
+        pricePaid: amountNow,
+        secondPaymentPaid: 0,
+        duration: selectedPlan.duration,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        paymentMode: paymentModeValue,
+        paymentStatus: isEMI ? "Pending" : "Paid",
+        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
+        referredBy: user?.username || user?.name || profileName || "",
+        trainerId: user?.user_id || user?.id || null,
+        trainerName: profileName || user?.username || user?.name || "",
+      };
+
+      await api.post("/memberships", membershipData);
+
       // ===== OPTIONAL ASSIGN TRAINER =====
       if (selectedTrainer && selectedTrainer !== "") {
         const assignPayload = {
-          userId: selectedUser.u_id || selectedUser.id,
+          userId: finalUserId,
           username: selectedUser.username || selectedUser.name || "",
           userEmail: selectedUser.userEmail || selectedUser.email || "",
           planId: selectedPlan.id,
@@ -599,21 +624,6 @@ const BuyPlanadmin = () => {
           sessionTime: sessionTime || null,
         };
         await api.post("/assignments", { assignments: [assignPayload] });
-      }
-
-      // create or update member with assigned plan
-      try {
-        if (selectedUser.id) {
-          await api.put(`${MEMBERS_API}/${selectedUser.id}`, updatedMember);
-        } else {
-          // If no gym_member record exists, we create one
-          await api.post(MEMBERS_API, updatedMember);
-        }
-      } catch (error) {
-        const errMsg =
-          error?.response?.data?.message || error?.message || "Plan assign failed";
-        alert(errMsg);
-        return;
       }
 
       alert("Plan assigned successfully");

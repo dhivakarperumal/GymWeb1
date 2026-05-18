@@ -32,6 +32,10 @@ const isUpdatePlanEnabled = (m) => {
   return days <= 5;
 };
 
+const hasActiveOrPendingPlan = (m) => {
+  return !!(m.plan && m.plan !== 'user' && (m.status === 'active' || m.status === 'pending'));
+};
+
 const Members = () => {
   const [searchParams] = useSearchParams();
   const querySearch = searchParams.get("search") || "";
@@ -102,7 +106,7 @@ const Members = () => {
 
     // 2. Plan Filter
     let matchesPlanFilter = true;
-    const hasPlan = m.plan && m.plan !== 'user' && m.status === 'active';
+    const hasPlan = hasActiveOrPendingPlan(m);
     if (filterType === "withPlan") matchesPlanFilter = hasPlan;
     if (filterType === "withoutPlan") matchesPlanFilter = !hasPlan;
 
@@ -156,8 +160,8 @@ const Members = () => {
       Email: m.email || m.user_email || "-",
       Role: m.role || m.plan || "Member",
       Source: m.source === "users" ? "User" : "Gym Member",
-      "Join Date": (m.plan && m.plan !== 'user' && m.status === 'active' && m.join_date) ? dayjs(m.join_date).format("YYYY-MM-DD") : "-",
-      "Expiry Date": (m.plan && m.plan !== 'user' && m.status === 'active' && m.expiry_date) ? dayjs(m.expiry_date).format("YYYY-MM-DD") : "-",
+      "Join Date": (hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("YYYY-MM-DD") : "-",
+      "Expiry Date": (hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("YYYY-MM-DD") : "-",
       Status: m.status || "active",
       "Plan Price": m.price || "-",
       "Payment Status": m.paymentMode === 'emi' ? "Pending" : m.plan ? "Paid" : "N/A",
@@ -526,15 +530,15 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.status === 'active' && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                      {(hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.status === 'active' && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                      {(hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
                     </td>
 
                     <td className="px-4 py-5">
                       {(() => {
-                        if (!(m.plan && m.plan !== 'user' && m.status === 'active') || !m.expiry_date) return <span className="text-white/30">-</span>;
+                        if (!hasActiveOrPendingPlan(m) || !m.expiry_date) return <span className="text-white/30">-</span>;
                         // Use startOf('day') for both to ensure we count full days and add +1 for inclusive counting
                         const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                         if (days <= 0) {
@@ -554,7 +558,7 @@ const Members = () => {
                     </td>
 
                     <td className="px-4 py-5">
-                      {!(m.plan && m.plan !== 'user' && m.status === "active") ? (
+                      {!hasActiveOrPendingPlan(m) ? (
                         <span className="text-white/30">-</span>
                       ) : m.pt_form_completed ? (
                         <div className="flex items-center gap-2">
@@ -740,13 +744,13 @@ const Members = () => {
                       <div>
                         <p className="text-[10px] text-gray-500 uppercase tracking-wider">Start Date</p>
                         <p className="text-xs text-gray-300 font-medium">
-                          {(m.plan && m.plan !== 'user' && m.status === 'active' && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                          {(hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
                         </p>
                       </div>
                       <div>
                         <p className="text-[10px] text-gray-500 uppercase tracking-wider">End Date</p>
                         <p className="text-xs text-gray-300 font-medium">
-                          {(m.plan && m.plan !== 'user' && m.status === 'active' && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                          {(hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
                         </p>
                       </div>
                     </div>
@@ -796,7 +800,7 @@ const Members = () => {
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center">
                     <p className="text-[10px] text-gray-400 uppercase mb-1">Validity</p>
                     <div className="text-[10px] font-bold text-white flex flex-col">
-                      {(m.plan && m.plan !== 'user' && m.status === 'active') ? (
+                      {hasActiveOrPendingPlan(m) ? (
                         <>
                           <span>{m.join_date ? dayjs(m.join_date).format("DD/MM/YY") : "-"}</span>
                           <span className="text-gray-500">to</span>
@@ -810,7 +814,7 @@ const Members = () => {
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center flex flex-col justify-center items-center">
                     <p className="text-[10px] text-gray-400 uppercase mb-1">Remaining</p>
                     {(() => {
-                      if (!(m.plan && m.plan !== 'user' && m.status === 'active') || !m.expiry_date) return <span className="text-white/30">-</span>;
+                      if (!hasActiveOrPendingPlan(m) || !m.expiry_date) return <span className="text-white/30">-</span>;
                       const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                       if (days <= 0) {
                         return <span className="text-red-400 text-[10px] font-bold uppercase">Expired</span>;

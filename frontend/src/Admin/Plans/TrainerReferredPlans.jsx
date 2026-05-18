@@ -49,12 +49,30 @@ export default function TrainerReferredPlans() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/memberships");
-      const all = Array.isArray(res.data) ? res.data : res.data?.memberships || [];
+      const [membershipsRes, staffRes] = await Promise.all([
+        api.get("/memberships"),
+        api.get("/staff").catch(() => ({ data: [] }))
+      ]);
+
+      const all = Array.isArray(membershipsRes.data) ? membershipsRes.data : membershipsRes.data?.memberships || [];
+      const staffList = Array.isArray(staffRes.data) ? staffRes.data : [];
+
+      // Filter staff members to get only trainers
+      const trainers = staffList.filter(s => s.role && s.role.toLowerCase() === "trainer");
+
+      // Extract all valid names, usernames, and emails of trainers (lowercased)
+      const trainerIdentifiers = new Set();
+      trainers.forEach(t => {
+        if (t.name) trainerIdentifiers.add(t.name.toLowerCase().trim());
+        if (t.username) trainerIdentifiers.add(t.username.toLowerCase().trim());
+        if (t.email) trainerIdentifiers.add(t.email.toLowerCase().trim());
+      });
+
       const filtered = all.filter(
         (m) =>
           m.referredBy &&
-          m.referredBy.toString().trim() !== ""
+          m.referredBy.toString().trim() !== "" &&
+          trainerIdentifiers.has(m.referredBy.toLowerCase().trim())
       );
       setMemberships(filtered);
     } catch (err) {
