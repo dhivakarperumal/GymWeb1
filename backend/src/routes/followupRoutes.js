@@ -8,6 +8,7 @@ router.get('/', followupMasterController.getAllFollowups);
 router.get('/:id', followupMasterController.getFollowupById);
 router.post('/', followupMasterController.createFollowup);
 router.put('/:id', followupMasterController.updateFollowup);
+router.post('/:id/convert', followupMasterController.convertFollowupToMember);
 router.delete('/:id', followupMasterController.deleteFollowup);
 router.delete('/', followupMasterController.deleteAllFollowups);
 

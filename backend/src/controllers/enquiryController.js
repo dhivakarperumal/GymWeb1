@@ -344,8 +344,8 @@ const enquiryController = {
                         fitness_goal, blood_group
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
-                        userId_uuid, memberId, enquiry.name, enquiry.phone, enquiry.email || null, enquiry.gender,
-                        enquiry.height, enquiry.weight, enquiry.bmi, enquiry.plan_name, enquiry.plan_duration,
+                        userId_uuid, memberId, enquiry.name, enquiry.phone, enquiry.email || null, enquiry.gender, 
+                        enquiry.height, enquiry.weight, enquiry.bmi, null, null,
                         enquiry.address, enquiry.dob, enquiry.age, enquiry.employer, enquiry.occupation,
                         enquiry.emergency_contact_name, enquiry.emergency_contact_relationship,
                         enquiry.emergency_contact_address, enquiry.emergency_contact_phone_home,

@@ -219,6 +219,18 @@ const FollowupEnquiry = () => {
     }
   };
 
+  const handleMoveToMembers = async (enquiry) => {
+    try {
+      await api.post(`/followups/${enquiry.id}/convert`);
+      toast.success('Member created successfully from followup. Login using Mobile Number as password.');
+      fetchEnquiries();
+    } catch (err) {
+      console.error('Error moving to members:', err);
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to create member';
+      alert(msg);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: "", email: "", phone: "", subject: "", message: "",
@@ -733,6 +745,15 @@ const FollowupEnquiry = () => {
                           >
                             Edit
                           </button>
+                          {enquiry.status === 'pending' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
+                              title="Move to Members"
+                            >
+                              <Users size={12} />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteEnquiry(enquiry.id); }}
                             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
@@ -843,6 +864,15 @@ const FollowupEnquiry = () => {
                                 >
                                   <Eye size={14} />
                                 </button>
+                                {enquiry.status === 'pending' && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
+                                    className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
+                                    title="Move to Members"
+                                  >
+                                    <Users size={14} />
+                                  </button>
+                                )}
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setSelectedEnquiry(enquiry); setShowForm(true); }}
                                   className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
