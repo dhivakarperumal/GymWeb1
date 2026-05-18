@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   Users,
@@ -17,11 +17,18 @@ import toast from "react-hot-toast";
 // backend API
 import api from "../../api";
 import cache from "../../cache";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 const MEMBERSHIPS_API = `memberships`;
 const MEMBERS_API = `members`;
 
 const Payments = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, profileName } = useAuth();
+  
+  const isTrainerPanel = location.pathname.startsWith("/trainer");
+  const cacheKey = isTrainerPanel ? `trainerPayments_${user?.id}` : "adminPayments";
+
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -39,8 +46,8 @@ const Payments = () => {
   /* ================= FETCH DATA ================= */
   useEffect(() => {
     const fetchPayments = async () => {
-      if (cache.adminPayments) {
-        setMembers(cache.adminPayments);
+      if (cache[cacheKey]) {
+        setMembers(cache[cacheKey]);
         setLoading(false);
       } else {
         setLoading(true);
@@ -59,7 +66,22 @@ const Payments = () => {
           return;
         }
 
+        const loggedInTrainerName = (profileName || user?.username || user?.name || "").toLowerCase().trim();
+
         membershipsData.forEach((m) => {
+          // If on trainer panel, filter for trainer collected only
+          if (isTrainerPanel) {
+            const referredByLower = (m.referredBy || "").toLowerCase().trim();
+            if (
+              !referredByLower || 
+              (referredByLower !== loggedInTrainerName && 
+               !referredByLower.includes(loggedInTrainerName) && 
+               !loggedInTrainerName.includes(referredByLower))
+            ) {
+              return;
+            }
+          }
+
           const uId = m.userId || `guest_${m.id}`;
           if (!usersMap.has(uId)) {
             usersMap.set(uId, {
@@ -89,17 +111,17 @@ const Payments = () => {
 
         const finalData = Array.from(usersMap.values());
         setMembers(finalData);
-        cache.adminPayments = finalData;
+        cache[cacheKey] = finalData;
       } catch (error) {
         console.error(error);
-        if (!cache.adminPayments) toast.error("Failed to load payment data");
+        if (!cache[cacheKey]) toast.error("Failed to load payment data");
       } finally {
         setLoading(false);
       }
     };
 
     fetchPayments();
-  }, []);
+  }, [isTrainerPanel, user, profileName]);
 
   /* ================= EXPIRY CHECK ================= */
   const isExpiringPlan = (endDate) => {
@@ -465,7 +487,7 @@ const Payments = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  if (loading && !cache.adminPayments) {
+  if (loading && !cache[cacheKey]) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-6">
         <div className="relative">

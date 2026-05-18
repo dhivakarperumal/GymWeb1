@@ -274,6 +274,7 @@ const router = createHashRouter([
       { path: "followupenquriy", element: <FollowupEnquiry /> },
       { path: "session-tracking", element: <SessionTracking /> },
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
+      { path: "payments", element: <Payments /> },
     ],
 
   },

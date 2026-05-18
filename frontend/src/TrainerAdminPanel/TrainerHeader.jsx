@@ -36,6 +36,12 @@ const pageTitles = {
   "/trainer/pricing": "Pricing",
   "/trainer/followupenquriy": "Follow-up Enquiry",
   "/trainer/buyplanadmin": "Assign Plans",
+  "/trainer/payments": "Payments",
+  "/trainer/member-attendance": "Member Attendance",
+  "/trainer/expiry-members": "Plan Expiry Details",
+  "/trainer/settings": "Settings",
+  "/trainer/settings/usermanagement": "User Management",
+  "/trainer/settings/reviews": "Reviews Settings",
 };
 
 /* ------------------------------------------------------------------ */
