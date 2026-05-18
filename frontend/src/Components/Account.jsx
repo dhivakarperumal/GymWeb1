@@ -18,11 +18,12 @@ import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Ho
 const Account = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const locationTab = location.state?.tab;
   const { user, logout } = useAuth();
   const userId = user?.id;
 
   const [activeTab, setActiveTab] = useState(
-    location.state?.tab || "personal"
+    locationTab || "personal"
   );
 
   const [userInfo, setUserInfo] = useState({});
@@ -83,7 +84,13 @@ const Account = () => {
     };
 
     fetchPlans();
-  }, [userId]);
+  }, [userId, locationTab]);
+
+  useEffect(() => {
+    if (locationTab) {
+      setActiveTab(locationTab);
+    }
+  }, [locationTab]);
 
   /* ================= SIDEBAR ================= */
 
