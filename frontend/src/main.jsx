@@ -19,6 +19,7 @@ const lazyWithRetry = (componentImport) =>
       return await componentImport();
     } catch (error) {
       console.error("Chunk load failed, reloading page...", error);
+      // Only reload once to avoid infinite loops
       const hasReloaded = sessionStorage.getItem("chunk_reload_attempted");
       if (!hasReloaded) {
         sessionStorage.setItem("chunk_reload_attempted", "true");
@@ -118,8 +119,6 @@ const SessionTracking = lazy(() => import("./TrainerAdminPanel/SessionTracking/S
 
 
 
-const BiometricLogs = lazyWithRetry(() => import("./Admin/Attendance/BiometricLogs.jsx"));
-
 const router = createHashRouter([
   {
     path: "/",
@@ -173,8 +172,6 @@ const router = createHashRouter([
       { path: "orders", element: <AllOrders /> },
       { path: "orders/:id", element: <OrderDetails /> },
       { path: "members", element: <Members /> },
-      { path: "member-attendance", element: <MemberAttendance /> },
-      { path: "biometric-logs", element: <BiometricLogs /> },
       { path: "member_details/:id", element: <MemberDetails /> },
       { path: "expiry-members", element: <ExpiryMembers /> },
       { path: "addmembers", element: <AddMember /> },

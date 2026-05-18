@@ -12,7 +12,7 @@ export default defineConfig({
       "/api": {
         // target: "http://localhost:5000",
 
-        target:"https://dap.qtechx.com",
+        target:"https://dapfitt.com",
 
         changeOrigin: true,
         secure: false,
