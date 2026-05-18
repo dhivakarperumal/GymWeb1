@@ -23,6 +23,7 @@ const BuyPlanadmin = () => {
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
+  const [followups, setFollowups] = useState([]);
   const [trainers, setTrainers] = useState([]);
   const [memberHistory, setMemberHistory] = useState([]);
 
@@ -165,35 +166,14 @@ const BuyPlanadmin = () => {
     }
   }, [selectedPlan, paymentType]);
 
-  const findPreferredEnquiryPlan = (user, enquiryList) => {
-    if (!user || !Array.isArray(enquiryList)) return null;
-    const phone = user.phone?.toString().trim();
-    const email = user.email?.toString().trim().toLowerCase();
-    const candidates = enquiryList
-      .filter((q) => {
-        const qPhone = q.phone?.toString().trim();
-        const qEmail = q.email?.toString().trim().toLowerCase();
-        return (phone && qPhone === phone) || (email && qEmail === email);
-      })
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    const latest = candidates.find((q) => q.plan_name || q.plan_duration);
-    return latest ? { plan: latest.plan_name, duration: latest.plan_duration } : null;
-  };
-
   const findMatchingPlan = (user, planList, enquiryList) => {
     if (!user || !Array.isArray(planList)) return null;
 
     let planName = normalizePlanText(user.plan);
     let durationValue = parseDurationValue(user.duration);
 
-    if (!planName && durationValue == null && Array.isArray(enquiryList)) {
-      const fromEnquiry = findPreferredEnquiryPlan(user, enquiryList);
-      if (fromEnquiry) {
-        planName = normalizePlanText(fromEnquiry.plan);
-        durationValue = parseDurationValue(fromEnquiry.duration);
-      }
-    }
+    // Do not auto-select a plan from enquiry history for users without an active plan.
+    // Converted members should choose a plan explicitly in the Buy Plan flow.
 
     if (planName) {
       const exactByName = planList.find(
@@ -216,6 +196,39 @@ const BuyPlanadmin = () => {
     }
 
     return null;
+  };
+
+  // Try to find the most recent enquiry for this user that contains a plan preference
+  const findPreferredEnquiryPlan = (user, enquiryList) => {
+    if (!user || !Array.isArray(enquiryList)) return null;
+
+    const normalizePhone = (p) => {
+      if (!p) return null;
+      const digits = p.toString().replace(/\D/g, '');
+      return digits.length <= 10 ? digits : digits.slice(-10);
+    };
+
+    const userPhone = normalizePhone(user.phone || user.mobile || user.user_mobile || user.user_phone);
+    const userEmail = (user.email || user.user_email || '').toString().trim().toLowerCase();
+    const userName = (user.name || user.username || '').toString().trim().toLowerCase();
+
+    const candidates = enquiryList
+      .filter((q) => {
+        const qPhone = normalizePhone(q.phone);
+        const qEmail = (q.email || '').toString().trim().toLowerCase();
+        const qName = (q.name || q.fullname || '').toString().trim().toLowerCase();
+
+        if (userPhone && qPhone && userPhone === qPhone) return true;
+        if (userEmail && qEmail && userEmail === qEmail) return true;
+        // fallback: match by name similarity (exact lowercase match)
+        if (userName && qName && userName === qName) return true;
+        return false;
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const latest = candidates.find((q) => q.plan_name || q.plan_duration || q.plan);
+    if (!latest) return null;
+    return { plan: latest.plan_name || latest.plan, duration: latest.plan_duration || latest.duration };
   };
 
   // ================= FETCH MEMBERS =================
@@ -256,12 +269,48 @@ const BuyPlanadmin = () => {
       }
     };
 
+    const fetchFollowups = async () => {
+      try {
+        const res = await api.get('/followups');
+        setFollowups(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error('Failed to load followups', err);
+      }
+    };
+
     fetchEnquiries();
+    fetchFollowups();
   }, []);
 
   useEffect(() => {
     if (!selectedUser || plans.length === 0) return;
-    const matchedPlan = findMatchingPlan(selectedUser, plans, enquiries);
+    const combined = Array.isArray(enquiries) ? [...enquiries] : [];
+    if (Array.isArray(followups)) combined.push(...followups);
+
+    // prefer explicit user enquiry/followup preference
+    const pref = findPreferredEnquiryPlan(selectedUser, combined);
+    if (pref && (pref.plan || pref.duration)) {
+      const byName = plans.find(
+        (p) => normalizePlanText(p.name) === normalizePlanText(pref.plan)
+      );
+      if (byName && byName.id !== selectedPlan?.id) {
+        setSelectedPlan(byName);
+        return;
+      }
+
+      const durationVal = parseDurationValue(pref.duration);
+      if (durationVal != null) {
+        const byDuration = plans.find(
+          (p) => parseDurationValue(p.duration) === durationVal
+        );
+        if (byDuration && byDuration.id !== selectedPlan?.id) {
+          setSelectedPlan(byDuration);
+          return;
+        }
+      }
+    }
+
+    const matchedPlan = findMatchingPlan(selectedUser, plans, combined);
     if (matchedPlan && matchedPlan.id !== selectedPlan?.id) {
       setSelectedPlan(matchedPlan);
     }
@@ -669,11 +718,34 @@ const BuyPlanadmin = () => {
                                 bmi: user.bmi || "",
                               }));
 
-                              const matchedPlan = findMatchingPlan(
-                                user,
-                                plans,
-                                enquiries
-                              );
+                              // First try to find a preferred plan from enquiries for this user
+                              const combined = Array.isArray(enquiries) ? [...enquiries] : [];
+                              if (Array.isArray(followups)) combined.push(...followups);
+                              const pref = findPreferredEnquiryPlan(user, combined);
+                              if (pref && (pref.plan || pref.duration)) {
+                                // try exact name match
+                                const byName = plans.find(
+                                  (p) => normalizePlanText(p.name) === normalizePlanText(pref.plan)
+                                );
+                                if (byName) {
+                                  setSelectedPlan(byName);
+                                  return;
+                                }
+
+                                // try match by duration if provided
+                                const durationVal = parseDurationValue(pref.duration);
+                                if (durationVal != null) {
+                                  const byDuration = plans.find(
+                                    (p) => parseDurationValue(p.duration) === durationVal
+                                  );
+                                  if (byDuration) {
+                                    setSelectedPlan(byDuration);
+                                    return;
+                                  }
+                                }
+                              }
+
+                              const matchedPlan = findMatchingPlan(user, plans, combined);
                               if (matchedPlan) {
                                 setSelectedPlan(matchedPlan);
                                 return;

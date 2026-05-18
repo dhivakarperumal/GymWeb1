@@ -258,7 +258,7 @@ async function getMemberByUserId(req, res) {
   }
 }
 
-async function createMember(req, res) {
+async function createMemberRecord(connection, payload) {
   const {
     name, phone, email, gender, height, weight, bmi,
     plan, duration, joinDate, expiryDate, status,
@@ -269,66 +269,47 @@ async function createMember(req, res) {
     emergency_contact_phone_home, emergency_contact_phone_work,
     fitness_goal, blood_group, pt_form_completed,
     fingerprintId
-  } = req.body;
+  } = payload;
 
-  console.log('createMember received:', { name, phone, email, gender, height, weight, bmi, plan, duration, joinDate, expiryDate, status, photo: photo ? 'base64...' : null, notes, address, username });
+  const resolvedName = name || "Unknown";
+  const resolvedPhone = phone || "";
 
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // Use fallback values if name/phone are missing (allow all imports)
-    const resolvedName = name || "Unknown";
-    const resolvedPhone = phone || "";
-
-    // duplicate phone or email check in gym_members
-    if (resolvedPhone || email) {
-      const [existingMember] = await connection.query(
-        "SELECT id FROM gym_members WHERE (phone != '' AND phone = ?) OR (email IS NOT NULL AND email != '' AND email = ?)",
-        [resolvedPhone, email]
-      );
-
-      if (existingMember.length > 0) {
-        await connection.rollback();
-        return res.status(400).json({ message: "A member with this phone or email already exists in members directory" });
-      }
-    }
-
-    // We no longer block creation if a user account already exists.
-    // We just check if they exist so we can link/update their user account later.
-    const [existingUser] = await connection.query(
-      "SELECT id, user_id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+  if (resolvedPhone || email) {
+    const [existingMember] = await connection.query(
+      "SELECT id FROM gym_members WHERE (phone != '' AND phone = ?) OR (email IS NOT NULL AND email != '' AND email = ?)",
       [resolvedPhone, email]
     );
 
-    let userId_uuid = null;
-    if (existingUser.length > 0) {
-      userId_uuid = existingUser[0].user_id;
-    } else {
-      userId_uuid = uuidv4();
+    if (existingMember.length > 0) {
+      throw new Error("A member with this phone or email already exists in members directory");
     }
+  }
 
-    // Parse numeric fields early so they can be used in insert loop
-    const numHeight = height != null && !isNaN(height) ? Number(height) : null;
-    const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
-    const numBmi = bmi != null && !isNaN(bmi) ? Number(bmi) : null;
-    const numDuration = duration != null && !isNaN(duration) ? Number(duration) : null;
+  const [existingUser] = await connection.query(
+    "SELECT id, user_id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+    [resolvedPhone, email]
+  );
 
-    const [maxResult] = await connection.query(
-      "SELECT MAX(CAST(member_id AS UNSIGNED)) as maxnum FROM gym_members"
-    );
+  let userId_uuid = existingUser.length > 0 ? existingUser[0].user_id : uuidv4();
 
-    let nextNumber = (maxResult[0].maxnum || 0) + 1;
-    let memberId = String(nextNumber);
+  const numHeight = height != null && !isNaN(height) ? Number(height) : null;
+  const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
+  const numBmi = bmi != null && !isNaN(bmi) ? Number(bmi) : null;
+  const numDuration = duration != null && !isNaN(duration) ? Number(duration) : null;
 
-    // In rare case of duplicate (concurrent inserts), retry once
-    let inserted = false;
-    let result;
-    let insertResult;
-    for (let attempt = 0; attempt < 2 && !inserted; attempt++) {
-      try {
-        [result] = await connection.query(
-          `INSERT INTO gym_members
+  const [maxResult] = await connection.query(
+    "SELECT MAX(CAST(member_id AS UNSIGNED)) as maxnum FROM gym_members"
+  );
+
+  let nextNumber = (maxResult[0].maxnum || 0) + 1;
+  let memberId = String(nextNumber);
+
+  let inserted = false;
+  let result;
+  for (let attempt = 0; attempt < 2 && !inserted; attempt++) {
+    try {
+      [result] = await connection.query(
+        `INSERT INTO gym_members
       (user_id, member_id, name, phone, email, gender, height, weight, bmi, plan, duration,
        join_date, expiry_date, status, photo, notes, address,
        dob, age, employer, occupation,
@@ -336,69 +317,60 @@ async function createMember(req, res) {
        emergency_contact_phone_home, emergency_contact_phone_work,
        fitness_goal, blood_group, pt_form_completed, fingerprint_id)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-          [
-            userId_uuid, memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
-            plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
-            dob || null, age || null, employer || null, occupation || null,
-            emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
-            emergency_contact_phone_home || null, emergency_contact_phone_work || null,
-            fitness_goal || null, blood_group || null,
-            pt_form_completed ? 1 : 0,
-            fingerprintId || null
-          ]
+        [
+          userId_uuid, memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
+          plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
+          dob || null, age || null, employer || null, occupation || null,
+          emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+          emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+          fitness_goal || null, blood_group || null,
+          pt_form_completed ? 1 : 0,
+          fingerprintId || null
+        ]
+      );
+      inserted = true;
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY' && err.sqlMessage.includes('member_id')) {
+        nextNumber += 1;
+        memberId = String(nextNumber);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  if (!inserted) {
+    throw new Error('Failed to generate unique member_id');
+  }
+
+  if (email || resolvedPhone) {
+    try {
+      const pwd = password || resolvedPhone || 'Gym123';
+      const hashed = await bcrypt.hash(pwd, 10);
+
+      if (existingUser.length > 0) {
+        await connection.query(
+          `UPDATE users SET password_hash = ?, username = ? WHERE id = ?`,
+          [hashed, username || null, existingUser[0].id]
         );
-        inserted = true;
-        insertResult = result;
-      } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY' && err.sqlMessage.includes('member_id')) {
-          // regenerate memberId and retry
-          nextNumber += 1;
-          memberId = String(nextNumber);
-        } else {
-          throw err;
-        }
-      }
-    }
-    if (!inserted) {
-      throw new Error('Failed to generate unique member_id');
-    }
-
-    // create or update user account for member (only if we have an email or phone)
-    if (email || resolvedPhone) {
-      try {
-        const pwd = password || resolvedPhone || 'Gym123'; // Fallback password to prevent NOT NULL error
-        const hashed = await bcrypt.hash(pwd, 10);
-
-        if (existingUser.length > 0) {
-          // Update existing user login
-          await connection.query(
-            `UPDATE users SET password_hash = ?, username = ? WHERE id = ?`,
-            [hashed, username || null, existingUser[0].id]
-          );
-        } else {
-          await connection.query(
-            `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
+      } else {
+        await connection.query(
+          `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
                VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId_uuid, email || null, hashed, 'user', username || null, resolvedPhone || null]
-          );
-        }
-      } catch (userErr) {
-        if (userErr.code === 'ER_DUP_ENTRY') {
-          // If we hit a duplicate email/mobile in users that wasn't caught by existingUser query
-          // (e.g. concurrent insert), just warn and skip
-          console.warn('createMember: user already exists (duplicate entry), skipping user insert');
-        } else {
-          console.error('createMember user insert error', userErr);
-          throw userErr;
-        }
+          [userId_uuid, email || null, hashed, 'user', username || null, resolvedPhone || null]
+        );
+      }
+    } catch (userErr) {
+      if (userErr.code === 'ER_DUP_ENTRY') {
+        console.warn('createMember: user already exists (duplicate entry), skipping user insert');
+      } else {
+        throw userErr;
       }
     }
+  }
 
-    await connection.commit();
-
-    // fetch back using the richer query so the client sees counts / user_email
-    const [fetched] = await connection.query(
-      `
+  const [fetched] = await connection.query(
+    `
       SELECT gm.*,
              u.id AS u_id,
              u.user_id AS u_uuid,
@@ -407,23 +379,46 @@ async function createMember(req, res) {
              0 AS diet_count
       FROM gym_members gm
       LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      WHERE gm.id = ?
-      `,
-      [result.insertId]
-    );
-    const member = fetched[0] || {
-      id: result.insertId,
-      member_id: memberId,
-      name, phone, email, gender, height: numHeight, weight: numWeight, bmi: numBmi, plan, duration: numDuration,
-      join_date: joinDate, expiry_date: expiryDate, status, photo, notes, address
-    };
+      WHERE gm.member_id = ?
+    `,
+    [memberId]
+  );
 
+  return fetched[0] || {
+    id: result.insertId,
+    member_id: memberId,
+    name: resolvedName,
+    phone: resolvedPhone,
+    email,
+    gender,
+    height: numHeight,
+    weight: numWeight,
+    bmi: numBmi,
+    plan,
+    duration: numDuration,
+    join_date: joinDate,
+    expiry_date: expiryDate,
+    status,
+    photo,
+    notes,
+    address
+  };
+}
+
+async function createMember(req, res) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const member = await createMemberRecord(connection, req.body);
+    await connection.commit();
     res.json(member);
   } catch (err) {
     await connection.rollback();
-    console.error('createMember error:', err.message);
-    console.error('Full error:', err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('createMember error:', err.message || err);
+    if (err.message && err.message.includes('already exists')) {
+      return res.status(400).json({ message: err.message });
+    }
+    res.status(500).json({ message: 'Server error', error: err.message });
   } finally {
     connection.release();
   }
@@ -744,6 +739,7 @@ module.exports = {
   getMemberById,
   getMemberByUserId,
   createMember,
+  createMemberRecord,
   updateMember,
   deleteMember,
   getMemberPlans,
