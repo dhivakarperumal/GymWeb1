@@ -219,6 +219,52 @@ const FollowupEnquiry = () => {
     }
   };
 
+  const handleMoveToMembers = async (enquiry) => {
+    try {
+      const memberData = {
+        name: enquiry.name,
+        username: enquiry.name,
+        email: enquiry.email,
+        phone: enquiry.phone || null,
+        address: enquiry.address || enquiry.organization || null,
+        height: enquiry.height || null,
+        weight: enquiry.weight || null,
+        bmi: enquiry.bmi || null,
+        dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : null,
+        age: enquiry.age || null,
+        employer: enquiry.employer || enquiry.organization || null,
+        occupation: enquiry.occupation || null,
+        emergency_contact_name: enquiry.emergency_contact_name || null,
+        emergency_contact_relationship: enquiry.emergency_contact_relationship || null,
+        emergency_contact_address: enquiry.emergency_contact_address || null,
+        emergency_contact_phone_home: enquiry.emergency_contact_phone_home || null,
+        emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
+        fitness_goal: enquiry.fitness_goal || null,
+        blood_group: enquiry.blood_group || null,
+        plan: enquiry.plan_name || null,
+        duration: enquiry.plan_duration ? parseInt(enquiry.plan_duration, 10) || null : null,
+        joinDate: new Date().toISOString().split('T')[0],
+        status: 'pending',
+        gender: enquiry.gender || null,
+        password: enquiry.phone || ''
+      };
+
+      await api.post('/members', memberData);
+      toast.success('Member created successfully. Login using Mobile Number as password.');
+      // mark followup as completed
+      try {
+        await api.put(`/followups/${enquiry.id}`, { status: 'completed' });
+      } catch (err) {
+        console.warn('Failed to update followup status after creating member', err);
+      }
+      fetchEnquiries();
+    } catch (err) {
+      console.error('Error moving to members:', err);
+      const msg = err.response?.data?.message || 'Failed to create member';
+      alert(msg);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: "", email: "", phone: "", subject: "", message: "",
@@ -733,6 +779,15 @@ const FollowupEnquiry = () => {
                           >
                             Edit
                           </button>
+                          {enquiry.status === 'pending' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
+                              title="Move to Members"
+                            >
+                              <Users size={12} />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteEnquiry(enquiry.id); }}
                             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
@@ -843,6 +898,15 @@ const FollowupEnquiry = () => {
                                 >
                                   <Eye size={14} />
                                 </button>
+                                {enquiry.status === 'pending' && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
+                                    className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
+                                    title="Move to Members"
+                                  >
+                                    <Users size={14} />
+                                  </button>
+                                )}
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setSelectedEnquiry(enquiry); setShowForm(true); }}
                                   className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
