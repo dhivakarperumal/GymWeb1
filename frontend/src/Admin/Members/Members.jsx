@@ -33,7 +33,7 @@ const isUpdatePlanEnabled = (m) => {
 };
 
 const hasActiveOrPendingPlan = (m) => {
-  return !!(m.plan && m.plan !== 'user' && (m.status === 'active' || m.status === 'pending'));
+  return !!(m.plan && m.plan !== 'user' && m.status === 'active');
 };
 
 const Members = () => {
