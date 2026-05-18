@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api"
@@ -19,6 +19,17 @@ const formatDobToDDMMYYYY = (dateString) => {
   const parsed = dayjs(dateString);
   if (parsed.isValid()) return parsed.format("DD-MM-YYYY");
   return dateString;
+};
+
+const isUpdatePlanEnabled = (m) => {
+  // If the member does not have an active plan, they need a plan
+  if (!m.plan || m.plan === 'user' || m.status !== 'active') {
+    return true;
+  }
+  // Allow renewal if expired or expiring within 5 days
+  if (!m.expiry_date) return true;
+  const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
+  return days <= 5;
 };
 
 const Members = () => {
@@ -515,15 +526,15 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                      {m.join_date ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                      {m.expiry_date ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
                     </td>
 
                     <td className="px-4 py-5">
                       {(() => {
-                        if (!(m.plan && m.plan !== 'user') || !m.expiry_date) return <span className="text-white/30">-</span>;
+                        if (!m.expiry_date) return <span className="text-white/30">-</span>;
                         // Use startOf('day') for both to ensure we count full days and add +1 for inclusive counting
                         const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                         if (days <= 0) {
@@ -585,6 +596,24 @@ const Members = () => {
                       >
                         <Eye size={16} />
                       </button>
+                      {(() => {
+                        const enabled = isUpdatePlanEnabled(m);
+                        return (
+                          <button
+                            onClick={() => {
+                              if (enabled) navigate("/admin/buyplanadmin", { state: { member: m } });
+                            }}
+                            disabled={!enabled}
+                            className={`p-2 rounded-lg text-white transition ${enabled
+                                ? "bg-orange-500/80 hover:bg-orange-500 cursor-pointer"
+                                : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
+                              }`}
+                            title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
+                          >
+                            <CreditCard size={16} />
+                          </button>
+                        );
+                      })()}
                       <button
                         onClick={() => {
                           if (m.source === "users") {
@@ -655,6 +684,24 @@ const Members = () => {
                       >
                         <Eye size={14} />
                       </button>
+                      {(() => {
+                        const enabled = isUpdatePlanEnabled(m);
+                        return (
+                          <button
+                            onClick={() => {
+                              if (enabled) navigate("/admin/buyplanadmin", { state: { member: m } });
+                            }}
+                            disabled={!enabled}
+                            className={`p-2 rounded-lg transition ${enabled
+                                ? "bg-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-white cursor-pointer"
+                                : "bg-white/5 text-white/10 cursor-not-allowed border border-white/5"
+                              }`}
+                            title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
+                          >
+                            <CreditCard size={14} />
+                          </button>
+                        );
+                      })()}
                       <button
                         onClick={() => {
                           if (m.source === "users") {
@@ -686,6 +733,22 @@ const Members = () => {
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <Mail size={14} className="text-orange-500" />
                       <span className="truncate">{m.email || m.user_email || "No email"}</span>
+                    </div>
+
+                    {/* MEMBERSHIP DATES IN CARD VIEW */}
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider">Start Date</p>
+                        <p className="text-xs text-gray-300 font-medium">
+                          {m.join_date ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider">End Date</p>
+                        <p className="text-xs text-gray-300 font-medium">
+                          {m.expiry_date ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">

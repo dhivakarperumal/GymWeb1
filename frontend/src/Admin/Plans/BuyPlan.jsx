@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import api from "../../api";
@@ -13,6 +13,7 @@ const MEMBERSHIP_API = "/memberships";
 
 const BuyPlanadmin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -56,9 +57,9 @@ const BuyPlanadmin = () => {
         // only gym members converted from enquiry should appear
         if (m.source === "users") return false;
 
-        // 1. Skip if already has active plan
+        // 1. Skip if already has active plan (unless searching for them specifically)
         const hasPlan = m.status === "active" && m.plan;
-        if (hasPlan) return false;
+        if (hasPlan && !memberSearch) return false;
 
         // 2. Skip duplicates by phone
         if (seenPhones.has(m.phone)) return false;
@@ -276,6 +277,51 @@ const BuyPlanadmin = () => {
     fetchTrainers();
   }, []);
 
+  // ================= LOAD MEMBER FROM NAVIGATION STATE =================
+  useEffect(() => {
+    if (location.state?.member && members.length > 0) {
+      const stateMember = location.state.member;
+      // Find the member in our members array
+      const user = members.find(
+        (m) =>
+          (m.phone && m.phone === stateMember.phone) ||
+          (m.id && m.id === stateMember.id)
+      );
+
+      if (user) {
+        setSelectedUser(user);
+        setMemberSearch("");
+        
+        // FETCH HISTORY
+        const uId = user.u_id || user.user_id || user.id;
+        api.get(`/memberships/user/${uId}`)
+          .then(res =>
+            setMemberHistory(
+              Array.isArray(res.data) ? res.data : []
+            )
+          )
+          .catch(err =>
+            console.error("History fetch error:", err)
+          );
+
+        setForm((prev) => ({
+          ...prev,
+          phone: user.phone || "",
+          email: user.email || "",
+          address: user.address || "",
+          height: user.height || "",
+          weight: user.weight || "",
+          bmi: user.bmi || "",
+        }));
+
+        const matchedPlan = findMatchingPlan(user, plans, enquiries);
+        if (matchedPlan) {
+          setSelectedPlan(matchedPlan);
+        }
+      }
+    }
+  }, [location.state, members, plans, enquiries]);
+
   // ================= CALCULATE BMI =================
   useEffect(() => {
     const h = parseFloat(form.height);
@@ -424,10 +470,7 @@ const BuyPlanadmin = () => {
       return;
     }
 
-    if (selectedUser.status === "active" && selectedUser.plan) {
-      alert("Member already has active plan");
-      return;
-    }
+    // Allow updating/renewing active plans as requested by the user
 
     setLoading(true);
     try {
@@ -653,6 +696,14 @@ const BuyPlanadmin = () => {
                     {selectedUser.name || selectedUser.username || "Member"}
                   </p>
                   <p className="text-xs text-gray-400">{selectedUser.phone}</p>
+                  {selectedUser.plan && selectedUser.plan !== 'user' && (
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">Current Plan:</span>
+                      <span className="px-2 py-0.5 rounded bg-white/10 text-orange-400 text-[10px] font-bold">
+                        {selectedUser.plan} ({selectedUser.duration || "N/A"})
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => {

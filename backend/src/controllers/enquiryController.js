@@ -89,8 +89,8 @@ const enquiryController = {
             );
 
             if (existingUsers.length > 0 || existingMembers.length > 0) {
-                return res.status(400).json({ 
-                    error: 'A member with this email or phone number already exists.' 
+                return res.status(400).json({
+                    error: 'A member with this email or phone number already exists.'
                 });
             }
 
@@ -125,7 +125,7 @@ const enquiryController = {
                     fitness_goal, blood_group
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    userId_uuid, memberId, name, phone, email || null, gender, 
+                    userId_uuid, memberId, name, phone, email || null, gender,
                     height || null, weight || null, bmi || null, plan_name || null, plan_duration || null,
                     address || null, dob || null, age || null, employer || null, occupation || null,
                     emergency_contact_name || null, emergency_contact_relationship || null,
@@ -246,9 +246,9 @@ const enquiryController = {
                 [status, ids]
             );
 
-            res.json({ 
+            res.json({
                 message: `Successfully updated ${result.affectedRows} enquiries`,
-                affectedRows: result.affectedRows 
+                affectedRows: result.affectedRows
             });
         } catch (error) {
             console.error('Error bulk updating enquiries:', error);
@@ -278,7 +278,7 @@ const enquiryController = {
         const connection = await pool.getConnection();
         try {
             const { id } = req.params;
-            
+
             // 1. Get Enquiry details
             const [enquiries] = await connection.query('SELECT * FROM enquiries WHERE id = ?', [id]);
             if (enquiries.length === 0) {
@@ -344,7 +344,7 @@ const enquiryController = {
                         fitness_goal, blood_group
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
-                        userId_uuid, memberId, enquiry.name, enquiry.phone, enquiry.email || null, enquiry.gender, 
+                        userId_uuid, memberId, enquiry.name, enquiry.phone, enquiry.email || null, enquiry.gender,
                         enquiry.height, enquiry.weight, enquiry.bmi, enquiry.plan_name, enquiry.plan_duration,
                         enquiry.address, enquiry.dob, enquiry.age, enquiry.employer, enquiry.occupation,
                         enquiry.emergency_contact_name, enquiry.emergency_contact_relationship,
@@ -384,9 +384,9 @@ const enquiryController = {
     deleteAllEnquiries: async (req, res) => {
         try {
             const [result] = await pool.query('DELETE FROM enquiries');
-            res.json({ 
+            res.json({
                 message: 'All enquiries deleted successfully',
-                affectedRows: result.affectedRows 
+                affectedRows: result.affectedRows
             });
         } catch (error) {
             console.error('Error deleting all enquiries:', error);

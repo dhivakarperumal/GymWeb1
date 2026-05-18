@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  ChevronLeft, User, Phone, Mail, MapPin, Calendar, 
+import {
+  ChevronLeft, User, Phone, Mail, MapPin, Calendar,
   Clock, CreditCard, Activity, FileText, Trash2, Pencil,
   Dumbbell, Utensils, Info, CheckCircle, Shield
 } from "lucide-react";
@@ -12,12 +12,12 @@ import toast from "react-hot-toast";
 const MemberDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   // State
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview"); // overview, workout, diet
-  
+
   const [workouts, setWorkouts] = useState([]);
   const [dietPlan, setDietPlan] = useState(null);
   const [trainer, setTrainer] = useState(null);
@@ -33,7 +33,7 @@ const MemberDetails = () => {
       // 1. Fetch Member Basic Info
       const res = await api.get(`/members/${id}`);
       const memberData = res.data;
-      
+
       // 2. Fetch Additional Data in parallel
       if (memberData) {
         const userId = memberData.u_id || memberData.user_id || memberData.id;
@@ -48,7 +48,7 @@ const MemberDetails = () => {
         // Get latest membership price if available
         const userMemberships = Array.isArray(membershipRes.data) ? membershipRes.data : [];
         const activeMembership = userMemberships.find(m => m.status === 'active') || userMemberships[0];
-        
+
         const enhancedMember = {
           ...memberData,
           price: activeMembership?.price || memberData.price,
@@ -67,7 +67,7 @@ const MemberDetails = () => {
         const myDiets = (Array.isArray(dietRes.data) ? dietRes.data : [])
           .filter(d => d.member_email?.toLowerCase() === memberData.email?.toLowerCase())
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        
+
         if (myDiets.length > 0) {
           const latestDiet = myDiets[0];
           let daysData = latestDiet.days;
@@ -82,7 +82,7 @@ const MemberDetails = () => {
         const allAssignments = Array.isArray(assignRes.data) ? assignRes.data : [];
         const allStaff = Array.isArray(staffRes.data) ? staffRes.data : [];
 
-        const myAssignment = allAssignments.find(a => 
+        const myAssignment = allAssignments.find(a =>
           String(a.member_id || a.memberId) === String(memberData.id) ||
           String(a.userId) === String(memberData.u_id || memberData.user_id) ||
           String(a.userId) === `m_${memberData.id}` ||
@@ -205,8 +205,8 @@ const MemberDetails = () => {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-1">{member.name}</h2>
                 <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">ID: #{member.id}</p>
-                
-                <button 
+
+                <button
                   onClick={handleToggleStatus}
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl transition-all hover:scale-105 active:scale-95 ${member.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}
                   title={`Click to set as ${member.status === 'active' ? 'Inactive' : 'Active'}`}
@@ -267,9 +267,8 @@ const MemberDetails = () => {
                   <div className="flex items-center justify-between border-b border-white/5 pb-4">
                     <h3 className="text-sm font-black text-white/20 uppercase tracking-widest">Membership</h3>
                     {member.payment_status && (
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        member.payment_status === 'Paid' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${member.payment_status === 'Paid' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+                        }`}>
                         {member.payment_status}
                       </span>
                     )}
@@ -278,7 +277,7 @@ const MemberDetails = () => {
                     <InfoRow icon={<CreditCard size={18} className="text-orange-500" />} label="Plan" value={member.plan || 'No Active Plan'} />
                     <InfoRow icon={<Calendar size={18} className="text-orange-500" />} label="Joined" value={member.join_date ? dayjs(member.join_date).format('MMM DD, YYYY') : 'N/A'} />
                     <InfoRow icon={<Clock size={18} className="text-orange-500" />} label="Expiry" value={member.expiry_date ? dayjs(member.expiry_date).format('MMM DD, YYYY') : 'N/A'} />
-                    
+
                     <div className="pt-4 border-t border-white/5 space-y-3">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-white/40">Total Price</span>
@@ -335,7 +334,7 @@ const MemberDetails = () => {
                     <p className="text-white/40 text-xs">{member.pt_form_completed ? 'Form completed' : 'Awaiting completion'}</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => navigate(member.pt_form_completed ? `/admin/pt-form/print/${id}` : `/admin/pt-form?member_id=${id}`)}
                   className={`px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all ${member.pt_form_completed ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white'}`}
                 >

@@ -99,22 +99,22 @@ const Reports = () => {
   /* ========================
      FILTERED DATA
   ======================== */
-  const filteredMembers = useMemo(() => 
+  const filteredMembers = useMemo(() =>
     filterByDateRange(members, 'join_date', dateRange.type, dateRange.range),
     [members, dateRange]
   );
 
-  const filteredOrders = useMemo(() => 
+  const filteredOrders = useMemo(() =>
     filterByDateRange(orders, 'created_at', dateRange.type, dateRange.range),
     [orders, dateRange]
   );
 
-  const filteredMemberships = useMemo(() => 
+  const filteredMemberships = useMemo(() =>
     filterByDateRange(memberships, 'startDate', dateRange.type, dateRange.range),
     [memberships, dateRange]
   );
 
-  const filteredEnquiries = useMemo(() => 
+  const filteredEnquiries = useMemo(() =>
     filterByDateRange(enquiries, 'created_at', dateRange.type, dateRange.range),
     [enquiries, dateRange]
   );
@@ -244,11 +244,10 @@ const Reports = () => {
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
-                activeTab === t.key
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${activeTab === t.key
                   ? "bg-orange-500 text-white shadow-lg"
                   : "bg-white/10 text-white/70 hover:bg-white/20"
-              }`}
+                }`}
             >
               <Icon size={16} /> {t.label}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === t.key ? "bg-white/20" : "bg-white/10"}`}>
