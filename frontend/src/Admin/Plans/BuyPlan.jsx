@@ -26,6 +26,7 @@ const BuyPlanadmin = () => {
   const [sessionTime, setSessionTime] = useState("");
   const [paymentType, setPaymentType] = useState("full");
   const [initialPayment, setInitialPayment] = useState("");
+  const [discount, setDiscount] = useState("");
 
   const [memberSearch, setMemberSearch] = useState("");
   const [planSearch, setPlanSearch] = useState("");
@@ -125,9 +126,11 @@ const BuyPlanadmin = () => {
 
   const getSelectedPlanTotal = () => {
     if (!selectedPlan) return 0;
-    return parseDecimal(
+    const originalPrice = parseDecimal(
       selectedPlan.finalPrice ?? selectedPlan.final_price ?? selectedPlan.price
     );
+    const discountVal = parseDecimal(discount);
+    return Math.max(0, originalPrice - discountVal);
   };
 
   const getSelectedPlanDuration = () => {
@@ -289,7 +292,7 @@ const BuyPlanadmin = () => {
 
     const durationMonths = parseDurationValue(selectedPlan.duration) || 0;
 
-    const start = new Date(today);
+    const start = new Date(form.startDate || today);
     const end = new Date(start);
 
     // Use 30 days per month for consistent plan durations
@@ -297,10 +300,9 @@ const BuyPlanadmin = () => {
 
     setForm((prev) => ({
       ...prev,
-      startDate: today,
       endDate: end.toISOString().split("T")[0],
     }));
-  }, [selectedPlan]);
+  }, [selectedPlan, form.startDate]);
 
   // ================= AOS =================
   useEffect(() => {
@@ -337,6 +339,9 @@ const BuyPlanadmin = () => {
     const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
     const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
 
+    const originalPrice = parseDecimal(selectedPlan?.finalPrice ?? selectedPlan?.final_price ?? selectedPlan?.price);
+    const discountVal = parseDecimal(discount);
+
     doc.autoTable({
       startY: 100,
       head: [["Description", "Details"]],
@@ -345,7 +350,9 @@ const BuyPlanadmin = () => {
         ["Duration", `${selectedPlan?.duration || "N/A"} Months`],
         ["Start Date", form.startDate],
         ["End Date", form.endDate],
-        ["Total Amount", `Rs. ${getSelectedPlanTotal()}`],
+        ["Original Price", `Rs. ${originalPrice}`],
+        ["Discount Amount", `Rs. ${discountVal}`],
+        ["Total Amount (After Discount)", `Rs. ${getSelectedPlanTotal()}`],
         ["Amount Paid", `Rs. ${paidNow}`],
         ["Payment Mode", paymentModeLabel],
         ["Payment Status", paymentType === "emi" && isEMIAllowed ? "Partial Payment" : "Paid"],
@@ -393,6 +400,7 @@ const BuyPlanadmin = () => {
       amount_paid: paidNow,
       payment_mode: paymentModeLabel,
       total_price: getSelectedPlanTotal(),
+      discount_amount: parseDecimal(discount),
       content: pdfDataUri // Attaching the PDF base64 to the email template
     };
 
@@ -531,7 +539,7 @@ const BuyPlanadmin = () => {
             <div className="relative">
               {/* Search Input */}
               <div className="flex items-center gap-2 px-3 py-3 bg-gray-900 rounded-lg border border-white/10 focus-within:ring-2 focus-within:ring-orange-500">
-                <Search size={18} className="text-gray-500 flex-shrink-0" />
+                <Search size={18} className="text-white flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="Search by name, mobile, or email..."
@@ -547,7 +555,7 @@ const BuyPlanadmin = () => {
                       setSelectedUser(null);
                       setSelectedPlan(null);
                     }}
-                    className="text-gray-500 hover:text-white flex-shrink-0"
+                    className="text-white hover:text-white/80 flex-shrink-0"
                   >
                     <X size={16} />
                   </button>
@@ -661,7 +669,7 @@ const BuyPlanadmin = () => {
                       bmi: "",
                     }));
                   }}
-                  className="text-orange-400 hover:text-orange-300"
+                  className="text-white hover:text-white/80"
                 >
                   <X size={18} />
                 </button>
@@ -762,8 +770,10 @@ const BuyPlanadmin = () => {
               <input
                 type="date"
                 value={form.startDate}
-                readOnly
-                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={(e) =>
+                  setForm({ ...form, startDate: e.target.value })
+                }
+                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
               />
             </div>
 
@@ -772,8 +782,10 @@ const BuyPlanadmin = () => {
               <input
                 type="date"
                 value={form.endDate}
-                readOnly
-                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={(e) =>
+                  setForm({ ...form, endDate: e.target.value })
+                }
+                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
               />
             </div>
           </div>
@@ -810,6 +822,24 @@ const BuyPlanadmin = () => {
               <option value="cash">Cash</option>
               <option value="upi">UPI</option>
             </select>
+          </div>
+
+          {/* DISCOUNT AMOUNT */}
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Discount Amount (₹)</label>
+            <input
+              type="number"
+              min="0"
+              className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+              placeholder="Enter discount amount"
+              value={discount}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "" || Number(val) >= 0) {
+                  setDiscount(val);
+                }
+              }}
+            />
           </div>
 
           {selectedPlan && paymentType === "emi" && isEMIAllowed && (
@@ -917,7 +947,7 @@ const BuyPlanadmin = () => {
             <div className="relative">
               {/* Search Input */}
               <div className="flex items-center gap-2 px-3 py-3 bg-gray-900 rounded-lg border border-white/10 focus-within:ring-2 focus-within:ring-orange-500">
-                <Search size={18} className="text-gray-500 flex-shrink-0" />
+                <Search size={18} className="text-white flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="Search by plan name, duration, or price..."
@@ -931,7 +961,7 @@ const BuyPlanadmin = () => {
                     onClick={() => {
                       setPlanSearch("");
                     }}
-                    className="text-gray-500 hover:text-white flex-shrink-0"
+                    className="text-white hover:text-white/80 flex-shrink-0"
                   >
                     <X size={16} />
                   </button>
@@ -990,7 +1020,7 @@ const BuyPlanadmin = () => {
                     setSelectedPlan(null);
                     setPlanSearch("");
                   }}
-                  className="text-orange-400 hover:text-orange-300"
+                  className="text-white hover:text-white/80"
                 >
                   <X size={18} />
                 </button>
@@ -1007,22 +1037,35 @@ const BuyPlanadmin = () => {
           )}
 
           {selectedPlan && (
-            <div className="p-4 border border-red-400 rounded-lg">
-              <h3 className="font-bold text-lg">
+            <div className="p-5 border border-orange-500/30 rounded-xl bg-orange-500/5 mt-4">
+              <h3 className="font-bold text-xl text-orange-400 mb-2">
                 {selectedPlan.name}
               </h3>
-
-              <p>Duration: {selectedPlan.duration} </p>
-
-              <p>
-                Price ₹
-                {selectedPlan.finalPrice ??
-                  selectedPlan.final_price}
-              </p>
-
-              <p className="text-gray-300 text-sm mt-2">
-                {selectedPlan.description}
-              </p>
+              
+              <div className="space-y-2 text-sm text-gray-300">
+                <p><span className="text-gray-400">Duration:</span> {selectedPlan.duration}</p>
+                <p>
+                  <span className="text-gray-400">Base Price:</span>{" "}
+                  <span className={parseDecimal(discount) > 0 ? "line-through text-gray-500" : "text-white font-semibold"}>
+                    ₹{selectedPlan.finalPrice ?? selectedPlan.final_price}
+                  </span>
+                </p>
+                {parseDecimal(discount) > 0 && (
+                  <>
+                    <p className="text-green-400">
+                      <span className="text-gray-400">Discount Applied:</span> -₹{parseDecimal(discount)}
+                    </p>
+                    <p className="text-orange-400 font-bold text-lg">
+                      <span className="text-gray-400 text-sm font-normal">Final Price:</span> ₹{getSelectedPlanTotal()}
+                    </p>
+                  </>
+                )}
+                {selectedPlan.description && (
+                  <p className="text-gray-400 text-xs mt-3 italic border-t border-white/5 pt-2">
+                    {selectedPlan.description}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
