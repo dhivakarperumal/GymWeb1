@@ -222,11 +222,12 @@ const FollowupEnquiry = () => {
   const handleMoveToMembers = async (enquiry) => {
     try {
       const memberData = {
-        name: enquiry.name,
-        username: enquiry.name,
-        email: enquiry.email,
+        name: enquiry.name || enquiry.organization || 'Unknown',
+        username: enquiry.name || enquiry.email || enquiry.phone || 'member',
+        email: enquiry.email || null,
         phone: enquiry.phone || null,
-        address: enquiry.address || enquiry.organization || null,
+        address: enquiry.address || enquiry.location || enquiry.organization || null,
+        notes: enquiry.message || enquiry.subject || enquiry.referred_by || enquiry.website || enquiry.best_time_to_reach || null,
         height: enquiry.height || null,
         weight: enquiry.weight || null,
         bmi: enquiry.bmi || null,
@@ -241,12 +242,12 @@ const FollowupEnquiry = () => {
         emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
         fitness_goal: enquiry.fitness_goal || null,
         blood_group: enquiry.blood_group || null,
-        plan: enquiry.plan_name || null,
+        plan: enquiry.plan_name || enquiry.plan || null,
         duration: enquiry.plan_duration ? parseInt(enquiry.plan_duration, 10) || null : null,
-        joinDate: new Date().toISOString().split('T')[0],
-        status: 'pending',
+        joinDate: enquiry.created_at ? dayjs(enquiry.created_at).format('YYYY-MM-DD') : new Date().toISOString().split('T')[0],
+        status: 'active',
         gender: enquiry.gender || null,
-        password: enquiry.phone || ''
+        password: enquiry.phone || 'Gym123'
       };
 
       await api.post('/members', memberData);
