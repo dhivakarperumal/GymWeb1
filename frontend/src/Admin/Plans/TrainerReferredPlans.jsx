@@ -39,6 +39,7 @@ export default function TrainerReferredPlans() {
   const [memberships, setMemberships] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("pending");
 
   const fetchData = async () => {
     setLoading(true);
@@ -76,17 +77,26 @@ export default function TrainerReferredPlans() {
   }, []);
 
   const filtered = useMemo(() => {
+    let result = memberships;
+
+    if (filterStatus !== "all") {
+      result = result.filter((m) => m.status === filterStatus);
+    }
+
     const q = search.toLowerCase().trim();
-    if (!q) return memberships;
-    return memberships.filter(
-      (m) =>
-        (m.userName || "").toLowerCase().includes(q) ||
-        (m.userPhone || "").includes(q) ||
-        (m.userEmail || "").toLowerCase().includes(q) ||
-        (m.planName || "").toLowerCase().includes(q) ||
-        (m.referredBy || "").toLowerCase().includes(q)
-    );
-  }, [memberships, search]);
+    if (q) {
+      result = result.filter(
+        (m) =>
+          (m.userName || "").toLowerCase().includes(q) ||
+          (m.userPhone || "").includes(q) ||
+          (m.userEmail || "").toLowerCase().includes(q) ||
+          (m.planName || "").toLowerCase().includes(q) ||
+          (m.referredBy || "").toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [memberships, search, filterStatus]);
 
   return (
     <div className="text-white min-h-screen">
@@ -102,6 +112,17 @@ export default function TrainerReferredPlans() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* FILTER STATUS */}
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm text-white"
+          >
+            <option value="pending" className="bg-gray-900">Pending</option>
+            <option value="active" className="bg-gray-900">Approved (Active)</option>
+            <option value="all" className="bg-gray-900">All</option>
+          </select>
+
           {/* SEARCH */}
           <div className="flex items-center gap-2 px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-orange-500 w-56">
             <Search size={16} className="text-white/40 shrink-0" />
@@ -118,16 +139,6 @@ export default function TrainerReferredPlans() {
               </button>
             )}
           </div>
-
-          {/* REFRESH */}
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
-          >
-            <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
-            Refresh
-          </button>
         </div>
       </div>
 
