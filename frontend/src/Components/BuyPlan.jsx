@@ -28,9 +28,6 @@ const BuyPlan = () => {
     endDate: "",
   });
 
-  const [hasEnquiry, setHasEnquiry] = useState(false);
-  const [checkingEnquiry, setCheckingEnquiry] = useState(true);
-
   /* ================= PAGE PROTECTION ================= */
 
   useEffect(() => {
@@ -46,29 +43,6 @@ const BuyPlan = () => {
   }, [user, plan, navigate]);
 
   /* ================= CHECK ENQUIRY ================= */
-
-  useEffect(() => {
-    if (!user?.email) {
-      setCheckingEnquiry(false);
-      return;
-    }
-
-    const checkEnquiry = async () => {
-      try {
-        const enquiryRes = await api.get('/enquiries');
-        const enquiries = enquiryRes.data || [];
-        const userEnquiry = enquiries.find(e => e.email === user.email);
-        setHasEnquiry(!!userEnquiry);
-      } catch (err) {
-        console.error('Failed to check enquiry', err);
-        setHasEnquiry(false);
-      } finally {
-        setCheckingEnquiry(false);
-      }
-    };
-
-    checkEnquiry();
-  }, [user]);
 
   /* ================= FETCH USER PROFILE ================= */
 
@@ -135,14 +109,13 @@ const BuyPlan = () => {
   /* ================= PAYMENT ================= */
 
   const handlePayment = async () => {
-    if (!hasEnquiry) {
-      alert("Please fill the enquiry form in your account before purchasing a plan.");
-      navigate("/account", { state: { tab: "ptform" } });
+    if (!form.address) {
+      alert("Please enter your address before purchasing a plan.");
       return;
     }
 
-    if (!form.address) {
-      alert("Please enter valid mobile number and address");
+    if (!form.phone || form.phone.length < 10) {
+      alert("Please enter a valid 10-digit mobile number.");
       return;
     }
 
@@ -175,7 +148,7 @@ const BuyPlan = () => {
           });
 
           navigate("/account", {
-            state: { tab: "plans" },
+            state: { tab: "myplans" },
           });
 
         } catch (err) {
@@ -218,36 +191,6 @@ const BuyPlan = () => {
     );
   }
 
-  if (checkingEnquiry) {
-    return (
-      <div className="text-white text-center p-10">
-        Checking requirements...
-      </div>
-    );
-  }
-
-  if (!hasEnquiry) {
-    return (
-      <div className="bg-black text-white min-h-screen">
-        <PageContainer>
-          <div className="py-10 text-center">
-            <h1 className="text-3xl font-bold mb-6 text-red-500">
-              Enquiry Required
-            </h1>
-            <p className="text-white/80 mb-6">
-              You must fill the enquiry form before purchasing a membership plan.
-            </p>
-            <button
-              onClick={() => navigate("/account", { state: { tab: "ptform" } })}
-              className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold"
-            >
-              Go to PT Forms
-            </button>
-          </div>
-        </PageContainer>
-      </div>
-    );
-  }
 
   return (
     <>
