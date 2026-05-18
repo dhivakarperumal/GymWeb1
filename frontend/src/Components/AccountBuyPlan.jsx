@@ -70,7 +70,7 @@ const AccountBuyPlan = () => {
                 hasActivePlan={false}
                 checkingPlan={false}
                 onChoose={(selectedPlan) =>
-                  navigate("/buy-plan-dummy", {
+                  navigate("/buy-plan", {
                     state: {
                       plan: selectedPlan,
                     },
