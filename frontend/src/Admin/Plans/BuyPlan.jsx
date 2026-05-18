@@ -906,51 +906,18 @@ const BuyPlanadmin = () => {
             />
           </div>
 
-          {/* OPTIONAL TRAINER ASSIGNMENT — trainer route only */}
+          {/* REFERRED BY — trainer route only, auto-filled with logged-in trainer's name */}
           {location.pathname.startsWith("/trainer") && (
-            <>
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Assign Trainer (Optional)</label>
-                <select
-                  className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
-                  value={selectedTrainer}
-                  onChange={(e) => setSelectedTrainer(e.target.value)}
-                >
-                  <option value="">None / No Trainer</option>
-                  {trainers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* SESSION TIME — only when trainer selected */}
-              {selectedTrainer && selectedTrainer !== "" && (
-                <div className="mb-4" data-aos="fade-up">
-                  <label className="block text-sm text-gray-400 mb-1">Session Time</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 6:00 AM - 7:00 AM"
-                    className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
-                    value={sessionTime}
-                    onChange={(e) => setSessionTime(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {/* REFERRED BY */}
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Referred By</label>
-                <input
-                  type="text"
-                  placeholder="Enter referrer name (if any)"
-                  className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
-                  value={referredBy}
-                  onChange={(e) => setReferredBy(e.target.value)}
-                />
-              </div>
-            </>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-1">Referred By</label>
+              <input
+                type="text"
+                placeholder="Enter referrer name (if any)"
+                className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+                value={referredBy}
+                onChange={(e) => setReferredBy(e.target.value)}
+              />
+            </div>
           )}
 
           {selectedPlan && paymentType === "emi" && isEMIAllowed && (
