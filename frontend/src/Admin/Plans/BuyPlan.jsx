@@ -507,7 +507,7 @@ const BuyPlanadmin = () => {
         endDate: form.endDate,
         paymentMode: paymentModeValue,
         paymentStatus: isEMI ? "Pending" : "Paid",
-        status: "active",
+        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
         referredBy: referredBy || null,
       };
 
@@ -526,7 +526,7 @@ const BuyPlanadmin = () => {
         duration: selectedPlan.duration,
         joinDate: form.startDate,
         expiryDate: form.endDate,
-        status: "active",
+        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
       };
 
       // ===== OPTIONAL ASSIGN TRAINER =====

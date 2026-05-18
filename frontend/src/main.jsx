@@ -89,6 +89,7 @@ const MemberAttendance = lazy(() => import("./Admin/Staff/Memberattendance.jsx")
 const BuyPlanadmin = lazy(() => import("./Admin/Plans/BuyPlan.jsx"));
 const EMIList = lazyWithRetry(() => import("./Admin/Plans/EMIList.jsx"));
 const PlanHistory = lazy(() => import("./Admin/Plans/PlanHistory.jsx"));
+const TrainerReferredPlans = lazy(() => import("./Admin/Plans/TrainerReferredPlans.jsx"));
 const MemberDetails = lazy(() => import("./Admin/Members/MemberDetails.jsx"));
 const ExpiryMembers = lazy(() => import("./Admin/Members/ExpiryMembers.jsx"));
 const Offers = lazy(() => import("./Admin/Settingss/Offers.jsx"));
@@ -230,6 +231,7 @@ const router = createHashRouter([
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
       { path: "emi", element: <EMIList /> },
       { path: "plan-history", element: <PlanHistory /> },
+      { path: "trainer-referred-plans", element: <TrainerReferredPlans /> },
       { path: "settings/offers", element: <Offers /> },
 
     ],

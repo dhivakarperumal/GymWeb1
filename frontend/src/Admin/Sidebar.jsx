@@ -38,6 +38,7 @@ const navItems = [
   { path: "/admin/members", label: "Members", icon: Users },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
   { path: "/admin/emi", label: "EMI", icon: BarChart3 },
+  { path: "/admin/trainer-referred-plans", label: "Trainer Referred Plans", icon: UserCheck },
 
   { path: "/admin/assignedtrainers", label: "Assigned Trainers", icon: UserCheck },
 
