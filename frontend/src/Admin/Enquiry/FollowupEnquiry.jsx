@@ -221,47 +221,12 @@ const FollowupEnquiry = () => {
 
   const handleMoveToMembers = async (enquiry) => {
     try {
-      const memberData = {
-        name: enquiry.name || enquiry.organization || enquiry.email || enquiry.phone || 'Unknown',
-        username: enquiry.email?.split?.('@')?.[0] || enquiry.phone || enquiry.name || 'member',
-        email: enquiry.email || enquiry.user_email || enquiry.email_address || enquiry.emailAddress || null,
-        phone: enquiry.phone || enquiry.mobile || enquiry.contact_number || enquiry.contact || null,
-        address: enquiry.address || enquiry.location || enquiry.organization || enquiry.website || null,
-        notes: enquiry.message || enquiry.subject || enquiry.referred_by || enquiry.website || enquiry.best_time_to_reach || null,
-        height: enquiry.height || enquiry.h || null,
-        weight: enquiry.weight || enquiry.w || null,
-        bmi: enquiry.bmi || null,
-        dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : null,
-        age: enquiry.age || null,
-        employer: enquiry.employer || enquiry.organization || null,
-        occupation: enquiry.occupation || null,
-        emergency_contact_name: enquiry.emergency_contact_name || enquiry.emergencyName || null,
-        emergency_contact_relationship: enquiry.emergency_contact_relationship || null,
-        emergency_contact_address: enquiry.emergency_contact_address || null,
-        emergency_contact_phone_home: enquiry.emergency_contact_phone_home || enquiry.emergency_phone || null,
-        emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
-        fitness_goal: enquiry.fitness_goal || null,
-        blood_group: enquiry.blood_group || null,
-        plan: enquiry.plan_name || enquiry.plan || null,
-        duration: enquiry.plan_duration ? parseInt(enquiry.plan_duration, 10) || null : null,
-        joinDate: enquiry.created_at ? dayjs(enquiry.created_at).format('YYYY-MM-DD') : new Date().toISOString().split('T')[0],
-        status: enquiry.status === 'completed' ? 'active' : 'active',
-        gender: enquiry.gender || null,
-        password: enquiry.phone || enquiry.mobile || 'Gym123'
-      };
-
-      await api.post('/members', memberData);
-      toast.success('Member created successfully. Login using Mobile Number as password.');
-      // mark followup as completed
-      try {
-        await api.put(`/followups/${enquiry.id}`, { status: 'completed' });
-      } catch (err) {
-        console.warn('Failed to update followup status after creating member', err);
-      }
+      await api.post(`/followups/${enquiry.id}/convert`);
+      toast.success('Member created successfully from followup. Login using Mobile Number as password.');
       fetchEnquiries();
     } catch (err) {
       console.error('Error moving to members:', err);
-      const msg = err.response?.data?.message || 'Failed to create member';
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to create member';
       alert(msg);
     }
   };

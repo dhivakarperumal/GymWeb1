@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { createMemberRecord } = require('./memberController');
 
 const followupMasterController = {
     // Get all followups
@@ -125,6 +126,64 @@ const followupMasterController = {
         } catch (error) {
             console.error('Error updating followup:', error);
             res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // Convert followup to member
+    convertFollowupToMember: async (req, res) => {
+        const { id } = req.params;
+        const connection = await pool.getConnection();
+
+        try {
+            await connection.beginTransaction();
+            const [rows] = await connection.query('SELECT * FROM followups WHERE id = ?', [id]);
+            if (rows.length === 0) {
+                await connection.rollback();
+                return res.status(404).json({ error: 'Followup not found' });
+            }
+
+            const followup = rows[0];
+            const memberPayload = {
+                name: followup.name || followup.organization || 'Unknown',
+                username: followup.name || followup.email || followup.phone || 'followup-member',
+                email: followup.email || null,
+                phone: followup.phone || null,
+                address: followup.address || followup.location || followup.organization || null,
+                notes: followup.message || followup.subject || followup.referred_by || followup.website || null,
+                height: followup.height,
+                weight: followup.weight,
+                bmi: followup.bmi,
+                dob: followup.dob || null,
+                age: followup.age,
+                employer: followup.employer || followup.organization || null,
+                occupation: followup.occupation,
+                emergency_contact_name: followup.emergency_contact_name,
+                emergency_contact_relationship: followup.emergency_contact_relationship,
+                emergency_contact_address: followup.emergency_contact_address,
+                emergency_contact_phone_home: followup.emergency_contact_phone_home,
+                emergency_contact_phone_work: followup.emergency_contact_phone_work,
+                fitness_goal: followup.fitness_goal,
+                blood_group: followup.blood_group,
+                gender: followup.gender,
+                plan: followup.plan_name,
+                duration: followup.plan_duration,
+                status: 'active',
+                password: followup.phone || 'Gym123'
+            };
+
+            const member = await createMemberRecord(connection, memberPayload);
+            await connection.query('UPDATE followups SET status = ? WHERE id = ?', ['completed', id]);
+            await connection.commit();
+            res.json(member);
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error converting followup to member:', error);
+            if (error.message && error.message.includes('already exists')) {
+                return res.status(400).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Internal server error' });
+        } finally {
+            connection.release();
         }
     },
 
