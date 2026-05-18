@@ -11,6 +11,7 @@ import {
   Phone,
   Mail,
   X,
+  CheckCircle,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────
@@ -44,10 +45,8 @@ export default function TrainerReferredPlans() {
     try {
       const res = await api.get("/memberships");
       const all = Array.isArray(res.data) ? res.data : res.data?.memberships || [];
-      // Only active memberships with a referredBy value
       const filtered = all.filter(
         (m) =>
-          m.status === "active" &&
           m.referredBy &&
           m.referredBy.toString().trim() !== ""
       );
@@ -56,6 +55,19 @@ export default function TrainerReferredPlans() {
       console.error("Failed to fetch memberships:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApprove = async (id) => {
+    if (!window.confirm("Approve this membership? It will become active.")) return;
+    try {
+      await api.put(`/memberships/${id}`, { status: "active" });
+      setMemberships((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, status: "active" } : m))
+      );
+    } catch (err) {
+      console.error("Failed to approve membership:", err);
+      alert("Failed to approve membership.");
     }
   };
 
@@ -129,7 +141,7 @@ export default function TrainerReferredPlans() {
           },
           {
             icon: <BadgeCheck size={20} className="text-green-400" />,
-            label: "Active Plans",
+            label: "Approved Plans",
             value: memberships.filter((m) => m.status === "active").length,
           },
           {
@@ -296,9 +308,24 @@ export default function TrainerReferredPlans() {
                       </div>
                     </td>
 
-                    {/* STATUS */}
+                    {/* STATUS / ACTION */}
                     <td className="px-5 py-4">
-                      {badge("Active", "bg-green-500/20 text-green-400")}
+                      {m.status === "pending" ? (
+                        <div className="flex flex-col gap-2 items-start">
+                          {badge("Pending Approval", "bg-yellow-500/20 text-yellow-400")}
+                          <button
+                            onClick={() => handleApprove(m.id)}
+                            className="flex items-center gap-1 px-3 py-1 bg-green-500/10 hover:bg-green-500/30 text-green-400 border border-green-500/50 rounded-lg text-xs font-semibold transition-colors"
+                          >
+                            <CheckCircle size={14} />
+                            Approve
+                          </button>
+                        </div>
+                      ) : m.status === "active" ? (
+                        badge("Approved / Active", "bg-green-500/20 text-green-400")
+                      ) : (
+                        badge(m.status, "bg-gray-500/20 text-gray-400")
+                      )}
                     </td>
                   </tr>
                 );

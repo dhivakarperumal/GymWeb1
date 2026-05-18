@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -69,6 +69,9 @@ const Payments = () => {
               plans: [],
             });
           }
+
+          // Only show plans that are NOT pending (i.e. they are approved/active/inactive)
+          if (m.status === "pending") return;
 
           usersMap.get(uId).plans.push({
             id: m.id,
