@@ -98,6 +98,17 @@ async function createMembership(req, res) {
       else finalPaymentStatus = 'Pending';
     }
 
+    // If provided userId does not exist in `users` table, null it to avoid FK errors
+    let resolvedUserId = userId;
+    if (userId) {
+      try {
+        const [ucheck] = await db.query('SELECT id FROM users WHERE id = ?', [userId]);
+        if (!ucheck || ucheck.length === 0) resolvedUserId = null;
+      } catch (e) {
+        resolvedUserId = null;
+      }
+    }
+
     const query = `
       INSERT INTO memberships
       (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status, paymentStatus, referredBy, trainerId, trainerName)
@@ -105,7 +116,7 @@ async function createMembership(req, res) {
     `;
 
     const values = [
-      userId,
+      resolvedUserId,
       userName || null,
       userEmail || null,
       userPhone || null,
@@ -156,6 +167,7 @@ async function createMembership(req, res) {
 
   } catch (error) {
     console.error("Create membership error:", error);
+    if (error && error.stack) console.error(error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to create membership",
