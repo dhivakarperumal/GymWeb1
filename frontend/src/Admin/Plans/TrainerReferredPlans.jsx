@@ -12,6 +12,8 @@ import {
   Mail,
   X,
   CheckCircle,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────
@@ -40,6 +42,7 @@ export default function TrainerReferredPlans() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("pending");
+  const [viewMode, setViewMode] = useState("table");
 
   const fetchData = async () => {
     setLoading(true);
@@ -100,31 +103,14 @@ export default function TrainerReferredPlans() {
 
   return (
     <div className="text-white min-h-screen">
-      {/* ── PAGE HEADER ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">
-            Trainer Referred Plans
-          </h1>
-          <p className="text-sm text-white/40 mt-1">
-            Active memberships approved via trainer referral
-          </p>
-        </div>
+     
+   
 
-        <div className="flex items-center gap-3">
-          {/* FILTER STATUS */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm text-white"
-          >
-            <option value="pending" className="bg-gray-900">Pending</option>
-            <option value="active" className="bg-gray-900">Approved (Active)</option>
-            <option value="all" className="bg-gray-900">All</option>
-          </select>
-
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        {/* LEFT: Search & Filter */}
+        <div className="flex flex-wrap items-center gap-3">
           {/* SEARCH */}
-          <div className="flex items-center gap-2 px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-orange-500 w-56">
+          <div className="flex items-center gap-2 px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-orange-500 w-full sm:w-64">
             <Search size={16} className="text-white/40 shrink-0" />
             <input
               type="text"
@@ -139,8 +125,50 @@ export default function TrainerReferredPlans() {
               </button>
             )}
           </div>
+
+          {/* FILTER STATUS */}
+        
         </div>
+
+
+<div className="flex gap-3">
+{/* RIGHT: Toggles */}
+        <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 h-[42px]">
+          <button
+            onClick={() => setViewMode("table")}
+            className={`p-2 rounded-lg transition-all ${
+              viewMode === "table"
+                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                : "text-white/40 hover:text-white hover:bg-white/5"
+            }`}
+            title="Table View"
+          >
+            <List size={20} />
+          </button>
+          <button
+            onClick={() => setViewMode("card")}
+            className={`p-2 rounded-lg transition-all ${
+              viewMode === "card"
+                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                : "text-white/40 hover:text-white hover:bg-white/5"
+            }`}
+            title="Card View"
+          >
+            <LayoutGrid size={20} />
+          </button>
+        </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm text-white h-[42px]"
+          >
+            <option value="pending" className="bg-gray-900">Pending</option>
+            <option value="active" className="bg-gray-900">Approved (Active)</option>
+            <option value="all" className="bg-gray-900">All</option>
+          </select>
       </div>
+</div>
+        
 
       {/* ── STATS STRIP ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
@@ -178,7 +206,7 @@ export default function TrainerReferredPlans() {
         ))}
       </div>
 
-      {/* ── TABLE ── */}
+      {/* ── CONTENT ── */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <div className="w-10 h-10 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
@@ -188,8 +216,84 @@ export default function TrainerReferredPlans() {
         <div className="flex flex-col items-center justify-center py-24 gap-3">
           <UserCheck size={48} className="text-white/10" />
           <p className="text-white/30 text-sm">
-            {search ? "No results match your search." : "No trainer-referred active memberships found."}
+            {search ? "No results match your search." : "No trainer-referred memberships found."}
           </p>
+        </div>
+      ) : viewMode === "card" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((m) => {
+            const daysLeft = m.endDate
+              ? Math.ceil((new Date(m.endDate) - new Date()) / (1000 * 60 * 60 * 24))
+              : null;
+
+            return (
+              <div key={m.id} className="bg-white/10 border border-white/20 rounded-2xl p-6 relative flex flex-col">
+                <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                  {m.status === "pending" ? (
+                    badge("Pending Approval", "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30")
+                  ) : m.status === "active" ? (
+                    badge("Active", "bg-green-500/20 text-green-400 border border-green-500/30")
+                  ) : (
+                    badge(m.status, "bg-gray-500/20 text-gray-400")
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white font-bold text-xl shrink-0">
+                    {(m.userName || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-lg text-white">
+                      {m.userName || "—"}
+                    </p>
+                    <p className="text-xs text-white/50">ID #{m.userId}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 flex-1 mb-4">
+                  <div>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest">Plan</p>
+                    <p className="text-sm text-white font-medium">{m.planName || "—"} ({m.duration} Months)</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest">Contact</p>
+                    <p className="text-xs text-white/80">{m.userPhone || "—"}</p>
+                    <p className="text-xs text-white/80 truncate">{m.userEmail || "—"}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest">Start Date</p>
+                      <p className="text-xs text-white/80">{fmt(m.startDate)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest">End Date</p>
+                      <p className="text-xs text-white/80">{fmt(m.endDate)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest">Paid</p>
+                      <p className="text-sm font-bold text-white">₹{parseFloat(m.pricePaid || 0).toLocaleString("en-IN")}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest">Referred By</p>
+                      <p className="text-sm font-semibold text-orange-400">{m.referredBy || "—"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {m.status === "pending" && (
+                  <button
+                    onClick={() => handleApprove(m.id)}
+                    className="w-full mt-auto flex justify-center items-center gap-2 py-2.5 bg-green-500/10 hover:bg-green-500/30 text-green-400 border border-green-500/50 rounded-xl text-sm font-semibold transition-all"
+                  >
+                    <CheckCircle size={16} />
+                    Approve Membership
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-white/10">
