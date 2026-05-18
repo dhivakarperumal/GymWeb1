@@ -59,7 +59,19 @@ const BuyPlan = () => {
 
   const durationMonths = getDurationMonths(currentPlan?.duration);
   const emiAmount = durationMonths > 0 ? Number((totalPayable / durationMonths).toFixed(2)) : totalPayable;
-  const isEMIAllowed = selectedPlan && durationMonths > 1;
+  const isEMIAllowed = durationMonths > 1;
+  const amountCollected = Number(parseDecimal(initialPayment));
+  const remainingBalance = Math.max(0, totalPayable - amountCollected);
+  const dueDateDisplay = (() => {
+    try {
+      const d = new Date(form.startDate);
+      d.setDate(d.getDate() + 30);
+      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    } catch (e) {
+      return "N/A";
+    }
+  })();
+  const amountNow = paymentType === "emi" ? amountCollected : totalPayable;
 
   /* ================= PAGE PROTECTION ================= */
 
@@ -397,14 +409,59 @@ const BuyPlan = () => {
                     </div>
 
                     {paymentType === "emi" && (
-                      <input
-                        type="number"
-                        placeholder={`EMI first installment (₹), suggested ₹${emiAmount}`}
-                        value={initialPayment}
-                        min="0"
-                        className="w-full p-3 bg-gray-900 rounded-lg"
-                        onChange={(e) => setInitialPayment(e.target.value)}
-                      />
+                      <>
+                        <div className="rounded-2xl border border-white/10 bg-gray-900/40 p-4 mb-3">
+                          <p className="text-sm text-gray-300">EMI monthly amount</p>
+                          <p className="text-2xl font-bold text-red-500">₹{emiAmount.toLocaleString("en-IN")}</p>
+                          <div className="mt-3">
+                            <label className="block text-sm font-medium text-gray-300">Initial EMI Payment</label>
+                            <div className="relative mt-2">
+                              <span className="absolute left-3 top-3 text-white font-semibold">₹</span>
+                              <input
+                                type="number"
+                                placeholder={`Enter amount to pay now`}
+                                value={initialPayment}
+                                min="0"
+                                className="w-full pl-8 pr-3 py-3 bg-gray-900 rounded-lg"
+                                onChange={(e) => setInitialPayment(e.target.value)}
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">EMI is available for plans longer than one month. The remaining balance will be due later.</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                          <div className="bg-gradient-to-br from-green-900/30 to-green-900/10 p-3 rounded-lg border border-green-500/30">
+                            <p className="text-green-400 text-xs uppercase tracking-wide font-semibold">Amount Collected Today</p>
+                            <p className="text-white font-bold text-lg mt-1">₹{amountCollected.toFixed(2)}</p>
+                          </div>
+                          <div className="bg-gradient-to-br from-blue-900/30 to-blue-900/10 p-3 rounded-lg border border-blue-500/30">
+                            <p className="text-blue-400 text-xs uppercase tracking-wide font-semibold">Remaining Balance</p>
+                            <p className="text-white font-bold text-lg mt-1">₹{remainingBalance.toFixed(2)}</p>
+                            <p className="text-blue-400 text-xs mt-1">Due in 30 days</p>
+                          </div>
+                          <div className="bg-gradient-to-br from-purple-900/30 to-purple-900/10 p-3 rounded-lg border border-purple-500/30">
+                            <p className="text-purple-400 text-xs uppercase tracking-wide font-semibold">Due Date</p>
+                            <p className="text-white font-bold text-sm mt-1">{dueDateDisplay}</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-white/5 p-3 rounded-lg border border-white/10 border-dashed mb-3">
+                          <p className="text-gray-400 text-xs uppercase tracking-wide font-semibold mb-2">Payment Summary</p>
+                          <div className="flex justify-between text-sm text-gray-300">
+                            <span>Step 1: Pay Today</span>
+                            <span className="text-green-400">₹{amountCollected.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-300 mt-1">
+                            <span>Step 2: Pay in 30 Days</span>
+                            <span className="text-blue-400">₹{remainingBalance.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm font-bold text-white mt-2 border-t border-white/10 pt-2">
+                            <span>Total Amount</span>
+                            <span className="text-orange-400">₹{totalPayable.toLocaleString("en-IN")}</span>
+                          </div>
+                        </div>
+                      </>
                     )}
 
                     <input

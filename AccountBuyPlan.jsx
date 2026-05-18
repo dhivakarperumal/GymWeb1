@@ -65,6 +65,20 @@ const AccountBuyPlan = () => {
 
   const isEmiAllowed = planDurationMonths > 1;
 
+  const amountCollected = useMemo(() => parseDecimal(initialPayment), [initialPayment]);
+  const remainingBalance = useMemo(() => Math.max(0, totalPrice - amountCollected), [totalPrice, amountCollected]);
+  const dueDateDisplay = useMemo(() => {
+    try {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + 30);
+      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    } catch (e) {
+      return "N/A";
+    }
+  }, [startDate]);
+
+  const amountNow = paymentType === "emi" ? amountCollected : totalPrice;
+
   const calculateEndDate = (date, months) => {
     const start = new Date(date);
     if (!(start instanceof Date) || Number.isNaN(start.getTime())) return TODAY;
@@ -291,24 +305,61 @@ const AccountBuyPlan = () => {
                     </div>
 
                     {paymentType === "emi" && (
-                      <div className="space-y-4 rounded-2xl border border-red-500/20 bg-black/50 p-4">
-                        <p className="text-sm text-gray-300">EMI monthly amount</p>
-                        <p className="text-3xl font-bold text-red-500">₹{emiAmount.toLocaleString("en-IN")}</p>
-                        <div className="space-y-2">
-                          <label className="block text-sm font-semibold text-gray-300">Initial EMI Payment</label>
-                          <input
-                            type="number"
-                            value={initialPayment}
-                            min="0"
-                            onChange={(e) => setInitialPayment(e.target.value)}
-                            className="w-full rounded-2xl border border-white/10 bg-black/70 px-4 py-3 text-white outline-none focus:border-red-500"
-                            placeholder="Enter amount to pay now"
-                          />
+                      <>
+                        <div className="space-y-4 rounded-2xl border border-red-500/20 bg-black/50 p-4">
+                          <p className="text-sm text-gray-300">EMI monthly amount</p>
+                          <p className="text-3xl font-bold text-red-500">₹{emiAmount.toLocaleString("en-IN")}</p>
+                          <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-gray-300">Initial EMI Payment</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-3 text-white font-semibold">₹</span>
+                              <input
+                                type="number"
+                                value={initialPayment}
+                                min="0"
+                                onChange={(e) => setInitialPayment(e.target.value)}
+                                className="w-full pl-8 pr-4 py-3 rounded-2xl border border-white/10 bg-black/70 text-white outline-none focus:border-red-500"
+                                placeholder="Enter amount to pay now"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500">EMI is available for plans longer than one month. The remaining balance will be due later.</p>
                         </div>
-                        <p className="text-xs text-gray-500">
-                          EMI is available for plans longer than one month. The remaining balance will be due later.
-                        </p>
-                      </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                          <div className="bg-gradient-to-br from-green-900/30 to-green-900/10 p-4 rounded-xl border border-green-500/30">
+                            <p className="text-green-400 text-xs uppercase tracking-wide font-semibold mb-1">Amount Collected Today</p>
+                            <p className="text-white font-bold text-xl">₹{parseDecimal(amountCollected).toFixed(2)}</p>
+                          </div>
+                          <div className="bg-gradient-to-br from-blue-900/30 to-blue-900/10 p-4 rounded-xl border border-blue-500/30">
+                            <p className="text-blue-400 text-xs uppercase tracking-wide font-semibold mb-1">Remaining Balance</p>
+                            <p className="text-white font-bold text-xl">₹{remainingBalance.toFixed(2)}</p>
+                            <p className="text-blue-400 text-xs mt-1">Due in 30 days</p>
+                          </div>
+                          <div className="bg-gradient-to-br from-purple-900/30 to-purple-900/10 p-4 rounded-xl border border-purple-500/30">
+                            <p className="text-purple-400 text-xs uppercase tracking-wide font-semibold mb-1">Due Date</p>
+                            <p className="text-white font-bold text-lg">{dueDateDisplay}</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-white/5 p-4 rounded-xl border border-white/10 border-dashed mt-3">
+                          <p className="text-gray-400 text-xs uppercase tracking-wide font-semibold mb-2">📋 Payment Summary</p>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-400">Step 1: Pay Today</span>
+                              <span className="text-green-400 font-semibold">₹{parseDecimal(amountCollected).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-400">Step 2: Pay in 30 Days</span>
+                              <span className="text-blue-400 font-semibold">₹{remainingBalance.toFixed(2)}</span>
+                            </div>
+                            <div className="border-t border-white/10 mt-2 pt-2 flex justify-between items-center text-sm font-bold">
+                              <span className="text-white">Total Amount</span>
+                              <span className="text-orange-400">₹{totalPrice.toLocaleString("en-IN")}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </>
                     )}
 
                     <div className="space-y-4">
