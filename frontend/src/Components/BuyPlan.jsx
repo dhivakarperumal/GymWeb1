@@ -18,9 +18,10 @@ const BuyPlan = () => {
   const today = new Date().toISOString().split("T")[0];
 
   const [plans, setPlans] = useState([]);
-  const [planSearch, setPlanSearch] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(plan || null);
   const [paymentMode, setPaymentMode] = useState("cash");
+  const [paymentType, setPaymentType] = useState("full");
+  const [initialPayment, setInitialPayment] = useState("");
   const [discount, setDiscount] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
@@ -46,13 +47,19 @@ const BuyPlan = () => {
     return Number.isFinite(number) ? number : 0;
   };
 
-  const filteredPlans = plans.filter((p) => {
-    const query = planSearch.trim().toLowerCase();
-    if (!query) return true;
-    return [p.name, p.duration, p.price, p.final_price, p.description]
-      .filter(Boolean)
-      .some((value) => value.toString().toLowerCase().includes(query));
-  });
+  const selectedPrice = Number(currentPlan?.final_price || currentPlan?.price || 0);
+  const discountValue = parseDecimal(discount);
+  const totalPayable = Math.max(0, selectedPrice - discountValue);
+
+  const getDurationMonths = (duration) => {
+    if (!duration) return 1;
+    const parsed = parseInt(duration, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  };
+
+  const durationMonths = getDurationMonths(currentPlan?.duration);
+  const emiAmount = durationMonths > 0 ? Number((totalPayable / durationMonths).toFixed(2)) : totalPayable;
+  const isEMIAllowed = selectedPlan && durationMonths > 1;
 
   /* ================= PAGE PROTECTION ================= */
 
@@ -135,6 +142,14 @@ const BuyPlan = () => {
     }));
   }, [selectedPlan, form.startDate]);
 
+  useEffect(() => {
+    if (paymentType !== "emi") return;
+    if (!selectedPlan) return;
+    if (!initialPayment || parseDecimal(initialPayment) <= 0) {
+      setInitialPayment(emiAmount.toString());
+    }
+  }, [paymentType, selectedPlan, initialPayment, emiAmount]);
+
   /* ================= LOAD RAZORPAY ================= */
 
   const loadRazorpay = () => {
@@ -175,13 +190,30 @@ const BuyPlan = () => {
       return;
     }
 
-    const selectedPrice = Number(selectedPlan?.final_price || selectedPlan?.price || 0);
-    const discountValue = parseDecimal(discount);
-    const amountPayable = Math.max(0, selectedPrice - discountValue);
+    const totalPayable = Math.max(0, selectedPrice - discountValue);
+    let paymentAmount = totalPayable;
+    let secondPaymentPaid = 0;
+    let initialPaid = totalPayable;
+
+    if (paymentType === "emi") {
+      const initialAmt = parseDecimal(initialPayment);
+      if (initialAmt <= 0) {
+        alert("Please enter a valid EMI first installment amount.");
+        return;
+      }
+      if (initialAmt > totalPayable) {
+        alert("EMI first installment cannot exceed the total payable amount.");
+        return;
+      }
+
+      paymentAmount = initialAmt;
+      initialPaid = initialAmt;
+      secondPaymentPaid = Math.max(0, totalPayable - initialAmt);
+    }
 
     const options = {
       key: "rzp_test_2ORD27rb7vGhwj",
-      amount: amountPayable * 100,
+      amount: paymentAmount * 100,
       currency: "INR",
       name: "Gym Membership",
       description: selectedPlan?.name || "Membership",
@@ -193,7 +225,8 @@ const BuyPlan = () => {
             planId: selectedPlan.id,
             planName: selectedPlan.name,
             price: selectedPrice,
-            pricePaid: amountPayable,
+            pricePaid: initialPaid,
+            secondPaymentPaid,
             duration: selectedPlan.duration,
             startDate: form.startDate,
             endDate: form.endDate,
@@ -341,14 +374,16 @@ const BuyPlan = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        type="number"
-                        placeholder="Discount (₹)"
-                        value={discount}
-                        min="0"
+                      <select
+                        value={paymentType}
+                        onChange={(e) => setPaymentType(e.target.value)}
                         className="p-3 bg-gray-900 rounded-lg"
-                        onChange={(e) => setDiscount(e.target.value)}
-                      />
+                      >
+                        <option value="full">Full Payment</option>
+                        <option value="emi" disabled={!isEMIAllowed}>
+                          EMI{!isEMIAllowed ? " (only for multi-month plans)" : ""}
+                        </option>
+                      </select>
                       <select
                         value={paymentMode}
                         onChange={(e) => setPaymentMode(e.target.value)}
@@ -360,6 +395,26 @@ const BuyPlan = () => {
                         <option value="online">Online</option>
                       </select>
                     </div>
+
+                    {paymentType === "emi" && (
+                      <input
+                        type="number"
+                        placeholder={`EMI first installment (₹), suggested ₹${emiAmount}`}
+                        value={initialPayment}
+                        min="0"
+                        className="w-full p-3 bg-gray-900 rounded-lg"
+                        onChange={(e) => setInitialPayment(e.target.value)}
+                      />
+                    )}
+
+                    <input
+                      type="number"
+                      placeholder="Discount (₹)"
+                      value={discount}
+                      min="0"
+                      className="p-3 bg-gray-900 rounded-lg"
+                      onChange={(e) => setDiscount(e.target.value)}
+                    />
 
                     <div className="rounded-2xl border border-white/10 bg-gray-900/40 p-4">
                       <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
@@ -388,50 +443,67 @@ const BuyPlan = () => {
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
                       <h3 className="text-xl font-semibold text-white">Select Plan</h3>
-                      <p className="text-gray-400 text-sm">Search and choose the membership plan you want.</p>
+                      <p className="text-gray-400 text-sm">Choose the plan you want to purchase.</p>
                     </div>
                   </div>
 
-                  <input
-                    type="text"
-                    placeholder="Search by plan name, duration, or price..."
-                    value={planSearch}
-                    onChange={(e) => setPlanSearch(e.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-3 text-white outline-none"
-                  />
-                </div>
+                  <div className="space-y-4">
+                    <label className="block text-sm text-gray-400">Choose Plan</label>
+                    <select
+                      value={selectedPlan?.id || ""}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const planObject = plans.find((item) => String(item.id) === selectedId);
+                        if (planObject) setSelectedPlan(planObject);
+                      }}
+                      className="w-full rounded-2xl border border-white/10 bg-gray-900/80 px-4 py-3 text-white outline-none"
+                    >
+                      <option value="" disabled>
+                        Select a plan...
+                      </option>
+                      {plans.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} — {item.duration} — ₹{Number(item.final_price || item.price || 0).toLocaleString("en-IN")}
+                        </option>
+                      ))}
+                    </select>
 
-                <div className="grid gap-4">
-                  {filteredPlans.length > 0 ? (
-                    filteredPlans.map((item, index) => (
-                      <button
-                        key={item.id || index}
-                        onClick={() => setSelectedPlan(item)}
-                        className={`rounded-3xl border p-5 text-left transition ${
-                          selectedPlan?.id === item.id
-                            ? "border-red-500/80 bg-red-500/10"
-                            : "border-white/10 bg-black/70 hover:border-red-500/40"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3 mb-3">
-                          <h4 className="text-lg font-semibold text-white">{item.name}</h4>
-                          <span className="text-sm text-gray-400">{item.duration}</span>
+                    {!selectedPlan ? (
+                      <div className="rounded-3xl border border-white/10 bg-black/70 p-6 text-center text-gray-400">
+                        Select a plan from the dropdown to view details.
+                      </div>
+                    ) : (
+                      <div className="rounded-3xl border border-white/10 bg-black/70 p-6">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold text-white">{selectedPlan.name}</h4>
+                          <p className="text-sm text-gray-400">{selectedPlan.duration}</p>
                         </div>
-                        <p className="text-sm text-gray-400 mb-3">{item.description || item.summary || "Premium membership plan."}</p>
-                        <div className="flex items-center justify-between text-sm text-gray-300">
-                          <span>Price</span>
-                          <span className="font-semibold text-red-500">₹{Number(item.final_price || item.price || 0).toLocaleString("en-IN")}</span>
+                        <p className="text-sm text-gray-300 mb-3">{selectedPlan.description || selectedPlan.summary || "Premium membership plan."}</p>
+                        <div className="grid gap-3 text-sm text-gray-300">
+                          <div className="flex items-center justify-between">
+                            <span>Plan Price</span>
+                            <span className="font-semibold text-red-500">₹{selectedPrice.toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Discount</span>
+                            <span>₹{discountValue.toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="flex items-center justify-between font-semibold text-white">
+                            <span>Total Payable</span>
+                            <span>₹{totalPayable.toLocaleString("en-IN")}</span>
+                          </div>
+                          {paymentType === "emi" && (
+                            <div className="flex items-center justify-between text-sm text-gray-400">
+                              <span>Suggested EMI ({durationMonths} installments)</span>
+                              <span>₹{emiAmount.toLocaleString("en-IN")}</span>
+                            </div>
+                          )}
                         </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="rounded-3xl border border-white/10 bg-black/70 p-6 text-center text-gray-400">
-                      No plans found.
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
           </div>
 
