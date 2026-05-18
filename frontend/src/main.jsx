@@ -37,6 +37,7 @@ const Facilities = lazy(() => import("./Components/Facilities.jsx"));
 const FacilityDetail = lazy(() => import("./Components/FacilityDetail.jsx"));
 const Pricing = lazy(() => import("./Components/Pricing.jsx"));
 const BuyPlan = lazy(() => import("./Components/BuyPlan.jsx"));
+const BuyPlanDummy = lazy(() => import("./Components/BuyPlanDummy.jsx"));
 const Products = lazy(() => import("./Pages/Products.jsx"));
 const Services = lazy(() => import("./Components/Services.jsx"));
 const ServicesDetails = lazy(() => import("./Components/ServicesDetails.jsx"));
@@ -133,6 +134,7 @@ const router = createHashRouter([
       { path: "facilities/:slug", element: <FacilityDetail /> },
       { path: "pricing", element: <Pricing /> },
       { path: "buy-plan", element: <BuyPlan /> },
+      { path: "buy-plan-dummy", element: <BuyPlanDummy /> },
       { path: "products", element: <Products /> },
       { path: "/cart", element: <Cart /> },
       { path: "/checkout", element: <Checkout /> },

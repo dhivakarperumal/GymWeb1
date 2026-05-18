@@ -87,7 +87,9 @@ const Account = () => {
 
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
-    { key: "plans", label: "My Plans", icon: CalendarCheck },
+    ...(!hasActivePlan
+      ? [{ key: "plans", label: "Buy Plan", icon: CalendarCheck }]
+      : []),
     ...(hasActivePlan
       ? [
         { key: "diet", label: "Diet Chart", icon: Shield },
@@ -102,6 +104,18 @@ const Account = () => {
   ];
 
   /* ================= CONTENT ================= */
+
+  useEffect(() => {
+    if (hasActivePlan && activeTab === "plans") {
+      setActiveTab("personal");
+    }
+  }, [hasActivePlan, activeTab]);
+
+  useEffect(() => {
+    if (!hasActivePlan && ["diet", "workouts", "ptform"].includes(activeTab)) {
+      setActiveTab("plans");
+    }
+  }, [hasActivePlan, activeTab]);
 
   const renderContent = () => {
     switch (activeTab) {

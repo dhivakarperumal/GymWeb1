@@ -2,7 +2,49 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../src/PrivateRouter/AuthContext";
 import api from "../../src/api";
-import { Trash2 } from "lucide-react";
+import PricingCard from "../Components/PricingCard";
+
+const dummyPlans = [
+  {
+    id: "dummy-1",
+    name: "3 Month Transformation",
+    description: "A structured 3-month program with workouts, nutrition, and support.",
+    duration: "3 Months",
+    final_price: 7999,
+    features: [
+      "Gym access 7 days a week",
+      "Personalized diet plan",
+      "Weekly progress check-ins",
+      "Trainer support via chat",
+    ],
+  },
+  {
+    id: "dummy-2",
+    name: "6 Month Strength Plan",
+    description: "Build strength and consistency with a six-month routine.",
+    duration: "6 Months",
+    final_price: 14999,
+    features: [
+      "Strength training focus",
+      "Meal guidance",
+      "Monthly body assessments",
+      "Recovery and mobility tips",
+    ],
+  },
+  {
+    id: "dummy-3",
+    name: "12 Month Elite Plan",
+    description: "Long-term membership for serious fitness commitment.",
+    duration: "12 Months",
+    final_price: 24999,
+    features: [
+      "Premium member access",
+      "Advanced workout plans",
+      "Regular nutrition coaching",
+      "Exclusive member events",
+    ],
+  },
+];
 
 const MemberSBuyPlans = ({ preFetchedPlans }) => {
   const navigate = useNavigate();
@@ -43,31 +85,21 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     fetchMemberships();
   }, [user, preFetchedPlans]);
 
-const handleDelete = async (plan) => {
-  const confirmDelete = window.confirm("Delete this plan?");
-  if (!confirmDelete) return;
-
-  try {
-    await api.delete(`/memberships/${plan.id}`);
-
-    setPlans((prev) => prev.filter((p) => p.id !== plan.id));
-  } catch (err) {
-  console.log(err.response?.data);
-  alert("Delete failed");
-}
-  
-};
+  const activePlan = plans.find((plan) => plan.status === "active");
+  const showDummyPlans = !activePlan;
 
   return (
     <>
       <div className="bg-black text-white min-h-screen py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-red-500">
-            My Plans
+            {showDummyPlans ? "Buy a Plan" : "My Plans"}
           </h2>
 
           <p className="text-gray-400 mt-2">
-            Your purchased membership plans
+            {showDummyPlans
+              ? "Choose a membership plan to start your fitness journey."
+              : "Your purchased membership plan details."}
           </p>
         </div>
 
@@ -78,79 +110,38 @@ const handleDelete = async (plan) => {
               <div className="h-2 bg-gray-800 w-48 rounded"></div>
             </div>
           </div>
-        ) : plans.length === 0 ? (
-          <div className="text-center p-12 bg-gray-900/50 rounded-2xl border border-red-500/10 max-w-2xl mx-auto">
-            <h2 className="text-xl text-red-500 font-bold">
-              No Active Plans
-            </h2>
-            <p className="text-gray-400 mt-2">
-              Unlock your full potential with our premium membership plans.
-            </p>
-            <button
-              onClick={() => navigate("/pricing")}
-              className="mt-6 bg-red-600 hover:bg-red-700 px-8 py-3 rounded-full font-bold transition shadow-lg shadow-red-600/20"
-            >
-              🚀 Explore Plans
-            </button>
-          </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-8 px-4">
-            {plans.map((plan) => {
-              const price = Number(plan.price || plan.pricePaid || 0);
-              const start = new Date(plan.startDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
-              const end = new Date(plan.endDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
-              const isExpired = new Date(plan.endDate) < new Date();
+            {(showDummyPlans ? dummyPlans : plans).map((plan) => {
+              const service = {
+                name: plan.planName || plan.name || plan.name || "Membership Plan",
+                description:
+                  plan.description || plan.planName || "Choose this plan to continue.",
+                duration: plan.duration || plan.duration_months || "1 Month",
+                final_price:
+                  plan.pricePaid || plan.final_price || plan.price || plan.pricePaid || 0,
+                features:
+                  plan.features ||
+                  plan.facilities ||
+                  [
+                    "Gym access",
+                    "Personalized support",
+                    "Diet guidance",
+                    "Progress tracking",
+                  ],
+              };
 
               return (
-                <div
+                <PricingCard
                   key={plan.id}
-                  className="group relative bg-gradient-to-br from-gray-900 to-black border border-red-500/20 p-8 rounded-2xl transition hover:border-red-500/40 shadow-xl"
-                >
-                  <button
-                    onClick={() => handleDelete(plan)}
-                    className={`absolute top-6 right-6 p-2 rounded-full transition ${isExpired
-                        ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white cursor-pointer"
-                        : "text-gray-700 cursor-not-allowed opacity-30"
-                      }`}
-                    title={isExpired ? "Remove expired plan" : "Active plans cannot be deleted"}
-                  >
-                    <Trash2 size={18} />
-                  </button>
-
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-2xl font-black text-white group-hover:text-red-500 transition">
-                      {plan.planName}
-                    </h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${isExpired
-                        ? "bg-gray-800 text-gray-400"
-                        : "bg-red-600 text-white animate-pulse"
-                        }`}
-                    >
-                      {isExpired ? "EXPIRED" : plan.status}
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]">₹{price.toLocaleString("en-IN")}</span>
-                      {plan.duration && (
-                        <span className="text-sm text-gray-500 font-bold tracking-tight">/ {plan.duration}</span>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
-                      <div>
-                        <p className="text-[10px] uppercase text-gray-500 font-bold">Started On</p>
-                        <p className="text-sm text-gray-200">{start}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase text-gray-500 font-bold">Expires On</p>
-                        <p className="text-sm text-gray-200">{end}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  service={service}
+                  index={0}
+                  hasActivePlan={false}
+                  checkingPlan={false}
+                  onChoose={() => {
+                    navigate("/buy-plan-dummy", { state: { plan: service } });
+                  }}
+                />
               );
             })}
           </div>
