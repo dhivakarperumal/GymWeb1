@@ -14,6 +14,7 @@ import {
   CheckCircle,
   LayoutGrid,
   List,
+  ChevronDown,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────
@@ -43,6 +44,7 @@ export default function TrainerReferredPlans() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("pending");
   const [viewMode, setViewMode] = useState("table");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -156,16 +158,43 @@ export default function TrainerReferredPlans() {
             <LayoutGrid size={20} />
           </button>
         </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm text-white h-[42px]"
-          >
-            <option value="pending" className="bg-gray-900">Pending</option>
-            <option value="active" className="bg-gray-900">Approved (Active)</option>
-            <option value="completed" className="bg-gray-900">Completed</option>
-            <option value="all" className="bg-gray-900">All</option>
-          </select>
+          
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center justify-between px-3 py-2.5 bg-white/10 border border-white/10 rounded-xl focus:outline-none hover:border-orange-500/50 text-sm text-white w-40 h-[42px] transition-colors"
+            >
+              <span className="capitalize">
+                {filterStatus === "active" ? "Approved" : filterStatus}
+              </span>
+              <ChevronDown size={16} className={`text-white/40 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {dropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute right-0 mt-2 w-40 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20 overflow-hidden text-sm">
+                  {[
+                    { value: "pending", label: "Pending" },
+                    { value: "active", label: "Approved (Active)" },
+                    { value: "completed", label: "Completed" },
+                    { value: "all", label: "All" }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setFilterStatus(option.value);
+                        setDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 hover:bg-white/10 transition-colors ${filterStatus === option.value ? 'text-orange-400 font-semibold bg-white/5' : 'text-white'}`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
         
