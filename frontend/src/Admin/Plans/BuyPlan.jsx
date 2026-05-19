@@ -59,6 +59,7 @@ const BuyPlanadmin = () => {
     startDate: today,
     endDate: "",
     paymentMode: "cash",
+    paymentDate: today,
   });
 
   // ================= FILTER MEMBERS FOR DROPDOWN =================
@@ -594,6 +595,7 @@ const BuyPlanadmin = () => {
         startDate: form.startDate,
         endDate: form.endDate,
         paymentMode: paymentModeValue,
+        paymentDate: form.paymentDate || today,
         paymentStatus: isEMI ? "Pending" : "Paid",
         status: location.pathname.startsWith("/trainer") ? "pending" : "active",
         referredBy: user?.username || user?.name || profileName || "",
@@ -968,6 +970,19 @@ const BuyPlanadmin = () => {
               <option value="cash">Cash</option>
               <option value="upi">UPI</option>
             </select>
+          </div>
+
+          {/* PAYMENT DATE */}
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Payment Date</label>
+            <input
+              type="date"
+              value={form.paymentDate}
+              onChange={(e) =>
+                setForm({ ...form, paymentDate: e.target.value })
+              }
+              className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+            />
           </div>
 
           {/* DISCOUNT AMOUNT */}
