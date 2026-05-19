@@ -101,6 +101,8 @@ const Payments = () => {
             price: m.price || 0,
             pricePaid: m.pricePaid || 0,
             secondPaymentPaid: m.secondPaymentPaid || 0,
+            duration: m.duration || "",
+            paymentMode: m.paymentMode || "",
             startDate: m.startDate,
             endDate: m.endDate,
             paymentDate: m.paymentDate || null,
@@ -108,6 +110,7 @@ const Payments = () => {
             status: m.status || "active",
             paymentStatus: m.paymentStatus || (m.pricePaid >= m.price ? "Paid" : "Pending"),
             referredBy: m.referredBy || "",
+            phone: m.mobile || m.userPhone || "",
           });
         });
 
@@ -238,27 +241,146 @@ const Payments = () => {
 
   /* ================= PRINT RECEIPT ================= */
   const handlePrintReceipt = (member, plan) => {
+    const receiptNo = `REC-${plan.id || Math.floor(Math.random() * 900000 + 100000)}`;
+    const printedOn = new Date().toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+    });
+
+    const totalAmount   = Number(plan.price || 0);
+    const pricePaid     = Number(plan.pricePaid || 0);
+    const secondPayment = Number(plan.secondPaymentPaid || 0);
+    const totalPaid     = pricePaid + secondPayment;
+    const balance       = Math.max(0, totalAmount - totalPaid);
+    const discount      = Math.max(0, totalAmount - (plan.price || totalAmount)); // if price already reduced
+
+    const paymentModeLabel = (plan.paymentMode || "cash").toUpperCase();
+    const paymentStatusColor =
+      plan.paymentStatus === "Paid"    ? "#16a34a" :
+      plan.paymentStatus === "Pending" ? "#dc2626" :
+      plan.paymentStatus === "Partial" ? "#d97706" : "#6b7280";
+
+    const row = (label, value, valueColor = "#111") => `
+      <tr>
+        <td style="padding:7px 10px; color:#555; font-size:13px; border-bottom:1px solid #f0f0f0;">${label}</td>
+        <td style="padding:7px 10px; font-size:13px; font-weight:600; color:${valueColor}; text-align:right; border-bottom:1px solid #f0f0f0;">${value}</td>
+      </tr>`;
+
     const receiptContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-        <h2 style="text-align: center; color: #f97316; margin-bottom: 5px;">Gym Admin</h2>
-        <h3 style="text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 15px; margin-top: 0; color: #555;">Payment Receipt</h3>
-        <p style="margin-top: 20px;"><strong>Member Name:</strong> ${member.username}</p>
-        <p><strong>Email:</strong> ${member.email}</p>
-        <p><strong>Plan:</strong> ${plan.planName}</p>
-        <p><strong>Amount Paid:</strong> ₹${plan.pricePaid}</p>
-        <p><strong>Start Date:</strong> ${formatDate(plan.startDate)}</p>
-        <p><strong>End Date:</strong> ${formatDate(plan.endDate)}</p>
-        <p><strong>Status:</strong> <span style="text-transform: capitalize;">${plan.status}</span></p>
-        <div style="border-top: 2px dashed #ddd; margin-top: 30px; padding-top: 15px; text-align: center; color: #777;">
-          <p>Thank you for choosing us!</p>
+      <style>
+        @media print {
+          body { margin: 0; }
+          .no-print { display: none; }
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+        .card { max-width: 480px; margin: auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+        .header { background: linear-gradient(135deg, #f97316, #ea580c); padding: 24px 20px 18px; text-align: center; }
+        .header h1 { margin: 0 0 4px; color: #fff; font-size: 22px; letter-spacing: 1px; }
+        .header p  { margin: 0; color: rgba(255,255,255,0.85); font-size: 12px; }
+        .badge { display: inline-block; margin-top: 10px; background: rgba(255,255,255,0.2); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 1px; padding: 3px 12px; border-radius: 20px; }
+        .section { padding: 16px 20px 0; }
+        .section-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #f97316; margin-bottom: 4px; border-left: 3px solid #f97316; padding-left: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        .divider { border: none; border-top: 2px dashed #e5e5e5; margin: 14px 20px; }
+        .total-row td { padding: 10px; font-size: 15px; font-weight: 700; }
+        .footer { background: #fafafa; border-top: 1px solid #eee; padding: 16px 20px; text-align: center; }
+        .footer p { margin: 3px 0; font-size: 11px; color: #888; }
+        .footer .tagline { font-size: 13px; font-weight: 600; color: #f97316; margin-bottom: 4px; }
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+        .print-btn { display: block; margin: 16px auto 0; padding: 10px 30px; background: #f97316; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+      </style>
+
+      <div class="card">
+        <!-- HEADER -->
+        <div class="header">
+          <h1>💪 GYM RECEIPT</h1>
+          <p>Official Membership Payment Receipt</p>
+          <div class="badge">RECEIPT NO: ${receiptNo}</div>
+        </div>
+
+        <!-- MEMBER INFO -->
+        <div class="section">
+          <p class="section-title">Member Details</p>
+          <table>
+            ${row("Member Name", member.username || "--")}
+            ${row("Email Address", member.email || "--")}
+            ${row("Mobile Number", plan.phone || "--")}
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- PLAN INFO -->
+        <div class="section">
+          <p class="section-title">Plan Details</p>
+          <table>
+            ${row("Plan Name", plan.planName || "--")}
+            ${row("Duration", plan.duration ? `${plan.duration}` : "--")}
+            ${row("Start Date", formatDate(plan.startDate))}
+            ${row("End Date", formatDate(plan.endDate))}
+            ${row("Days Remaining", getRemainingDays(plan.endDate), getRemainingDays(plan.endDate) === "Expired" ? "#dc2626" : "#16a34a")}
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- PAYMENT INFO -->
+        <div class="section">
+          <p class="section-title">Payment Details</p>
+          <table>
+            ${row("Total Plan Price", `&#8377;${totalAmount.toFixed(2)}`)}
+            ${row("Initial Amount Paid", `&#8377;${pricePaid.toFixed(2)}`, "#16a34a")}
+            ${secondPayment > 0 ? row("Second Payment", `&#8377;${secondPayment.toFixed(2)}`, "#16a34a") : ""}
+            ${balance > 0 ? row("Balance Due", `&#8377;${balance.toFixed(2)}`, "#dc2626") : ""}
+            ${row("Payment Mode", paymentModeLabel)}
+            ${row("Payment Date", plan.paymentDate ? formatDate(plan.paymentDate) : formatDate(plan.createdAt))}
+            <tr>
+              <td style="padding:7px 10px; color:#555; font-size:13px; border-bottom:1px solid #f0f0f0;">Payment Status</td>
+              <td style="padding:7px 10px; text-align:right; border-bottom:1px solid #f0f0f0;">
+                <span class="status-badge" style="background:${paymentStatusColor}22; color:${paymentStatusColor}; border:1px solid ${paymentStatusColor}44;">
+                  ${plan.paymentStatus || "Paid"}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- TOTAL PAID ROW -->
+        <div class="section" style="padding-bottom:4px;">
+          <table>
+            <tr class="total-row">
+              <td style="color:#111;">Total Amount Paid</td>
+              <td style="text-align:right; color:#f97316;">&#8377;${totalPaid.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- COLLECTED BY + DATES -->
+        <div class="section" style="padding-bottom:14px;">
+          <table>
+            ${row("Collected By", plan.referredBy || "Admin", "#f97316")}
+            ${row("Receipt Printed On", printedOn)}
+          </table>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+          <p class="tagline">Thank you for being a valued member! 🙏</p>
+          <p>Keep up the great work on your fitness journey.</p>
+          <p style="margin-top:8px; font-size:10px; color:#bbb;">This is a computer-generated receipt and does not require a signature.</p>
         </div>
       </div>
+
+      <button class="print-btn no-print" onclick="window.print()">🖨️ Print Receipt</button>
     `;
 
-    const printWindow = window.open("", "_blank", "width=600,height=600");
+    const printWindow = window.open("", "_blank", "width=640,height=820");
     if (printWindow) {
       printWindow.document.write(
-        "<html><head><title>Print Receipt</title></head><body>",
+        "<html><head><title>Receipt – " + receiptNo + "</title></head><body>",
       );
       printWindow.document.write(receiptContent);
       printWindow.document.write("</body></html>");
@@ -266,10 +388,10 @@ const Payments = () => {
       printWindow.focus();
       setTimeout(() => {
         printWindow.print();
-        printWindow.close();
-      }, 300);
+      }, 400);
     }
   };
+
 
   /* ================= FILTER ================= */
   // Get flat list of all plans for counting
