@@ -268,31 +268,33 @@ const Payments = () => {
     const receiptContent = `
       <style>
         @media print {
-          body { margin: 0; }
+          @page { margin: 0; }
+          body { margin: 0; padding: 10px; }
           .no-print { display: none; }
+          .card { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
         }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
-        .card { max-width: 480px; margin: auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
-        .header { background: linear-gradient(135deg, #f97316, #ea580c); padding: 24px 20px 18px; text-align: center; }
-        .header h1 { margin: 0 0 4px; color: #fff; font-size: 22px; letter-spacing: 1px; }
-        .header p  { margin: 0; color: rgba(255,255,255,0.85); font-size: 12px; }
-        .badge { display: inline-block; margin-top: 10px; background: rgba(255,255,255,0.2); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 1px; padding: 3px 12px; border-radius: 20px; }
-        .section { padding: 16px 20px 0; }
-        .section-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #f97316; margin-bottom: 4px; border-left: 3px solid #f97316; padding-left: 8px; }
+        .card { max-width: 400px; margin: auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+        .header { background: linear-gradient(135deg, #f97316, #ea580c); padding: 16px 16px 12px; text-align: center; }
+        .header h1 { margin: 0 0 4px; color: #fff; font-size: 20px; letter-spacing: 1px; }
+        .header p  { margin: 0; color: rgba(255,255,255,0.85); font-size: 11px; }
+        .badge { display: inline-block; margin-top: 8px; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 10px; border-radius: 20px; }
+        .section { padding: 10px 16px 0; }
+        .section-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #f97316; margin-bottom: 2px; border-left: 3px solid #f97316; padding-left: 8px; }
         table { width: 100%; border-collapse: collapse; }
-        .divider { border: none; border-top: 2px dashed #e5e5e5; margin: 14px 20px; }
-        .total-row td { padding: 10px; font-size: 15px; font-weight: 700; }
-        .footer { background: #fafafa; border-top: 1px solid #eee; padding: 16px 20px; text-align: center; }
-        .footer p { margin: 3px 0; font-size: 11px; color: #888; }
-        .footer .tagline { font-size: 13px; font-weight: 600; color: #f97316; margin-bottom: 4px; }
-        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
-        .print-btn { display: block; margin: 16px auto 0; padding: 10px 30px; background: #f97316; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .divider { border: none; border-top: 1px dashed #e5e5e5; margin: 8px 16px; }
+        .total-row td { padding: 6px 10px; font-size: 14px; font-weight: 700; }
+        .footer { background: #fafafa; border-top: 1px solid #eee; padding: 12px 16px; text-align: center; }
+        .footer p { margin: 2px 0; font-size: 10px; color: #888; }
+        .footer .tagline { font-size: 12px; font-weight: 600; color: #f97316; margin-bottom: 2px; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+        .print-btn { display: block; margin: 12px auto 0; padding: 8px 24px; background: #f97316; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
       </style>
 
       <div class="card">
         <!-- HEADER -->
         <div class="header">
-          <h1>💪 GYM RECEIPT</h1>
+          <h1>💪 DAP Fitness Studio</h1>
           <p>Official Membership Payment Receipt</p>
           <div class="badge">RECEIPT NO: ${receiptNo}</div>
         </div>
