@@ -54,7 +54,9 @@ const MemberDetails = () => {
           price: activeMembership?.price || memberData.price,
           pricePaid: activeMembership?.pricePaid || 0,
           secondPaymentPaid: activeMembership?.secondPaymentPaid || 0,
-          payment_status: activeMembership?.paymentStatus || memberData.payment_status
+          payment_status: activeMembership?.paymentStatus || memberData.payment_status,
+          discount: activeMembership?.discount || 0,
+          amount: activeMembership?.amount || 0,
         };
         setMember(enhancedMember);
 
@@ -279,6 +281,18 @@ const MemberDetails = () => {
                     <InfoRow icon={<Clock size={18} className="text-orange-500" />} label="Expiry" value={member.expiry_date ? dayjs(member.expiry_date).format('MMM DD, YYYY') : 'N/A'} />
 
                     <div className="pt-4 border-t border-white/5 space-y-3">
+                      {member.amount > 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-white/40">Original Price</span>
+                          <span className="text-white/80 font-semibold">₹{member.amount}</span>
+                        </div>
+                      )}
+                      {member.discount > 0 && (
+                        <div className="flex justify-between items-center text-sm text-red-400/80">
+                          <span className="text-white/40">Discount</span>
+                          <span className="font-semibold">-₹{member.discount}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-white/40">Total Price</span>
                         <span className="text-white font-bold">₹{member.price || '0'}</span>

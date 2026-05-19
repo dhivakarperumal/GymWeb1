@@ -111,6 +111,8 @@ const Payments = () => {
             paymentStatus: m.paymentStatus || (m.pricePaid >= m.price ? "Paid" : "Pending"),
             referredBy: m.referredBy || "",
             phone: m.mobile || m.userPhone || "",
+            discount: m.discount || 0,
+            amount: m.amount || 0,
           });
         });
 
@@ -251,7 +253,8 @@ const Payments = () => {
     const secondPayment = Number(plan.secondPaymentPaid || 0);
     const totalPaid     = pricePaid + secondPayment;
     const balance       = Math.max(0, totalAmount - totalPaid);
-    const discount      = Math.max(0, totalAmount - (plan.price || totalAmount)); // if price already reduced
+    const discount      = Number(plan.discount || 0);
+    const originalPrice = Number(plan.amount || plan.price || 0);
 
     const paymentModeLabel = (plan.paymentMode || "cash").toUpperCase();
     const paymentStatusColor =
@@ -329,7 +332,9 @@ const Payments = () => {
         <div class="section">
           <p class="section-title">Payment Details</p>
           <table>
-            ${row("Total Plan Price", `&#8377;${totalAmount.toFixed(2)}`)}
+            ${originalPrice > 0 ? row("Original Price", `&#8377;${originalPrice.toFixed(2)}`) : ""}
+            ${discount > 0 ? row("Discount Amount", `&#8377;${discount.toFixed(2)}`, "#dc2626") : ""}
+            ${row("Total Price (After Discount)", `&#8377;${totalAmount.toFixed(2)}`)}
             ${row("Initial Amount Paid", `&#8377;${pricePaid.toFixed(2)}`, "#16a34a")}
             ${secondPayment > 0 ? row("Second Payment", `&#8377;${secondPayment.toFixed(2)}`, "#16a34a") : ""}
             ${balance > 0 ? row("Balance Due", `&#8377;${balance.toFixed(2)}`, "#dc2626") : ""}
@@ -858,8 +863,23 @@ const Payments = () => {
                     </div>
 
                     <div>
-                      <p className="text-gray-400">Amount</p>
-                      <p>₹ {plan.pricePaid}</p>
+                      <p className="text-gray-400">Original Price</p>
+                      <p>₹ {plan.amount || plan.price || 0}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Discount</p>
+                      <p className="text-red-400">₹ {plan.discount || 0}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Final Price</p>
+                      <p>₹ {plan.price || 0}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Amount Paid</p>
+                      <p className="text-green-400 font-semibold">₹ {plan.pricePaid}</p>
                     </div>
 
                     <div>
@@ -957,6 +977,8 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Original Price</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
@@ -1008,6 +1030,16 @@ const Payments = () => {
                           {plan.referredBy || "Admin"}
                         </td>
                         <td className="px-4 py-4">
+                          <span className="text-base font-medium text-white/60">
+                            ₹{plan.amount || plan.price || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-base font-medium text-red-400">
+                            ₹{plan.discount || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
                           <span className="text-base font-medium text-orange-400">
                             ₹{totalAmount}
                           </span>
@@ -1017,7 +1049,6 @@ const Payments = () => {
                             ₹{plan.pricePaid}
                           </span>
                         </td>
-
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-cyan-300">
                             ₹{plan.secondPaymentPaid || 0}

@@ -581,6 +581,11 @@ const BuyPlanadmin = () => {
       }
 
       // ===== SAVE MEMBERSHIP HISTORY WITH CORRECT CUSTOMER ID & TRAINER USERNAME =====
+      const originalPrice = parseDecimal(
+        selectedPlan.finalPrice ?? selectedPlan.final_price ?? selectedPlan.price
+      );
+      const discountVal = parseDecimal(discount);
+
       const membershipData = {
         userId: finalUserId,
         userName: selectedUser.name || selectedUser.username,
@@ -601,6 +606,8 @@ const BuyPlanadmin = () => {
         referredBy: user?.username || user?.name || profileName || "",
         trainerId: user?.user_id || user?.id || null,
         trainerName: profileName || user?.username || user?.name || "",
+        discount: discountVal,
+        amount: originalPrice,
       };
 
       await api.post("/memberships", membershipData);
@@ -1265,7 +1272,11 @@ const BuyPlanadmin = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-400">
                         <div>
-                          <p>Price: <span className="text-emerald-400 font-semibold">₹{h.price}</span></p>
+                          <p>Original Price: <span className="text-white/60 font-semibold">₹{h.amount || h.price}</span></p>
+                          {h.discount > 0 && (
+                            <p>Discount: <span className="text-red-400 font-semibold">-₹{h.discount}</span></p>
+                          )}
+                          <p>Final Price: <span className="text-emerald-400 font-semibold">₹{h.price}</span></p>
                           <p>Paid: ₹{h.pricePaid}</p>
                         </div>
                         <div className="text-right">

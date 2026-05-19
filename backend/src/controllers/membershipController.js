@@ -84,6 +84,8 @@ async function createMembership(req, res) {
       referredBy,
       trainerId,
       trainerName,
+      discount,
+      amount,
     } = req.body;
 
     const actualPricePaid = pricePaid !== undefined ? pricePaid : price;
@@ -112,8 +114,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -137,6 +139,8 @@ async function createMembership(req, res) {
       referredBy || null,
       trainerId || null,
       trainerName || null,
+      discount !== undefined ? discount : 0,
+      amount !== undefined ? amount : 0,
     ];
 
     const [result] = await db.query(query, values);
@@ -244,6 +248,8 @@ async function updateMembership(req, res) {
       "paymentStatus",
       "trainerId",
       "trainerName",
+      "discount",
+      "amount",
     ];
 
     const updates = [];
