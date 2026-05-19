@@ -59,7 +59,7 @@ app.use(
         const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
         if (isLocalhost) return callback(null, true);
       } catch (err) {}
-      const allowed = ["https://dap.qtechx.com"];
+      const allowed = ["https://dapfitt.com"];
       if (allowed.includes(origin)) return callback(null, true);
       callback(new Error("Not allowed by CORS"));
     },
