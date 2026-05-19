@@ -1,0 +1,2 @@
+ALTER TABLE memberships
+  ADD COLUMN IF NOT EXISTS paymentDate DATE NULL DEFAULT NULL AFTER paymentMode;

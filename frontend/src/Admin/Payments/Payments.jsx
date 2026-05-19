@@ -103,6 +103,7 @@ const Payments = () => {
             secondPaymentPaid: m.secondPaymentPaid || 0,
             startDate: m.startDate,
             endDate: m.endDate,
+            paymentDate: m.paymentDate || null,
             createdAt: m.createdAt,
             status: m.status || "active",
             paymentStatus: m.paymentStatus || (m.pricePaid >= m.price ? "Paid" : "Pending"),
@@ -409,6 +410,7 @@ const Payments = () => {
         Plan: plan.planName,
         "Collected By": plan.referredBy || "Admin",
         Amount: plan.pricePaid,
+        "Payment Date": formatDate(plan.paymentDate),
         "Start Date": formatDate(plan.startDate),
         "End Date": formatDate(plan.endDate),
         Status: plan.status,
@@ -766,6 +768,13 @@ const Payments = () => {
                     </div>
 
                     <div>
+                      <p className="text-gray-400">Payment Date</p>
+                      <p className="whitespace-nowrap text-purple-300">
+                        {formatDate(plan.paymentDate) !== "--" ? formatDate(plan.paymentDate) : <span className="text-gray-500">--</span>}
+                      </p>
+                    </div>
+
+                    <div>
                       <p className="text-gray-400">Collected By</p>
                       <p className="font-semibold text-orange-400">
                         {plan.referredBy || "Admin"}
@@ -830,6 +839,7 @@ const Payments = () => {
                     
                     <th className="px-4 py-4 text-left text-sm font-semibold">Start Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">End Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Payment Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Days Left</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Payment</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Status / Action</th>
@@ -895,6 +905,12 @@ const Payments = () => {
                         </td>
                         <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
                           {formatDate(plan.endDate)}
+                        </td>
+                        <td className="px-4 py-4 font-medium text-base whitespace-nowrap">
+                          {plan.paymentDate
+                            ? <span className="text-purple-300">{formatDate(plan.paymentDate)}</span>
+                            : <span className="text-gray-600">--</span>
+                          }
                         </td>
                         <td className="px-4 py-4">
                           <span
