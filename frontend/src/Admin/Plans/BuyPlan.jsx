@@ -534,8 +534,6 @@ const BuyPlanadmin = () => {
       return;
     }
 
-    // Allow updating/renewing active plans as requested by the user
-
     setLoading(true);
     try {
       const planTotal = getSelectedPlanTotal();
@@ -567,7 +565,6 @@ const BuyPlanadmin = () => {
         if (selectedUser.id) {
           memberRes = await api.put(`${MEMBERS_API}/${selectedUser.id}`, updatedMember);
         } else {
-          // If no gym_member record exists, we create one
           memberRes = await api.post(MEMBERS_API, updatedMember);
         }
 
@@ -582,7 +579,7 @@ const BuyPlanadmin = () => {
         return;
       }
 
-      // ===== SAVE MEMBERSHIP HISTORY WITH CORRECT CUSTOMER ID & TRAINER USERNAME =====
+      // ===== SAVE OR UPDATE MEMBERSHIP HISTORY =====
       const originalPrice = parseDecimal(
         selectedPlan.finalPrice ?? selectedPlan.final_price ?? selectedPlan.price
       );
@@ -612,7 +609,16 @@ const BuyPlanadmin = () => {
         amount: originalPrice,
       };
 
-      await api.post("/memberships", membershipData);
+      const activeOrPendingMembership = memberHistory
+        .filter((h) => h && h.status)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .find((h) => ["active", "pending"].includes((h.status || "").toLowerCase()));
+
+      if (activeOrPendingMembership) {
+        await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
+      } else {
+        await api.post("/memberships", membershipData);
+      }
 
       // ===== OPTIONAL ASSIGN TRAINER =====
       if (selectedTrainer && selectedTrainer !== "") {

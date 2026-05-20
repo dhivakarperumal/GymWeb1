@@ -236,11 +236,13 @@ async function updateMembership(req, res) {
     const { id } = req.params;
     const allowedFields = [
       "status",
+      "price",
       "pricePaid",
       "secondPaymentPaid",
       "paymentMode",
       "paymentDate",
       "paymentId",
+      "planId",
       "startDate",
       "endDate",
       "duration",
