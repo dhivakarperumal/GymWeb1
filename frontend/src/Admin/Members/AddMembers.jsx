@@ -119,6 +119,25 @@ const AddMember = () => {
 
   const [extensionDays, setExtensionDays] = useState(5);
 
+  const parseDurationValue = (value) => {
+    if (value == null || value === "") return null;
+    const raw = value.toString().trim().toLowerCase();
+    const numberMatch = raw.match(/(\d+(?:\.\d+)?)/);
+    const amount = numberMatch ? Number(numberMatch[1]) : NaN;
+    if (Number.isNaN(amount)) return null;
+    if (raw.includes("year")) return Math.round(amount * 12);
+    if (raw.includes("month")) return Math.round(amount);
+    if (raw.includes("week")) return Math.ceil((amount * 7) / 30);
+    if (raw.includes("day")) return Math.ceil(amount / 30);
+    return Number.isFinite(amount) ? Math.round(amount) : null;
+  };
+
+  const calculateExpiryDate = (joinDate, duration) => {
+    const durationMonths = parseDurationValue(duration);
+    if (!joinDate || !durationMonths || durationMonths <= 0) return "";
+    return dayjs(joinDate).add(durationMonths, "month").format("YYYY-MM-DD");
+  };
+
   // 🎂 AGE
   useEffect(() => {
     if (form.dob) {
@@ -141,14 +160,12 @@ const AddMember = () => {
     }
   }, [form.height, form.weight]);
 
-  // 📅 EXPIRY
+  // 📅 AUTO-UPDATE EXPIRY DATE when start date or duration changes
   useEffect(() => {
-    if (form.joinDate && form.duration) {
-      const expiry = dayjs(form.joinDate)
-        .add(Number(form.duration), "month")
-        .format("YYYY-MM-DD");
-
-      setForm((prev) => ({ ...prev, expiryDate: expiry }));
+    const durationMonths = parseDurationValue(form.duration);
+    if (form.joinDate && durationMonths && durationMonths > 0) {
+      const calculatedExpiry = calculateExpiryDate(form.joinDate, durationMonths);
+      setForm((prev) => ({ ...prev, expiryDate: calculatedExpiry }));
     }
   }, [form.joinDate, form.duration]);
 
@@ -162,6 +179,9 @@ const AddMember = () => {
       setForm(prev => ({ ...prev, phone: numericValue, password: numericValue }));
     } else if (name === 'dob') {
       setForm(prev => ({ ...prev, dob: value }));
+    } else if (name === 'duration') {
+      const expiryDate = calculateExpiryDate(form.joinDate, value);
+      setForm(prev => ({ ...prev, duration: value, expiryDate }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -400,11 +420,20 @@ const AddMember = () => {
                 name="plan"
                 value={form.plan}
                 onChange={(e) => {
-                  const selectedPlan = plans.find((p) => p.name === e.target.value);
+                  const selectedPlanName = e.target.value;
+                  const selectedPlan = plans.find((p) => p.name === selectedPlanName);
+                  
+                  let newDuration = form.duration;
+                  if (selectedPlan) {
+                    newDuration = selectedPlan.duration || selectedPlan.duration_months || form.duration;
+                  }
+                  const newDurationMonths = parseDurationValue(newDuration) ?? parseDurationValue(form.duration);
+                  const newExpiryDate = calculateExpiryDate(form.joinDate, newDurationMonths);
                   setForm((prev) => ({
                     ...prev,
-                    plan: e.target.value,
-                    duration: selectedPlan ? selectedPlan.duration : prev.duration,
+                    plan: selectedPlanName,
+                    duration: newDurationMonths ? newDurationMonths.toString() : prev.duration,
+                    expiryDate: newExpiryDate,
                   }));
                 }}
                 className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -412,7 +441,7 @@ const AddMember = () => {
                 <option value="">Select Plan</option>
                 {plans.map((plan) => (
                   <option key={plan.id} value={plan.name} className="text-black">
-                    {plan.name} - ₹{plan.finalPrice || plan.final_price || plan.price}
+                    {plan.name} - {plan.duration || plan.duration_months || '?'} months - ₹{plan.finalPrice || plan.final_price || plan.price}
                   </option>
                 ))}
               </select>
