@@ -377,8 +377,9 @@ const BuyPlanadmin = () => {
           bmi: user.bmi || "",
         }));
 
+        const forceChange = location.state?.forceChange;
         const matchedPlan = findMatchingPlan(user, plans, enquiries);
-        if (matchedPlan) {
+        if (matchedPlan && !forceChange) {
           setSelectedPlan(matchedPlan);
         }
       }

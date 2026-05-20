@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, RotateCcw } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api"
@@ -34,6 +34,14 @@ const isUpdatePlanEnabled = (m) => {
 
 const hasActiveOrPendingPlan = (m) => {
   return !!(m.plan && m.plan !== 'user' && m.status === 'active');
+};
+
+const canChangePlan = (m) => {
+  return !!(
+    m.plan &&
+    m.plan !== 'user' &&
+    (m.status === 'active' || m.status === 'pending')
+  );
 };
 
 const Members = () => {
@@ -618,6 +626,15 @@ const Members = () => {
                           </button>
                         );
                       })()}
+                      {canChangePlan(m) && (
+                        <button
+                          onClick={() => navigate("/admin/buyplanadmin", { state: { member: m, forceChange: true } })}
+                          className="p-2 rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition"
+                          title="Change Plan"
+                        >
+                          <RotateCcw size={16} />
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           if (m.source === "users") {
@@ -706,6 +723,15 @@ const Members = () => {
                           </button>
                         );
                       })()}
+                      {canChangePlan(m) && (
+                        <button
+                          onClick={() => navigate("/admin/buyplanadmin", { state: { member: m, forceChange: true } })}
+                          className="p-2 rounded-lg bg-violet-500/20 text-violet-500 hover:bg-violet-500 hover:text-white transition"
+                          title="Change Plan"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           if (m.source === "users") {
