@@ -11,6 +11,8 @@ const API = `/members`;
 const AddMember = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [originalPlan, setOriginalPlan] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -41,6 +43,20 @@ const AddMember = () => {
   const location = useLocation();
   const isEdit = Boolean(id);
 
+  // ✏️ FETCH PLANS
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const res = await api.get('/plans');
+        const activePlans = (res.data || []).filter((p) => p.active);
+        setPlans(activePlans);
+      } catch (err) {
+        console.error('Failed to load plans:', err);
+      }
+    };
+    fetchPlans();
+  }, []);
+
   // ✏️ FETCH MEMBER (EDIT) OR USER (NEW)
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -52,6 +68,7 @@ const AddMember = () => {
           const res = await api.get(`${API}/${id}`);
           const data = res.data;
 
+          setOriginalPlan(data.plan || null);
           setForm({
             ...data,
             username: data.email ? data.email.split('@')[0] : '',
@@ -98,7 +115,7 @@ const AddMember = () => {
       };
       fetchUser();
     }
-  }, [id, isEdit, location.search]);
+  }, [id, isEdit, location.search, plans]);
 
   const [extensionDays, setExtensionDays] = useState(5);
 
@@ -368,8 +385,37 @@ const AddMember = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70 ml-1">Plan</label>
-              <input name="plan" value={form.plan} onChange={handleChange} placeholder="e.g. Monthly Pro" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              <label className="text-sm font-medium text-white/70 ml-1">
+                Plan
+                {isEdit && originalPlan && form.plan && originalPlan !== form.plan && (
+                  <span className="ml-2 text-xs bg-orange-500/30 px-2 py-1 rounded text-orange-300">Changed</span>
+                )}
+              </label>
+              {isEdit && originalPlan && (
+                <div className="mb-2 p-2 rounded-lg bg-white/5 border border-orange-500/30 text-xs text-orange-300">
+                  <p>Current Plan: <span className="font-semibold">{originalPlan}</span></p>
+                </div>
+              )}
+              <select
+                name="plan"
+                value={form.plan}
+                onChange={(e) => {
+                  const selectedPlan = plans.find((p) => p.name === e.target.value);
+                  setForm((prev) => ({
+                    ...prev,
+                    plan: e.target.value,
+                    duration: selectedPlan ? selectedPlan.duration : prev.duration,
+                  }));
+                }}
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">Select Plan</option>
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.name} className="text-black">
+                    {plan.name} - ₹{plan.finalPrice || plan.final_price || plan.price}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1">
