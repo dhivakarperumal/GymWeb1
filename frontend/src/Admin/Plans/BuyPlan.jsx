@@ -70,9 +70,10 @@ const BuyPlanadmin = () => {
         // only gym members converted from enquiry should appear
         if (m.source === "users") return false;
 
-        // 1. Skip if already has active plan (unless searching for them specifically)
-        const hasPlan = m.status === "active" && m.plan;
-        if (hasPlan && !memberSearch) return false;
+        // 1. Skip if already has a pending or active plan
+        const status = (m.status || "").toLowerCase();
+        const hasExistingPlan = m.plan && (status === "active" || status === "pending");
+        if (hasExistingPlan) return false;
 
         // 2. Skip duplicates by phone
         if (seenPhones.has(m.phone)) return false;
