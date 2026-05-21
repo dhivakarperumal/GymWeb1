@@ -26,15 +26,22 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     };
     fetchFeatured();
 
-    if (!user?.id || preFetchedPlans) return;
+    const shouldUsePreFetchedPlans = Array.isArray(preFetchedPlans) && preFetchedPlans.length > 0;
+    if (!user?.id) return;
+
+    if (shouldUsePreFetchedPlans) {
+      setPlans(preFetchedPlans);
+      setLoading(false);
+      return;
+    }
 
     const fetchMemberships = async () => {
       try {
         const res = await api.get(`/memberships/user/${user.id}`);
-
-        setPlans(res.data || []);
+        setPlans(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error("Failed to fetch memberships", err);
+        setPlans([]);
       } finally {
         setLoading(false);
       }

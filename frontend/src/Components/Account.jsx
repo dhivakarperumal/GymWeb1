@@ -139,7 +139,21 @@ const Account = () => {
       }
     };
 
+    const fetchUserMemberships = async () => {
+      try {
+        const res = await api.get(`/memberships/user/${userId}`);
+        const memberships = Array.isArray(res.data) ? res.data : [];
+        setPlans(memberships);
+        setHasActivePlan(memberships.some((m) => m.status === 'active'));
+      } catch (err) {
+        console.error('Failed to fetch user memberships', err);
+        setPlans([]);
+        setHasActivePlan(false);
+      }
+    };
+
     fetchMemberData();
+    fetchUserMemberships();
   }, [userId]);
 
   useEffect(() => {
