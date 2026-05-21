@@ -11,7 +11,7 @@ import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
-import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft } from "lucide-react";
+import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users } from "lucide-react";
 
 
 const Account = () => {
@@ -212,6 +212,20 @@ const Account = () => {
       phone: prev.phone || userInfo.mobile || "",
     }));
   }, [userInfo, userEnquiry, memberData]);
+
+  // Calculate BMI when height or weight changes
+  useEffect(() => {
+    if (memberFormData.height && memberFormData.weight) {
+      const h = parseFloat(memberFormData.height) / 100;
+      const w = parseFloat(memberFormData.weight);
+      if (h > 0) {
+        const bmiVal = (w / (h * h)).toFixed(1);
+        setMemberFormData(prev => ({ ...prev, bmi: bmiVal }));
+      }
+    } else {
+      setMemberFormData(prev => ({ ...prev, bmi: "" }));
+    }
+  }, [memberFormData.height, memberFormData.weight]);
 
   const handleSaveMemberEdits = async () => {
     if (!memberData?.id && !userEnquiry?.id) return;
@@ -454,12 +468,12 @@ const Account = () => {
               <div className="mt-8 bg-gray-900/50 border border-white/10 rounded-3xl p-6 space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-bold uppercase text-white">Member Details</h3>
-                    <p className="text-sm text-gray-400">If you are already a member, your gym profile is auto-filled here and can be edited directly.</p>
+                    <h3 className="text-xl font-bold uppercase text-white">Join Form Details</h3>
+                    <p className="text-sm text-gray-400">Edit your join form details. All changes will be saved to your profile.</p>
                   </div>
                   <button
                     onClick={() => {
-                      if (!memberData) {
+                      if (!memberData && !userEnquiry) {
                         navigate('/userenquiry', {
                           state: {
                             prefilledUser: {
@@ -475,282 +489,209 @@ const Account = () => {
                     }}
                     className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-red-500"
                   >
-                    {memberData ? (memberEditMode ? 'Cancel edit' : 'Edit details') : 'Complete join form'}
+                    {memberEditMode ? 'Cancel' : 'Edit Details'}
                   </button>
                 </div>
 
                 {memberData || userEnquiry ? (
                   memberEditMode ? (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="block text-sm text-gray-300">
-                          Full Name
-                          <input
-                            value={memberFormData.name}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, name: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Email Address
-                          <input
-                            value={memberFormData.email}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, email: e.target.value })}
-                            type="email"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Phone Number
-                          <input
-                            value={memberFormData.phone}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                            type="tel"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Subject
-                          <input
-                            value={memberFormData.subject}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, subject: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Location
-                          <input
-                            value={memberFormData.location}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, location: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Date of Birth
-                          <input
-                            value={memberFormData.dob}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, dob: e.target.value })}
-                            type="date"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Current Age
-                          <input
-                            value={memberFormData.age}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, age: e.target.value })}
-                            type="number"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Gender
-                          <select
-                            value={memberFormData.gender}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, gender: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          >
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Blood Group
-                          <input
-                            value={memberFormData.blood_group}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, blood_group: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="block text-sm text-gray-300">
-                          Height (cm)
-                          <input
-                            value={memberFormData.height}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, height: e.target.value })}
-                            type="number"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Weight (kg)
-                          <input
-                            value={memberFormData.weight}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, weight: e.target.value })}
-                            type="number"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          BMI
-                          <input
-                            value={memberFormData.bmi}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, bmi: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Plan Name
-                          <input
+                    <form className="space-y-10">
+                      {/* SECTION: PLAN INFO */}
+                      {(memberFormData.plan_name || memberFormData.plan_duration) && (
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <InputField
+                            label="Selected Plan"
                             value={memberFormData.plan_name}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, plan_name: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                            readOnly
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Plan Duration
-                          <input
+                          <InputField
+                            label="Plan Duration"
                             value={memberFormData.plan_duration}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, plan_duration: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                      </div>
-
-                      <InputField
-                        label="Permanent Address"
-                        value={memberFormData.address}
-                        onChange={(val) => setMemberFormData({ ...memberFormData, address: val })}
-                        isTextArea
-                      />
-
-                      <div className="space-y-6 pt-6 border-t border-white/5">
-                        <h4 className="text-lg font-bold text-white uppercase tracking-widest">Work & Career</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <InputField
-                            label="Company / Employer"
-                            value={memberFormData.employer}
-                            onChange={(val) => setMemberFormData({ ...memberFormData, employer: val })}
-                          />
-                          <InputField
-                            label="Job Title / Occupation"
-                            value={memberFormData.occupation}
-                            onChange={(val) => setMemberFormData({ ...memberFormData, occupation: val })}
+                            readOnly
                           />
                         </div>
-                      </div>
+                      )}
 
-                      <div className="space-y-6 pt-6 border-t border-white/5">
-                        <h4 className="text-lg font-bold text-white uppercase tracking-widest">Emergency Contact</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <InputField
-                            label="Guardian / Contact Name"
-                            value={memberFormData.emergency_contact_name}
-                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_name: val })}
-                          />
-                          <InputField
-                            label="Relationship"
-                            value={memberFormData.emergency_contact_relationship}
-                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_relationship: val })}
-                          />
-                          <InputField
-                            label="Home / Primary Phone"
-                            type="tel"
-                            value={memberFormData.emergency_contact_phone_home}
-                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_home: val.replace(/\D/g, '').slice(0, 10) })}
-                          />
-                          <InputField
-                            label="Work / Secondary Phone"
-                            type="tel"
-                            value={memberFormData.emergency_contact_phone_work}
-                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_work: val.replace(/\D/g, '').slice(0, 10) })}
-                          />
-                        </div>
-                        <InputField
-                          label="Emergency Contact Address"
-                          value={memberFormData.emergency_contact_address}
-                          onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_address: val })}
-                          isTextArea
-                        />
-                      </div>
-
-                      <div className="space-y-6 pt-6 border-t border-white/5">
-                        <h4 className="text-lg font-bold text-white uppercase tracking-widest">Fitness Profile</h4>
-                        <InputField
-                          label="Fitness Goal"
-                          value={memberFormData.fitness_goal}
-                          onChange={(val) => setMemberFormData({ ...memberFormData, fitness_goal: val })}
-                          isTextArea
-                        />
-                        <InputField
-                          label="Additional Notes / Medical History"
-                          value={memberFormData.message}
-                          onChange={(val) => setMemberFormData({ ...memberFormData, message: val })}
-                          isTextArea
-                        />
-                      </div>
-
-                      <div className="pt-6 border-t border-white/5">
-                        <button
-                          type="button"
-                          onClick={() => setShowConsent((prev) => !prev)}
-                          className="w-full flex items-center justify-between px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all"
-                        >
-                          <span className="text-white font-bold tracking-wider">Informed Consent Form</span>
-                          <span className="text-orange-500 text-2xl">{showConsent ? '−' : '+'}</span>
-                        </button>
-
-                        {showConsent && (
-                          <div className="mt-5 p-6 rounded-2xl bg-white/5 border border-white/10 space-y-6">
-                            <div className="flex flex-wrap items-center gap-3 text-white leading-8">
-                              <span>I</span>
-                              <input
-                                type="text"
-                                value={memberFormData.participant_name}
-                                onChange={(e) => setMemberFormData({ ...memberFormData, participant_name: e.target.value })}
-                                placeholder="Full Name"
-                                className="min-w-[170px] bg-transparent border-b border-orange-400 px-2 py-1 text-white outline-none"
-                              />
-                              <span>give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.</span>
-                            </div>
-
-                            <label className="flex items-center gap-3 mt-4 text-white">
-                              <input
-                                type="checkbox"
-                                checked={memberFormData.consent_agree}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  setMemberFormData({
-                                    ...memberFormData,
-                                    consent_agree: checked,
-                                    termsAccepted: checked,
-                                  });
-                                }}
-                                className="w-5 h-5"
-                              />
-                              <span>I Agree</span>
-                            </label>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <InputField
-                                label="Signature"
-                                value={memberFormData.consent_signature}
-                                onChange={(val) => setMemberFormData({ ...memberFormData, consent_signature: val })}
-                              />
-                              <InputField
-                                label="Consent Date"
-                                type="date"
-                                value={memberFormData.consent_date}
-                                onChange={(val) => setMemberFormData({ ...memberFormData, consent_date: val })}
-                              />
-                            </div>
-
-                            <InputField
-                              label="Parent / Guardian Signature"
-                              value={memberFormData.guardian_signature}
-                              onChange={(val) => setMemberFormData({ ...memberFormData, guardian_signature: val })}
-                            />
-                            <InputField
-                              label="Witness"
-                              value={memberFormData.witness}
-                              onChange={(val) => setMemberFormData({ ...memberFormData, witness: val })}
-                            />
+                      {/* SECTION: PERSONAL INFO */}
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                            <Users className="w-5 h-5 text-orange-500" />
                           </div>
-                        )}
+                          <h3 className="text-xl font-bold text-white uppercase tracking-widest">Personal Information</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="Full Name" value={memberFormData.name} onChange={(val) => setMemberFormData({ ...memberFormData, name: val })} placeholder="e.g. John Doe" />
+                          <InputField label="Email Address" type="email" value={memberFormData.email} onChange={(val) => setMemberFormData({ ...memberFormData, email: val })} placeholder="john@example.com" />
+                          <InputField label="Phone Number" type="tel" value={memberFormData.phone} onChange={(val) => setMemberFormData({ ...memberFormData, phone: val.replace(/\D/g, '').slice(0, 10) })} placeholder="e.g. 9876543210" />
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <InputField label="Date of Birth" type="date" value={memberFormData.dob} onChange={(val) => setMemberFormData({ ...memberFormData, dob: val })} />
+                            <InputField label="Current Age" type="number" value={memberFormData.age} onChange={(val) => setMemberFormData({ ...memberFormData, age: val })} placeholder="Years" />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Blood Group</label>
+                            <select
+                              value={memberFormData.blood_group}
+                              onChange={(e) => setMemberFormData({ ...memberFormData, blood_group: e.target.value })}
+                              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                            >
+                              <option value="" className="bg-gray-900">Select Blood Group</option>
+                              {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(g => (
+                                <option key={g} value={g} className="bg-gray-900">{g}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Gender</label>
+                            <select
+                              value={memberFormData.gender}
+                              onChange={(e) => setMemberFormData({ ...memberFormData, gender: e.target.value })}
+                              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                            >
+                              <option value="" className="bg-gray-900">Select Gender</option>
+                              <option value="Male" className="bg-gray-900">Male</option>
+                              <option value="Female" className="bg-gray-900">Female</option>
+                              <option value="Other" className="bg-gray-900">Other</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <InputField label="Permanent Address" value={memberFormData.address} onChange={(val) => setMemberFormData({ ...memberFormData, address: val })} isTextArea placeholder="Enter your full residential address..." />
+                      </div>
+
+                      {/* SECTION: PROFESSIONAL INFO */}
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Work & Career</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="Company / Employer" value={memberFormData.employer} onChange={(val) => setMemberFormData({ ...memberFormData, employer: val })} placeholder="Company name" />
+                          <InputField label="Job Title / Occupation" value={memberFormData.occupation} onChange={(val) => setMemberFormData({ ...memberFormData, occupation: val })} placeholder="e.g. Software Engineer" />
+                        </div>
+                      </div>
+
+                      {/* SECTION: EMERGENCY CONTACT */}
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Emergency Contact</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="Guardian/Contact Name" value={memberFormData.emergency_contact_name} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_name: val })} placeholder="Full name" />
+                          <InputField label="Relationship" value={memberFormData.emergency_contact_relationship} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_relationship: val })} placeholder="e.g. Father, Spouse, Friend" />
+                          <InputField label="Home / Primary Phone" type="tel" value={memberFormData.emergency_contact_phone_home} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_home: val.replace(/\D/g, '').slice(0, 10) })} placeholder="e.g. 9876543210" />
+                          <InputField label="Work / Secondary Phone" type="tel" value={memberFormData.emergency_contact_phone_work} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_work: val.replace(/\D/g, '').slice(0, 10) })} placeholder="Alternative number" />
+                        </div>
+                        <InputField label="Emergency Contact Address" value={memberFormData.emergency_contact_address} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_address: val })} isTextArea placeholder="Guardian's address..." />
+                      </div>
+
+                      {/* SECTION: HEALTH & GOALS */}
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Fitness Profile</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <InputField label="Height (cm)" type="number" value={memberFormData.height} onChange={(val) => setMemberFormData({ ...memberFormData, height: val })} placeholder="Height in cm" />
+                          <InputField label="Weight (kg)" type="number" value={memberFormData.weight} onChange={(val) => setMemberFormData({ ...memberFormData, weight: val })} placeholder="Weight in kg" />
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Current BMI</label>
+                            <div className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-orange-500 font-black text-center text-xl">
+                              {memberFormData.bmi || "0.0"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="What are your fitness goals?" value={memberFormData.fitness_goal} onChange={(val) => setMemberFormData({ ...memberFormData, fitness_goal: val })} isTextArea placeholder="Describe what you want to achieve (e.g. Lose 5kg, build muscle, marathon prep)..." />
+                          <InputField label="Any Medical History or Notes?" value={memberFormData.message} onChange={(val) => setMemberFormData({ ...memberFormData, message: val })} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
+                        </div>
+
+                        <div className="pt-6 border-t border-white/5">
+                          <p className="text-sm text-gray-400 mb-3">
+                            Please read the <span className="text-orange-500 font-semibold">Terms & Conditions</span>
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => setShowConsent(!showConsent)}
+                            className="w-full flex items-center justify-between px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all"
+                          >
+                            <span className="text-white font-bold tracking-wider">INFORMED CONSENT FORM</span>
+                            <span className="text-orange-500 text-2xl">{showConsent ? "−" : "+"}</span>
+                          </button>
+
+                          {showConsent && (
+                            <div className="mt-5 p-8 rounded-2xl bg-white/5 border border-white/10 space-y-8">
+                              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                                <p className="uppercase text-sm text-orange-400 font-semibold mb-5">Please Fill In All Information Requested Below</p>
+
+                                <div className="flex flex-wrap items-center gap-3 leading-8 text-white">
+                                  <span>I</span>
+                                  <input
+                                    type="text"
+                                    value={memberFormData.participant_name}
+                                    onChange={(e) => setMemberFormData({ ...memberFormData, participant_name: e.target.value })}
+                                    placeholder="Full Name"
+                                    className="min-w-[180px] bg-transparent border-b border-orange-400 px-2 py-1 text-white outline-none"
+                                  />
+                                  <span>give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.</span>
+                                </div>
+
+                                <label className="flex items-center gap-3 mt-6">
+                                  <input
+                                    type="checkbox"
+                                    checked={memberFormData.consent_agree}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      setMemberFormData({
+                                        ...memberFormData,
+                                        consent_agree: checked,
+                                        termsAccepted: checked,
+                                      });
+                                    }}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-white">I Agree</span>
+                                </label>
+                              </div>
+
+                              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                <h3 className="text-orange-400 font-bold text-lg mb-4">BENEFITS</h3>
+                                <p className="text-white/80 leading-8">
+                                  Participation in a regular program of physical activity has been shown to produce positive changes in a number of organ systems. These changes include increased work capacity, improved cardiovascular efficiency, increased muscular strength, flexibility, power and endurance.
+                                </p>
+                              </div>
+
+                              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                <h3 className="text-orange-400 font-bold text-lg mb-4">RISKS</h3>
+                                <p className="text-white/80 leading-8">
+                                  Exercise carries some risk to the musculoskeletal system (sprains, strains) and cardiorespiratory system (dizziness, discomfort in breathing, heart attack). I certify that I know of no medical problem that would increase my risk of illness or injury.
+                                </p>
+                              </div>
+
+                              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                <h3 className="text-orange-400 font-bold text-lg mb-4">TESTING AND EVALUATION RESULTS</h3>
+                                <p className="text-white/80 leading-8 mb-5">
+                                  I understand I will undergo initial testing to determine my current physical fitness status including health inventory, body composition, treadmill testing, muscular fitness and flexibility screening.
+                                </p>
+                                <p className="text-white/80 leading-8 mb-5">
+                                  My individual results will be made available only to me and are not intended to replace any medical test or physician services.
+                                </p>
+                                <p className="text-white/80 leading-8">
+                                  By signing this consent form, I understand I am personally responsible for my actions during my tenure at DAP Unisex Fitness Studio.
+                                </p>
+                              </div>
+
+                              <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-5 text-orange-300 font-semibold">
+                                * No Refund • No Transfer • No Extension • No Freezing
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <InputField label="Signature" value={memberFormData.consent_signature} onChange={(val) => setMemberFormData({ ...memberFormData, consent_signature: val })} placeholder="Type your signature" />
+                                <InputField label="Date" type="date" value={memberFormData.consent_date} onChange={(val) => setMemberFormData({ ...memberFormData, consent_date: val })} />
+                              </div>
+
+                              <InputField label="Parent / Guardian Signature" value={memberFormData.guardian_signature} onChange={(val) => setMemberFormData({ ...memberFormData, guardian_signature: val })} placeholder="Guardian signature" />
+                              <InputField label="Witness" value={memberFormData.witness} onChange={(val) => setMemberFormData({ ...memberFormData, witness: val })} placeholder="Witness name" />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <button
@@ -758,45 +699,79 @@ const Account = () => {
                         disabled={savingMember}
                         className="w-full rounded-2xl bg-linear-to-r from-orange-600 to-red-600 px-6 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {savingMember ? 'Saving...' : 'Save Join Details'}
+                        {savingMember ? 'Saving...' : 'Save All Changes'}
                       </button>
-                    </div>
+                    </form>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {renderMemberDetailRow('Full Name', memberFormData.name)}
-                      {renderMemberDetailRow('Email', memberFormData.email)}
-                      {renderMemberDetailRow('Phone', memberFormData.phone)}
-                      {renderMemberDetailRow('Member ID', memberData?.member_id ? `#${memberData.member_id}` : null)}
-                      {renderMemberDetailRow('Subject', memberFormData.subject)}
-                      {renderMemberDetailRow('Location', memberFormData.location)}
-                      {renderMemberDetailRow('Plan Name', memberFormData.plan_name)}
-                      {renderMemberDetailRow('Plan Duration', memberFormData.plan_duration)}
-                      {renderMemberDetailRow('DOB', memberFormData.dob)}
-                      {renderMemberDetailRow('Age', memberFormData.age)}
-                      {renderMemberDetailRow('Gender', memberFormData.gender)}
-                      {renderMemberDetailRow('Blood Group', memberFormData.blood_group)}
-                      {renderMemberDetailRow('Height', memberFormData.height)}
-                      {renderMemberDetailRow('Weight', memberFormData.weight)}
-                      {renderMemberDetailRow('BMI', memberFormData.bmi)}
-                      {renderMemberDetailRow('Address', memberFormData.address)}
-                      {renderMemberDetailRow('Employer', memberFormData.employer)}
-                      {renderMemberDetailRow('Occupation', memberFormData.occupation)}
-                      {renderMemberDetailRow('Fitness Goal', memberFormData.fitness_goal)}
-                      {renderMemberDetailRow('Message / Notes', memberFormData.message)}
-                      {renderMemberDetailRow('Emergency Contact', memberFormData.emergency_contact_name)}
-                      {renderMemberDetailRow('Relationship', memberFormData.emergency_contact_relationship)}
-                      {renderMemberDetailRow('Emergency Phone', memberFormData.emergency_contact_phone_home)}
-                      {renderMemberDetailRow('Secondary Phone', memberFormData.emergency_contact_phone_work)}
-                      {renderMemberDetailRow('Consent Participant', memberFormData.participant_name)}
-                      {renderMemberDetailRow('Consent Agreed', memberFormData.consent_agree ? 'Yes' : 'No')}
-                      {renderMemberDetailRow('Signature', memberFormData.consent_signature)}
-                      {renderMemberDetailRow('Consent Date', memberFormData.consent_date)}
-                      {renderMemberDetailRow('Guardian Signature', memberFormData.guardian_signature)}
-                      {renderMemberDetailRow('Witness', memberFormData.witness)}
+                    <div className="space-y-8">
+                      {(memberFormData.plan_name || memberFormData.plan_duration) && (
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {renderMemberDetailRow('Selected Plan', memberFormData.plan_name)}
+                          {renderMemberDetailRow('Plan Duration', memberFormData.plan_duration)}
+                        </div>
+                      )}
+
+                      <div className="space-y-4">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Personal Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Full Name', memberFormData.name)}
+                          {renderMemberDetailRow('Email', memberFormData.email)}
+                          {renderMemberDetailRow('Phone', memberFormData.phone)}
+                          {renderMemberDetailRow('DOB', memberFormData.dob)}
+                          {renderMemberDetailRow('Age', memberFormData.age)}
+                          {renderMemberDetailRow('Blood Group', memberFormData.blood_group)}
+                          {renderMemberDetailRow('Gender', memberFormData.gender)}
+                          {renderMemberDetailRow('Address', memberFormData.address)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Work & Career</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Employer', memberFormData.employer)}
+                          {renderMemberDetailRow('Occupation', memberFormData.occupation)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Emergency Contact</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Contact Name', memberFormData.emergency_contact_name)}
+                          {renderMemberDetailRow('Relationship', memberFormData.emergency_contact_relationship)}
+                          {renderMemberDetailRow('Home Phone', memberFormData.emergency_contact_phone_home)}
+                          {renderMemberDetailRow('Work Phone', memberFormData.emergency_contact_phone_work)}
+                          {renderMemberDetailRow('Address', memberFormData.emergency_contact_address)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Fitness Profile</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {renderMemberDetailRow('Height (cm)', memberFormData.height)}
+                          {renderMemberDetailRow('Weight (kg)', memberFormData.weight)}
+                          {renderMemberDetailRow('BMI', memberFormData.bmi)}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Fitness Goals', memberFormData.fitness_goal)}
+                          {renderMemberDetailRow('Medical Notes', memberFormData.message)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Consent Form</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Participant Name', memberFormData.participant_name)}
+                          {renderMemberDetailRow('Consent', memberFormData.consent_agree ? 'Agreed' : 'Not Agreed')}
+                          {renderMemberDetailRow('Signature', memberFormData.consent_signature)}
+                          {renderMemberDetailRow('Date', memberFormData.consent_date)}
+                          {renderMemberDetailRow('Guardian Signature', memberFormData.guardian_signature)}
+                          {renderMemberDetailRow('Witness', memberFormData.witness)}
+                        </div>
+                      </div>
                     </div>
                   )
                 ) : (
-                  <p className="text-gray-400">No member profile or join enquiry found yet. Click the button above to complete your join form.</p>
+                  <p className="text-gray-400 text-center py-8">No join form details found. Click "Edit Details" to get started.</p>
                 )}
               </div>
             </div>
@@ -1068,15 +1043,18 @@ const Account = () => {
   );
 };
 
-const InputField = ({ label, value, onChange, type = 'text', isTextArea = false }) => {
+const InputField = ({ label, value, onChange, type = 'text', isTextArea = false, readOnly = false, placeholder = '', required = false }) => {
   if (isTextArea) {
     return (
       <label className="block text-sm text-gray-300">
         {label}
         <textarea
           value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange?.(e.target.value)}
           rows={3}
+          readOnly={readOnly}
+          placeholder={placeholder}
+          required={required}
           className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
         />
       </label>
@@ -1089,7 +1067,10 @@ const InputField = ({ label, value, onChange, type = 'text', isTextArea = false 
       <input
         type={type}
         value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange?.(e.target.value)}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        required={required}
         className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
       />
     </label>
