@@ -26,26 +26,41 @@ const Account = () => {
 
   const [userInfo, setUserInfo] = useState({});
   const [memberData, setMemberData] = useState(null);
+  const [userEnquiry, setUserEnquiry] = useState(null);
   const [memberEditMode, setMemberEditMode] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
   const [memberFormData, setMemberFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    subject: "",
+    message: "",
+    location: "",
+    height: "",
+    weight: "",
+    bmi: "",
     dob: "",
     age: "",
-    blood_group: "",
-    gender: "",
     address: "",
     employer: "",
     occupation: "",
-    fitness_goal: "",
     emergency_contact_name: "",
     emergency_contact_relationship: "",
     emergency_contact_address: "",
     emergency_contact_phone_home: "",
     emergency_contact_phone_work: "",
-    plan: "",
-    duration: "",
+    fitness_goal: "",
+    blood_group: "",
+    gender: "",
+    termsAccepted: false,
+    participant_name: "",
+    consent_agree: false,
+    consent_signature: "",
+    consent_date: "",
+    guardian_signature: "",
+    witness: "",
+    plan_name: "",
+    plan_duration: "",
   });
   const [savingMember, setSavingMember] = useState(false);
   const [plans, setPlans] = useState([]);
@@ -108,8 +123,8 @@ const Account = () => {
             emergency_contact_address: data.emergency_contact_address || "",
             emergency_contact_phone_home: data.emergency_contact_phone_home || "",
             emergency_contact_phone_work: data.emergency_contact_phone_work || "",
-            plan: data.plan || "",
-            duration: data.duration || "",
+            plan_name: data.plan || "",
+            plan_duration: data.duration || "",
           });
         } else {
           setMemberData(null);
@@ -124,6 +139,69 @@ const Account = () => {
   }, [userId]);
 
   useEffect(() => {
+    if (!user?.email && !user?.mobile) return;
+
+    const fetchUserEnquiry = async () => {
+      try {
+        const res = await api.get('/enquiries');
+        const list = Array.isArray(res.data) ? res.data : [];
+        const match = list.find((entry) => {
+          if (!entry) return false;
+          const emailMatch = entry.email && user.email && entry.email.toLowerCase() === user.email.toLowerCase();
+          const phoneMatch = entry.phone && user.mobile && entry.phone === user.mobile;
+          return emailMatch || phoneMatch;
+        });
+
+        if (match) {
+          setUserEnquiry(match);
+          const consent = getConsent(match.consent_data);
+          setMemberFormData({
+            name: match.name || "",
+            email: match.email || "",
+            phone: match.phone || "",
+            subject: match.subject || "",
+            message: match.message || "",
+            location: match.location || "",
+            height: match.height || "",
+            weight: match.weight || "",
+            bmi: match.bmi || "",
+            dob: formatEnquiryDob(match.dob) || "",
+            age: match.age || "",
+            address: match.address || "",
+            employer: match.employer || "",
+            occupation: match.occupation || "",
+            emergency_contact_name: match.emergency_contact_name || "",
+            emergency_contact_relationship: match.emergency_contact_relationship || "",
+            emergency_contact_address: match.emergency_contact_address || "",
+            emergency_contact_phone_home: match.emergency_contact_phone_home || "",
+            emergency_contact_phone_work: match.emergency_contact_phone_work || "",
+            fitness_goal: match.fitness_goal || "",
+            blood_group: match.blood_group || "",
+            gender: match.gender || "",
+            termsAccepted: match.terms_accepted === 1 || match.termsAccepted || false,
+            participant_name: consent.participant_name || match.name || "",
+            consent_agree: consent.agree || false,
+            consent_signature: consent.signature || "",
+            consent_date: consent.date || "",
+            guardian_signature: consent.guardian_signature || "",
+            witness: consent.witness || "",
+            plan_name: match.plan_name || "",
+            plan_duration: match.plan_duration || "",
+          });
+        } else {
+          setUserEnquiry(null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user enquiry', err);
+        setUserEnquiry(null);
+      }
+    };
+
+    fetchUserEnquiry();
+  }, [user?.email, user?.mobile]);
+
+  useEffect(() => {
+    if (userEnquiry) return;
     if (memberData) return;
     if (!userInfo) return;
 
@@ -133,60 +211,132 @@ const Account = () => {
       email: prev.email || userInfo.email || "",
       phone: prev.phone || userInfo.mobile || "",
     }));
-  }, [userInfo, memberData]);
+  }, [userInfo, userEnquiry, memberData]);
 
   const handleSaveMemberEdits = async () => {
-    if (!memberData?.id) return;
+    if (!memberData?.id && !userEnquiry?.id) return;
     setSavingMember(true);
+
+    const enquiryPayload = {
+      name: memberFormData.name || memberData?.name || userInfo.username || "",
+      email: memberFormData.email || memberData?.email || userInfo.email || "",
+      phone: memberFormData.phone || memberData?.phone || userInfo.mobile || "",
+      subject: memberFormData.subject || userEnquiry?.subject || null,
+      message: memberFormData.message || userEnquiry?.message || null,
+      location: memberFormData.location || userEnquiry?.location || null,
+      dob: memberFormData.dob || memberData?.dob || null,
+      age: memberFormData.age || memberData?.age || null,
+      address: memberFormData.address || memberData?.address || null,
+      employer: memberFormData.employer || memberData?.employer || null,
+      occupation: memberFormData.occupation || memberData?.occupation || null,
+      emergency_contact_name: memberFormData.emergency_contact_name || memberData?.emergency_contact_name || null,
+      emergency_contact_relationship: memberFormData.emergency_contact_relationship || memberData?.emergency_contact_relationship || null,
+      emergency_contact_address: memberFormData.emergency_contact_address || memberData?.emergency_contact_address || null,
+      emergency_contact_phone_home: memberFormData.emergency_contact_phone_home || memberData?.emergency_contact_phone_home || null,
+      emergency_contact_phone_work: memberFormData.emergency_contact_phone_work || memberData?.emergency_contact_phone_work || null,
+      fitness_goal: memberFormData.fitness_goal || memberData?.fitness_goal || null,
+      blood_group: memberFormData.blood_group || memberData?.blood_group || null,
+      height: memberFormData.height || memberData?.height || null,
+      weight: memberFormData.weight || memberData?.weight || null,
+      bmi: memberFormData.bmi || memberData?.bmi || null,
+      gender: memberFormData.gender || memberData?.gender || null,
+      plan_name: memberFormData.plan_name || userEnquiry?.plan_name || memberData?.plan || null,
+      plan_duration: memberFormData.plan_duration || userEnquiry?.plan_duration || memberData?.duration || null,
+      status: userEnquiry?.status || 'pending',
+      termsAccepted: memberFormData.termsAccepted || userEnquiry?.termsAccepted || false,
+      consent_data: {
+        participant_name: memberFormData.participant_name || userEnquiry?.participant_name || memberFormData.name || "",
+        agree: memberFormData.consent_agree,
+        signature: memberFormData.consent_signature,
+        date: memberFormData.consent_date,
+        guardian_signature: memberFormData.guardian_signature,
+        witness: memberFormData.witness,
+      },
+      trainer_id: userEnquiry?.trainer_id || null,
+      trainer_name: userEnquiry?.trainer_name || null,
+    };
+
+    const memberPayload = {
+      name: memberFormData.name || memberData?.name,
+      email: memberFormData.email || memberData?.email,
+      phone: memberFormData.phone || memberData?.phone,
+      gender: memberFormData.gender || memberData?.gender,
+      height: memberFormData.height || memberData?.height,
+      weight: memberFormData.weight || memberData?.weight,
+      bmi: memberFormData.bmi || memberData?.bmi,
+      plan: memberFormData.plan_name || memberData?.plan,
+      duration: memberFormData.plan_duration || memberData?.duration,
+      dob: memberFormData.dob || memberData?.dob,
+      age: memberFormData.age || memberData?.age,
+      address: memberFormData.address || memberData?.address,
+      employer: memberFormData.employer || memberData?.employer,
+      occupation: memberFormData.occupation || memberData?.occupation,
+      emergency_contact_name: memberFormData.emergency_contact_name || memberData?.emergency_contact_name,
+      emergency_contact_relationship: memberFormData.emergency_contact_relationship || memberData?.emergency_contact_relationship,
+      emergency_contact_address: memberFormData.emergency_contact_address || memberData?.emergency_contact_address,
+      emergency_contact_phone_home: memberFormData.emergency_contact_phone_home || memberData?.emergency_contact_phone_home,
+      emergency_contact_phone_work: memberFormData.emergency_contact_phone_work || memberData?.emergency_contact_phone_work,
+      fitness_goal: memberFormData.fitness_goal || memberData?.fitness_goal,
+      blood_group: memberFormData.blood_group || memberData?.blood_group,
+    };
+
     try {
-      const payload = {
-        name: memberFormData.name || memberData.name,
-        email: memberFormData.email || memberData.email,
-        phone: memberFormData.phone || memberData.phone,
-        gender: memberFormData.gender || memberData.gender,
-        dob: memberFormData.dob || memberData.dob,
-        age: memberFormData.age || memberData.age,
-        blood_group: memberFormData.blood_group || memberData.blood_group,
-        address: memberFormData.address || memberData.address,
-        employer: memberFormData.employer || memberData.employer,
-        occupation: memberFormData.occupation || memberData.occupation,
-        fitness_goal: memberFormData.fitness_goal || memberData.fitness_goal,
-        emergency_contact_name: memberFormData.emergency_contact_name || memberData.emergency_contact_name,
-        emergency_contact_relationship: memberFormData.emergency_contact_relationship || memberData.emergency_contact_relationship,
-        emergency_contact_address: memberFormData.emergency_contact_address || memberData.emergency_contact_address,
-        emergency_contact_phone_home: memberFormData.emergency_contact_phone_home || memberData.emergency_contact_phone_home,
-        emergency_contact_phone_work: memberFormData.emergency_contact_phone_work || memberData.emergency_contact_phone_work,
-      };
-      const memberId = memberData.id || memberData.member_id;
-      const res = await api.put(`/members/${memberId}`, payload);
-      const updated = res.data;
-      setMemberData(updated);
+      let updatedEnquiry = null;
+      if (userEnquiry?.id) {
+        const res = await api.put(`/enquiries/${userEnquiry.id}`, enquiryPayload);
+        updatedEnquiry = res.data;
+        setUserEnquiry(updatedEnquiry);
+      }
+
+      let updatedMember = memberData;
+      if (memberData?.id) {
+        const memberId = memberData.id || memberData.member_id;
+        const res = await api.put(`/members/${memberId}`, memberPayload);
+        updatedMember = res.data;
+        setMemberData(updatedMember);
+      }
+
+      const merged = updatedEnquiry || updatedMember || {};
       setMemberFormData({
-        name: updated.name || "",
-        email: updated.email || "",
-        phone: updated.phone || "",
-        dob: updated.dob || "",
-        age: updated.age || "",
-        blood_group: updated.blood_group || "",
-        gender: updated.gender || "",
-        address: updated.address || "",
-        employer: updated.employer || "",
-        occupation: updated.occupation || "",
-        fitness_goal: updated.fitness_goal || "",
-        emergency_contact_name: updated.emergency_contact_name || "",
-        emergency_contact_relationship: updated.emergency_contact_relationship || "",
-        emergency_contact_address: updated.emergency_contact_address || "",
-        emergency_contact_phone_home: updated.emergency_contact_phone_home || "",
-        emergency_contact_phone_work: updated.emergency_contact_phone_work || "",
-        plan: updated.plan || "",
-        duration: updated.duration || "",
+        name: merged.name || "",
+        email: merged.email || "",
+        phone: merged.phone || "",
+        subject: merged.subject || memberFormData.subject || "",
+        message: merged.message || memberFormData.message || "",
+        location: merged.location || memberFormData.location || "",
+        height: merged.height || memberFormData.height || "",
+        weight: merged.weight || memberFormData.weight || "",
+        bmi: merged.bmi || memberFormData.bmi || "",
+        dob: merged.dob || memberFormData.dob || "",
+        age: merged.age || memberFormData.age || "",
+        address: merged.address || memberFormData.address || "",
+        employer: merged.employer || memberFormData.employer || "",
+        occupation: merged.occupation || memberFormData.occupation || "",
+        emergency_contact_name: merged.emergency_contact_name || memberFormData.emergency_contact_name || "",
+        emergency_contact_relationship: merged.emergency_contact_relationship || memberFormData.emergency_contact_relationship || "",
+        emergency_contact_address: merged.emergency_contact_address || memberFormData.emergency_contact_address || "",
+        emergency_contact_phone_home: merged.emergency_contact_phone_home || memberFormData.emergency_contact_phone_home || "",
+        emergency_contact_phone_work: merged.emergency_contact_phone_work || memberFormData.emergency_contact_phone_work || "",
+        fitness_goal: merged.fitness_goal || memberFormData.fitness_goal || "",
+        blood_group: merged.blood_group || memberFormData.blood_group || "",
+        gender: merged.gender || memberFormData.gender || "",
+        termsAccepted: memberFormData.termsAccepted || false,
+        participant_name: memberFormData.participant_name || "",
+        consent_agree: memberFormData.consent_agree || false,
+        consent_signature: memberFormData.consent_signature || "",
+        consent_date: memberFormData.consent_date || "",
+        guardian_signature: memberFormData.guardian_signature || "",
+        witness: memberFormData.witness || "",
+        plan_name: memberFormData.plan_name || merged.plan_name || merged.plan || "",
+        plan_duration: memberFormData.plan_duration || merged.plan_duration || merged.duration || "",
       });
+
       setMemberEditMode(false);
       setUserInfo((prev) => ({
         ...prev,
-        email: updated.email || prev.email,
-        mobile: updated.phone || prev.mobile,
-        username: updated.name || prev.username,
+        email: updatedMember?.email || updatedEnquiry?.email || prev.email,
+        mobile: updatedMember?.phone || updatedEnquiry?.phone || prev.mobile,
+        username: updatedMember?.name || updatedEnquiry?.name || prev.username,
       }));
       toast.success('Member details updated successfully.');
     } catch (err) {
@@ -329,7 +479,7 @@ const Account = () => {
                   </button>
                 </div>
 
-                {memberData ? (
+                {memberData || userEnquiry ? (
                   memberEditMode ? (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -360,11 +510,36 @@ const Account = () => {
                           />
                         </label>
                         <label className="block text-sm text-gray-300">
+                          Subject
+                          <input
+                            value={memberFormData.subject}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, subject: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Location
+                          <input
+                            value={memberFormData.location}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, location: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
                           Date of Birth
                           <input
                             value={memberFormData.dob}
                             onChange={(e) => setMemberFormData({ ...memberFormData, dob: e.target.value })}
                             type="date"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Current Age
+                          <input
+                            value={memberFormData.age}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, age: e.target.value })}
+                            type="number"
                             className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
                           />
                         </label>
@@ -376,9 +551,9 @@ const Account = () => {
                             className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
                           >
                             <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
                           </select>
                         </label>
                         <label className="block text-sm text-gray-300">
@@ -393,109 +568,235 @@ const Account = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <label className="block text-sm text-gray-300">
-                          Employer
+                          Height (cm)
                           <input
+                            value={memberFormData.height}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, height: e.target.value })}
+                            type="number"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Weight (kg)
+                          <input
+                            value={memberFormData.weight}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, weight: e.target.value })}
+                            type="number"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          BMI
+                          <input
+                            value={memberFormData.bmi}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, bmi: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Plan Name
+                          <input
+                            value={memberFormData.plan_name}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, plan_name: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Plan Duration
+                          <input
+                            value={memberFormData.plan_duration}
+                            onChange={(e) => setMemberFormData({ ...memberFormData, plan_duration: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                      </div>
+
+                      <InputField
+                        label="Permanent Address"
+                        value={memberFormData.address}
+                        onChange={(val) => setMemberFormData({ ...memberFormData, address: val })}
+                        isTextArea
+                      />
+
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h4 className="text-lg font-bold text-white uppercase tracking-widest">Work & Career</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <InputField
+                            label="Company / Employer"
                             value={memberFormData.employer}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, employer: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                            onChange={(val) => setMemberFormData({ ...memberFormData, employer: val })}
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Occupation
-                          <input
+                          <InputField
+                            label="Job Title / Occupation"
                             value={memberFormData.occupation}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, occupation: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                            onChange={(val) => setMemberFormData({ ...memberFormData, occupation: val })}
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300 md:col-span-2">
-                          Address
-                          <textarea
-                            value={memberFormData.address}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, address: e.target.value })}
-                            rows={3}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="block text-sm text-gray-300">
-                          Emergency Contact Name
-                          <input
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h4 className="text-lg font-bold text-white uppercase tracking-widest">Emergency Contact</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <InputField
+                            label="Guardian / Contact Name"
                             value={memberFormData.emergency_contact_name}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, emergency_contact_name: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_name: val })}
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Emergency Relationship
-                          <input
+                          <InputField
+                            label="Relationship"
                             value={memberFormData.emergency_contact_relationship}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, emergency_contact_relationship: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_relationship: val })}
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Emergency Phone
-                          <input
+                          <InputField
+                            label="Home / Primary Phone"
+                            type="tel"
                             value={memberFormData.emergency_contact_phone_home}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, emergency_contact_phone_home: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                            type="tel"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_home: val.replace(/\D/g, '').slice(0, 10) })}
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Secondary Contact
-                          <input
+                          <InputField
+                            label="Work / Secondary Phone"
+                            type="tel"
                             value={memberFormData.emergency_contact_phone_work}
-                            onChange={(e) => setMemberFormData({ ...memberFormData, emergency_contact_phone_work: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                            type="tel"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                            onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_work: val.replace(/\D/g, '').slice(0, 10) })}
                           />
-                        </label>
+                        </div>
+                        <InputField
+                          label="Emergency Contact Address"
+                          value={memberFormData.emergency_contact_address}
+                          onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_address: val })}
+                          isTextArea
+                        />
                       </div>
 
-                      <label className="block text-sm text-gray-300">
-                        Fitness Goal
-                        <textarea
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h4 className="text-lg font-bold text-white uppercase tracking-widest">Fitness Profile</h4>
+                        <InputField
+                          label="Fitness Goal"
                           value={memberFormData.fitness_goal}
-                          onChange={(e) => setMemberFormData({ ...memberFormData, fitness_goal: e.target.value })}
-                          rows={3}
-                          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          onChange={(val) => setMemberFormData({ ...memberFormData, fitness_goal: val })}
+                          isTextArea
                         />
-                      </label>
+                        <InputField
+                          label="Additional Notes / Medical History"
+                          value={memberFormData.message}
+                          onChange={(val) => setMemberFormData({ ...memberFormData, message: val })}
+                          isTextArea
+                        />
+                      </div>
+
+                      <div className="pt-6 border-t border-white/5">
+                        <button
+                          type="button"
+                          onClick={() => setShowConsent((prev) => !prev)}
+                          className="w-full flex items-center justify-between px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all"
+                        >
+                          <span className="text-white font-bold tracking-wider">Informed Consent Form</span>
+                          <span className="text-orange-500 text-2xl">{showConsent ? '−' : '+'}</span>
+                        </button>
+
+                        {showConsent && (
+                          <div className="mt-5 p-6 rounded-2xl bg-white/5 border border-white/10 space-y-6">
+                            <div className="flex flex-wrap items-center gap-3 text-white leading-8">
+                              <span>I</span>
+                              <input
+                                type="text"
+                                value={memberFormData.participant_name}
+                                onChange={(e) => setMemberFormData({ ...memberFormData, participant_name: e.target.value })}
+                                placeholder="Full Name"
+                                className="min-w-[170px] bg-transparent border-b border-orange-400 px-2 py-1 text-white outline-none"
+                              />
+                              <span>give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.</span>
+                            </div>
+
+                            <label className="flex items-center gap-3 mt-4 text-white">
+                              <input
+                                type="checkbox"
+                                checked={memberFormData.consent_agree}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setMemberFormData({
+                                    ...memberFormData,
+                                    consent_agree: checked,
+                                    termsAccepted: checked,
+                                  });
+                                }}
+                                className="w-5 h-5"
+                              />
+                              <span>I Agree</span>
+                            </label>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <InputField
+                                label="Signature"
+                                value={memberFormData.consent_signature}
+                                onChange={(val) => setMemberFormData({ ...memberFormData, consent_signature: val })}
+                              />
+                              <InputField
+                                label="Consent Date"
+                                type="date"
+                                value={memberFormData.consent_date}
+                                onChange={(val) => setMemberFormData({ ...memberFormData, consent_date: val })}
+                              />
+                            </div>
+
+                            <InputField
+                              label="Parent / Guardian Signature"
+                              value={memberFormData.guardian_signature}
+                              onChange={(val) => setMemberFormData({ ...memberFormData, guardian_signature: val })}
+                            />
+                            <InputField
+                              label="Witness"
+                              value={memberFormData.witness}
+                              onChange={(val) => setMemberFormData({ ...memberFormData, witness: val })}
+                            />
+                          </div>
+                        )}
+                      </div>
 
                       <button
                         onClick={handleSaveMemberEdits}
                         disabled={savingMember}
                         className="w-full rounded-2xl bg-linear-to-r from-orange-600 to-red-600 px-6 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {savingMember ? 'Saving...' : 'Save Member Details'}
+                        {savingMember ? 'Saving...' : 'Save Join Details'}
                       </button>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {renderMemberDetailRow('Full Name', memberData.name)}
-                      {renderMemberDetailRow('Email', memberData.email)}
-                      {renderMemberDetailRow('Phone', memberData.phone)}
-                      {renderMemberDetailRow('Member ID', memberData.member_id ? `#${memberData.member_id}` : null)}
-                      {renderMemberDetailRow('Date of Birth', memberData.dob)}
-                      {renderMemberDetailRow('Age', memberData.age)}
-                      {renderMemberDetailRow('Gender', memberData.gender)}
-                      {renderMemberDetailRow('Blood Group', memberData.blood_group)}
-                      {renderMemberDetailRow('Address', memberData.address)}
-                      {renderMemberDetailRow('Employer', memberData.employer)}
-                      {renderMemberDetailRow('Occupation', memberData.occupation)}
-                      {renderMemberDetailRow('Fitness Goal', memberData.fitness_goal)}
-                      {renderMemberDetailRow('Emergency Contact', memberData.emergency_contact_name)}
-                      {renderMemberDetailRow('Relationship', memberData.emergency_contact_relationship)}
-                      {renderMemberDetailRow('Emergency Phone', memberData.emergency_contact_phone_home)}
-                      {renderMemberDetailRow('Secondary Phone', memberData.emergency_contact_phone_work)}
+                      {renderMemberDetailRow('Full Name', memberFormData.name)}
+                      {renderMemberDetailRow('Email', memberFormData.email)}
+                      {renderMemberDetailRow('Phone', memberFormData.phone)}
+                      {renderMemberDetailRow('Member ID', memberData?.member_id ? `#${memberData.member_id}` : null)}
+                      {renderMemberDetailRow('Subject', memberFormData.subject)}
+                      {renderMemberDetailRow('Location', memberFormData.location)}
+                      {renderMemberDetailRow('Plan Name', memberFormData.plan_name)}
+                      {renderMemberDetailRow('Plan Duration', memberFormData.plan_duration)}
+                      {renderMemberDetailRow('DOB', memberFormData.dob)}
+                      {renderMemberDetailRow('Age', memberFormData.age)}
+                      {renderMemberDetailRow('Gender', memberFormData.gender)}
+                      {renderMemberDetailRow('Blood Group', memberFormData.blood_group)}
+                      {renderMemberDetailRow('Height', memberFormData.height)}
+                      {renderMemberDetailRow('Weight', memberFormData.weight)}
+                      {renderMemberDetailRow('BMI', memberFormData.bmi)}
+                      {renderMemberDetailRow('Address', memberFormData.address)}
+                      {renderMemberDetailRow('Employer', memberFormData.employer)}
+                      {renderMemberDetailRow('Occupation', memberFormData.occupation)}
+                      {renderMemberDetailRow('Fitness Goal', memberFormData.fitness_goal)}
+                      {renderMemberDetailRow('Message / Notes', memberFormData.message)}
+                      {renderMemberDetailRow('Emergency Contact', memberFormData.emergency_contact_name)}
+                      {renderMemberDetailRow('Relationship', memberFormData.emergency_contact_relationship)}
+                      {renderMemberDetailRow('Emergency Phone', memberFormData.emergency_contact_phone_home)}
+                      {renderMemberDetailRow('Secondary Phone', memberFormData.emergency_contact_phone_work)}
+                      {renderMemberDetailRow('Consent Participant', memberFormData.participant_name)}
+                      {renderMemberDetailRow('Consent Agreed', memberFormData.consent_agree ? 'Yes' : 'No')}
+                      {renderMemberDetailRow('Signature', memberFormData.consent_signature)}
+                      {renderMemberDetailRow('Consent Date', memberFormData.consent_date)}
+                      {renderMemberDetailRow('Guardian Signature', memberFormData.guardian_signature)}
+                      {renderMemberDetailRow('Witness', memberFormData.witness)}
                     </div>
                   )
                 ) : (
-                  <p className="text-gray-400">No member profile found yet. Click the button above to complete your join form.</p>
+                  <p className="text-gray-400">No member profile or join enquiry found yet. Click the button above to complete your join form.</p>
                 )}
               </div>
             </div>
@@ -764,6 +1065,34 @@ const Account = () => {
         </main>
       </div>
     </div>
+  );
+};
+
+const InputField = ({ label, value, onChange, type = 'text', isTextArea = false }) => {
+  if (isTextArea) {
+    return (
+      <label className="block text-sm text-gray-300">
+        {label}
+        <textarea
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          rows={3}
+          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+        />
+      </label>
+    );
+  }
+
+  return (
+    <label className="block text-sm text-gray-300">
+      {label}
+      <input
+        type={type}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+      />
+    </label>
   );
 };
 
