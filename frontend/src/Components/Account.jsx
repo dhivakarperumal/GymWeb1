@@ -27,8 +27,6 @@ const Account = () => {
   const [userInfo, setUserInfo] = useState({});
   const [memberData, setMemberData] = useState(null);
   const [userEnquiry, setUserEnquiry] = useState(null);
-  const [memberEditMode, setMemberEditMode] = useState(false);
-  const [showConsent, setShowConsent] = useState(false);
   const [memberFormData, setMemberFormData] = useState({
     name: "",
     email: "",
