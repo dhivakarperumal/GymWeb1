@@ -658,13 +658,15 @@ const Members = () => {
                       >
                         <Pencil size={16} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(m)}
-                        className="p-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition"
-                        title="Delete Member"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {role !== "trainer" && (
+                        <button
+                          onClick={() => handleDelete(m)}
+                          className="p-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition"
+                          title="Delete Member"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -755,13 +757,15 @@ const Members = () => {
                       >
                         <Pencil size={14} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(m)}
-                        className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition"
-                        title="Delete Member"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {role !== "trainer" && (
+                        <button
+                          onClick={() => handleDelete(m)}
+                          className="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition"
+                          title="Delete Member"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
