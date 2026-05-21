@@ -11,7 +11,8 @@ import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
-import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft } from "lucide-react";
+import dayjs from "dayjs";
+import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users } from "lucide-react";
 
 
 const Account = () => {
@@ -25,25 +26,34 @@ const Account = () => {
   );
 
   const [userInfo, setUserInfo] = useState({});
+  const [memberData, setMemberData] = useState(null);
   const [userEnquiry, setUserEnquiry] = useState(null);
-  const [enquiryEditMode, setEnquiryEditMode] = useState(false);
-  const [enquiryFormData, setEnquiryFormData] = useState({
+  const [memberEditMode, setMemberEditMode] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
+  const [memberFormData, setMemberFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    subject: "",
+    message: "",
+    location: "",
+    height: "",
+    weight: "",
+    bmi: "",
     dob: "",
     age: "",
-    blood_group: "",
-    gender: "",
     address: "",
     employer: "",
     occupation: "",
-    fitness_goal: "",
     emergency_contact_name: "",
     emergency_contact_relationship: "",
     emergency_contact_address: "",
     emergency_contact_phone_home: "",
     emergency_contact_phone_work: "",
+    fitness_goal: "",
+    blood_group: "",
+    gender: "",
+    termsAccepted: false,
     participant_name: "",
     consent_agree: false,
     consent_signature: "",
@@ -53,7 +63,7 @@ const Account = () => {
     plan_name: "",
     plan_duration: "",
   });
-  const [savingEnquiry, setSavingEnquiry] = useState(false);
+  const [savingMember, setSavingMember] = useState(false);
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
 
@@ -87,29 +97,49 @@ const Account = () => {
     fetchUser();
   }, [userId]);
 
-  /* ================= FETCH USER PLANS ================= */
+  /* ================= FETCH MEMBER DATA ================= */
   useEffect(() => {
     if (!userId) return;
 
-    const fetchPlans = async () => {
-      if (cache.userPlans) {
-        setPlans(cache.userPlans);
-        const active = cache.userPlans.find((p) => p.status === "active");
-        setHasActivePlan(!!active);
-      }
+    const fetchMemberData = async () => {
       try {
-        const res = await api.get(`/memberships/user/${userId}`);
-        const list = Array.isArray(res.data) ? res.data : [];
-        setPlans(list);
-        cache.userPlans = list;
-        const active = list.find((p) => p.status === "active");
-        setHasActivePlan(!!active);
+        const res = await api.get(`/members/user/${userId}`);
+        const data = res.data || null;
+        if (data && (data.source === 'member' || data.member_id)) {
+          setMemberData(data);
+          setMemberFormData({
+            name: data.name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            dob: normalizeDateForDateInput(data.dob) || "",
+            age: data.age || "",
+            blood_group: data.blood_group || "",
+            gender: data.gender || "",
+            address: data.address || "",
+            employer: data.employer || "",
+            occupation: data.occupation || "",
+            fitness_goal: data.fitness_goal || "",
+            emergency_contact_name: data.emergency_contact_name || "",
+            emergency_contact_relationship: data.emergency_contact_relationship || "",
+            emergency_contact_address: data.emergency_contact_address || "",
+            emergency_contact_phone_home: data.emergency_contact_phone_home || "",
+            emergency_contact_phone_work: data.emergency_contact_phone_work || "",
+            height: data.height || "",
+            weight: data.weight || "",
+            bmi: data.bmi || "",
+            plan_name: data.plan || "",
+            plan_duration: data.duration || "",
+          });
+        } else {
+          setMemberData(null);
+        }
       } catch (err) {
-        console.error("failed to fetch user plans", err);
+        console.error('Failed to fetch member data', err);
+        setMemberData(null);
       }
     };
 
-    fetchPlans();
+    fetchMemberData();
   }, [userId]);
 
   useEffect(() => {
@@ -128,29 +158,37 @@ const Account = () => {
 
         if (match) {
           setUserEnquiry(match);
-          setEnquiryFormData({
+          const consent = getConsent(match.consent_data);
+          setMemberFormData({
             name: match.name || "",
             email: match.email || "",
             phone: match.phone || "",
-            dob: formatEnquiryDob(match.dob),
+            subject: match.subject || "",
+            message: match.message || "",
+            location: match.location || "",
+            height: match.height || "",
+            weight: match.weight || "",
+            bmi: match.bmi || "",
+            dob: normalizeDateForDateInput(match.dob) || "",
             age: match.age || "",
-            blood_group: match.blood_group || "",
-            gender: match.gender || "",
             address: match.address || "",
             employer: match.employer || "",
             occupation: match.occupation || "",
-            fitness_goal: match.fitness_goal || "",
             emergency_contact_name: match.emergency_contact_name || "",
             emergency_contact_relationship: match.emergency_contact_relationship || "",
             emergency_contact_address: match.emergency_contact_address || "",
             emergency_contact_phone_home: match.emergency_contact_phone_home || "",
             emergency_contact_phone_work: match.emergency_contact_phone_work || "",
-            participant_name: getConsent(match.consent_data)?.participant_name || match.name || "",
-            consent_agree: getConsent(match.consent_data)?.agree || false,
-            consent_signature: getConsent(match.consent_data)?.signature || "",
-            consent_date: getConsent(match.consent_data)?.date || "",
-            guardian_signature: getConsent(match.consent_data)?.guardian_signature || "",
-            witness: getConsent(match.consent_data)?.witness || "",
+            fitness_goal: match.fitness_goal || "",
+            blood_group: match.blood_group || "",
+            gender: match.gender || "",
+            termsAccepted: match.terms_accepted === 1 || match.termsAccepted || false,
+            participant_name: consent.participant_name || match.name || "",
+            consent_agree: consent.agree || false,
+            consent_signature: consent.signature || "",
+            consent_date: consent.date || "",
+            guardian_signature: consent.guardian_signature || "",
+            witness: consent.witness || "",
             plan_name: match.plan_name || "",
             plan_duration: match.plan_duration || "",
           });
@@ -159,125 +197,204 @@ const Account = () => {
         }
       } catch (err) {
         console.error('Failed to fetch user enquiry', err);
+        setUserEnquiry(null);
       }
     };
 
     fetchUserEnquiry();
   }, [user?.email, user?.mobile]);
 
-  const formatEnquiryDob = (dob) => {
-    if (!dob) return "";
-    const parts = dob.split('-');
-    if (parts.length !== 3) return dob;
-    if (parts[0].length === 4) return dob;
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-  };
+  useEffect(() => {
+    if (userEnquiry) return;
+    if (memberData) return;
+    if (!userInfo) return;
 
-  const getConsent = (consent_data) => {
-    if (!consent_data) return {};
-    if (typeof consent_data === 'string') {
-      try {
-        return JSON.parse(consent_data);
-      } catch (err) {
-        return {};
+    setMemberFormData((prev) => ({
+      ...prev,
+      name: prev.name || userInfo.username || userInfo.full_name || "",
+      email: prev.email || userInfo.email || "",
+      phone: prev.phone || userInfo.mobile || "",
+    }));
+  }, [userInfo, userEnquiry, memberData]);
+
+  useEffect(() => {
+    if (!memberData || !userEnquiry) return;
+
+    setMemberFormData((prev) => ({
+      ...prev,
+      height: prev.height || memberData.height || "",
+      weight: prev.weight || memberData.weight || "",
+      bmi: prev.bmi || memberData.bmi || "",
+      dob: prev.dob || normalizeDateForDateInput(memberData.dob) || "",
+      age: prev.age || memberData.age || "",
+      blood_group: prev.blood_group || memberData.blood_group || "",
+      gender: prev.gender || memberData.gender || "",
+      address: prev.address || memberData.address || "",
+      employer: prev.employer || memberData.employer || "",
+      occupation: prev.occupation || memberData.occupation || "",
+      emergency_contact_name: prev.emergency_contact_name || memberData.emergency_contact_name || "",
+      emergency_contact_relationship: prev.emergency_contact_relationship || memberData.emergency_contact_relationship || "",
+      emergency_contact_address: prev.emergency_contact_address || memberData.emergency_contact_address || "",
+      emergency_contact_phone_home: prev.emergency_contact_phone_home || memberData.emergency_contact_phone_home || "",
+      emergency_contact_phone_work: prev.emergency_contact_phone_work || memberData.emergency_contact_phone_work || "",
+      fitness_goal: prev.fitness_goal || memberData.fitness_goal || "",
+    }));
+  }, [memberData, userEnquiry]);
+
+  // Calculate BMI when height or weight changes
+  useEffect(() => {
+    if (memberFormData.height && memberFormData.weight) {
+      const h = parseFloat(memberFormData.height) / 100;
+      const w = parseFloat(memberFormData.weight);
+      if (h > 0) {
+        const bmiVal = (w / (h * h)).toFixed(1);
+        setMemberFormData(prev => ({ ...prev, bmi: bmiVal }));
       }
+    } else {
+      setMemberFormData(prev => ({ ...prev, bmi: "" }));
     }
-    return consent_data;
-  };
+  }, [memberFormData.height, memberFormData.weight]);
 
-  const buildEnquiryPayload = () => {
-    const consentPayload = {
-      participant_name: enquiryFormData.participant_name,
-      agree: enquiryFormData.consent_agree,
-      signature: enquiryFormData.consent_signature,
-      date: enquiryFormData.consent_date,
-      guardian_signature: enquiryFormData.guardian_signature,
-      witness: enquiryFormData.witness,
-    };
+  const handleSaveMemberEdits = async () => {
+    if (!memberData?.id && !userEnquiry?.id) return;
+    setSavingMember(true);
 
-    return {
-      name: enquiryFormData.name,
-      email: enquiryFormData.email,
-      phone: enquiryFormData.phone,
-      subject: userEnquiry?.subject || null,
-      message: userEnquiry?.message || null,
-      location: userEnquiry?.location || null,
-      dob: enquiryFormData.dob || null,
-      age: enquiryFormData.age || null,
-      address: enquiryFormData.address || null,
-      employer: enquiryFormData.employer || null,
-      occupation: enquiryFormData.occupation || null,
-      emergency_contact_name: enquiryFormData.emergency_contact_name || null,
-      emergency_contact_relationship: enquiryFormData.emergency_contact_relationship || null,
-      emergency_contact_address: enquiryFormData.emergency_contact_address || null,
-      emergency_contact_phone_home: enquiryFormData.emergency_contact_phone_home || null,
-      emergency_contact_phone_work: enquiryFormData.emergency_contact_phone_work || null,
-      fitness_goal: enquiryFormData.fitness_goal || null,
-      blood_group: enquiryFormData.blood_group || null,
-      height: userEnquiry?.height || null,
-      weight: userEnquiry?.weight || null,
-      bmi: userEnquiry?.bmi || null,
-      gender: enquiryFormData.gender || null,
-      plan_name: enquiryFormData.plan_name || null,
-      plan_duration: enquiryFormData.plan_duration || null,
+    const enquiryPayload = {
+      name: memberFormData.name || memberData?.name || userInfo.username || "",
+      email: memberFormData.email || memberData?.email || userInfo.email || "",
+      phone: memberFormData.phone || memberData?.phone || userInfo.mobile || "",
+      subject: memberFormData.subject || userEnquiry?.subject || null,
+      message: memberFormData.message || userEnquiry?.message || null,
+      location: memberFormData.location || userEnquiry?.location || null,
+        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob || null,
+      age: memberFormData.age || memberData?.age || null,
+      address: memberFormData.address || memberData?.address || null,
+      employer: memberFormData.employer || memberData?.employer || null,
+      occupation: memberFormData.occupation || memberData?.occupation || null,
+      emergency_contact_name: memberFormData.emergency_contact_name || memberData?.emergency_contact_name || null,
+      emergency_contact_relationship: memberFormData.emergency_contact_relationship || memberData?.emergency_contact_relationship || null,
+      emergency_contact_address: memberFormData.emergency_contact_address || memberData?.emergency_contact_address || null,
+      emergency_contact_phone_home: memberFormData.emergency_contact_phone_home || memberData?.emergency_contact_phone_home || null,
+      emergency_contact_phone_work: memberFormData.emergency_contact_phone_work || memberData?.emergency_contact_phone_work || null,
+      fitness_goal: memberFormData.fitness_goal || memberData?.fitness_goal || null,
+      blood_group: memberFormData.blood_group || memberData?.blood_group || null,
+      height: memberFormData.height || memberData?.height || null,
+      weight: memberFormData.weight || memberData?.weight || null,
+      bmi: memberFormData.bmi || memberData?.bmi || null,
+      gender: memberFormData.gender || memberData?.gender || null,
+      plan_name: memberFormData.plan_name || userEnquiry?.plan_name || memberData?.plan || null,
+      plan_duration: memberFormData.plan_duration || userEnquiry?.plan_duration || memberData?.duration || null,
       status: userEnquiry?.status || 'pending',
-      termsAccepted: userEnquiry?.terms_accepted === 1 || userEnquiry?.termsAccepted || false,
-      consent_data: consentPayload,
+      termsAccepted: memberFormData.termsAccepted || userEnquiry?.termsAccepted || false,
+      consent_data: {
+        participant_name: memberFormData.participant_name || userEnquiry?.participant_name || memberFormData.name || "",
+        agree: memberFormData.consent_agree,
+        signature: memberFormData.consent_signature,
+        date: memberFormData.consent_date,
+        guardian_signature: memberFormData.guardian_signature,
+        witness: memberFormData.witness,
+      },
       trainer_id: userEnquiry?.trainer_id || null,
       trainer_name: userEnquiry?.trainer_name || null,
     };
-  };
 
-  const handleSaveEnquiryEdits = async () => {
-    if (!userEnquiry?.id) return;
-    setSavingEnquiry(true);
+    const memberPayload = {
+      name: memberFormData.name || memberData?.name,
+      email: memberFormData.email || memberData?.email,
+      phone: memberFormData.phone || memberData?.phone,
+      gender: memberFormData.gender || memberData?.gender,
+      height: memberFormData.height || memberData?.height,
+      weight: memberFormData.weight || memberData?.weight,
+      bmi: memberFormData.bmi || memberData?.bmi,
+      plan: memberFormData.plan_name || memberData?.plan,
+      duration: memberFormData.plan_duration || memberData?.duration,
+        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob,
+      age: memberFormData.age || memberData?.age,
+      address: memberFormData.address || memberData?.address,
+      employer: memberFormData.employer || memberData?.employer,
+      occupation: memberFormData.occupation || memberData?.occupation,
+      emergency_contact_name: memberFormData.emergency_contact_name || memberData?.emergency_contact_name,
+      emergency_contact_relationship: memberFormData.emergency_contact_relationship || memberData?.emergency_contact_relationship,
+      emergency_contact_address: memberFormData.emergency_contact_address || memberData?.emergency_contact_address,
+      emergency_contact_phone_home: memberFormData.emergency_contact_phone_home || memberData?.emergency_contact_phone_home,
+      emergency_contact_phone_work: memberFormData.emergency_contact_phone_work || memberData?.emergency_contact_phone_work,
+      fitness_goal: memberFormData.fitness_goal || memberData?.fitness_goal,
+      blood_group: memberFormData.blood_group || memberData?.blood_group,
+    };
+
     try {
-      const payload = buildEnquiryPayload();
-      const res = await api.put(`/enquiries/${userEnquiry.id}`, payload);
-      const updated = res.data;
-      setUserEnquiry(updated);
-      setEnquiryFormData({
-        name: updated.name || "",
-        email: updated.email || "",
-        phone: updated.phone || "",
-        dob: formatEnquiryDob(updated.dob),
-        age: updated.age || "",
-        blood_group: updated.blood_group || "",
-        gender: updated.gender || "",
-        address: updated.address || "",
-        employer: updated.employer || "",
-        occupation: updated.occupation || "",
-        fitness_goal: updated.fitness_goal || "",
-        emergency_contact_name: updated.emergency_contact_name || "",
-        emergency_contact_relationship: updated.emergency_contact_relationship || "",
-        emergency_contact_address: updated.emergency_contact_address || "",
-        emergency_contact_phone_home: updated.emergency_contact_phone_home || "",
-        emergency_contact_phone_work: updated.emergency_contact_phone_work || "",
-        participant_name: getConsent(updated.consent_data)?.participant_name || updated.name || "",
-        consent_agree: getConsent(updated.consent_data)?.agree || false,
-        consent_signature: getConsent(updated.consent_data)?.signature || "",
-        consent_date: getConsent(updated.consent_data)?.date || "",
-        guardian_signature: getConsent(updated.consent_data)?.guardian_signature || "",
-        witness: getConsent(updated.consent_data)?.witness || "",
-        plan_name: updated.plan_name || "",
-        plan_duration: updated.plan_duration || "",
+      let updatedEnquiry = null;
+      if (userEnquiry?.id) {
+        const res = await api.put(`/enquiries/${userEnquiry.id}`, enquiryPayload);
+        updatedEnquiry = res.data;
+        setUserEnquiry(updatedEnquiry);
+      }
+
+      let updatedMember = memberData;
+      if (memberData?.id) {
+        const memberId = memberData.id || memberData.member_id;
+        const res = await api.put(`/members/${memberId}`, memberPayload);
+        updatedMember = res.data;
+        setMemberData(updatedMember);
+      }
+
+      const merged = updatedEnquiry || updatedMember || {};
+      setMemberFormData({
+        name: merged.name || "",
+        email: merged.email || "",
+        phone: merged.phone || "",
+        subject: merged.subject || memberFormData.subject || "",
+        message: merged.message || memberFormData.message || "",
+        location: merged.location || memberFormData.location || "",
+        height: merged.height || memberFormData.height || "",
+        weight: merged.weight || memberFormData.weight || "",
+        bmi: merged.bmi || memberFormData.bmi || "",
+        dob: merged.dob || memberFormData.dob || "",
+        age: merged.age || memberFormData.age || "",
+        address: merged.address || memberFormData.address || "",
+        employer: merged.employer || memberFormData.employer || "",
+        occupation: merged.occupation || memberFormData.occupation || "",
+        emergency_contact_name: merged.emergency_contact_name || memberFormData.emergency_contact_name || "",
+        emergency_contact_relationship: merged.emergency_contact_relationship || memberFormData.emergency_contact_relationship || "",
+        emergency_contact_address: merged.emergency_contact_address || memberFormData.emergency_contact_address || "",
+        emergency_contact_phone_home: merged.emergency_contact_phone_home || memberFormData.emergency_contact_phone_home || "",
+        emergency_contact_phone_work: merged.emergency_contact_phone_work || memberFormData.emergency_contact_phone_work || "",
+        fitness_goal: merged.fitness_goal || memberFormData.fitness_goal || "",
+        blood_group: merged.blood_group || memberFormData.blood_group || "",
+        gender: merged.gender || memberFormData.gender || "",
+        termsAccepted: memberFormData.termsAccepted || false,
+        participant_name: memberFormData.participant_name || "",
+        consent_agree: memberFormData.consent_agree || false,
+        consent_signature: memberFormData.consent_signature || "",
+        consent_date: memberFormData.consent_date || "",
+        guardian_signature: memberFormData.guardian_signature || "",
+        witness: memberFormData.witness || "",
+        plan_name: memberFormData.plan_name || merged.plan_name || merged.plan || "",
+        plan_duration: memberFormData.plan_duration || merged.plan_duration || merged.duration || "",
       });
-      setEnquiryEditMode(false);
-      toast.success('Join details updated successfully.');
+
+      setMemberEditMode(false);
+      setUserInfo((prev) => ({
+        ...prev,
+        email: updatedMember?.email || updatedEnquiry?.email || prev.email,
+        mobile: updatedMember?.phone || updatedEnquiry?.phone || prev.mobile,
+        username: updatedMember?.name || updatedEnquiry?.name || prev.username,
+      }));
+      toast.success('Member details updated successfully.');
     } catch (err) {
-      console.error('Failed to update enrolment details', err);
-      toast.error(err.response?.data?.error || 'Unable to update join details.');
+      console.error('Failed to update member details', err);
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Unable to save member details.');
     } finally {
-      setSavingEnquiry(false);
+      setSavingMember(false);
     }
   };
 
-  const renderEnquiryDetailRow = (label, value) => {
-    if (!value) return null;
+  const renderMemberDetailRow = (label, value) => {
+    const displayValue = value === undefined || value === null || value === "" ? "-" : value;
     return (
       <div className="bg-gray-900/50 border border-white/5 rounded-2xl p-4">
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-white text-sm">{value}</p>
+        <p className="text-white text-sm">{displayValue}</p>
       </div>
     );
   };
@@ -379,189 +496,338 @@ const Account = () => {
               <div className="mt-8 bg-gray-900/50 border border-white/10 rounded-3xl p-6 space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-bold uppercase text-white">Join Now Details</h3>
-                    <p className="text-sm text-gray-400">Your enquiry form data is visible here and can be updated from this page.</p>
+                    <h3 className="text-xl font-bold uppercase text-white">Join Form Details</h3>
+                    <p className="text-sm text-gray-400">Edit your join form details. All changes will be saved to your profile.</p>
                   </div>
                   <button
                     onClick={() => {
-                      if (!userEnquiry) {
-                        navigate('/userenquiry');
+                      // If we have an actual enquiry, pass it as selectedEnquiry so UserEnquiry will edit it.
+                      if (userEnquiry) {
+                        navigate('/userenquiry', {
+                          state: {
+                            selectedEnquiry: userEnquiry,
+                            prefilledUser: {
+                              name: userInfo.username || userInfo.full_name || "",
+                              email: userInfo.email || "",
+                              phone: userInfo.mobile || "",
+                            },
+                          },
+                        });
                         return;
                       }
-                      setEnquiryEditMode((prev) => !prev);
+
+                      // If we only have a member record (admin-created), pass its fields as a prefill object
+                      if (memberData) {
+                        // Pass the member as `selectedMember` so UserEnquiry will edit via /members/:id
+                        navigate('/userenquiry', {
+                          state: {
+                            selectedMember: memberData,
+                            prefilledUser: {
+                              name: userInfo.username || userInfo.full_name || "",
+                              email: userInfo.email || "",
+                              phone: userInfo.mobile || "",
+                            },
+                          },
+                        });
+                        return;
+                      }
+
+                      // Fallback: send prefilled user only
+                      navigate('/userenquiry', {
+                        state: {
+                          prefilledUser: {
+                            name: userInfo.username || userInfo.full_name || "",
+                            email: userInfo.email || "",
+                            phone: userInfo.mobile || "",
+                          },
+                        },
+                      });
                     }}
                     className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-red-500"
                   >
-                    {userEnquiry ? (enquiryEditMode ? 'Cancel edit' : 'Edit details') : 'Complete join form'}
+                    {memberEditMode ? 'Cancel' : 'Edit Details'}
                   </button>
                 </div>
 
-                {userEnquiry ? (
-                  enquiryEditMode ? (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="block text-sm text-gray-300">
-                          Full Name
-                          <input
-                            value={enquiryFormData.name}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, name: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                {memberData || userEnquiry ? (
+                  memberEditMode ? (
+                    <form className="space-y-10">
+                      {/* SECTION: PLAN INFO */}
+                      {(memberFormData.plan_name || memberFormData.plan_duration) && (
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <InputField
+                            label="Selected Plan"
+                            value={memberFormData.plan_name}
+                            readOnly
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Email Address
-                          <input
-                            value={enquiryFormData.email}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, email: e.target.value })}
-                            type="email"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          <InputField
+                            label="Plan Duration"
+                            value={memberFormData.plan_duration}
+                            readOnly
                           />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Phone Number
-                          <input
-                            value={enquiryFormData.phone}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                            type="tel"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Date of Birth
-                          <input
-                            value={enquiryFormData.dob}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, dob: e.target.value })}
-                            type="date"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Gender
-                          <select
-                            value={enquiryFormData.gender}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, gender: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                        </div>
+                      )}
+
+                      {/* SECTION: PERSONAL INFO */}
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                            <Users className="w-5 h-5 text-orange-500" />
+                          </div>
+                          <h3 className="text-xl font-bold text-white uppercase tracking-widest">Personal Information</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="Full Name" value={memberFormData.name} onChange={(val) => setMemberFormData({ ...memberFormData, name: val })} placeholder="e.g. John Doe" />
+                          <InputField label="Email Address" type="email" value={memberFormData.email} onChange={(val) => setMemberFormData({ ...memberFormData, email: val })} placeholder="john@example.com" />
+                          <InputField label="Phone Number" type="tel" value={memberFormData.phone} onChange={(val) => setMemberFormData({ ...memberFormData, phone: val.replace(/\D/g, '').slice(0, 10) })} placeholder="e.g. 9876543210" />
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <InputField label="Date of Birth" type="date" value={memberFormData.dob} onChange={(val) => setMemberFormData({ ...memberFormData, dob: val })} />
+                            <InputField label="Current Age" type="number" value={memberFormData.age} onChange={(val) => setMemberFormData({ ...memberFormData, age: val })} placeholder="Years" />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Blood Group</label>
+                            <select
+                              value={memberFormData.blood_group}
+                              onChange={(e) => setMemberFormData({ ...memberFormData, blood_group: e.target.value })}
+                              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                            >
+                              <option value="" className="bg-gray-900">Select Blood Group</option>
+                              {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(g => (
+                                <option key={g} value={g} className="bg-gray-900">{g}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Gender</label>
+                            <select
+                              value={memberFormData.gender}
+                              onChange={(e) => setMemberFormData({ ...memberFormData, gender: e.target.value })}
+                              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                            >
+                              <option value="" className="bg-gray-900">Select Gender</option>
+                              <option value="Male" className="bg-gray-900">Male</option>
+                              <option value="Female" className="bg-gray-900">Female</option>
+                              <option value="Other" className="bg-gray-900">Other</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <InputField label="Permanent Address" value={memberFormData.address} onChange={(val) => setMemberFormData({ ...memberFormData, address: val })} isTextArea placeholder="Enter your full residential address..." />
+                      </div>
+
+                      {/* SECTION: PROFESSIONAL INFO */}
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Work & Career</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="Company / Employer" value={memberFormData.employer} onChange={(val) => setMemberFormData({ ...memberFormData, employer: val })} placeholder="Company name" />
+                          <InputField label="Job Title / Occupation" value={memberFormData.occupation} onChange={(val) => setMemberFormData({ ...memberFormData, occupation: val })} placeholder="e.g. Software Engineer" />
+                        </div>
+                      </div>
+
+                      {/* SECTION: EMERGENCY CONTACT */}
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Emergency Contact</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="Guardian/Contact Name" value={memberFormData.emergency_contact_name} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_name: val })} placeholder="Full name" />
+                          <InputField label="Relationship" value={memberFormData.emergency_contact_relationship} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_relationship: val })} placeholder="e.g. Father, Spouse, Friend" />
+                          <InputField label="Home / Primary Phone" type="tel" value={memberFormData.emergency_contact_phone_home} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_home: val.replace(/\D/g, '').slice(0, 10) })} placeholder="e.g. 9876543210" />
+                          <InputField label="Work / Secondary Phone" type="tel" value={memberFormData.emergency_contact_phone_work} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_phone_work: val.replace(/\D/g, '').slice(0, 10) })} placeholder="Alternative number" />
+                        </div>
+                        <InputField label="Emergency Contact Address" value={memberFormData.emergency_contact_address} onChange={(val) => setMemberFormData({ ...memberFormData, emergency_contact_address: val })} isTextArea placeholder="Guardian's address..." />
+                      </div>
+
+                      {/* SECTION: HEALTH & GOALS */}
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-4">Fitness Profile</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <InputField label="Height (cm)" type="number" value={memberFormData.height} onChange={(val) => setMemberFormData({ ...memberFormData, height: val })} placeholder="Height in cm" />
+                          <InputField label="Weight (kg)" type="number" value={memberFormData.weight} onChange={(val) => setMemberFormData({ ...memberFormData, weight: val })} placeholder="Weight in kg" />
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">Current BMI</label>
+                            <div className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-orange-500 font-black text-center text-xl">
+                              {memberFormData.bmi || "0.0"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <InputField label="What are your fitness goals?" value={memberFormData.fitness_goal} onChange={(val) => setMemberFormData({ ...memberFormData, fitness_goal: val })} isTextArea placeholder="Describe what you want to achieve (e.g. Lose 5kg, build muscle, marathon prep)..." />
+                          <InputField label="Any Medical History or Notes?" value={memberFormData.message} onChange={(val) => setMemberFormData({ ...memberFormData, message: val })} isTextArea placeholder="List any injuries, conditions, or specific requests..." />
+                        </div>
+
+                        <div className="pt-6 border-t border-white/5">
+                          <p className="text-sm text-gray-400 mb-3">
+                            Please read the <span className="text-orange-500 font-semibold">Terms & Conditions</span>
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => setShowConsent(!showConsent)}
+                            className="w-full flex items-center justify-between px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all"
                           >
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Blood Group
-                          <input
-                            value={enquiryFormData.blood_group}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, blood_group: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                      </div>
+                            <span className="text-white font-bold tracking-wider">INFORMED CONSENT FORM</span>
+                            <span className="text-orange-500 text-2xl">{showConsent ? "−" : "+"}</span>
+                          </button>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="block text-sm text-gray-300">
-                          Employer
-                          <input
-                            value={enquiryFormData.employer}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, employer: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Occupation
-                          <input
-                            value={enquiryFormData.occupation}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, occupation: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300 md:col-span-2">
-                          Address
-                          <textarea
-                            value={enquiryFormData.address}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, address: e.target.value })}
-                            rows={3}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                      </div>
+                          {showConsent && (
+                            <div className="mt-5 p-8 rounded-2xl bg-white/5 border border-white/10 space-y-8">
+                              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                                <p className="uppercase text-sm text-orange-400 font-semibold mb-5">Please Fill In All Information Requested Below</p>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="block text-sm text-gray-300">
-                          Emergency Contact Name
-                          <input
-                            value={enquiryFormData.emergency_contact_name}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_name: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Emergency Relationship
-                          <input
-                            value={enquiryFormData.emergency_contact_relationship}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_relationship: e.target.value })}
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Emergency Phone
-                          <input
-                            value={enquiryFormData.emergency_contact_phone_home}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_phone_home: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                            type="tel"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                        <label className="block text-sm text-gray-300">
-                          Secondary Contact
-                          <input
-                            value={enquiryFormData.emergency_contact_phone_work}
-                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_phone_work: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                            type="tel"
-                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                          />
-                        </label>
-                      </div>
+                                <div className="flex flex-wrap items-center gap-3 leading-8 text-white">
+                                  <span>I</span>
+                                  <input
+                                    type="text"
+                                    value={memberFormData.participant_name}
+                                    onChange={(e) => setMemberFormData({ ...memberFormData, participant_name: e.target.value })}
+                                    placeholder="Full Name"
+                                    className="min-w-[180px] bg-transparent border-b border-orange-400 px-2 py-1 text-white outline-none"
+                                  />
+                                  <span>give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.</span>
+                                </div>
 
-                      <label className="block text-sm text-gray-300">
-                        Fitness Goal
-                        <textarea
-                          value={enquiryFormData.fitness_goal}
-                          onChange={(e) => setEnquiryFormData({ ...enquiryFormData, fitness_goal: e.target.value })}
-                          rows={3}
-                          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
-                        />
-                      </label>
+                                <label className="flex items-center gap-3 mt-6">
+                                  <input
+                                    type="checkbox"
+                                    checked={memberFormData.consent_agree}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      setMemberFormData({
+                                        ...memberFormData,
+                                        consent_agree: checked,
+                                        termsAccepted: checked,
+                                      });
+                                    }}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-white">I Agree</span>
+                                </label>
+                              </div>
+
+                              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                <h3 className="text-orange-400 font-bold text-lg mb-4">BENEFITS</h3>
+                                <p className="text-white/80 leading-8">
+                                  Participation in a regular program of physical activity has been shown to produce positive changes in a number of organ systems. These changes include increased work capacity, improved cardiovascular efficiency, increased muscular strength, flexibility, power and endurance.
+                                </p>
+                              </div>
+
+                              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                <h3 className="text-orange-400 font-bold text-lg mb-4">RISKS</h3>
+                                <p className="text-white/80 leading-8">
+                                  Exercise carries some risk to the musculoskeletal system (sprains, strains) and cardiorespiratory system (dizziness, discomfort in breathing, heart attack). I certify that I know of no medical problem that would increase my risk of illness or injury.
+                                </p>
+                              </div>
+
+                              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                <h3 className="text-orange-400 font-bold text-lg mb-4">TESTING AND EVALUATION RESULTS</h3>
+                                <p className="text-white/80 leading-8 mb-5">
+                                  I understand I will undergo initial testing to determine my current physical fitness status including health inventory, body composition, treadmill testing, muscular fitness and flexibility screening.
+                                </p>
+                                <p className="text-white/80 leading-8 mb-5">
+                                  My individual results will be made available only to me and are not intended to replace any medical test or physician services.
+                                </p>
+                                <p className="text-white/80 leading-8">
+                                  By signing this consent form, I understand I am personally responsible for my actions during my tenure at DAP Unisex Fitness Studio.
+                                </p>
+                              </div>
+
+                              <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-5 text-orange-300 font-semibold">
+                                * No Refund • No Transfer • No Extension • No Freezing
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <InputField label="Signature" value={memberFormData.consent_signature} onChange={(val) => setMemberFormData({ ...memberFormData, consent_signature: val })} placeholder="Type your signature" />
+                                <InputField label="Date" type="date" value={memberFormData.consent_date} onChange={(val) => setMemberFormData({ ...memberFormData, consent_date: val })} />
+                              </div>
+
+                              <InputField label="Parent / Guardian Signature" value={memberFormData.guardian_signature} onChange={(val) => setMemberFormData({ ...memberFormData, guardian_signature: val })} placeholder="Guardian signature" />
+                              <InputField label="Witness" value={memberFormData.witness} onChange={(val) => setMemberFormData({ ...memberFormData, witness: val })} placeholder="Witness name" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       <button
-                        onClick={handleSaveEnquiryEdits}
-                        disabled={savingEnquiry}
+                        onClick={handleSaveMemberEdits}
+                        disabled={savingMember}
                         className="w-full rounded-2xl bg-linear-to-r from-orange-600 to-red-600 px-6 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {savingEnquiry ? 'Saving...' : 'Save Join Details'}
+                        {savingMember ? 'Saving...' : 'Save All Changes'}
                       </button>
-                    </div>
+                    </form>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {renderEnquiryDetailRow('Full Name', userEnquiry.name)}
-                      {renderEnquiryDetailRow('Email', userEnquiry.email)}
-                      {renderEnquiryDetailRow('Phone', userEnquiry.phone)}
-                      {renderEnquiryDetailRow('Date of Birth', userEnquiry.dob)}
-                      {renderEnquiryDetailRow('Age', userEnquiry.age)}
-                      {renderEnquiryDetailRow('Gender', userEnquiry.gender)}
-                      {renderEnquiryDetailRow('Blood Group', userEnquiry.blood_group)}
-                      {renderEnquiryDetailRow('Address', userEnquiry.address)}
-                      {renderEnquiryDetailRow('Employer', userEnquiry.employer)}
-                      {renderEnquiryDetailRow('Occupation', userEnquiry.occupation)}
-                      {renderEnquiryDetailRow('Fitness Goal', userEnquiry.fitness_goal)}
-                      {renderEnquiryDetailRow('Emergency Contact', userEnquiry.emergency_contact_name)}
-                      {renderEnquiryDetailRow('Relationship', userEnquiry.emergency_contact_relationship)}
-                      {renderEnquiryDetailRow('Emergency Phone', userEnquiry.emergency_contact_phone_home)}
-                      {renderEnquiryDetailRow('Secondary Phone', userEnquiry.emergency_contact_phone_work)}
+                    <div className="space-y-8">
+                      {(memberFormData.plan_name || memberFormData.plan_duration) && (
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {renderMemberDetailRow('Selected Plan', memberFormData.plan_name)}
+                          {renderMemberDetailRow('Plan Duration', memberFormData.plan_duration)}
+                        </div>
+                      )}
+
+                      <div className="space-y-4">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Personal Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Full Name', memberFormData.name)}
+                          {renderMemberDetailRow('Email', memberFormData.email)}
+                          {renderMemberDetailRow('Phone', memberFormData.phone)}
+                          {renderMemberDetailRow('DOB', memberFormData.dob)}
+                          {renderMemberDetailRow('Age', memberFormData.age)}
+                          {renderMemberDetailRow('Blood Group', memberFormData.blood_group)}
+                          {renderMemberDetailRow('Gender', memberFormData.gender)}
+                          {renderMemberDetailRow('Address', memberFormData.address)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Work & Career</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Employer', memberFormData.employer)}
+                          {renderMemberDetailRow('Occupation', memberFormData.occupation)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Emergency Contact</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Contact Name', memberFormData.emergency_contact_name)}
+                          {renderMemberDetailRow('Relationship', memberFormData.emergency_contact_relationship)}
+                          {renderMemberDetailRow('Home Phone', memberFormData.emergency_contact_phone_home)}
+                          {renderMemberDetailRow('Work Phone', memberFormData.emergency_contact_phone_work)}
+                          {renderMemberDetailRow('Address', memberFormData.emergency_contact_address)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Fitness Profile</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {renderMemberDetailRow('Height (cm)', memberFormData.height)}
+                          {renderMemberDetailRow('Weight (kg)', memberFormData.weight)}
+                          {renderMemberDetailRow('BMI', memberFormData.bmi)}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Fitness Goals', memberFormData.fitness_goal)}
+                          {renderMemberDetailRow('Medical Notes', memberFormData.message)}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h4 className="text-white font-bold uppercase tracking-widest">Consent Form</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {renderMemberDetailRow('Participant Name', memberFormData.participant_name)}
+                          {renderMemberDetailRow('Consent', memberFormData.consent_agree ? 'Agreed' : 'Not Agreed')}
+                          {renderMemberDetailRow('Signature', memberFormData.consent_signature)}
+                          {renderMemberDetailRow('Date', memberFormData.consent_date)}
+                          {renderMemberDetailRow('Guardian Signature', memberFormData.guardian_signature)}
+                          {renderMemberDetailRow('Witness', memberFormData.witness)}
+                        </div>
+                      </div>
                     </div>
                   )
                 ) : (
-                  <p className="text-gray-400">You have not submitted your join enquiry yet. Click the button above to fill the form.</p>
+                  <p className="text-gray-400 text-center py-8">No join form details found. Click "Edit Details" to get started.</p>
                 )}
               </div>
             </div>
@@ -831,6 +1097,59 @@ const Account = () => {
       </div>
     </div>
   );
+};
+
+const InputField = ({ label, value, onChange, type = 'text', isTextArea = false, readOnly = false, placeholder = '', required = false }) => {
+  if (isTextArea) {
+    return (
+      <label className="block text-sm text-gray-300">
+        {label}
+        <textarea
+          value={value || ''}
+          onChange={(e) => onChange?.(e.target.value)}
+          rows={3}
+          readOnly={readOnly}
+          placeholder={placeholder}
+          required={required}
+          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+        />
+      </label>
+    );
+  }
+
+  return (
+    <label className="block text-sm text-gray-300">
+      {label}
+      <input
+        type={type}
+        value={value || ''}
+        onChange={(e) => onChange?.(e.target.value)}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        required={required}
+        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+      />
+    </label>
+  );
+};
+
+const normalizeDateForDateInput = (value) => {
+  if (!value) return "";
+  const parsed = dayjs(value, ['YYYY-MM-DD', 'DD-MM-YYYY', 'MM/DD/YYYY', 'YYYY/MM/DD', 'DD/MM/YYYY'], true);
+  if (!parsed.isValid()) {
+    const fallback = dayjs(value);
+    return fallback.isValid() ? fallback.format('YYYY-MM-DD') : "";
+  }
+  return parsed.format('YYYY-MM-DD');
+};
+
+const getConsent = (consentData) => {
+  if (!consentData) return {};
+  try {
+    return typeof consentData === 'string' ? JSON.parse(consentData) : consentData;
+  } catch (err) {
+    return {};
+  }
 };
 
 export default Account;
