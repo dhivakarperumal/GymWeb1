@@ -12,7 +12,7 @@ import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
-import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users } from "lucide-react";
+import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users, CreditCard } from "lucide-react";
 
 
 const Account = () => {
@@ -413,11 +413,80 @@ const Account = () => {
     );
   };
 
-  /* ================= SIDEBAR ================= */
+  const formatCurrency = (value) => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `₹${number.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  };
+
+  const safeParseDues = (membership) => {
+    if (!membership) return [];
+    let dues = membership.dues ?? [];
+    if (typeof dues === "string") {
+      try {
+        dues = JSON.parse(dues || "[]");
+      } catch (err) {
+        dues = [];
+      }
+    }
+    return Array.isArray(dues) ? dues : [];
+  };
+
+  const getMembershipField = (membership, ...keys) => {
+    return keys.reduce((value, key) => value ?? membership?.[key], undefined);
+  };
+
+  const getMembershipTotal = (membership) => {
+    const total = getMembershipField(membership, "price", "amount", "total", "total_amount") || 0;
+    return Number(total) || 0;
+  };
+
+  const getMembershipPaid = (membership) => {
+    const initialPaid = Number(getMembershipField(membership, "pricePaid", "price_paid", "paid")) || 0;
+    const secondPaid = Number(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid")) || 0;
+    return initialPaid + secondPaid;
+  };
+
+  const getMembershipRemaining = (membership) => {
+    const remaining = getMembershipTotal(membership) - getMembershipPaid(membership);
+    return Math.max(0, Number.isFinite(remaining) ? remaining : 0);
+  };
+
+  const getMembershipDisplayValue = (membership, fallback = "-") => {
+    return getMembershipField(membership, "planName", "plan_name", "plan") || fallback;
+  };
+
+  const getMembershipDuration = (membership) => {
+    const duration = getMembershipField(membership, "duration", "plan_duration");
+    return duration || "-";
+  };
+
+  const getMembershipPaymentEntries = (membership) => {
+    return safeParseDues(membership).map((due) => {
+      const amount = Number(due?.amount ?? due?.amt ?? 0);
+      const collectedBy = getMembershipField(due, "collectedBy", "collected_by") || "Admin";
+      const paymentId = getMembershipField(due, "paymentId", "payment_id") || "Cash";
+      const collectedAt = getMembershipField(due, "collectedAt", "collected_at", "createdAt", "date");
+      return {
+        amount: Number.isFinite(amount) ? amount : 0,
+        collectedBy,
+        paymentId,
+        collectedAt,
+      };
+    });
+  };
 
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
     { key: "plans", label: "My Plans", icon: CalendarCheck },
+    { key: "emi", label: "EMI Details", icon: CreditCard },
     ...(hasActivePlan
       ? [
         { key: "diet", label: "Diet Chart", icon: Shield },
@@ -856,6 +925,146 @@ const Account = () => {
 
       case "plans":
         return <MemberSBuyPlans preFetchedPlans={plans} />
+
+      case "emi": {
+        const activePlans = plans || [];
+        return (
+          <div className="w-full py-4 px-2 sm:px-4" data-aos="fade-up">
+            <div className="max-w-6xl mx-auto space-y-6">
+              <div className="bg-gray-900/50 border border-white/10 rounded-3xl p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold uppercase text-white">EMI Details</h2>
+                    <p className="text-sm text-gray-400 max-w-2xl">
+                      Review your membership EMI schedule, plan summary, total amount paid and remaining dues.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Plans</p>
+                      <p className="text-white font-semibold mt-2">{activePlans.length}</p>
+                    </div>
+                    <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Active Plans</p>
+                      <p className="text-white font-semibold mt-2">{activePlans.filter((membership) => membership.status === "active").length}</p>
+                    </div>
+                    <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Pending Dues</p>
+                      <p className="text-white font-semibold mt-2">
+                        {activePlans.reduce((sum, membership) => sum + getMembershipRemaining(membership), 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {activePlans.length === 0 ? (
+                <div className="rounded-3xl border border-white/10 bg-gray-900/50 p-8 text-center text-gray-400">
+                  No EMI membership records found for your account.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {activePlans.map((membership, index) => {
+                    const planName = getMembershipDisplayValue(membership, "Unknown Plan");
+                    const duration = getMembershipDuration(membership);
+                    const totalAmount = getMembershipTotal(membership);
+                    const paidAmount = getMembershipPaid(membership);
+                    const remainingAmount = getMembershipRemaining(membership);
+                    const dues = getMembershipPaymentEntries(membership);
+                    const status = getMembershipField(membership, "status") || "-";
+                    const paymentStatus = getMembershipField(membership, "paymentStatus", "payment_status") || "-";
+                    const paymentMode = getMembershipField(membership, "paymentMode", "payment_mode") || "-";
+                    const startDate = getMembershipField(membership, "startDate", "start_date");
+                    const endDate = getMembershipField(membership, "endDate", "end_date");
+                    const createdAt = getMembershipField(membership, "createdAt", "created_at");
+                    const membershipId = membership.id || membership.membershipId || index;
+
+                    return (
+                      <div key={membershipId} className="rounded-3xl border border-white/10 bg-gray-900/50 p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+                          <div>
+                            <p className="text-xs uppercase tracking-widest text-gray-500">Plan</p>
+                            <h3 className="text-xl font-bold text-white">{planName}</h3>
+                            <p className="text-sm text-gray-400">{duration !== "-" ? `${duration} month${duration === 1 ? "" : "s"}` : "Duration not set"}</p>
+                          </div>
+                          <div className="space-y-2 text-left sm:text-right">
+                            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold ${status?.toLowerCase() === "active" ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-gray-500/10 text-gray-300 border border-white/10"}`}>
+                              {status}
+                            </span>
+                            <p className="text-xs text-gray-400">Created {formatDate(createdAt)}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Amount</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(totalAmount)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Initial Paid</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "pricePaid", "price_paid") || 0)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Second Paid</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Remaining</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Status</p>
+                            <p className="text-white font-semibold mt-2">{paymentStatus}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Mode</p>
+                            <p className="text-white font-semibold mt-2">{paymentMode}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Start Date</p>
+                            <p className="text-white font-semibold mt-2">{formatDate(startDate)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">End Date</p>
+                            <p className="text-white font-semibold mt-2">{formatDate(endDate)}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6">
+                          <h4 className="text-sm font-bold uppercase tracking-widest text-white mb-3">EMI Dues History</h4>
+                          {dues.length > 0 ? (
+                            <div className="space-y-3">
+                              {dues.map((due, dueIndex) => (
+                                <div key={dueIndex} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                      <p className="text-sm font-semibold text-white">{formatCurrency(due.amount)}</p>
+                                      <p className="text-xs text-gray-400">{formatDate(due.collectedAt)}</p>
+                                    </div>
+                                    <div className="text-sm text-gray-400">
+                                      <p>Collected by: {due.collectedBy}</p>
+                                      <p>Reference: {due.paymentId || "Cash"}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-400">No dues recorded yet for this plan.</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
 
       case "diet":
         return hasActivePlan ? (
