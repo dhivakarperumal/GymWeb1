@@ -289,6 +289,17 @@ const UserEnquiry = () => {
     setShowForm(true);
   };
 
+  // If navigated here with a selectedEnquiry in location.state, preload it for editing
+  useEffect(() => {
+    if (location.state?.selectedEnquiry) {
+      try {
+        handleEdit(location.state.selectedEnquiry);
+      } catch (err) {
+        console.error('Failed to preload selected enquiry from navigation state', err);
+      }
+    }
+  }, [location.state]);
+
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this enquiry?')) {
       try {

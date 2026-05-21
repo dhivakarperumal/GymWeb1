@@ -11,6 +11,7 @@ import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
+import dayjs from "dayjs";
 import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users } from "lucide-react";
 
 
@@ -110,7 +111,7 @@ const Account = () => {
             name: data.name || "",
             email: data.email || "",
             phone: data.phone || "",
-            dob: data.dob || "",
+            dob: normalizeDateForDateInput(data.dob) || "",
             age: data.age || "",
             blood_group: data.blood_group || "",
             gender: data.gender || "",
@@ -123,6 +124,9 @@ const Account = () => {
             emergency_contact_address: data.emergency_contact_address || "",
             emergency_contact_phone_home: data.emergency_contact_phone_home || "",
             emergency_contact_phone_work: data.emergency_contact_phone_work || "",
+            height: data.height || "",
+            weight: data.weight || "",
+            bmi: data.bmi || "",
             plan_name: data.plan || "",
             plan_duration: data.duration || "",
           });
@@ -165,7 +169,7 @@ const Account = () => {
             height: match.height || "",
             weight: match.weight || "",
             bmi: match.bmi || "",
-            dob: formatEnquiryDob(match.dob) || "",
+            dob: normalizeDateForDateInput(match.dob) || "",
             age: match.age || "",
             address: match.address || "",
             employer: match.employer || "",
@@ -213,6 +217,30 @@ const Account = () => {
     }));
   }, [userInfo, userEnquiry, memberData]);
 
+  useEffect(() => {
+    if (!memberData || !userEnquiry) return;
+
+    setMemberFormData((prev) => ({
+      ...prev,
+      height: prev.height || memberData.height || "",
+      weight: prev.weight || memberData.weight || "",
+      bmi: prev.bmi || memberData.bmi || "",
+      dob: prev.dob || normalizeDateForDateInput(memberData.dob) || "",
+      age: prev.age || memberData.age || "",
+      blood_group: prev.blood_group || memberData.blood_group || "",
+      gender: prev.gender || memberData.gender || "",
+      address: prev.address || memberData.address || "",
+      employer: prev.employer || memberData.employer || "",
+      occupation: prev.occupation || memberData.occupation || "",
+      emergency_contact_name: prev.emergency_contact_name || memberData.emergency_contact_name || "",
+      emergency_contact_relationship: prev.emergency_contact_relationship || memberData.emergency_contact_relationship || "",
+      emergency_contact_address: prev.emergency_contact_address || memberData.emergency_contact_address || "",
+      emergency_contact_phone_home: prev.emergency_contact_phone_home || memberData.emergency_contact_phone_home || "",
+      emergency_contact_phone_work: prev.emergency_contact_phone_work || memberData.emergency_contact_phone_work || "",
+      fitness_goal: prev.fitness_goal || memberData.fitness_goal || "",
+    }));
+  }, [memberData, userEnquiry]);
+
   // Calculate BMI when height or weight changes
   useEffect(() => {
     if (memberFormData.height && memberFormData.weight) {
@@ -238,7 +266,7 @@ const Account = () => {
       subject: memberFormData.subject || userEnquiry?.subject || null,
       message: memberFormData.message || userEnquiry?.message || null,
       location: memberFormData.location || userEnquiry?.location || null,
-      dob: memberFormData.dob || memberData?.dob || null,
+        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob || null,
       age: memberFormData.age || memberData?.age || null,
       address: memberFormData.address || memberData?.address || null,
       employer: memberFormData.employer || memberData?.employer || null,
@@ -280,7 +308,7 @@ const Account = () => {
       bmi: memberFormData.bmi || memberData?.bmi,
       plan: memberFormData.plan_name || memberData?.plan,
       duration: memberFormData.plan_duration || memberData?.duration,
-      dob: memberFormData.dob || memberData?.dob,
+        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob,
       age: memberFormData.age || memberData?.age,
       address: memberFormData.address || memberData?.address,
       employer: memberFormData.employer || memberData?.employer,
@@ -362,11 +390,11 @@ const Account = () => {
   };
 
   const renderMemberDetailRow = (label, value) => {
-    if (!value) return null;
+    const displayValue = value === undefined || value === null || value === "" ? "-" : value;
     return (
       <div className="bg-gray-900/50 border border-white/5 rounded-2xl p-4">
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-white text-sm">{value}</p>
+        <p className="text-white text-sm">{displayValue}</p>
       </div>
     );
   };
@@ -473,19 +501,27 @@ const Account = () => {
                   </div>
                   <button
                     onClick={() => {
-                      if (!memberData && !userEnquiry) {
-                        navigate('/userenquiry', {
-                          state: {
-                            prefilledUser: {
-                              name: userInfo.username || userInfo.full_name || "",
-                              email: userInfo.email || "",
-                              phone: userInfo.mobile || ""
-                            }
+                      const selectedEnquiry = userEnquiry
+                        ? userEnquiry
+                        : memberData
+                        ? {
+                            ...memberData,
+                            plan_name: memberData.plan || memberData.plan_name,
+                            plan_duration: memberData.duration || memberData.plan_duration,
+                            dob: normalizeDateForDateInput(memberData.dob) || memberData.dob || "",
                           }
-                        });
-                        return;
-                      }
-                      setMemberEditMode((prev) => !prev);
+                        : null;
+
+                      navigate('/userenquiry', {
+                        state: {
+                          selectedEnquiry,
+                          prefilledUser: {
+                            name: userInfo.username || userInfo.full_name || "",
+                            email: userInfo.email || "",
+                            phone: userInfo.mobile || "",
+                          },
+                        },
+                      });
                     }}
                     className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-red-500"
                   >
@@ -1075,6 +1111,25 @@ const InputField = ({ label, value, onChange, type = 'text', isTextArea = false,
       />
     </label>
   );
+};
+
+const normalizeDateForDateInput = (value) => {
+  if (!value) return "";
+  const parsed = dayjs(value, ['YYYY-MM-DD', 'DD-MM-YYYY', 'MM/DD/YYYY', 'YYYY/MM/DD', 'DD/MM/YYYY'], true);
+  if (!parsed.isValid()) {
+    const fallback = dayjs(value);
+    return fallback.isValid() ? fallback.format('YYYY-MM-DD') : "";
+  }
+  return parsed.format('YYYY-MM-DD');
+};
+
+const getConsent = (consentData) => {
+  if (!consentData) return {};
+  try {
+    return typeof consentData === 'string' ? JSON.parse(consentData) : consentData;
+  } catch (err) {
+    return {};
+  }
 };
 
 export default Account;
