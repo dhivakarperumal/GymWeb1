@@ -834,31 +834,63 @@ async function updateMember(req, res) {
 }
 
 async function deleteMember(req, res) {
+  const { id } = req.params;
+  const idNum = parseInt(id, 10);
+  const isNum = !isNaN(idNum);
+
+  const selectQuery = isNum ?
+    `SELECT email, phone, user_id FROM gym_members WHERE id = ?` :
+    `SELECT email, phone, user_id FROM gym_members WHERE member_id = ?`;
+  const deleteQuery = isNum ?
+    `DELETE FROM gym_members WHERE id = ?` :
+    `DELETE FROM gym_members WHERE member_id = ?`;
+  const params = [isNum ? idNum : id];
+
+  let connection;
   try {
-    const { id } = req.params;
-    const idNum = parseInt(id, 10);
-    const isNum = !isNaN(idNum);
+    connection = await db.getConnection();
+    await connection.beginTransaction();
 
-    let deleteQuery;
-    let deleteParams;
-    if (isNum) {
-      deleteQuery = `DELETE FROM gym_members WHERE id = ?`;
-      deleteParams = [idNum];
-    } else {
-      deleteQuery = `DELETE FROM gym_members WHERE member_id = ?`;
-      deleteParams = [id];
-    }
-
-    const [result] = await db.query(deleteQuery, deleteParams);
-
-    if (result.affectedRows === 0) {
+    const [rows] = await connection.query(selectQuery, params);
+    if (rows.length === 0) {
+      await connection.rollback();
       return res.status(404).json({ error: 'Member not found' });
     }
 
+    const member = rows[0];
+    const [deleteResult] = await connection.query(deleteQuery, params);
+    if (deleteResult.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Member not found' });
+    }
+
+    if (member.user_id || member.email || member.phone) {
+      const userQuery = member.user_id
+        ? `SELECT id, role FROM users WHERE user_id = ? LIMIT 1`
+        : `SELECT id, role FROM users WHERE (email = ? AND email IS NOT NULL AND email != '') OR (mobile = ? AND mobile IS NOT NULL AND mobile != '') LIMIT 1`;
+      const userParams = member.user_id ? [member.user_id] : [member.email, member.phone];
+      const [userRows] = await connection.query(userQuery, userParams);
+
+      if (userRows.length > 0) {
+        const user = userRows[0];
+        if (user.role === 'user' || user.role === 'member') {
+          await connection.query('DELETE FROM users WHERE id = ?', [user.id]);
+        }
+      }
+    }
+
+    await connection.commit();
     res.json({ success: true, message: 'Member deleted successfully' });
   } catch (err) {
+    if (connection) {
+      await connection.rollback();
+    }
     console.error('deleteMember error', err);
     res.status(500).json({ error: 'Delete failed' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 }
 
