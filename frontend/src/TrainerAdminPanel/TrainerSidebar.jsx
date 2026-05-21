@@ -16,6 +16,8 @@ import {
   Send,
   Scale,
   DollarSign,
+  Users,
+  CreditCard,
 } from "lucide-react";
 
 
@@ -76,6 +78,16 @@ const navItems = [
     path: "/trainer/followupenquriy",
     label: "Followup Enquiry",
     icon: MessageSquare,
+  },
+  {
+    path: "/trainer/members",
+    label: "Assigned Members",
+    icon: Users,
+  },
+  {
+    path: "/trainer/emi",
+    label: "EMI",
+    icon: CreditCard,
   },
 
   {

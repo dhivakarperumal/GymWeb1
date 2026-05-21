@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
+<<<<<<< Updated upstream
 import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+=======
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, RotateCcw } from "lucide-react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useAuth } from "../../PrivateRouter/AuthContext";
+>>>>>>> Stashed changes
 import toast from "react-hot-toast";
 import api from "../../api"
 import cache from "../../cache";
@@ -42,6 +48,9 @@ const Members = () => {
   const [importErrors, setImportErrors] = useState([]);
   const [viewMode, setViewMode] = useState("table"); // table, card
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.includes("/trainer") ? "/trainer" : "/admin";
+  const { user, role } = useAuth();
   const [ptViewMemberId, setPtViewMemberId] = useState(null);
   const [isPtModalOpen, setIsPtModalOpen] = useState(false);
 
@@ -54,11 +63,17 @@ const Members = () => {
     }
 
     try {
-      const res = await api.get("/members");
+      let query = "/members";
+      if (role === "trainer" && user?.id) {
+        query = `/members?trainerUserId=${user.id}`;
+      }
+      const res = await api.get(query);
       const data = Array.isArray(res.data) ? res.data : [];
       const onlyGymMembers = data.filter((m) => m.source !== "users");
       setMembers(onlyGymMembers);
-      cache.adminMembers = onlyGymMembers;
+      if (role !== "trainer") {
+        cache.adminMembers = onlyGymMembers;
+      }
     } catch {
       if (!cache.adminMembers) toast.error("Failed to load members");
     } finally {
@@ -375,7 +390,7 @@ const Members = () => {
           </button> */}
 
           <button
-            onClick={() => navigate("/admin/pt-form")}
+            onClick={() => navigate(`${basePath}/pt-form`)}
             className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
             bg-white/10 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
           >
@@ -408,7 +423,7 @@ const Members = () => {
           </div>
 
           <button
-            onClick={() => navigate("/admin/addmembers")}
+            onClick={() => navigate(`${basePath}/addmembers`)}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white
             bg-gradient-to-r from-orange-500 to-orange-600
             hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
@@ -449,7 +464,7 @@ const Members = () => {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center lg:justify-end">
           <button
-            onClick={() => navigate("/admin/buyplanadmin")}
+            onClick={() => navigate(`${basePath}/buyplanadmin`)}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
           >
             Buy Plan
@@ -563,7 +578,7 @@ const Members = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`)}
                           className="flex items-center gap-1 text-orange-400"
                         >
                           <Clock size={16} />
@@ -578,18 +593,48 @@ const Members = () => {
 
                     <td className="px-4 py-5 flex gap-2">
                       <button
-                        onClick={() => navigate(`/admin/member_details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`)}
                         className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
                         title="View Details"
                       >
                         <Eye size={16} />
                       </button>
+<<<<<<< Updated upstream
+=======
+                      {(() => {
+                        const enabled = isUpdatePlanEnabled(m);
+                        return (
+                          <button
+                            onClick={() => {
+                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m } });
+                            }}
+                            disabled={!enabled}
+                            className={`p-2 rounded-lg text-white transition ${enabled
+                                ? "bg-orange-500/80 hover:bg-orange-500 cursor-pointer"
+                                : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
+                              }`}
+                            title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
+                          >
+                            <CreditCard size={16} />
+                          </button>
+                        );
+                      })()}
+                      {canChangePlan(m) && (
+                        <button
+                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
+                          className="p-2 rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition"
+                          title="Change Plan"
+                        >
+                          <RotateCcw size={16} />
+                        </button>
+                      )}
+>>>>>>> Stashed changes
                       <button
                         onClick={() => {
                           if (m.source === "users") {
-                            navigate(`/admin/addmembers?user_id=${m.u_id}`);
+                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`);
                           } else {
-                            navigate(`/admin/addmembers/${m.id}`);
+                            navigate(`${basePath}/addmembers/${m.id}`);
                           }
                         }}
                         className="p-2 rounded-lg bg-yellow-500/80 hover:bg-yellow-500 text-white transition"
@@ -638,7 +683,7 @@ const Members = () => {
                     <div className="flex gap-2">
                       {m.pt_form_completed && (
                         <button
-                          onClick={() => navigate(`/admin/pt-form/print/${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form/print/${m.id || m.member_id}`)}
                           className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition"
                           title="Print PT Form"
                         >
@@ -646,18 +691,48 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => navigate(`/admin/member_details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`)}
                         className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
                         title="View Details"
                       >
                         <Eye size={14} />
                       </button>
+<<<<<<< Updated upstream
+=======
+                      {(() => {
+                        const enabled = isUpdatePlanEnabled(m);
+                        return (
+                          <button
+                            onClick={() => {
+                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m } });
+                            }}
+                            disabled={!enabled}
+                            className={`p-2 rounded-lg transition ${enabled
+                                ? "bg-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-white cursor-pointer"
+                                : "bg-white/5 text-white/10 cursor-not-allowed border border-white/5"
+                              }`}
+                            title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
+                          >
+                            <CreditCard size={14} />
+                          </button>
+                        );
+                      })()}
+                      {canChangePlan(m) && (
+                        <button
+                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
+                          className="p-2 rounded-lg bg-violet-500/20 text-violet-500 hover:bg-violet-500 hover:text-white transition"
+                          title="Change Plan"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
+>>>>>>> Stashed changes
                       <button
                         onClick={() => {
                           if (m.source === "users") {
-                            navigate(`/admin/addmembers?user_id=${m.u_id}`);
+                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`);
                           } else {
-                            navigate(`/admin/addmembers/${m.id}`);
+                            navigate(`${basePath}/addmembers/${m.id}`);
                           }
                         }}
                         className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white transition"
@@ -720,7 +795,7 @@ const Members = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => navigate(`/admin/pt-form?member_id=${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`)}
                           className="flex items-center gap-1 text-orange-400 hover:text-orange-500 text-[10px] font-bold underline decoration-dotted underline-offset-2"
                         >
                           <Clock size={12} /> PENDING
@@ -849,14 +924,14 @@ const Members = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigate(`/admin/pt-form?member_id=${ptViewMemberId}`)}
+                  onClick={() => navigate(`${basePath}/pt-form?member_id=${ptViewMemberId}`)}
                   className="p-2 bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-white rounded-lg transition"
                   title="Edit PT Form"
                 >
                   <Pencil size={20} />
                 </button>
                 <button
-                  onClick={() => window.open(`/admin/pt-form/print/${ptViewMemberId}`, '_blank')}
+                  onClick={() => window.open(`${basePath}/pt-form/print/${ptViewMemberId}`, '_blank')}
                   className="p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition"
                   title="Open Print View"
                 >
