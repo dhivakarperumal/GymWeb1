@@ -510,7 +510,6 @@ const EMIList = () => {
                       >
                         <td className="px-4 py-4 text-center text-base font-medium text-gray-400">
                           {(currentPage - 1) * itemsPerPage + idx + 1}
-                        </td>
                         <td className="px-4 py-4">
                           <div className="font-medium text-base text-white group-hover:text-orange-400 transition-colors">
                             {membership.userName || membership.username || "Unknown"}
