@@ -23,47 +23,74 @@ const UserEnquiry = () => {
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
   const [showForm, setShowForm] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
+  const [selectedMember, setSelectedMember] = useState(null);
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    subject: "",
-    message: "",
-    height: "",
-    weight: "",
-    bmi: "",
-    dob: "",
-    age: "",
-    address: "",
-    employer: "",
-    occupation: "",
-    emergency_contact_name: "",
-    emergency_contact_relationship: "",
-    emergency_contact_address: "",
-    emergency_contact_phone_home: "",
-    emergency_contact_phone_work: "",
-    fitness_goal: "",
-    blood_group: "",
-    gender: "",
-    termsAccepted: false,
-    participant_name: "",
-    consent_agree: false,
-    consent_signature: "",
-    consent_date: "",
-    guardian_signature: "",
-    witness: "",
-    plan_name: "",
-    plan_duration: "",
-  });
-  const [showConsent, setShowConsent] = useState(false);
+    useEffect(() => {
+      // If navigated with a real enquiry, preload for editing
+      if (location.state?.selectedEnquiry) {
+        try {
+          handleEdit(location.state.selectedEnquiry);
+          return;
+        } catch (err) {
+          console.error('Failed to preload selected enquiry from navigation state', err);
+        }
+      }
 
-  const { user } = useAuth();
-  // console.log("USER DATA 👉", user);
-  const userId = user?.id;
+      // If navigated with a selectedMember (from Account), preload form and mark as member-edit
+      if (location.state?.selectedMember) {
+        const m = location.state.selectedMember;
+        setSelectedMember(m);
+        setFormData(prev => ({
+          ...prev,
+          name: m.name || prev.name,
+          email: m.email || m.user_email || prev.email,
+          phone: m.phone || prev.phone,
+          height: m.height || prev.height,
+          weight: m.weight || prev.weight,
+          bmi: m.bmi || prev.bmi,
+          dob: m.dob ? (m.dob.includes('T') ? dayjs(m.dob).format('YYYY-MM-DD') : m.dob) : prev.dob,
+          age: m.age || prev.age,
+          address: m.address || prev.address,
+          employer: m.employer || prev.employer,
+          occupation: m.occupation || prev.occupation,
+          fitness_goal: m.fitness_goal || prev.fitness_goal,
+          blood_group: m.blood_group || prev.blood_group,
+          gender: m.gender || prev.gender,
+          plan_name: m.plan || m.plan_name || prev.plan_name,
+          plan_duration: m.duration || m.plan_duration || prev.plan_duration,
+        }));
+        setShowForm(true);
+      }
 
-  useEffect(() => {
-    if (prefilledPlan) {
+      // If navigation provided `prefilledEnquiryData` (from a member record but not wanting member-edit), prefill the form WITHOUT setting selectedEnquiry
+      if (location.state?.prefilledEnquiryData) {
+        const d = location.state.prefilledEnquiryData;
+        setFormData(prev => ({
+          ...prev,
+          name: d.name || prev.name,
+          email: d.email || prev.email,
+          phone: d.phone || prev.phone,
+          height: d.height || prev.height,
+          weight: d.weight || prev.weight,
+          bmi: d.bmi || prev.bmi,
+          dob: d.dob || prev.dob,
+          age: d.age || prev.age,
+          address: d.address || prev.address,
+          employer: d.employer || prev.employer,
+          occupation: d.occupation || prev.occupation,
+          fitness_goal: d.fitness_goal || prev.fitness_goal,
+          blood_group: d.blood_group || prev.blood_group,
+          gender: d.gender || prev.gender,
+          plan_name: d.plan_name || prev.plan_name,
+          plan_duration: d.plan_duration || prev.plan_duration,
+        }));
+        setShowForm(true);
+      }
+    }, [location.state]);
       setFormData(prev => ({
         ...prev,
         plan_name: prefilledPlan.planName,
@@ -206,7 +233,33 @@ const UserEnquiry = () => {
         },
       };
 
-      if (selectedEnquiry) {
+      // If editing a member record (navigated from Account), update member endpoint
+      if (selectedMember) {
+        const memberId = selectedMember.id || selectedMember.member_id || selectedMember.gmId;
+        const memberPayload = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          height: formData.height || null,
+          weight: formData.weight || null,
+          bmi: formData.bmi || null,
+          dob: formData.dob ? dayjs(formData.dob).format('DD-MM-YYYY') : null,
+          age: formData.age || null,
+          address: formData.address || null,
+          employer: formData.employer || null,
+          occupation: formData.occupation || null,
+          emergency_contact_name: formData.emergency_contact_name || null,
+          emergency_contact_relationship: formData.emergency_contact_relationship || null,
+          emergency_contact_address: formData.emergency_contact_address || null,
+          emergency_contact_phone_home: formData.emergency_contact_phone_home || null,
+          emergency_contact_phone_work: formData.emergency_contact_phone_work || null,
+          fitness_goal: formData.fitness_goal || null,
+          blood_group: formData.blood_group || null,
+          plan: formData.plan_name || null,
+          duration: formData.plan_duration || null,
+        };
+        await api.put(`/members/${memberId}`, memberPayload);
+      } else if (selectedEnquiry) {
         await api.put(`/enquiries/${selectedEnquiry.id}`, payload);
       } else {
         await api.post('/enquiries', payload);
@@ -291,12 +344,39 @@ const UserEnquiry = () => {
 
   // If navigated here with a selectedEnquiry in location.state, preload it for editing
   useEffect(() => {
+    // If navigation provided a real `selectedEnquiry`, treat it as an existing enquiry to edit
     if (location.state?.selectedEnquiry) {
       try {
         handleEdit(location.state.selectedEnquiry);
+        return;
       } catch (err) {
         console.error('Failed to preload selected enquiry from navigation state', err);
       }
+    }
+
+    // If navigation provided `prefilledEnquiryData` (from a member record), prefill the form WITHOUT marking it as an existing enquiry
+    if (location.state?.prefilledEnquiryData) {
+      const d = location.state.prefilledEnquiryData;
+      setFormData(prev => ({
+        ...prev,
+        name: d.name || prev.name,
+        email: d.email || prev.email,
+        phone: d.phone || prev.phone,
+        height: d.height || prev.height,
+        weight: d.weight || prev.weight,
+        bmi: d.bmi || prev.bmi,
+        dob: d.dob || prev.dob,
+        age: d.age || prev.age,
+        address: d.address || prev.address,
+        employer: d.employer || prev.employer,
+        occupation: d.occupation || prev.occupation,
+        fitness_goal: d.fitness_goal || prev.fitness_goal,
+        blood_group: d.blood_group || prev.blood_group,
+        gender: d.gender || prev.gender,
+        plan_name: d.plan_name || prev.plan_name,
+        plan_duration: d.plan_duration || prev.plan_duration,
+      }));
+      setShowForm(true);
     }
   }, [location.state]);
 

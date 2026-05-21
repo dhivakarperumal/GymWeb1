@@ -501,20 +501,59 @@ const Account = () => {
                   </div>
                   <button
                     onClick={() => {
-                      const selectedEnquiry = userEnquiry
-                        ? userEnquiry
-                        : memberData
-                        ? {
-                            ...memberData,
-                            plan_name: memberData.plan || memberData.plan_name,
-                            plan_duration: memberData.duration || memberData.plan_duration,
-                            dob: normalizeDateForDateInput(memberData.dob) || memberData.dob || "",
-                          }
-                        : null;
+                      // If we have an actual enquiry, pass it as selectedEnquiry so UserEnquiry will edit it.
+                      if (userEnquiry) {
+                        navigate('/userenquiry', {
+                          state: {
+                            selectedEnquiry: userEnquiry,
+                            prefilledUser: {
+                              name: userInfo.username || userInfo.full_name || "",
+                              email: userInfo.email || "",
+                              phone: userInfo.mobile || "",
+                            },
+                          },
+                        });
+                        return;
+                      }
 
+                      // If we only have a member record (admin-created), pass its fields as a prefill object
+                      if (memberData) {
+                        const prefilledEnquiryData = {
+                          // do NOT include an `id` so UserEnquiry treats this as a new/editable form, not an existing enquiry
+                          name: memberData.name || "",
+                          email: memberData.email || "",
+                          phone: memberData.phone || "",
+                          height: memberData.height || "",
+                          weight: memberData.weight || "",
+                          bmi: memberData.bmi || "",
+                          dob: normalizeDateForDateInput(memberData.dob) || memberData.dob || "",
+                          age: memberData.age || "",
+                          address: memberData.address || "",
+                          employer: memberData.employer || "",
+                          occupation: memberData.occupation || "",
+                          fitness_goal: memberData.fitness_goal || "",
+                          blood_group: memberData.blood_group || "",
+                          gender: memberData.gender || "",
+                          plan_name: memberData.plan || memberData.plan_name || "",
+                          plan_duration: memberData.duration || memberData.plan_duration || "",
+                        };
+
+                        navigate('/userenquiry', {
+                          state: {
+                            prefilledUser: {
+                              name: userInfo.username || userInfo.full_name || "",
+                              email: userInfo.email || "",
+                              phone: userInfo.mobile || "",
+                            },
+                            prefilledEnquiryData,
+                          },
+                        });
+                        return;
+                      }
+
+                      // Fallback: send prefilled user only
                       navigate('/userenquiry', {
                         state: {
-                          selectedEnquiry,
                           prefilledUser: {
                             name: userInfo.username || userInfo.full_name || "",
                             email: userInfo.email || "",
