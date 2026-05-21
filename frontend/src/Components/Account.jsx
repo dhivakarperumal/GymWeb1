@@ -1036,21 +1036,27 @@ const Account = () => {
                         <div className="mt-6">
                           <h4 className="text-sm font-bold uppercase tracking-widest text-white mb-3">EMI Dues History</h4>
                           {dues.length > 0 ? (
-                            <div className="space-y-3">
-                              {dues.map((due, dueIndex) => (
-                                <div key={dueIndex} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div>
-                                      <p className="text-sm font-semibold text-white">{formatCurrency(due.amount)}</p>
-                                      <p className="text-xs text-gray-400">{formatDate(due.collectedAt)}</p>
-                                    </div>
-                                    <div className="text-sm text-gray-400">
-                                      <p>Collected by: {due.collectedBy}</p>
-                                      <p>Reference: {due.paymentId || "Cash"}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                            <div className="overflow-x-auto rounded-3xl border border-white/10 bg-black/40">
+                              <table className="min-w-full divide-y divide-white/10 text-sm">
+                                <thead>
+                                  <tr className="bg-white/5 text-left text-xs uppercase tracking-widest text-gray-400">
+                                    <th className="px-4 py-3">Due Amount</th>
+                                    <th className="px-4 py-3">Date</th>
+                                    <th className="px-4 py-3">Collected By</th>
+                                    <th className="px-4 py-3">Reference</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/10 bg-black/20">
+                                  {dues.map((due, dueIndex) => (
+                                    <tr key={dueIndex} className="hover:bg-white/5 transition-colors">
+                                      <td className="px-4 py-4 text-white font-semibold">{formatCurrency(due.amount)}</td>
+                                      <td className="px-4 py-4 text-gray-300">{formatDate(due.collectedAt)}</td>
+                                      <td className="px-4 py-4 text-gray-300">{due.collectedBy}</td>
+                                      <td className="px-4 py-4 text-gray-300">{due.paymentId || "Cash"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
                             </div>
                           ) : (
                             <p className="text-gray-400">No dues recorded yet for this plan.</p>
