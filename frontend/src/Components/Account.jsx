@@ -25,6 +25,35 @@ const Account = () => {
   );
 
   const [userInfo, setUserInfo] = useState({});
+  const [userEnquiry, setUserEnquiry] = useState(null);
+  const [enquiryEditMode, setEnquiryEditMode] = useState(false);
+  const [enquiryFormData, setEnquiryFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    dob: "",
+    age: "",
+    blood_group: "",
+    gender: "",
+    address: "",
+    employer: "",
+    occupation: "",
+    fitness_goal: "",
+    emergency_contact_name: "",
+    emergency_contact_relationship: "",
+    emergency_contact_address: "",
+    emergency_contact_phone_home: "",
+    emergency_contact_phone_work: "",
+    participant_name: "",
+    consent_agree: false,
+    consent_signature: "",
+    consent_date: "",
+    guardian_signature: "",
+    witness: "",
+    plan_name: "",
+    plan_duration: "",
+  });
+  const [savingEnquiry, setSavingEnquiry] = useState(false);
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
 
@@ -82,6 +111,176 @@ const Account = () => {
 
     fetchPlans();
   }, [userId]);
+
+  useEffect(() => {
+    if (!user?.email && !user?.mobile) return;
+
+    const fetchUserEnquiry = async () => {
+      try {
+        const res = await api.get('/enquiries');
+        const list = Array.isArray(res.data) ? res.data : [];
+        const match = list.find((entry) => {
+          if (!entry) return false;
+          const emailMatch = entry.email && user.email && entry.email.toLowerCase() === user.email.toLowerCase();
+          const phoneMatch = entry.phone && user.mobile && entry.phone === user.mobile;
+          return emailMatch || phoneMatch;
+        });
+
+        if (match) {
+          setUserEnquiry(match);
+          setEnquiryFormData({
+            name: match.name || "",
+            email: match.email || "",
+            phone: match.phone || "",
+            dob: formatEnquiryDob(match.dob),
+            age: match.age || "",
+            blood_group: match.blood_group || "",
+            gender: match.gender || "",
+            address: match.address || "",
+            employer: match.employer || "",
+            occupation: match.occupation || "",
+            fitness_goal: match.fitness_goal || "",
+            emergency_contact_name: match.emergency_contact_name || "",
+            emergency_contact_relationship: match.emergency_contact_relationship || "",
+            emergency_contact_address: match.emergency_contact_address || "",
+            emergency_contact_phone_home: match.emergency_contact_phone_home || "",
+            emergency_contact_phone_work: match.emergency_contact_phone_work || "",
+            participant_name: getConsent(match.consent_data)?.participant_name || match.name || "",
+            consent_agree: getConsent(match.consent_data)?.agree || false,
+            consent_signature: getConsent(match.consent_data)?.signature || "",
+            consent_date: getConsent(match.consent_data)?.date || "",
+            guardian_signature: getConsent(match.consent_data)?.guardian_signature || "",
+            witness: getConsent(match.consent_data)?.witness || "",
+            plan_name: match.plan_name || "",
+            plan_duration: match.plan_duration || "",
+          });
+        } else {
+          setUserEnquiry(null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user enquiry', err);
+      }
+    };
+
+    fetchUserEnquiry();
+  }, [user?.email, user?.mobile]);
+
+  const formatEnquiryDob = (dob) => {
+    if (!dob) return "";
+    const parts = dob.split('-');
+    if (parts.length !== 3) return dob;
+    if (parts[0].length === 4) return dob;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  };
+
+  const getConsent = (consent_data) => {
+    if (!consent_data) return {};
+    if (typeof consent_data === 'string') {
+      try {
+        return JSON.parse(consent_data);
+      } catch (err) {
+        return {};
+      }
+    }
+    return consent_data;
+  };
+
+  const buildEnquiryPayload = () => {
+    const consentPayload = {
+      participant_name: enquiryFormData.participant_name,
+      agree: enquiryFormData.consent_agree,
+      signature: enquiryFormData.consent_signature,
+      date: enquiryFormData.consent_date,
+      guardian_signature: enquiryFormData.guardian_signature,
+      witness: enquiryFormData.witness,
+    };
+
+    return {
+      name: enquiryFormData.name,
+      email: enquiryFormData.email,
+      phone: enquiryFormData.phone,
+      subject: userEnquiry?.subject || null,
+      message: userEnquiry?.message || null,
+      location: userEnquiry?.location || null,
+      dob: enquiryFormData.dob || null,
+      age: enquiryFormData.age || null,
+      address: enquiryFormData.address || null,
+      employer: enquiryFormData.employer || null,
+      occupation: enquiryFormData.occupation || null,
+      emergency_contact_name: enquiryFormData.emergency_contact_name || null,
+      emergency_contact_relationship: enquiryFormData.emergency_contact_relationship || null,
+      emergency_contact_address: enquiryFormData.emergency_contact_address || null,
+      emergency_contact_phone_home: enquiryFormData.emergency_contact_phone_home || null,
+      emergency_contact_phone_work: enquiryFormData.emergency_contact_phone_work || null,
+      fitness_goal: enquiryFormData.fitness_goal || null,
+      blood_group: enquiryFormData.blood_group || null,
+      height: userEnquiry?.height || null,
+      weight: userEnquiry?.weight || null,
+      bmi: userEnquiry?.bmi || null,
+      gender: enquiryFormData.gender || null,
+      plan_name: enquiryFormData.plan_name || null,
+      plan_duration: enquiryFormData.plan_duration || null,
+      status: userEnquiry?.status || 'pending',
+      termsAccepted: userEnquiry?.terms_accepted === 1 || userEnquiry?.termsAccepted || false,
+      consent_data: consentPayload,
+      trainer_id: userEnquiry?.trainer_id || null,
+      trainer_name: userEnquiry?.trainer_name || null,
+    };
+  };
+
+  const handleSaveEnquiryEdits = async () => {
+    if (!userEnquiry?.id) return;
+    setSavingEnquiry(true);
+    try {
+      const payload = buildEnquiryPayload();
+      const res = await api.put(`/enquiries/${userEnquiry.id}`, payload);
+      const updated = res.data;
+      setUserEnquiry(updated);
+      setEnquiryFormData({
+        name: updated.name || "",
+        email: updated.email || "",
+        phone: updated.phone || "",
+        dob: formatEnquiryDob(updated.dob),
+        age: updated.age || "",
+        blood_group: updated.blood_group || "",
+        gender: updated.gender || "",
+        address: updated.address || "",
+        employer: updated.employer || "",
+        occupation: updated.occupation || "",
+        fitness_goal: updated.fitness_goal || "",
+        emergency_contact_name: updated.emergency_contact_name || "",
+        emergency_contact_relationship: updated.emergency_contact_relationship || "",
+        emergency_contact_address: updated.emergency_contact_address || "",
+        emergency_contact_phone_home: updated.emergency_contact_phone_home || "",
+        emergency_contact_phone_work: updated.emergency_contact_phone_work || "",
+        participant_name: getConsent(updated.consent_data)?.participant_name || updated.name || "",
+        consent_agree: getConsent(updated.consent_data)?.agree || false,
+        consent_signature: getConsent(updated.consent_data)?.signature || "",
+        consent_date: getConsent(updated.consent_data)?.date || "",
+        guardian_signature: getConsent(updated.consent_data)?.guardian_signature || "",
+        witness: getConsent(updated.consent_data)?.witness || "",
+        plan_name: updated.plan_name || "",
+        plan_duration: updated.plan_duration || "",
+      });
+      setEnquiryEditMode(false);
+      toast.success('Join details updated successfully.');
+    } catch (err) {
+      console.error('Failed to update enrolment details', err);
+      toast.error(err.response?.data?.error || 'Unable to update join details.');
+    } finally {
+      setSavingEnquiry(false);
+    }
+  };
+
+  const renderEnquiryDetailRow = (label, value) => {
+    if (!value) return null;
+    return (
+      <div className="bg-gray-900/50 border border-white/5 rounded-2xl p-4">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-white text-sm">{value}</p>
+      </div>
+    );
+  };
 
   /* ================= SIDEBAR ================= */
 
@@ -175,6 +374,195 @@ const Account = () => {
                 }`}>
                   {userInfo.status || "Active"}
                 </div>
+              </div>
+
+              <div className="mt-8 bg-gray-900/50 border border-white/10 rounded-3xl p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold uppercase text-white">Join Now Details</h3>
+                    <p className="text-sm text-gray-400">Your enquiry form data is visible here and can be updated from this page.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!userEnquiry) {
+                        navigate('/userenquiry');
+                        return;
+                      }
+                      setEnquiryEditMode((prev) => !prev);
+                    }}
+                    className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-red-500"
+                  >
+                    {userEnquiry ? (enquiryEditMode ? 'Cancel edit' : 'Edit details') : 'Complete join form'}
+                  </button>
+                </div>
+
+                {userEnquiry ? (
+                  enquiryEditMode ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="block text-sm text-gray-300">
+                          Full Name
+                          <input
+                            value={enquiryFormData.name}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, name: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Email Address
+                          <input
+                            value={enquiryFormData.email}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, email: e.target.value })}
+                            type="email"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Phone Number
+                          <input
+                            value={enquiryFormData.phone}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                            type="tel"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Date of Birth
+                          <input
+                            value={enquiryFormData.dob}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, dob: e.target.value })}
+                            type="date"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Gender
+                          <select
+                            value={enquiryFormData.gender}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, gender: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Blood Group
+                          <input
+                            value={enquiryFormData.blood_group}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, blood_group: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="block text-sm text-gray-300">
+                          Employer
+                          <input
+                            value={enquiryFormData.employer}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, employer: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Occupation
+                          <input
+                            value={enquiryFormData.occupation}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, occupation: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300 md:col-span-2">
+                          Address
+                          <textarea
+                            value={enquiryFormData.address}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, address: e.target.value })}
+                            rows={3}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="block text-sm text-gray-300">
+                          Emergency Contact Name
+                          <input
+                            value={enquiryFormData.emergency_contact_name}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_name: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Emergency Relationship
+                          <input
+                            value={enquiryFormData.emergency_contact_relationship}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_relationship: e.target.value })}
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Emergency Phone
+                          <input
+                            value={enquiryFormData.emergency_contact_phone_home}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_phone_home: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                            type="tel"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                        <label className="block text-sm text-gray-300">
+                          Secondary Contact
+                          <input
+                            value={enquiryFormData.emergency_contact_phone_work}
+                            onChange={(e) => setEnquiryFormData({ ...enquiryFormData, emergency_contact_phone_work: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                            type="tel"
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                          />
+                        </label>
+                      </div>
+
+                      <label className="block text-sm text-gray-300">
+                        Fitness Goal
+                        <textarea
+                          value={enquiryFormData.fitness_goal}
+                          onChange={(e) => setEnquiryFormData({ ...enquiryFormData, fitness_goal: e.target.value })}
+                          rows={3}
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none"
+                        />
+                      </label>
+
+                      <button
+                        onClick={handleSaveEnquiryEdits}
+                        disabled={savingEnquiry}
+                        className="w-full rounded-2xl bg-linear-to-r from-orange-600 to-red-600 px-6 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {savingEnquiry ? 'Saving...' : 'Save Join Details'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {renderEnquiryDetailRow('Full Name', userEnquiry.name)}
+                      {renderEnquiryDetailRow('Email', userEnquiry.email)}
+                      {renderEnquiryDetailRow('Phone', userEnquiry.phone)}
+                      {renderEnquiryDetailRow('Date of Birth', userEnquiry.dob)}
+                      {renderEnquiryDetailRow('Age', userEnquiry.age)}
+                      {renderEnquiryDetailRow('Gender', userEnquiry.gender)}
+                      {renderEnquiryDetailRow('Blood Group', userEnquiry.blood_group)}
+                      {renderEnquiryDetailRow('Address', userEnquiry.address)}
+                      {renderEnquiryDetailRow('Employer', userEnquiry.employer)}
+                      {renderEnquiryDetailRow('Occupation', userEnquiry.occupation)}
+                      {renderEnquiryDetailRow('Fitness Goal', userEnquiry.fitness_goal)}
+                      {renderEnquiryDetailRow('Emergency Contact', userEnquiry.emergency_contact_name)}
+                      {renderEnquiryDetailRow('Relationship', userEnquiry.emergency_contact_relationship)}
+                      {renderEnquiryDetailRow('Emergency Phone', userEnquiry.emergency_contact_phone_home)}
+                      {renderEnquiryDetailRow('Secondary Phone', userEnquiry.emergency_contact_phone_work)}
+                    </div>
+                  )
+                ) : (
+                  <p className="text-gray-400">You have not submitted your join enquiry yet. Click the button above to fill the form.</p>
+                )}
               </div>
             </div>
           </div>

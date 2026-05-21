@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Outlet } from "react-router-dom";
+import { PacmanLoader } from "react-spinners";
 import Sidebar from "./TrainerSidebar";
 import Header from "./TrainerHeader";
 
@@ -46,7 +47,14 @@ const AdminLayout = () => {
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-5 lg:p-6 overflow-y-auto">
           <div className="glass-container">
-            <Outlet />
+            <Suspense fallback={
+              <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+                <PacmanLoader color="#ef4444" size={20} />
+                <p className="text-white/30 text-[10px] tracking-widest uppercase">Loading...</p>
+              </div>
+            }>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
 

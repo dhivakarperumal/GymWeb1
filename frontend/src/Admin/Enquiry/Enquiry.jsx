@@ -111,7 +111,7 @@ const Enquiry = () => {
       return;
     }
     if (!formData.phone || formData.phone.length !== 10) {
-      toast.error("A valid 10-digit phone number is required");
+      toast.error("A valid 10-digit mobile number is required");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -137,7 +137,7 @@ const Enquiry = () => {
         );
 
         if (isDuplicate) {
-          toast.error("An enquiry with this email or phone already exists.");
+          toast.error("An enquiry with this email or mobile number already exists.");
           return;
         }
 
@@ -217,7 +217,7 @@ const Enquiry = () => {
     const dataToExport = enquiries.map((e, index) => ({
       "S.No": index + 1,
       Name: e.name || "N/A",
-      Phone: e.phone || "N/A",
+      "Mobile Number": e.phone || "N/A",
       Email: e.email || "-",
       Subject: e.subject || "-",
       Message: e.message || "-",
@@ -431,7 +431,7 @@ const Enquiry = () => {
     const template = [
       {
         "Customer Name": "Jane Doe",
-        "Phone": "9876543210",
+        "Mobile Number": "9876543210",
         "Email": "jane@example.com",
         "Gender": "Female",
         "Date of Birth": "1998-10-20",
@@ -517,17 +517,17 @@ const Enquiry = () => {
         emergency_contact_phone_work: enquiry.emergency_contact_phone_work || null,
         fitness_goal: enquiry.fitness_goal || null,
         blood_group: enquiry.blood_group || null,
-        plan: enquiry.plan_name || null,
-        duration: enquiry.plan_duration ? parseInt(enquiry.plan_duration, 10) || null : null,
+        plan: null,
+        duration: null,
         joinDate: new Date().toISOString().split('T')[0],
         status: 'pending',
         gender: enquiry.gender || null,
         // supply password explicitly so frontend knows credentials
-        password: enquiry.dob ? dayjs(enquiry.dob).format('DD-MM-YYYY') : (enquiry.phone || '')
+        password: enquiry.phone || ''
       };
       // tell admin what the temporary password is
       await api.post('/members', memberData);
-      toast.success(`Member created successfully. Login using Date of Birth (DD-MM-YYYY) as password.`);
+      toast.success(`Member created successfully. Login using Mobile Number as password.`);
       await updateStatus(enquiry.id, 'completed');
     } catch (err) {
       console.error('Error moving to members:', err);

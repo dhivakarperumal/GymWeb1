@@ -3,6 +3,22 @@ const path = require('path');
 const db = require('./db');
 
 async function runMigrations() {
+  // Ensure database exists
+  try {
+    const mysql = require("mysql2/promise");
+    const tempConnection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 3306,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+    });
+    await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
+    await tempConnection.end();
+    console.log(`✅ Database "${process.env.DB_NAME}" checked/created successfully.`);
+  } catch (err) {
+    console.warn("⚠️ Failed to check/create database:", err.message);
+  }
+
   const migrationsDir = path.join(__dirname, 'migrations');
   
   if (!fs.existsSync(migrationsDir)) {

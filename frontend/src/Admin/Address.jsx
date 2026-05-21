@@ -86,7 +86,7 @@ export default function AddressForm() {
                 <input
                     type="text"
                     name="phone"
-                    placeholder="Phone Number"
+                    placeholder="Mobile Number"
                     value={form.phone}
                     onChange={handleChange}
                     required

@@ -4,117 +4,254 @@ const { v4: uuidv4 } = require('uuid');
 
 async function getAllMembers(req, res) {
   try {
-    // We want a list that includes:
-    // 1. All records from gym_members (joined with their user account)
-    // 2. All records from users (role='user') that don't have a gym_member record yet
-    const sql = `
-      SELECT 
-        gm.id, 
-        gm.member_id, 
-        gm.fingerprint_id,
-        gm.name, 
-        gm.phone, 
-        gm.email, 
-        gm.gender,
-        gm.height,
-        gm.weight,
-        gm.bmi,
-        gm.plan,
-        gm.status,
-        gm.address,
-        gm.dob,
-        gm.age,
-        gm.employer,
-        gm.occupation,
-        gm.emergency_contact_name,
-        gm.emergency_contact_relationship,
-        gm.emergency_contact_address,
-        gm.emergency_contact_phone_home,
-        gm.emergency_contact_phone_work,
-        gm.fitness_goal,
-        gm.blood_group,
-        gm.pt_form_completed,
-        u.id AS u_id, 
-        COALESCE(gm.user_id, u.user_id) AS u_uuid,
-        u.email AS user_email, 
-        u.role,
-        (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
-        (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
-        gm.join_date,
-        gm.expiry_date,
-        gm.created_at,
-        m_pay.paymentMode,
-        m_pay.price,
-        m_pay.pricePaid,
-        m_pay.secondPaymentPaid,
-        'members' as source
-      FROM gym_members gm
-      LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
-                        OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      LEFT JOIN (
-        SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid
-        FROM memberships m
-        JOIN (
-          SELECT userId, MAX(id) AS max_id
-          FROM memberships
-          GROUP BY userId
-        ) mm ON m.userId = mm.userId AND m.id = mm.max_id
-      ) m_pay ON m_pay.userId = u.id
-      
-      UNION ALL
-      
-      SELECT 
-        NULL as id, 
-        NULL as member_id, 
-        NULL as fingerprint_id,
-        u.username as name, 
-        u.mobile as phone, 
-        u.email, 
-        NULL as gender,
-        NULL as height,
-        NULL as weight,
-        NULL as bmi,
-        NULL as plan,
-        'active' as status,
-        NULL as address,
-        NULL as dob,
-        NULL as age,
-        NULL as employer,
-        NULL as occupation,
-        NULL as emergency_contact_name,
-        NULL as emergency_contact_relationship,
-        NULL as emergency_contact_address,
-        NULL as emergency_contact_phone_home,
-        NULL as emergency_contact_phone_work,
-        NULL as fitness_goal,
-        NULL as blood_group,
-        0 as pt_form_completed,
-        u.id AS u_id, 
-        COALESCE(NULL, u.user_id) AS u_uuid,
-        u.email AS user_email, 
-        u.role,
-        0 AS workout_count,
-        0 AS diet_count,
-        NULL as join_date,
-        NULL as expiry_date,
-        u.created_at,
-        NULL as paymentMode,
-        NULL as price,
-        NULL as pricePaid,
-        NULL as secondPaymentPaid,
-        'users' as source
-      FROM users u
-      WHERE u.role = 'user' AND NOT EXISTS (
-        SELECT 1 FROM gym_members gm2 
-        WHERE (gm2.email = u.email AND u.email IS NOT NULL AND u.email != '') 
-           OR (gm2.phone = u.mobile AND u.mobile IS NOT NULL AND u.mobile != '')
-      )
-      
-      ORDER BY created_at DESC
-    `;
+    const { trainerUserId } = req.query;
+    let staffId = null;
+
+    if (trainerUserId) {
+      const [userRows] = await db.query(
+        'SELECT id, email, username FROM users WHERE id = ?',
+        [trainerUserId]
+      );
+      if (userRows.length > 0) {
+        const u = userRows[0];
+        const [staffRows] = await db.query(
+          'SELECT id FROM staff WHERE email = ? OR username = ? LIMIT 1',
+          [u.email, u.username]
+        );
+        if (staffRows.length > 0) {
+          staffId = staffRows[0].id;
+        } else {
+          // If trainerUserId was provided but no staff matches, return empty to avoid leak
+          return res.json([]);
+        }
+      } else {
+        return res.json([]);
+      }
+    }
+
+    let sql;
+    let params = [];
+
+    if (staffId) {
+      sql = `
+        SELECT 
+          gm.id, 
+          gm.member_id, 
+          gm.fingerprint_id,
+          gm.name, 
+          gm.phone, 
+          gm.email, 
+          gm.gender,
+          gm.height,
+          gm.weight,
+          gm.bmi,
+          gm.plan,
+          gm.status,
+          gm.address,
+          gm.dob,
+          gm.age,
+          gm.employer,
+          gm.occupation,
+          gm.emergency_contact_name,
+          gm.emergency_contact_relationship,
+          gm.emergency_contact_address,
+          gm.emergency_contact_phone_home,
+          gm.emergency_contact_phone_work,
+          gm.fitness_goal,
+          gm.blood_group,
+          gm.pt_form_completed,
+          u.id AS u_id, 
+          COALESCE(gm.user_id, u.user_id) AS u_uuid,
+          u.email AS user_email, 
+          u.role,
+          (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
+          (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
+          gm.join_date,
+          gm.expiry_date,
+          gm.created_at,
+          m_pay.paymentMode,
+          m_pay.price,
+          m_pay.pricePaid,
+          m_pay.secondPaymentPaid,
+          'members' as source
+        FROM gym_members gm
+        INNER JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
+                          OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+        INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
+        LEFT JOIN (
+          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid
+          FROM memberships m
+          JOIN (
+            SELECT userId, MAX(id) AS max_id
+            FROM memberships
+            GROUP BY userId
+          ) mm ON m.userId = mm.userId AND m.id = mm.max_id
+        ) m_pay ON m_pay.userId = u.id
+        
+        UNION ALL
+        
+        SELECT 
+          NULL as id, 
+          NULL as member_id, 
+          NULL as fingerprint_id,
+          u.username as name, 
+          u.mobile as phone, 
+          u.email, 
+          NULL as gender,
+          NULL as height,
+          NULL as weight,
+          NULL as bmi,
+          NULL as plan,
+          'active' as status,
+          NULL as address,
+          NULL as dob,
+          NULL as age,
+          NULL as employer,
+          NULL as occupation,
+          NULL as emergency_contact_name,
+          NULL as emergency_contact_relationship,
+          NULL as emergency_contact_address,
+          NULL as emergency_contact_phone_home,
+          NULL as emergency_contact_phone_work,
+          NULL as fitness_goal,
+          NULL as blood_group,
+          0 as pt_form_completed,
+          u.id AS u_id, 
+          COALESCE(NULL, u.user_id) AS u_uuid,
+          u.email AS user_email, 
+          u.role,
+          0 AS workout_count,
+          0 AS diet_count,
+          NULL as join_date,
+          NULL as expiry_date,
+          u.created_at,
+          NULL as paymentMode,
+          NULL as price,
+          NULL as pricePaid,
+          NULL as secondPaymentPaid,
+          'users' as source
+        FROM users u
+        INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
+        WHERE u.role = 'user' AND NOT EXISTS (
+          SELECT 1 FROM gym_members gm2 
+          WHERE (gm2.email = u.email AND u.email IS NOT NULL AND u.email != '') 
+             OR (gm2.phone = u.mobile AND u.mobile IS NOT NULL AND u.mobile != '')
+        )
+        
+        ORDER BY created_at DESC
+      `;
+      params = [staffId, staffId];
+    } else {
+      sql = `
+        SELECT 
+          gm.id, 
+          gm.member_id, 
+          gm.fingerprint_id,
+          gm.name, 
+          gm.phone, 
+          gm.email, 
+          gm.gender,
+          gm.height,
+          gm.weight,
+          gm.bmi,
+          gm.plan,
+          gm.status,
+          gm.address,
+          gm.dob,
+          gm.age,
+          gm.employer,
+          gm.occupation,
+          gm.emergency_contact_name,
+          gm.emergency_contact_relationship,
+          gm.emergency_contact_address,
+          gm.emergency_contact_phone_home,
+          gm.emergency_contact_phone_work,
+          gm.fitness_goal,
+          gm.blood_group,
+          gm.pt_form_completed,
+          u.id AS u_id, 
+          COALESCE(gm.user_id, u.user_id) AS u_uuid,
+          u.email AS user_email, 
+          u.role,
+          (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
+          (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
+          gm.join_date,
+          gm.expiry_date,
+          gm.created_at,
+          m_pay.paymentMode,
+          m_pay.price,
+          m_pay.pricePaid,
+          m_pay.secondPaymentPaid,
+          'members' as source
+        FROM gym_members gm
+        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
+                          OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+        LEFT JOIN (
+          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid
+          FROM memberships m
+          JOIN (
+            SELECT userId, MAX(id) AS max_id
+            FROM memberships
+            GROUP BY userId
+          ) mm ON m.userId = mm.userId AND m.id = mm.max_id
+        ) m_pay ON m_pay.userId = u.id
+        
+        UNION ALL
+        
+        SELECT 
+          NULL as id, 
+          NULL as member_id, 
+          NULL as fingerprint_id,
+          u.username as name, 
+          u.mobile as phone, 
+          u.email, 
+          NULL as gender,
+          NULL as height,
+          NULL as weight,
+          NULL as bmi,
+          NULL as plan,
+          'active' as status,
+          NULL as address,
+          NULL as dob,
+          NULL as age,
+          NULL as employer,
+          NULL as occupation,
+          NULL as emergency_contact_name,
+          NULL as emergency_contact_relationship,
+          NULL as emergency_contact_address,
+          NULL as emergency_contact_phone_home,
+          NULL as emergency_contact_phone_work,
+          NULL as fitness_goal,
+          NULL as blood_group,
+          0 as pt_form_completed,
+          u.id AS u_id, 
+          COALESCE(NULL, u.user_id) AS u_uuid,
+          u.email AS user_email, 
+          u.role,
+          0 AS workout_count,
+          0 AS diet_count,
+          NULL as join_date,
+          NULL as expiry_date,
+          u.created_at,
+          NULL as paymentMode,
+          NULL as price,
+          NULL as pricePaid,
+          NULL as secondPaymentPaid,
+          'users' as source
+        FROM users u
+        WHERE u.role = 'user' AND NOT EXISTS (
+          SELECT 1 FROM gym_members gm2 
+          WHERE (gm2.email = u.email AND u.email IS NOT NULL AND u.email != '') 
+             OR (gm2.phone = u.mobile AND u.mobile IS NOT NULL AND u.mobile != '')
+        )
+        
+        ORDER BY created_at DESC
+      `;
+    }
+
     let rows;
     try {
-      [rows] = await db.query(sql);
+      [rows] = await db.query(sql, params);
       res.json(rows);
       return;
     } catch (err) {
@@ -122,53 +259,107 @@ async function getAllMembers(req, res) {
     }
 
     // Fallback to simpler gym-members only query
-    const fallbackSql = `
-      SELECT 
-        gm.id,
-        gm.member_id,
-        COALESCE(gm.fingerprint_id, NULL) AS fingerprint_id,
-        gm.name,
-        gm.phone,
-        gm.email,
-        gm.gender,
-        gm.height,
-        gm.weight,
-        gm.bmi,
-        gm.plan,
-        gm.status,
-        gm.address,
-        COALESCE(gm.dob, NULL) AS dob,
-        COALESCE(gm.age, NULL) AS age,
-        COALESCE(gm.employer, NULL) AS employer,
-        COALESCE(gm.occupation, NULL) AS occupation,
-        COALESCE(gm.emergency_contact_name, NULL) AS emergency_contact_name,
-        COALESCE(gm.emergency_contact_relationship, NULL) AS emergency_contact_relationship,
-        COALESCE(gm.emergency_contact_address, NULL) AS emergency_contact_address,
-        COALESCE(gm.emergency_contact_phone_home, NULL) AS emergency_contact_phone_home,
-        COALESCE(gm.emergency_contact_phone_work, NULL) AS emergency_contact_phone_work,
-        COALESCE(gm.fitness_goal, NULL) AS fitness_goal,
-        COALESCE(gm.blood_group, NULL) AS blood_group,
-        COALESCE(gm.pt_form_completed, 0) AS pt_form_completed,
-        u.id AS u_id,
-        COALESCE(gm.user_id, u.user_id) AS u_uuid,
-        u.email AS user_email,
-        u.role,
-        (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
-        (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
-        gm.join_date,
-        gm.expiry_date,
-        gm.created_at,
-        NULL AS paymentMode,
-        NULL AS price,
-        NULL AS pricePaid,
-        NULL AS secondPaymentPaid,
-        'members' AS source
-      FROM gym_members gm
-      LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '')
-                        OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      ORDER BY gm.created_at DESC
-    `;
-    [rows] = await db.query(fallbackSql);
+    let fallbackSql;
+    let fallbackParams = [];
+
+    if (staffId) {
+      fallbackSql = `
+        SELECT 
+          gm.id,
+          gm.member_id,
+          COALESCE(gm.fingerprint_id, NULL) AS fingerprint_id,
+          gm.name,
+          gm.phone,
+          gm.email,
+          gm.gender,
+          gm.height,
+          gm.weight,
+          gm.bmi,
+          gm.plan,
+          gm.status,
+          gm.address,
+          COALESCE(gm.dob, NULL) AS dob,
+          COALESCE(gm.age, NULL) AS age,
+          COALESCE(gm.employer, NULL) AS employer,
+          COALESCE(gm.occupation, NULL) AS occupation,
+          COALESCE(gm.emergency_contact_name, NULL) AS emergency_contact_name,
+          COALESCE(gm.emergency_contact_relationship, NULL) AS emergency_contact_relationship,
+          COALESCE(gm.emergency_contact_address, NULL) AS emergency_contact_address,
+          COALESCE(gm.emergency_contact_phone_home, NULL) AS emergency_contact_phone_home,
+          COALESCE(gm.emergency_contact_phone_work, NULL) AS emergency_contact_phone_work,
+          COALESCE(gm.fitness_goal, NULL) AS fitness_goal,
+          COALESCE(gm.blood_group, NULL) AS blood_group,
+          COALESCE(gm.pt_form_completed, 0) AS pt_form_completed,
+          u.id AS u_id,
+          COALESCE(gm.user_id, u.user_id) AS u_uuid,
+          u.email AS user_email,
+          u.role,
+          (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
+          (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
+          gm.join_date,
+          gm.expiry_date,
+          gm.created_at,
+          NULL AS paymentMode,
+          NULL AS price,
+          NULL AS pricePaid,
+          NULL AS secondPaymentPaid,
+          'members' AS source
+        FROM gym_members gm
+        INNER JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '')
+                          OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+        INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
+        ORDER BY gm.created_at DESC
+      `;
+      fallbackParams = [staffId];
+    } else {
+      fallbackSql = `
+        SELECT 
+          gm.id,
+          gm.member_id,
+          COALESCE(gm.fingerprint_id, NULL) AS fingerprint_id,
+          gm.name,
+          gm.phone,
+          gm.email,
+          gm.gender,
+          gm.height,
+          gm.weight,
+          gm.bmi,
+          gm.plan,
+          gm.status,
+          gm.address,
+          COALESCE(gm.dob, NULL) AS dob,
+          COALESCE(gm.age, NULL) AS age,
+          COALESCE(gm.employer, NULL) AS employer,
+          COALESCE(gm.occupation, NULL) AS occupation,
+          COALESCE(gm.emergency_contact_name, NULL) AS emergency_contact_name,
+          COALESCE(gm.emergency_contact_relationship, NULL) AS emergency_contact_relationship,
+          COALESCE(gm.emergency_contact_address, NULL) AS emergency_contact_address,
+          COALESCE(gm.emergency_contact_phone_home, NULL) AS emergency_contact_phone_home,
+          COALESCE(gm.emergency_contact_phone_work, NULL) AS emergency_contact_phone_work,
+          COALESCE(gm.fitness_goal, NULL) AS fitness_goal,
+          COALESCE(gm.blood_group, NULL) AS blood_group,
+          COALESCE(gm.pt_form_completed, 0) AS pt_form_completed,
+          u.id AS u_id,
+          COALESCE(gm.user_id, u.user_id) AS u_uuid,
+          u.email AS user_email,
+          u.role,
+          (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
+          (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
+          gm.join_date,
+          gm.expiry_date,
+          gm.created_at,
+          NULL AS paymentMode,
+          NULL AS price,
+          NULL AS pricePaid,
+          NULL AS secondPaymentPaid,
+          'members' AS source
+        FROM gym_members gm
+        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '')
+                          OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+        ORDER BY gm.created_at DESC
+      `;
+    }
+    [rows] = await db.query(fallbackSql, fallbackParams);
     res.json(rows);
   } catch (err) {
     console.error('getAllMembers error', err);
@@ -258,7 +449,7 @@ async function getMemberByUserId(req, res) {
   }
 }
 
-async function createMember(req, res) {
+async function createMemberRecord(connection, payload) {
   const {
     name, phone, email, gender, height, weight, bmi,
     plan, duration, joinDate, expiryDate, status,
@@ -269,66 +460,47 @@ async function createMember(req, res) {
     emergency_contact_phone_home, emergency_contact_phone_work,
     fitness_goal, blood_group, pt_form_completed,
     fingerprintId
-  } = req.body;
+  } = payload;
 
-  console.log('createMember received:', { name, phone, email, gender, height, weight, bmi, plan, duration, joinDate, expiryDate, status, photo: photo ? 'base64...' : null, notes, address, username });
+  const resolvedName = name || "Unknown";
+  const resolvedPhone = phone || "";
 
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // Use fallback values if name/phone are missing (allow all imports)
-    const resolvedName = name || "Unknown";
-    const resolvedPhone = phone || "";
-
-    // duplicate phone or email check in gym_members
-    if (resolvedPhone || email) {
-      const [existingMember] = await connection.query(
-        "SELECT id FROM gym_members WHERE (phone != '' AND phone = ?) OR (email IS NOT NULL AND email != '' AND email = ?)",
-        [resolvedPhone, email]
-      );
-
-      if (existingMember.length > 0) {
-        await connection.rollback();
-        return res.status(400).json({ message: "A member with this phone or email already exists in members directory" });
-      }
-    }
-
-    // We no longer block creation if a user account already exists.
-    // We just check if they exist so we can link/update their user account later.
-    const [existingUser] = await connection.query(
-      "SELECT id, user_id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+  if (resolvedPhone || email) {
+    const [existingMember] = await connection.query(
+      "SELECT id FROM gym_members WHERE (phone != '' AND phone = ?) OR (email IS NOT NULL AND email != '' AND email = ?)",
       [resolvedPhone, email]
     );
 
-    let userId_uuid = null;
-    if (existingUser.length > 0) {
-      userId_uuid = existingUser[0].user_id;
-    } else {
-      userId_uuid = uuidv4();
+    if (existingMember.length > 0) {
+      throw new Error("A member with this phone or email already exists in members directory");
     }
+  }
 
-    // Parse numeric fields early so they can be used in insert loop
-    const numHeight = height != null && !isNaN(height) ? Number(height) : null;
-    const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
-    const numBmi = bmi != null && !isNaN(bmi) ? Number(bmi) : null;
-    const numDuration = duration != null && !isNaN(duration) ? Number(duration) : null;
+  const [existingUser] = await connection.query(
+    "SELECT id, user_id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
+    [resolvedPhone, email]
+  );
 
-    // generate member_id using max numeric suffix, more robust than simple count
-    const [maxResult] = await connection.query(
-      "SELECT MAX(CAST(SUBSTRING(member_id,3) AS UNSIGNED)) as maxnum FROM gym_members"
-    );
-    let nextNumber = (maxResult[0].maxnum || 0) + 1;
-    let memberId = `MB${String(nextNumber).padStart(3, "0")}`;
+  let userId_uuid = existingUser.length > 0 ? existingUser[0].user_id : uuidv4();
 
-    // In rare case of duplicate (concurrent inserts), retry once
-    let inserted = false;
-    let result;
-    let insertResult;
-    for (let attempt = 0; attempt < 2 && !inserted; attempt++) {
-      try {
-        [result] = await connection.query(
-          `INSERT INTO gym_members
+  const numHeight = height != null && !isNaN(height) ? Number(height) : null;
+  const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
+  const numBmi = bmi != null && !isNaN(bmi) ? Number(bmi) : null;
+  const numDuration = duration != null && !isNaN(duration) ? Number(duration) : null;
+
+  const [maxResult] = await connection.query(
+    "SELECT MAX(CAST(member_id AS UNSIGNED)) as maxnum FROM gym_members"
+  );
+
+  let nextNumber = (maxResult[0].maxnum || 0) + 1;
+  let memberId = String(nextNumber);
+
+  let inserted = false;
+  let result;
+  for (let attempt = 0; attempt < 2 && !inserted; attempt++) {
+    try {
+      [result] = await connection.query(
+        `INSERT INTO gym_members
       (user_id, member_id, name, phone, email, gender, height, weight, bmi, plan, duration,
        join_date, expiry_date, status, photo, notes, address,
        dob, age, employer, occupation,
@@ -336,69 +508,60 @@ async function createMember(req, res) {
        emergency_contact_phone_home, emergency_contact_phone_work,
        fitness_goal, blood_group, pt_form_completed, fingerprint_id)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-          [
-            userId_uuid, memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
-            plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
-            dob || null, age || null, employer || null, occupation || null,
-            emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
-            emergency_contact_phone_home || null, emergency_contact_phone_work || null,
-            fitness_goal || null, blood_group || null,
-            pt_form_completed ? 1 : 0,
-            fingerprintId || null
-          ]
+        [
+          userId_uuid, memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
+          plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
+          dob || null, age || null, employer || null, occupation || null,
+          emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+          emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+          fitness_goal || null, blood_group || null,
+          pt_form_completed ? 1 : 0,
+          fingerprintId || null
+        ]
+      );
+      inserted = true;
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY' && err.sqlMessage.includes('member_id')) {
+        nextNumber += 1;
+        memberId = String(nextNumber);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  if (!inserted) {
+    throw new Error('Failed to generate unique member_id');
+  }
+
+  if (email || resolvedPhone) {
+    try {
+      const pwd = password || resolvedPhone || 'Gym123';
+      const hashed = await bcrypt.hash(pwd, 10);
+
+      if (existingUser.length > 0) {
+        await connection.query(
+          `UPDATE users SET password_hash = ?, username = ? WHERE id = ?`,
+          [hashed, username || null, existingUser[0].id]
         );
-        inserted = true;
-        insertResult = result;
-      } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY' && err.sqlMessage.includes('member_id')) {
-          // regenerate memberId and retry
-          nextNumber += 1;
-          memberId = `MB${String(nextNumber).padStart(3, "0")}`;
-        } else {
-          throw err;
-        }
-      }
-    }
-    if (!inserted) {
-      throw new Error('Failed to generate unique member_id');
-    }
-
-    // create or update user account for member (only if we have an email or phone)
-    if (email || resolvedPhone) {
-      try {
-        const pwd = password || resolvedPhone || 'Gym123'; // Fallback password to prevent NOT NULL error
-        const hashed = await bcrypt.hash(pwd, 10);
-
-        if (existingUser.length > 0) {
-          // Update existing user login
-          await connection.query(
-            `UPDATE users SET password_hash = ?, username = ? WHERE id = ?`,
-            [hashed, username || null, existingUser[0].id]
-          );
-        } else {
-          await connection.query(
-            `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
+      } else {
+        await connection.query(
+          `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
                VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId_uuid, email || null, hashed, 'user', username || null, resolvedPhone || null]
-          );
-        }
-      } catch (userErr) {
-        if (userErr.code === 'ER_DUP_ENTRY') {
-          // If we hit a duplicate email/mobile in users that wasn't caught by existingUser query
-          // (e.g. concurrent insert), just warn and skip
-          console.warn('createMember: user already exists (duplicate entry), skipping user insert');
-        } else {
-          console.error('createMember user insert error', userErr);
-          throw userErr;
-        }
+          [userId_uuid, email || null, hashed, 'user', username || null, resolvedPhone || null]
+        );
+      }
+    } catch (userErr) {
+      if (userErr.code === 'ER_DUP_ENTRY') {
+        console.warn('createMember: user already exists (duplicate entry), skipping user insert');
+      } else {
+        throw userErr;
       }
     }
+  }
 
-    await connection.commit();
-
-    // fetch back using the richer query so the client sees counts / user_email
-    const [fetched] = await connection.query(
-      `
+  const [fetched] = await connection.query(
+    `
       SELECT gm.*,
              u.id AS u_id,
              u.user_id AS u_uuid,
@@ -407,23 +570,46 @@ async function createMember(req, res) {
              0 AS diet_count
       FROM gym_members gm
       LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      WHERE gm.id = ?
-      `,
-      [result.insertId]
-    );
-    const member = fetched[0] || {
-      id: result.insertId,
-      member_id: memberId,
-      name, phone, email, gender, height: numHeight, weight: numWeight, bmi: numBmi, plan, duration: numDuration,
-      join_date: joinDate, expiry_date: expiryDate, status, photo, notes, address
-    };
+      WHERE gm.member_id = ?
+    `,
+    [memberId]
+  );
 
+  return fetched[0] || {
+    id: result.insertId,
+    member_id: memberId,
+    name: resolvedName,
+    phone: resolvedPhone,
+    email,
+    gender,
+    height: numHeight,
+    weight: numWeight,
+    bmi: numBmi,
+    plan,
+    duration: numDuration,
+    join_date: joinDate,
+    expiry_date: expiryDate,
+    status,
+    photo,
+    notes,
+    address
+  };
+}
+
+async function createMember(req, res) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const member = await createMemberRecord(connection, req.body);
+    await connection.commit();
     res.json(member);
   } catch (err) {
     await connection.rollback();
-    console.error('createMember error:', err.message);
-    console.error('Full error:', err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error('createMember error:', err.message || err);
+    if (err.message && err.message.includes('already exists')) {
+      return res.status(400).json({ message: err.message });
+    }
+    res.status(500).json({ message: 'Server error', error: err.message });
   } finally {
     connection.release();
   }
@@ -739,13 +925,14 @@ async function deleteAllMembers(req, res) {
   }
 }
 
-module.exports = { 
-  getAllMembers, 
-  getMemberById, 
-  getMemberByUserId, 
-  createMember, 
-  updateMember, 
-  deleteMember, 
+module.exports = {
+  getAllMembers,
+  getMemberById,
+  getMemberByUserId,
+  createMember,
+  createMemberRecord,
+  updateMember,
+  deleteMember,
   getMemberPlans,
   deleteAllMembers
 };

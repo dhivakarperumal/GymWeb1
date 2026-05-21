@@ -45,6 +45,7 @@ const pageInfo = {
   "/admin/products": { title: "Products", icon: Dumbbell },
   "/admin/addproducts": { title: "Add Products", icon: Plus },
   "/admin/orders": { title: "Orders", icon: ShoppingCart },
+  "/admin/trainer-referred-plans": { title: "Trainer Referred Plans", icon: ClipboardList },
   "/admin/members": { title: "Members", icon: Users },
   "/admin/addmembers": { title: "Add Members", icon: Plus },
   "/admin/plansall": { title: "All Plans", icon: ClipboardList },

@@ -189,7 +189,7 @@ const Billing = () => {
     }
 
     if (shipping.phone.length !== 10) {
-      return toast.error("A valid 10-digit phone number is required");
+      return toast.error("A valid 10-digit mobile number is required");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -319,7 +319,7 @@ const Billing = () => {
           <option value="">-- Choose Member</option>
           {members.map((m) => (
             <option key={m.id || m.member_id || m.u_id} value={m.id || m.member_id || m.u_id} className="text-black">
-              {m.name || m.displayName || m.username} ({m.phone || m.mobile || "No Phone"}) 
+              {m.name || m.displayName || m.username} ({m.phone || m.mobile || "No Mobile"}) 
             </option>
           ))}
         </select>
@@ -399,13 +399,13 @@ const Billing = () => {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400 uppercase block mb-2">Phone <span className="text-red-500">*</span></label>
+            <label className="text-xs text-gray-400 uppercase block mb-2">Mobile Number <span className="text-red-500">*</span></label>
             <input
               className={inputClass}
               value={shipping.phone}
               onChange={(e) => setShipping({ ...shipping, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
               maxLength={10}
-              placeholder="10-digit phone"
+              placeholder="10-digit mobile number"
             />
           </div>
           <div>

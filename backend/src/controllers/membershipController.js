@@ -8,9 +8,16 @@ async function getAllMemberships(req, res) {
              COALESCE(m.userName, u.username) as username, 
              COALESCE(m.userEmail, u.email) as email, 
              COALESCE(m.userPhone, u.mobile) as mobile, 
-             u.role
+             u.role,
+             gm.join_date as memberJoinDate,
+             gm.expiry_date as memberExpiryDate
       FROM memberships m
       LEFT JOIN users u ON m.userId = u.id
+      LEFT JOIN gym_members gm ON 
+        (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR 
+        (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '') OR
+        (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
+        (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
       ORDER BY m.createdAt DESC
     `);
     res.json(rows);
@@ -70,9 +77,15 @@ async function createMembership(req, res) {
       endDate,
       paymentId,
       paymentMode,
+      paymentDate,
       status,
       secondPaymentPaid,
       paymentStatus,
+      referredBy,
+      trainerId,
+      trainerName,
+      discount,
+      amount,
     } = req.body;
 
     const actualPricePaid = pricePaid !== undefined ? pricePaid : price;
@@ -88,14 +101,25 @@ async function createMembership(req, res) {
       else finalPaymentStatus = 'Pending';
     }
 
+    // If provided userId does not exist in `users` table, null it to avoid FK errors
+    let resolvedUserId = userId;
+    if (userId) {
+      try {
+        const [ucheck] = await db.query('SELECT id FROM users WHERE id = ?', [userId]);
+        if (!ucheck || ucheck.length === 0) resolvedUserId = null;
+      } catch (e) {
+        resolvedUserId = null;
+      }
+    }
+
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, status, paymentStatus)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
-      userId,
+      resolvedUserId,
       userName || null,
       userEmail || null,
       userPhone || null,
@@ -109,8 +133,14 @@ async function createMembership(req, res) {
       endDate,
       paymentId || null,
       paymentMode || null,
+      paymentDate || null,
       status || 'active',
       finalPaymentStatus,
+      referredBy || null,
+      trainerId || null,
+      trainerName || null,
+      discount !== undefined ? discount : 0,
+      amount !== undefined ? amount : 0,
     ];
 
     const [result] = await db.query(query, values);
@@ -126,10 +156,10 @@ async function createMembership(req, res) {
                duration = ?, 
                join_date = ?, 
                expiry_date = ?,
-               status = 'active'
+               status = ?
            WHERE (email = ? AND email IS NOT NULL AND email != '') 
               OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
-          [planName, duration, startDate, endDate, u.email, u.mobile]
+          [planName, duration, startDate, endDate, status || 'active', u.email, u.mobile]
         );
       }
     } catch (syncErr) {
@@ -143,6 +173,7 @@ async function createMembership(req, res) {
 
   } catch (error) {
     console.error("Create membership error:", error);
+    if (error && error.stack) console.error(error.stack);
     res.status(500).json({
       success: false,
       message: "Failed to create membership",
@@ -205,15 +236,22 @@ async function updateMembership(req, res) {
     const { id } = req.params;
     const allowedFields = [
       "status",
+      "price",
       "pricePaid",
       "secondPaymentPaid",
       "paymentMode",
+      "paymentDate",
       "paymentId",
+      "planId",
       "startDate",
       "endDate",
       "duration",
       "planName",
       "paymentStatus",
+      "trainerId",
+      "trainerName",
+      "discount",
+      "amount",
     ];
 
     const updates = [];
@@ -243,7 +281,7 @@ async function updateMembership(req, res) {
 
     // Sync with gym_members table
     try {
-      const [membershipRows] = await db.query("SELECT userId, planName, duration, startDate, endDate FROM memberships WHERE id = ?", [id]);
+      const [membershipRows] = await db.query("SELECT userId, planName, duration, startDate, endDate, status FROM memberships WHERE id = ?", [id]);
       if (membershipRows.length > 0) {
         const m = membershipRows[0];
         const [userRows] = await db.query("SELECT email, mobile FROM users WHERE id = ?", [m.userId]);
@@ -254,10 +292,11 @@ async function updateMembership(req, res) {
              SET plan = ?, 
                  duration = ?, 
                  join_date = ?, 
-                 expiry_date = ?
+                 expiry_date = ?,
+                 status = ?
              WHERE (email = ? AND email IS NOT NULL AND email != '') 
                 OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
-            [m.planName, m.duration, m.startDate, m.endDate, u.email, u.mobile]
+            [m.planName, m.duration, m.startDate, m.endDate, m.status, u.email, u.mobile]
           );
         }
       }
@@ -276,15 +315,23 @@ async function updateMembership(req, res) {
 async function getExpiringSoon(req, res) {
   try {
     const { trainerUserId } = req.query;
-    let trainerId = null;
+    let staffId = null;
 
     if (trainerUserId) {
       const [userRows] = await db.query(
-        'SELECT id FROM users WHERE id = ?',
+        'SELECT id, email, username FROM users WHERE id = ?',
         [trainerUserId]
       );
       if (userRows.length > 0) {
-        trainerId = trainerUserId;
+        const u = userRows[0];
+        // Find matching staff record by email or username
+        const [staffRows] = await db.query(
+          'SELECT id FROM staff WHERE email = ? OR username = ? LIMIT 1',
+          [u.email, u.username]
+        );
+        if (staffRows.length > 0) {
+          staffId = staffRows[0].id;
+        }
       }
     }
 
@@ -296,8 +343,13 @@ async function getExpiringSoon(req, res) {
       LEFT JOIN users u ON m.userId = u.id
     `;
     
-    if (trainerId) {
-      sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
+    if (trainerUserId) {
+      if (staffId) {
+        sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
+      } else {
+        // If trainerUserId was provided but no staff matches, return empty to avoid mismatch
+        return res.json([]);
+      }
     }
 
     // Add filter: expiring in next 5 days
@@ -307,7 +359,7 @@ async function getExpiringSoon(req, res) {
              AND m.endDate <= DATE_ADD(CURDATE(), INTERVAL 5 DAY)
              ORDER BY m.endDate ASC `;
 
-    const [rows] = await db.query(sql, trainerId ? [trainerId] : []);
+    const [rows] = await db.query(sql, staffId ? [staffId] : []);
     res.json(rows);
   } catch (error) {
     console.error("Error fetching expiring memberships:", error);

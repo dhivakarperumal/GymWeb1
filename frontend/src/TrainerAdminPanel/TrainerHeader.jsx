@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -35,6 +35,13 @@ const pageTitles = {
   "/trainer/session-tracking": "Session Tracking",
   "/trainer/pricing": "Pricing",
   "/trainer/followupenquriy": "Follow-up Enquiry",
+  "/trainer/buyplanadmin": "Assign Plans",
+  "/trainer/payments": "Payments",
+  "/trainer/member-attendance": "Member Attendance",
+  "/trainer/expiry-members": "Plan Expiry Details",
+  "/trainer/settings": "Settings",
+  "/trainer/settings/usermanagement": "User Management",
+  "/trainer/settings/reviews": "Reviews Settings",
 };
 
 /* ------------------------------------------------------------------ */
@@ -66,8 +73,11 @@ const clearCheckin = () => localStorage.removeItem(CHECKIN_KEY);
 /* ------------------------------------------------------------------ */
 
 const Header = ({ onMenuClick }) => {
-  const [activeDropdown, setActiveDropdown] = useState(null); // 'notifications', 'profile'
-  const [alerts, setAlerts] = useState([]);
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'notifications', 'expiry', 'profile'
+  const [alerts, setAlerts] = useState({
+    expiring: [],
+    assignments: []
+  });
   const [fetchingAlerts, setFetchingAlerts] = useState(false);
 
   // Check-in state
@@ -130,13 +140,14 @@ const Header = ({ onMenuClick }) => {
       if (!user?.id) return;
       try {
         setFetchingAlerts(true);
-        const alertsData = [];
+        const expiringData = [];
+        const assignmentsData = [];
 
         // 1. Fetch expiring soon
         try {
           const expRes = await api.get(`/memberships/alerts/expiring-soon?trainerUserId=${user.id}`);
           const expData = expRes.data || [];
-          alertsData.push(...expData.map(d => ({ ...d, alertType: 'expiration' })));
+          expiringData.push(...expData);
         } catch (e) {
           console.error("Failed to fetch expiring alerts", e);
         }
@@ -154,13 +165,12 @@ const Header = ({ onMenuClick }) => {
             return assignDate === todayStr;
           });
 
-          alertsData.push(...recentAssigns.map(a => ({ ...a, alertType: 'new_assignment' })));
+          assignmentsData.push(...recentAssigns);
         } catch (e) {
           console.error("Failed to fetch new assignments alerts", e);
         }
 
-        // Sort by date or just set
-        setAlerts(alertsData);
+        setAlerts({ expiring: expiringData, assignments: assignmentsData });
       } catch (err) {
         console.error("Failed to fetch membership alerts:", err);
       } finally {
@@ -379,7 +389,72 @@ const Header = ({ onMenuClick }) => {
             </button>
           )}
 
-          {/* EXPIRING PLANS ICON */}
+          {/* EXPIRING PLANS (CLOCK) ICON */}
+          <div className="relative">
+            <button
+              onClick={() => toggleDropdown('expiry')}
+              className={`p-2 rounded-xl transition relative ${activeDropdown === 'expiry' ? 'bg-[#FF3131] text-white animate-pulse' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              title="Expiring Memberships"
+            >
+              <Clock className="w-5 h-5" />
+              {alerts.expiring.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-lg">
+                  {alerts.expiring.length}
+                </span>
+              )}
+            </button>
+            {activeDropdown === 'expiry' && (
+              <div className="absolute right-0 mt-4 w-80 max-h-[450px] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-red-500" /> Expirations
+                  </h3>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold uppercase tracking-wider">
+                    {alerts.expiring.length} Active
+                  </span>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {fetchingAlerts ? (
+                    <div className="p-10 text-center">
+                      <div className="w-6 h-6 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin mx-auto" />
+                    </div>
+                  ) : alerts.expiring.length > 0 ? (
+                    <div className="divide-y divide-white/5">
+                      {alerts.expiring.map((item, idx) => {
+                        const daysLeft = Math.ceil((new Date(item.endDate) - new Date()) / (1000 * 60 * 60 * 24));
+                        return (
+                          <Link key={idx} to="/trainer/expiry-members" onClick={() => setActiveDropdown(null)} className="p-4 block hover:bg-white/5 transition group">
+                            <div className="flex gap-3">
+                              <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                <Clock className="w-4 h-4 text-red-500" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-white group-hover:text-red-400 transition-colors uppercase truncate">{item.username}</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5 truncate">{item.planName}</p>
+                                <div className="mt-2 flex items-center justify-between">
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-400 uppercase">
+                                    Expiring {daysLeft <= 0 ? 'Today' : `in ${daysLeft}d`}
+                                  </span>
+                                  <span className="text-[9px] text-gray-600">{new Date(item.endDate).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-10 text-center text-gray-500 text-xs">No expiring memberships today.</div>
+                  )}
+                </div>
+                <Link to="/trainer/expiry-members" onClick={() => setActiveDropdown(null)} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-[#FF3131] hover:text-red-400 transition uppercase tracking-widest block">
+                  View All Records
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* MEMBER ALERTS (BELL) ICON */}
           <div className="relative">
             <button
               onClick={() => toggleDropdown('notifications')}
@@ -387,115 +462,79 @@ const Header = ({ onMenuClick }) => {
               title="Member Alerts"
             >
               <Bell className="w-5 h-5" />
-              {alerts.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-lg animate-pulse">
-                  {alerts.length}
+              {alerts.assignments.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shadow-lg animate-pulse">
+                  {alerts.assignments.length}
                 </span>
               )}
             </button>
 
             {activeDropdown === 'notifications' && (
               <div className="absolute right-0 mt-4 w-80 max-h-[450px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-                  <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-orange-500" /> Member Alerts
-                    </h3>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-bold uppercase tracking-wider">
-                      {alerts.length} Records
-                    </span>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    {fetchingAlerts ? (
-                      <div className="p-10 text-center">
-                        <div className="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto" />
-                      </div>
-                    ) : alerts.length > 0 ? (
-                      <div className="divide-y divide-white/5">
-                        {alerts.map((alert, idx) => {
-                          if (alert.alertType === 'new_assignment') {
-                            const daysAgo = Math.floor((new Date() - new Date(alert.updatedAt)) / (1000 * 60 * 60 * 24));
-                            return (
-                              <Link
-                                key={idx}
-                                to="/trainer"
-                                onClick={() => setActiveDropdown(null)}
-                                className="p-4 block border-b border-white/5 hover:bg-white/5 transition group"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 shrink-0">
-                                    <Bell className="w-4 h-4" />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors uppercase truncate">
-                                      {alert.username || 'New Member'}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 mt-1">
-                                      Plan: <span className="text-gray-300">{alert.planName || '-'}</span>
-                                    </p>
-                                    <div className="mt-2 flex items-center justify-between">
-                                      <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400">
-                                        New Assignment
-                                      </span>
-                                      <span className="text-[9px] text-gray-600">
-                                        {daysAgo <= 0 ? "Today" : `${daysAgo}d ago`}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </Link>
-                            );
-                          } else {
-                            const daysLeft = Math.ceil((new Date(alert.endDate) - new Date()) / (1000 * 60 * 60 * 24));
-                            return (
-                              <Link
-                                key={idx}
-                                to="/trainer"
-                                onClick={() => setActiveDropdown(null)}
-                                className="p-4 block border-b border-white/5 hover:bg-white/5 transition group"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 shrink-0">
-                                    <Bell className="w-4 h-4" />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-white group-hover:text-orange-400 transition-colors uppercase truncate">
-                                      {alert.username}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 mt-1">
-                                      Plan: <span className="text-gray-300">{alert.planName}</span>
-                                    </p>
-                                    <div className="mt-2 flex items-center justify-between">
-                                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${
-                                        daysLeft <= 1 ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"
-                                      }`}>
-                                        {daysLeft <= 0 ? "Expiring Today" : `In ${daysLeft} days`}
-                                      </span>
-                                      <span className="text-[9px] text-gray-600">
-                                        {new Date(alert.endDate).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </Link>
-                            );
-                          }
-                        })}
-                      </div>
-                    ) : (
-                      <div className="p-10 text-center">
-                        <Bell className="w-8 h-8 text-white/10 mx-auto mb-3" />
-                        <p className="text-xs text-gray-500">No alerts for your members.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-3 bg-white/5 border-t border-white/10 text-center">
-                    <Link to="/trainer" onClick={() => setActiveDropdown(null)} className="text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest">
-                      View My Assignments
-                    </Link>
-                  </div>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-orange-500" /> Member Alerts
+                  </h3>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold uppercase tracking-wider">
+                    {alerts.assignments.length} Records
+                  </span>
                 </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {fetchingAlerts ? (
+                    <div className="p-10 text-center">
+                      <div className="w-6 h-6 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto" />
+                    </div>
+                  ) : alerts.assignments.length > 0 ? (
+                    <div className="divide-y divide-white/5">
+                      {alerts.assignments.map((alert, idx) => {
+                        const daysAgo = Math.floor((new Date() - new Date(alert.updatedAt)) / (1000 * 60 * 60 * 24));
+                        return (
+                          <Link
+                            key={idx}
+                            to="/trainer"
+                            onClick={() => setActiveDropdown(null)}
+                            className="p-4 block hover:bg-white/5 transition group"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 shrink-0">
+                                <Bell className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors uppercase truncate">
+                                  {alert.username || 'New Member'}
+                                </p>
+                                <p className="text-[10px] text-gray-400 mt-1">
+                                  Plan: <span className="text-gray-300">{alert.planName || '-'}</span>
+                                </p>
+                                <div className="mt-2 flex items-center justify-between">
+                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400">
+                                    New Assignment
+                                  </span>
+                                  <span className="text-[9px] text-gray-600">
+                                    {daysAgo <= 0 ? "Today" : `${daysAgo}d ago`}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-10 text-center">
+                      <Bell className="w-8 h-8 text-white/10 mx-auto mb-3" />
+                      <p className="text-xs text-gray-500">No new member assignments today.</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3 bg-white/5 border-t border-white/10 text-center">
+                  <Link to="/trainer" onClick={() => setActiveDropdown(null)} className="text-[10px] font-bold text-orange-500 hover:text-orange-400 transition uppercase tracking-widest block">
+                    View My Assignments
+                  </Link>
+                </div>
+              </div>
             )}
           </div>
 

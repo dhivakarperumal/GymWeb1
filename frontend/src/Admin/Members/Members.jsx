@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 <<<<<<< Updated upstream
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, RotateCcw } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 =======
 import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, RotateCcw } from "lucide-react";
@@ -25,6 +25,29 @@ const formatDobToDDMMYYYY = (dateString) => {
   const parsed = dayjs(dateString);
   if (parsed.isValid()) return parsed.format("DD-MM-YYYY");
   return dateString;
+};
+
+const isUpdatePlanEnabled = (m) => {
+  // If the member does not have an active plan, they need a plan
+  if (!m.plan || m.plan === 'user' || m.status !== 'active') {
+    return true;
+  }
+  // Allow renewal if expired or expiring within 5 days
+  if (!m.expiry_date) return true;
+  const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
+  return days <= 5;
+};
+
+const hasActiveOrPendingPlan = (m) => {
+  return !!(m.plan && m.plan !== 'user' && m.status === 'active');
+};
+
+const canChangePlan = (m) => {
+  return !!(
+    m.plan &&
+    m.plan !== 'user' &&
+    (m.status === 'active' || m.status === 'pending')
+  );
 };
 
 const Members = () => {
@@ -106,7 +129,7 @@ const Members = () => {
 
     // 2. Plan Filter
     let matchesPlanFilter = true;
-    const hasPlan = m.plan && m.plan !== 'user' && m.status === 'active';
+    const hasPlan = hasActiveOrPendingPlan(m);
     if (filterType === "withPlan") matchesPlanFilter = hasPlan;
     if (filterType === "withoutPlan") matchesPlanFilter = !hasPlan;
 
@@ -154,14 +177,14 @@ const Members = () => {
     }
 
     const dataToExport = members.map((m, index) => ({
-      "S.No": index + 1,
+      "Member ID": m.member_id || "-",
       Name: m.name || "N/A",
-      Phone: m.phone || "N/A",
+      "Mobile Number": m.phone || "N/A",
       Email: m.email || m.user_email || "-",
       Role: m.role || m.plan || "Member",
       Source: m.source === "users" ? "User" : "Gym Member",
-      "Join Date": m.join_date || "-",
-      "Expiry Date": m.expiry_date || "-",
+      "Join Date": (hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("YYYY-MM-DD") : "-",
+      "Expiry Date": (hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("YYYY-MM-DD") : "-",
       Status: m.status || "active",
       "Plan Price": m.price || "-",
       "Payment Status": m.paymentMode === 'emi' ? "Pending" : m.plan ? "Paid" : "N/A",
@@ -179,7 +202,7 @@ const Members = () => {
     const template = [
       {
         "Full Name": "John Doe",
-        "Phone Number": "9876543210",
+        "Mobile Number": "9876543210",
         "Email Address": "john@example.com",
         "Gender": "Male",
         "BMI": "22.9",
@@ -240,7 +263,7 @@ const Members = () => {
 
         for (const row of jsonData) {
           const email = row["Email Address"] || row.Email || row.email || "";
-          const phone = String(row["Phone Number"] || row.Phone || row.phone || row.Mobile || "");
+          const phone = String(row["Mobile Number"] || row["Phone Number"] || row.Phone || row.phone || row.Mobile || "");
           const name = row["Full Name"] || row.Name || row.name || "Unknown";
 
           const username = row.Username || row.username || (email ? email.split('@')[0] : name.replace(/\s+/g, '').toLowerCase());
@@ -280,7 +303,7 @@ const Members = () => {
             employer: row.Employer || row.employer || "",
             occupation: row.Occupation || row.occupation || "",
             emergency_contact_name: row["Emergency Contact Name"] || row.emergency_contact_name || "",
-            emergency_contact_phone_home: row["Emergency Phone"] || row.emergency_contact_phone || ""
+            emergency_contact_phone_home: row["Emergency Mobile"] || row["Emergency Phone"] || row.emergency_contact_phone || ""
           };
 
           try {
@@ -345,7 +368,7 @@ const Members = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search name or phone"
+            placeholder="Search name or mobile"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -491,9 +514,11 @@ const Members = () => {
           <table className="w-full min-w-[700px] text-base text-gray-200">
             <thead className="bg-white/10 text-white">
               <tr>
-                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">S No</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">
+                  Member ID
+                </th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Phone</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">Mobile Number</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Start Date</th>
@@ -513,13 +538,12 @@ const Members = () => {
               ) : (
                 paginatedData.map((m, index) => (
                   <tr key={m.id || `u-${m.u_id}`} className="border-b border-white/5 hover:bg-white/5 transition">
-                    <td className="px-4 py-5 font-medium text-gray-400">{startIndex + index + 1}</td>
+                    <td className="px-4 py-5 font-medium text-gray-400">
+                      {m.member_id || "-"}
+                    </td>
                     <td className="px-4 py-5 font-medium text-white">{m.name || "N/A"}</td>
                     <td className="px-4 py-5">
                       <div className="font-medium text-gray-300">{m.phone || "N/A"}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        DOB: {formatDobToDDMMYYYY(m.dob)}
-                      </div>
                     </td>
 
 
@@ -529,15 +553,15 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                      {(hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(m.plan && m.plan !== 'user' && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                      {(hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
                     </td>
 
                     <td className="px-4 py-5">
                       {(() => {
-                        if (!(m.plan && m.plan !== 'user') || !m.expiry_date) return <span className="text-white/30">-</span>;
+                        if (!hasActiveOrPendingPlan(m) || !m.expiry_date) return <span className="text-white/30">-</span>;
                         // Use startOf('day') for both to ensure we count full days and add +1 for inclusive counting
                         const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                         if (days <= 0) {
@@ -557,7 +581,7 @@ const Members = () => {
                     </td>
 
                     <td className="px-4 py-5">
-                      {!(m.plan && m.plan !== 'user' && m.status === "active") ? (
+                      {!hasActiveOrPendingPlan(m) ? (
                         <span className="text-white/30">-</span>
                       ) : m.pt_form_completed ? (
                         <div className="flex items-center gap-2">
@@ -599,6 +623,33 @@ const Members = () => {
                       >
                         <Eye size={16} />
                       </button>
+                      {(() => {
+                        const enabled = isUpdatePlanEnabled(m);
+                        return (
+                          <button
+                            onClick={() => {
+                              if (enabled) navigate("/admin/buyplanadmin", { state: { member: m } });
+                            }}
+                            disabled={!enabled}
+                            className={`p-2 rounded-lg text-white transition ${enabled
+                                ? "bg-orange-500/80 hover:bg-orange-500 cursor-pointer"
+                                : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
+                              }`}
+                            title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
+                          >
+                            <CreditCard size={16} />
+                          </button>
+                        );
+                      })()}
+                      {canChangePlan(m) && (
+                        <button
+                          onClick={() => navigate("/admin/buyplanadmin", { state: { member: m, forceChange: true } })}
+                          className="p-2 rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition"
+                          title="Change Plan"
+                        >
+                          <RotateCcw size={16} />
+                        </button>
+                      )}
 <<<<<<< Updated upstream
 =======
                       {(() => {
@@ -677,7 +728,9 @@ const Members = () => {
                       </div>
                       <div>
                         <p className="text-lg font-bold text-white line-clamp-1">{m.name || "N/A"}</p>
-                        <p className="text-xs text-gray-400">{startIndex + index + 1}. Member ID: #{m.id || "N/A"}</p>
+                        <p className="text-xs text-gray-400">
+                          Member ID: #{m.member_id || "N/A"}
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -697,6 +750,33 @@ const Members = () => {
                       >
                         <Eye size={14} />
                       </button>
+                      {(() => {
+                        const enabled = isUpdatePlanEnabled(m);
+                        return (
+                          <button
+                            onClick={() => {
+                              if (enabled) navigate("/admin/buyplanadmin", { state: { member: m } });
+                            }}
+                            disabled={!enabled}
+                            className={`p-2 rounded-lg transition ${enabled
+                                ? "bg-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-white cursor-pointer"
+                                : "bg-white/5 text-white/10 cursor-not-allowed border border-white/5"
+                              }`}
+                            title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
+                          >
+                            <CreditCard size={14} />
+                          </button>
+                        );
+                      })()}
+                      {canChangePlan(m) && (
+                        <button
+                          onClick={() => navigate("/admin/buyplanadmin", { state: { member: m, forceChange: true } })}
+                          className="p-2 rounded-lg bg-violet-500/20 text-violet-500 hover:bg-violet-500 hover:text-white transition"
+                          title="Change Plan"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
 <<<<<<< Updated upstream
 =======
                       {(() => {
@@ -753,15 +833,27 @@ const Members = () => {
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <Phone size={14} className="text-orange-500" />
-                      {m.phone || "No phone"}
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-300">
-                      <Calendar size={14} className="text-orange-500" />
-                      DOB: {m.dob ? dayjs(m.dob).format("DD/MM/YYYY") : "-"}
+                      {m.phone || "No mobile"}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <Mail size={14} className="text-orange-500" />
                       <span className="truncate">{m.email || m.user_email || "No email"}</span>
+                    </div>
+
+                    {/* MEMBERSHIP DATES IN CARD VIEW */}
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider">Start Date</p>
+                        <p className="text-xs text-gray-300 font-medium">
+                          {(hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider">End Date</p>
+                        <p className="text-xs text-gray-300 font-medium">
+                          {(hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
@@ -809,15 +901,21 @@ const Members = () => {
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center">
                     <p className="text-[10px] text-gray-400 uppercase mb-1">Validity</p>
                     <div className="text-[10px] font-bold text-white flex flex-col">
-                      <span>{(m.plan && m.plan !== 'user' && m.join_date) ? dayjs(m.join_date).format("DD/MM/YY") : "-"}</span>
-                      <span className="text-gray-500">to</span>
-                      <span>{(m.plan && m.plan !== 'user' && m.expiry_date) ? dayjs(m.expiry_date).format("DD/MM/YY") : "-"}</span>
+                      {hasActiveOrPendingPlan(m) ? (
+                        <>
+                          <span>{m.join_date ? dayjs(m.join_date).format("DD/MM/YY") : "-"}</span>
+                          <span className="text-gray-500">to</span>
+                          <span>{m.expiry_date ? dayjs(m.expiry_date).format("DD/MM/YY") : "-"}</span>
+                        </>
+                      ) : (
+                        <span className="text-white/30">-</span>
+                      )}
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-2 border border-white/10 text-center flex flex-col justify-center items-center">
                     <p className="text-[10px] text-gray-400 uppercase mb-1">Remaining</p>
                     {(() => {
-                      if (!(m.plan && m.plan !== 'user') || !m.expiry_date) return <span className="text-white/30">-</span>;
+                      if (!hasActiveOrPendingPlan(m) || !m.expiry_date) return <span className="text-white/30">-</span>;
                       const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                       if (days <= 0) {
                         return <span className="text-red-400 text-[10px] font-bold uppercase">Expired</span>;

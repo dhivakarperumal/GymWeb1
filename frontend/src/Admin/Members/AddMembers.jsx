@@ -11,6 +11,8 @@ const API = `/members`;
 const AddMember = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [originalPlan, setOriginalPlan] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -41,6 +43,20 @@ const AddMember = () => {
   const location = useLocation();
   const isEdit = Boolean(id);
 
+  // ✏️ FETCH PLANS
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const res = await api.get('/plans');
+        const activePlans = (res.data || []).filter((p) => p.active);
+        setPlans(activePlans);
+      } catch (err) {
+        console.error('Failed to load plans:', err);
+      }
+    };
+    fetchPlans();
+  }, []);
+
   // ✏️ FETCH MEMBER (EDIT) OR USER (NEW)
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -52,6 +68,7 @@ const AddMember = () => {
           const res = await api.get(`${API}/${id}`);
           const data = res.data;
 
+          setOriginalPlan(data.plan || null);
           setForm({
             ...data,
             username: data.email ? data.email.split('@')[0] : '',
@@ -98,9 +115,28 @@ const AddMember = () => {
       };
       fetchUser();
     }
-  }, [id, isEdit, location.search]);
+  }, [id, isEdit, location.search, plans]);
 
   const [extensionDays, setExtensionDays] = useState(5);
+
+  const parseDurationValue = (value) => {
+    if (value == null || value === "") return null;
+    const raw = value.toString().trim().toLowerCase();
+    const numberMatch = raw.match(/(\d+(?:\.\d+)?)/);
+    const amount = numberMatch ? Number(numberMatch[1]) : NaN;
+    if (Number.isNaN(amount)) return null;
+    if (raw.includes("year")) return Math.round(amount * 12);
+    if (raw.includes("month")) return Math.round(amount);
+    if (raw.includes("week")) return Math.ceil((amount * 7) / 30);
+    if (raw.includes("day")) return Math.ceil(amount / 30);
+    return Number.isFinite(amount) ? Math.round(amount) : null;
+  };
+
+  const calculateExpiryDate = (joinDate, duration) => {
+    const durationMonths = parseDurationValue(duration);
+    if (!joinDate || !durationMonths || durationMonths <= 0) return "";
+    return dayjs(joinDate).add(durationMonths, "month").format("YYYY-MM-DD");
+  };
 
   // 🎂 AGE
   useEffect(() => {
@@ -124,14 +160,12 @@ const AddMember = () => {
     }
   }, [form.height, form.weight]);
 
-  // 📅 EXPIRY
+  // 📅 AUTO-UPDATE EXPIRY DATE when start date or duration changes
   useEffect(() => {
-    if (form.joinDate && form.duration) {
-      const expiry = dayjs(form.joinDate)
-        .add(Number(form.duration), "month")
-        .format("YYYY-MM-DD");
-
-      setForm((prev) => ({ ...prev, expiryDate: expiry }));
+    const durationMonths = parseDurationValue(form.duration);
+    if (form.joinDate && durationMonths && durationMonths > 0) {
+      const calculatedExpiry = calculateExpiryDate(form.joinDate, durationMonths);
+      setForm((prev) => ({ ...prev, expiryDate: calculatedExpiry }));
     }
   }, [form.joinDate, form.duration]);
 
@@ -142,10 +176,12 @@ const AddMember = () => {
       setForm(prev => ({ ...prev, email: value, username: uname }));
     } else if (name === 'phone') {
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
-      setForm(prev => ({ ...prev, phone: numericValue, password: prev.dob ? dayjs(prev.dob).format('DD-MM-YYYY') : numericValue }));
+      setForm(prev => ({ ...prev, phone: numericValue, password: numericValue }));
     } else if (name === 'dob') {
-      const formattedDob = value ? dayjs(value).format('DD-MM-YYYY') : "";
-      setForm(prev => ({ ...prev, dob: value, password: formattedDob }));
+      setForm(prev => ({ ...prev, dob: value }));
+    } else if (name === 'duration') {
+      const expiryDate = calculateExpiryDate(form.joinDate, value);
+      setForm(prev => ({ ...prev, duration: value, expiryDate }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -261,7 +297,7 @@ const AddMember = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70 ml-1">Phone Number <span className="text-red-500">*</span></label>
+                <label className="text-sm font-medium text-white/70 ml-1">Mobile Number <span className="text-red-500">*</span></label>
               <input name="phone" value={form.phone} onChange={handleChange} maxLength={10} placeholder="e.g. 9876543210" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
             </div>
 
@@ -282,7 +318,7 @@ const AddMember = () => {
 
             {!isEdit && (
               <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as DOB)</label>
+                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as Mobile Number)</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -363,62 +399,92 @@ const AddMember = () => {
               </div>
             </div>
 
-            {isEdit && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Start Date</label>
-                <input type="date" name="joinDate" value={form.joinDate} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-              </div>
-            )}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Start Date</label>
+              <input type="date" name="joinDate" value={form.joinDate} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
 
-            {isEdit && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Plan</label>
-                <input name="plan" value={form.plan} onChange={handleChange} placeholder="e.g. Monthly Pro" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-              </div>
-            )}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">
+                Plan
+                {isEdit && originalPlan && form.plan && originalPlan !== form.plan && (
+                  <span className="ml-2 text-xs bg-orange-500/30 px-2 py-1 rounded text-orange-300">Changed</span>
+                )}
+              </label>
+              {isEdit && originalPlan && (
+                <div className="mb-2 p-2 rounded-lg bg-white/5 border border-orange-500/30 text-xs text-orange-300">
+                  <p>Current Plan: <span className="font-semibold">{originalPlan}</span></p>
+                </div>
+              )}
+              <select
+                name="plan"
+                value={form.plan}
+                onChange={(e) => {
+                  const selectedPlanName = e.target.value;
+                  const selectedPlan = plans.find((p) => p.name === selectedPlanName);
+                  
+                  let newDuration = form.duration;
+                  if (selectedPlan) {
+                    newDuration = selectedPlan.duration || selectedPlan.duration_months || form.duration;
+                  }
+                  const newDurationMonths = parseDurationValue(newDuration) ?? parseDurationValue(form.duration);
+                  const newExpiryDate = calculateExpiryDate(form.joinDate, newDurationMonths);
+                  setForm((prev) => ({
+                    ...prev,
+                    plan: selectedPlanName,
+                    duration: newDurationMonths ? newDurationMonths.toString() : prev.duration,
+                    expiryDate: newExpiryDate,
+                  }));
+                }}
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">Select Plan</option>
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.name} className="text-black">
+                    {plan.name} - {plan.duration || plan.duration_months || '?'} months - ₹{plan.finalPrice || plan.final_price || plan.price}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {isEdit && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Duration (Months)</label>
-                <input type="number" name="duration" value={form.duration} onChange={handleChange} placeholder="e.g. 3" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-              </div>
-            )}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Duration (Months)</label>
+              <input type="number" name="duration" value={form.duration} onChange={handleChange} placeholder="e.g. 3" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
 
-            {isEdit && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Expiry Date</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="date" 
-                    name="expiryDate" 
-                    value={form.expiryDate} 
-                    onChange={handleChange} 
-                    className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" 
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Expiry Date</label>
+              <div className="flex gap-2">
+                <input 
+                  type="date" 
+                  name="expiryDate" 
+                  value={form.expiryDate} 
+                  onChange={handleChange} 
+                  className="flex-1 rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" 
+                />
+                <div className="flex gap-1">
+                  <input
+                    type="number"
+                    value={extensionDays}
+                    onChange={(e) => setExtensionDays(Number(e.target.value))}
+                    className="w-16 rounded-lg bg-white/5 border border-white/10 px-2 py-3 text-white text-center focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Days"
                   />
-                  <div className="flex gap-1">
-                    <input
-                      type="number"
-                      value={extensionDays}
-                      onChange={(e) => setExtensionDays(Number(e.target.value))}
-                      className="w-16 rounded-lg bg-white/5 border border-white/10 px-2 py-3 text-white text-center focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="Days"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const days = Number(extensionDays) || 0;
-                        const newExpiry = dayjs(form.expiryDate || dayjs()).add(days, 'day').format('YYYY-MM-DD');
-                        setForm(prev => ({ ...prev, expiryDate: newExpiry }));
-                        toast.success(`Extended by ${days} days`);
-                      }}
-                      className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-all whitespace-nowrap"
-                    >
-                      Extend
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const days = Number(extensionDays) || 0;
+                      const newExpiry = dayjs(form.expiryDate || dayjs()).add(days, 'day').format('YYYY-MM-DD');
+                      setForm(prev => ({ ...prev, expiryDate: newExpiry }));
+                      toast.success(`Extended by ${days} days`);
+                    }}
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-all whitespace-nowrap"
+                  >
+                    Extend
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-white/70 ml-1">Status</label>

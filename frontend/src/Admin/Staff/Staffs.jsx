@@ -185,7 +185,7 @@ const Staffs = () => {
 
        <input
   type="text"
-  placeholder="Search by name, email or phone..."
+  placeholder="Search by name, email or mobile..."
   value={search}
   onChange={(e) => setSearch(e.target.value)}
   className="
@@ -238,7 +238,7 @@ const Staffs = () => {
         <th className="px-4 py-4 text-left font-semibold">S.No</th>
         <th className="px-4 py-4 text-left font-semibold">Name</th>
         <th className="px-4 py-4 text-left font-semibold">Email</th>
-        <th className="px-4 py-4 text-left font-semibold">Phone</th>
+        <th className="px-4 py-4 text-left font-semibold">Mobile Number</th>
         <th className="px-4 py-4 text-left font-semibold">Role</th>
         <th className="px-4 py-4 text-left font-semibold">Time In</th>
         <th className="px-4 py-4 text-left font-semibold">Time Out</th>
@@ -335,7 +335,7 @@ const Staffs = () => {
 
       <div className="text-sm text-gray-300 space-y-1">
         <p><strong>Email:</strong> {s.email}</p>
-        <p><strong>Phone:</strong> {s.phone}</p>
+        <p><strong>Mobile:</strong> {s.phone}</p>
         <p><strong>Role:</strong> {s.role}</p>
         <p><strong>Time In:</strong> {s.timeIn || "N/A"}</p>
         <p><strong>Time Out:</strong> {s.timeOut || "N/A"}</p>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import api from "../../api";
@@ -7,32 +7,47 @@ import emailjs from "@emailjs/browser";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Search, X } from "lucide-react";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
 const MEMBERSHIP_API = "/memberships";
 
 const BuyPlanadmin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { profileName, user } = useAuth();
+
+  // Logged-in user's display name for Referred By
+  const loggedInName = profileName || user?.username || user?.name || "";
 
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
+  const [followups, setFollowups] = useState([]);
   const [trainers, setTrainers] = useState([]);
   const [memberHistory, setMemberHistory] = useState([]);
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [selectedTrainer, setSelectedTrainer] = useState(null);
+  const [selectedTrainer, setSelectedTrainer] = useState("");
   const [sessionTime, setSessionTime] = useState("");
   const [paymentType, setPaymentType] = useState("full");
   const [initialPayment, setInitialPayment] = useState("");
+  const [discount, setDiscount] = useState("");
+  const [referredBy, setReferredBy] = useState("");
 
   const [memberSearch, setMemberSearch] = useState("");
   const [planSearch, setPlanSearch] = useState("");
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [showPlanDropdown, setShowPlanDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
+
+  // Auto-fill Referred By with logged-in user name on mount
+  useEffect(() => {
+    if (loggedInName) setReferredBy(loggedInName);
+  }, [loggedInName]);
 
   const [form, setForm] = useState({
     phone: "",
@@ -44,6 +59,7 @@ const BuyPlanadmin = () => {
     startDate: today,
     endDate: "",
     paymentMode: "cash",
+    paymentDate: today,
   });
 
   // ================= FILTER MEMBERS FOR DROPDOWN =================
@@ -54,9 +70,10 @@ const BuyPlanadmin = () => {
         // only gym members converted from enquiry should appear
         if (m.source === "users") return false;
 
-        // 1. Skip if already has active plan
-        const hasPlan = m.status === "active" && m.plan;
-        if (hasPlan) return false;
+        // 1. Skip if already has a pending or active plan
+        const status = (m.status || "").toLowerCase();
+        const hasExistingPlan = m.plan && (status === "active" || status === "pending");
+        if (hasExistingPlan) return false;
 
         // 2. Skip duplicates by phone
         if (seenPhones.has(m.phone)) return false;
@@ -124,9 +141,11 @@ const BuyPlanadmin = () => {
 
   const getSelectedPlanTotal = () => {
     if (!selectedPlan) return 0;
-    return parseDecimal(
+    const originalPrice = parseDecimal(
       selectedPlan.finalPrice ?? selectedPlan.final_price ?? selectedPlan.price
     );
+    const discountVal = parseDecimal(discount);
+    return Math.max(0, originalPrice - discountVal);
   };
 
   const getSelectedPlanDuration = () => {
@@ -149,35 +168,14 @@ const BuyPlanadmin = () => {
     }
   }, [selectedPlan, paymentType]);
 
-  const findPreferredEnquiryPlan = (user, enquiryList) => {
-    if (!user || !Array.isArray(enquiryList)) return null;
-    const phone = user.phone?.toString().trim();
-    const email = user.email?.toString().trim().toLowerCase();
-    const candidates = enquiryList
-      .filter((q) => {
-        const qPhone = q.phone?.toString().trim();
-        const qEmail = q.email?.toString().trim().toLowerCase();
-        return (phone && qPhone === phone) || (email && qEmail === email);
-      })
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    const latest = candidates.find((q) => q.plan_name || q.plan_duration);
-    return latest ? { plan: latest.plan_name, duration: latest.plan_duration } : null;
-  };
-
   const findMatchingPlan = (user, planList, enquiryList) => {
     if (!user || !Array.isArray(planList)) return null;
 
     let planName = normalizePlanText(user.plan);
     let durationValue = parseDurationValue(user.duration);
 
-    if (!planName && durationValue == null && Array.isArray(enquiryList)) {
-      const fromEnquiry = findPreferredEnquiryPlan(user, enquiryList);
-      if (fromEnquiry) {
-        planName = normalizePlanText(fromEnquiry.plan);
-        durationValue = parseDurationValue(fromEnquiry.duration);
-      }
-    }
+    // Do not auto-select a plan from enquiry history for users without an active plan.
+    // Converted members should choose a plan explicitly in the Buy Plan flow.
 
     if (planName) {
       const exactByName = planList.find(
@@ -202,6 +200,39 @@ const BuyPlanadmin = () => {
     return null;
   };
 
+  // Try to find the most recent enquiry for this user that contains a plan preference
+  const findPreferredEnquiryPlan = (user, enquiryList) => {
+    if (!user || !Array.isArray(enquiryList)) return null;
+
+    const normalizePhone = (p) => {
+      if (!p) return null;
+      const digits = p.toString().replace(/\D/g, '');
+      return digits.length <= 10 ? digits : digits.slice(-10);
+    };
+
+    const userPhone = normalizePhone(user.phone || user.mobile || user.user_mobile || user.user_phone);
+    const userEmail = (user.email || user.user_email || '').toString().trim().toLowerCase();
+    const userName = (user.name || user.username || '').toString().trim().toLowerCase();
+
+    const candidates = enquiryList
+      .filter((q) => {
+        const qPhone = normalizePhone(q.phone);
+        const qEmail = (q.email || '').toString().trim().toLowerCase();
+        const qName = (q.name || q.fullname || '').toString().trim().toLowerCase();
+
+        if (userPhone && qPhone && userPhone === qPhone) return true;
+        if (userEmail && qEmail && userEmail === qEmail) return true;
+        // fallback: match by name similarity (exact lowercase match)
+        if (userName && qName && userName === qName) return true;
+        return false;
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const latest = candidates.find((q) => q.plan_name || q.plan_duration || q.plan);
+    if (!latest) return null;
+    return { plan: latest.plan_name || latest.plan, duration: latest.plan_duration || latest.duration };
+  };
+
   // ================= FETCH MEMBERS =================
   useEffect(() => {
     const fetchMembers = async () => {
@@ -209,8 +240,7 @@ const BuyPlanadmin = () => {
         const res = await api.get(MEMBERS_API);
         setMembers(res.data || []);
       } catch (err) {
-        console.error(err);
-        alert("Failed to load members");
+        console.error("Failed to load members:", err);
       }
     };
 
@@ -224,8 +254,7 @@ const BuyPlanadmin = () => {
         const res = await api.get(PLANS_API);
         setPlans((res.data || []).filter((p) => p.active));
       } catch (err) {
-        console.error(err);
-        alert("Failed to load plans");
+        console.error("Failed to load plans:", err);
       }
     };
 
@@ -242,12 +271,48 @@ const BuyPlanadmin = () => {
       }
     };
 
+    const fetchFollowups = async () => {
+      try {
+        const res = await api.get('/followups');
+        setFollowups(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error('Failed to load followups', err);
+      }
+    };
+
     fetchEnquiries();
+    fetchFollowups();
   }, []);
 
   useEffect(() => {
     if (!selectedUser || plans.length === 0) return;
-    const matchedPlan = findMatchingPlan(selectedUser, plans, enquiries);
+    const combined = Array.isArray(enquiries) ? [...enquiries] : [];
+    if (Array.isArray(followups)) combined.push(...followups);
+
+    // prefer explicit user enquiry/followup preference
+    const pref = findPreferredEnquiryPlan(selectedUser, combined);
+    if (pref && (pref.plan || pref.duration)) {
+      const byName = plans.find(
+        (p) => normalizePlanText(p.name) === normalizePlanText(pref.plan)
+      );
+      if (byName && byName.id !== selectedPlan?.id) {
+        setSelectedPlan(byName);
+        return;
+      }
+
+      const durationVal = parseDurationValue(pref.duration);
+      if (durationVal != null) {
+        const byDuration = plans.find(
+          (p) => parseDurationValue(p.duration) === durationVal
+        );
+        if (byDuration && byDuration.id !== selectedPlan?.id) {
+          setSelectedPlan(byDuration);
+          return;
+        }
+      }
+    }
+
+    const matchedPlan = findMatchingPlan(selectedUser, plans, combined);
     if (matchedPlan && matchedPlan.id !== selectedPlan?.id) {
       setSelectedPlan(matchedPlan);
     }
@@ -257,20 +322,69 @@ const BuyPlanadmin = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const res = await api.get("/staff", { params: { role: "trainer" } });
+        const res = await api.get("/staff");
         const data = res.data || [];
+        // Filter trainer-role staff client-side to avoid query param dependency
         const normalized = Array.isArray(data)
-          ? data.map((t) => ({ id: t.id, name: t.name || t.username || "Trainer" }))
+          ? data
+              .filter((t) => !t.role || t.role.toLowerCase() === "trainer")
+              .map((t) => ({ id: t.id, name: t.name || t.username || "Trainer" }))
           : [];
         setTrainers(normalized);
       } catch (err) {
-        console.error(err);
-        alert("Failed to load trainers");
+        console.error("Failed to load trainers:", err);
+        // Non-critical: trainer dropdown will just show empty
       }
     };
 
     fetchTrainers();
   }, []);
+
+  // ================= LOAD MEMBER FROM NAVIGATION STATE =================
+  useEffect(() => {
+    if (location.state?.member && members.length > 0) {
+      const stateMember = location.state.member;
+      // Find the member in our members array
+      const user = members.find(
+        (m) =>
+          (m.phone && m.phone === stateMember.phone) ||
+          (m.id && m.id === stateMember.id)
+      );
+
+      if (user) {
+        setSelectedUser(user);
+        setMemberSearch("");
+        
+        // FETCH HISTORY
+        const uId = user.u_id || user.user_id || user.id;
+        api.get(`/memberships/user/${uId}`)
+          .then(res =>
+            setMemberHistory(
+              Array.isArray(res.data) ? res.data : []
+            )
+          )
+          .catch(err =>
+            console.error("History fetch error:", err)
+          );
+
+        setForm((prev) => ({
+          ...prev,
+          phone: user.phone || "",
+          email: user.email || "",
+          address: user.address || "",
+          height: user.height || "",
+          weight: user.weight || "",
+          bmi: user.bmi || "",
+        }));
+
+        const forceChange = location.state?.forceChange;
+        const matchedPlan = findMatchingPlan(user, plans, enquiries);
+        if (matchedPlan && !forceChange) {
+          setSelectedPlan(matchedPlan);
+        }
+      }
+    }
+  }, [location.state, members, plans, enquiries]);
 
   // ================= CALCULATE BMI =================
   useEffect(() => {
@@ -288,7 +402,7 @@ const BuyPlanadmin = () => {
 
     const durationMonths = parseDurationValue(selectedPlan.duration) || 0;
 
-    const start = new Date(today);
+    const start = new Date(form.startDate || today);
     const end = new Date(start);
 
     // Use 30 days per month for consistent plan durations
@@ -296,10 +410,9 @@ const BuyPlanadmin = () => {
 
     setForm((prev) => ({
       ...prev,
-      startDate: today,
       endDate: end.toISOString().split("T")[0],
     }));
-  }, [selectedPlan]);
+  }, [selectedPlan, form.startDate]);
 
   // ================= AOS =================
   useEffect(() => {
@@ -329,12 +442,15 @@ const BuyPlanadmin = () => {
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text(`Name: ${selectedUser?.name || selectedUser?.username || "Member"}`, 15, 70);
-    doc.text(`Phone: ${form.phone}`, 15, 80);
+    doc.text(`Mobile: ${form.phone}`, 15, 80);
     doc.text(`Email: ${form.email}`, 15, 90);
 
     // Plan Info
     const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
     const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
+
+    const originalPrice = parseDecimal(selectedPlan?.finalPrice ?? selectedPlan?.final_price ?? selectedPlan?.price);
+    const discountVal = parseDecimal(discount);
 
     doc.autoTable({
       startY: 100,
@@ -344,7 +460,9 @@ const BuyPlanadmin = () => {
         ["Duration", `${selectedPlan?.duration || "N/A"} Months`],
         ["Start Date", form.startDate],
         ["End Date", form.endDate],
-        ["Total Amount", `Rs. ${getSelectedPlanTotal()}`],
+        ["Original Price", `Rs. ${originalPrice}`],
+        ["Discount Amount", `Rs. ${discountVal}`],
+        ["Total Amount (After Discount)", `Rs. ${getSelectedPlanTotal()}`],
         ["Amount Paid", `Rs. ${paidNow}`],
         ["Payment Mode", paymentModeLabel],
         ["Payment Status", paymentType === "emi" && isEMIAllowed ? "Partial Payment" : "Paid"],
@@ -392,6 +510,7 @@ const BuyPlanadmin = () => {
       amount_paid: paidNow,
       payment_mode: paymentModeLabel,
       total_price: getSelectedPlanTotal(),
+      discount_amount: parseDecimal(discount),
       content: pdfDataUri // Attaching the PDF base64 to the email template
     };
 
@@ -415,39 +534,14 @@ const BuyPlanadmin = () => {
       return;
     }
 
-    if (selectedUser.status === "active" && selectedUser.plan) {
-      alert("Member already has active plan");
-      return;
-    }
-
+    setLoading(true);
     try {
       const planTotal = getSelectedPlanTotal();
       const isEMI = paymentType === "emi" && isEMIAllowed;
       const amountNow = isEMI ? parseDecimal(initialPayment) : planTotal;
       const paymentModeValue = isEMI ? "emi" : form.paymentMode;
 
-      // ===== SAVE MEMBERSHIP HISTORY =====
-      const membershipData = {
-        userId: selectedUser.u_id || selectedUser.user_id || selectedUser.id,
-        userName: selectedUser.name || selectedUser.username,
-        userEmail: form.email,
-        userPhone: form.phone,
-        planId: selectedPlan.id,
-        planName: selectedPlan.name,
-        price: planTotal,
-        pricePaid: amountNow,
-        secondPaymentPaid: 0,
-        duration: selectedPlan.duration,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        paymentMode: paymentModeValue,
-        paymentStatus: isEMI ? "Pending" : "Paid",
-        status: "active",
-      };
-
-      await api.post("/memberships", membershipData);
-
-      // ===== UPDATE MEMBER =====
+      // ===== UPDATE/CREATE MEMBER FIRST =====
       const updatedMember = {
         ...selectedUser,
         phone: form.phone,
@@ -460,13 +554,76 @@ const BuyPlanadmin = () => {
         duration: selectedPlan.duration,
         joinDate: form.startDate,
         expiryDate: form.endDate,
-        status: "active",
+        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
       };
 
+      let finalUserId = selectedUser.u_id || selectedUser.user_id || selectedUser.id;
+      let finalUserUuid = selectedUser.u_uuid || selectedUser.user_id;
+
+      try {
+        let memberRes;
+        if (selectedUser.id) {
+          memberRes = await api.put(`${MEMBERS_API}/${selectedUser.id}`, updatedMember);
+        } else {
+          memberRes = await api.post(MEMBERS_API, updatedMember);
+        }
+
+        if (memberRes && memberRes.data) {
+          finalUserId = memberRes.data.u_id || memberRes.data.user_id || memberRes.data.id || finalUserId;
+          finalUserUuid = memberRes.data.u_uuid || memberRes.data.user_id || finalUserUuid;
+        }
+      } catch (error) {
+        const errMsg =
+          error?.response?.data?.message || error?.message || "Plan assign failed";
+        alert(errMsg);
+        return;
+      }
+
+      // ===== SAVE OR UPDATE MEMBERSHIP HISTORY =====
+      const originalPrice = parseDecimal(
+        selectedPlan.finalPrice ?? selectedPlan.final_price ?? selectedPlan.price
+      );
+      const discountVal = parseDecimal(discount);
+
+      const membershipData = {
+        userId: finalUserId,
+        userName: selectedUser.name || selectedUser.username,
+        userEmail: form.email,
+        userPhone: form.phone,
+        planId: selectedPlan.id,
+        planName: selectedPlan.name,
+        price: planTotal,
+        pricePaid: amountNow,
+        secondPaymentPaid: 0,
+        duration: selectedPlan.duration,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        paymentMode: paymentModeValue,
+        paymentDate: form.paymentDate || today,
+        paymentStatus: isEMI ? "Pending" : "Paid",
+        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
+        referredBy: user?.username || user?.name || profileName || "",
+        trainerId: user?.user_id || user?.id || null,
+        trainerName: profileName || user?.username || user?.name || "",
+        discount: discountVal,
+        amount: originalPrice,
+      };
+
+      const activeOrPendingMembership = memberHistory
+        .filter((h) => h && h.status)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .find((h) => ["active", "pending"].includes((h.status || "").toLowerCase()));
+
+      if (activeOrPendingMembership) {
+        await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
+      } else {
+        await api.post("/memberships", membershipData);
+      }
+
       // ===== OPTIONAL ASSIGN TRAINER =====
-      if (selectedTrainer) {
+      if (selectedTrainer && selectedTrainer !== "") {
         const assignPayload = {
-          userId: selectedUser.u_id || selectedUser.id,
+          userId: finalUserId,
           username: selectedUser.username || selectedUser.name || "",
           userEmail: selectedUser.userEmail || selectedUser.email || "",
           planId: selectedPlan.id,
@@ -486,30 +643,17 @@ const BuyPlanadmin = () => {
         await api.post("/assignments", { assignments: [assignPayload] });
       }
 
-      // create or update member with assigned plan
-      try {
-        if (selectedUser.id) {
-          await api.put(`${MEMBERS_API}/${selectedUser.id}`, updatedMember);
-        } else {
-          // If no gym_member record exists, we create one
-          await api.post(MEMBERS_API, updatedMember);
-        }
-      } catch (error) {
-        const errMsg =
-          error?.response?.data?.message || error?.message || "Plan assign failed";
-        alert(errMsg);
-        return;
-      }
-
       alert("Plan assigned successfully");
 
       // sendWhatsApp();
       await sendEmailReceipt();
 
-      navigate("/admin/members");
+      navigate(location.pathname.startsWith("/trainer") ? "/trainer" : "/admin/members");
     } catch (err) {
       console.error(err);
       alert("Plan save failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -527,10 +671,10 @@ const BuyPlanadmin = () => {
             <div className="relative">
               {/* Search Input */}
               <div className="flex items-center gap-2 px-3 py-3 bg-gray-900 rounded-lg border border-white/10 focus-within:ring-2 focus-within:ring-orange-500">
-                <Search size={18} className="text-gray-500 flex-shrink-0" />
+                <Search size={18} className="text-white flex-shrink-0" />
                 <input
                   type="text"
-                  placeholder="Search by name, phone, or email..."
+                  placeholder="Search by name, mobile, or email..."
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
                   onFocus={() => setShowMemberDropdown(true)}
@@ -543,7 +687,7 @@ const BuyPlanadmin = () => {
                       setSelectedUser(null);
                       setSelectedPlan(null);
                     }}
-                    className="text-gray-500 hover:text-white flex-shrink-0"
+                    className="text-white hover:text-white/80 flex-shrink-0"
                   >
                     <X size={16} />
                   </button>
@@ -601,11 +745,34 @@ const BuyPlanadmin = () => {
                                 bmi: user.bmi || "",
                               }));
 
-                              const matchedPlan = findMatchingPlan(
-                                user,
-                                plans,
-                                enquiries
-                              );
+                              // First try to find a preferred plan from enquiries for this user
+                              const combined = Array.isArray(enquiries) ? [...enquiries] : [];
+                              if (Array.isArray(followups)) combined.push(...followups);
+                              const pref = findPreferredEnquiryPlan(user, combined);
+                              if (pref && (pref.plan || pref.duration)) {
+                                // try exact name match
+                                const byName = plans.find(
+                                  (p) => normalizePlanText(p.name) === normalizePlanText(pref.plan)
+                                );
+                                if (byName) {
+                                  setSelectedPlan(byName);
+                                  return;
+                                }
+
+                                // try match by duration if provided
+                                const durationVal = parseDurationValue(pref.duration);
+                                if (durationVal != null) {
+                                  const byDuration = plans.find(
+                                    (p) => parseDurationValue(p.duration) === durationVal
+                                  );
+                                  if (byDuration) {
+                                    setSelectedPlan(byDuration);
+                                    return;
+                                  }
+                                }
+                              }
+
+                              const matchedPlan = findMatchingPlan(user, plans, combined);
                               if (matchedPlan) {
                                 setSelectedPlan(matchedPlan);
                                 return;
@@ -641,6 +808,14 @@ const BuyPlanadmin = () => {
                     {selectedUser.name || selectedUser.username || "Member"}
                   </p>
                   <p className="text-xs text-gray-400">{selectedUser.phone}</p>
+                  {selectedUser.plan && selectedUser.plan !== 'user' && (
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <span className="text-[10px] text-gray-400 uppercase tracking-wide">Current Plan:</span>
+                      <span className="px-2 py-0.5 rounded bg-white/10 text-orange-400 text-[10px] font-bold">
+                        {selectedUser.plan} ({selectedUser.duration || "N/A"})
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => {
@@ -657,7 +832,7 @@ const BuyPlanadmin = () => {
                       bmi: "",
                     }));
                   }}
-                  className="text-orange-400 hover:text-orange-300"
+                  className="text-white hover:text-white/80"
                 >
                   <X size={18} />
                 </button>
@@ -675,11 +850,11 @@ const BuyPlanadmin = () => {
 
           {/* PHONE */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+            <label className="block text-sm text-gray-400 mb-1">Mobile Number</label>
             <input
               className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
               value={form.phone}
-              placeholder="Enter phone number"
+              placeholder="Enter mobile number"
               onChange={(e) =>
                 setForm({ ...form, phone: e.target.value })
               }
@@ -758,8 +933,10 @@ const BuyPlanadmin = () => {
               <input
                 type="date"
                 value={form.startDate}
-                readOnly
-                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={(e) =>
+                  setForm({ ...form, startDate: e.target.value })
+                }
+                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
               />
             </div>
 
@@ -768,8 +945,10 @@ const BuyPlanadmin = () => {
               <input
                 type="date"
                 value={form.endDate}
-                readOnly
-                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={(e) =>
+                  setForm({ ...form, endDate: e.target.value })
+                }
+                className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
               />
             </div>
           </div>
@@ -807,6 +986,51 @@ const BuyPlanadmin = () => {
               <option value="upi">UPI</option>
             </select>
           </div>
+
+          {/* PAYMENT DATE */}
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Payment Date</label>
+            <input
+              type="date"
+              value={form.paymentDate}
+              onChange={(e) =>
+                setForm({ ...form, paymentDate: e.target.value })
+              }
+              className="w-full p-3 bg-gray-900 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+            />
+          </div>
+
+          {/* DISCOUNT AMOUNT */}
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-1">Discount Amount (₹)</label>
+            <input
+              type="number"
+              min="0"
+              className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+              placeholder="Enter discount amount"
+              value={discount}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "" || Number(val) >= 0) {
+                  setDiscount(val);
+                }
+              }}
+            />
+          </div>
+
+          {/* REFERRED BY — trainer route only, auto-filled with logged-in trainer's name */}
+          {location.pathname.startsWith("/trainer") && (
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-1">Referred By</label>
+              <input
+                type="text"
+                placeholder="Enter referrer name (if any)"
+                className="w-full p-3 bg-gray-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-white/10"
+                value={referredBy}
+                onChange={(e) => setReferredBy(e.target.value)}
+              />
+            </div>
+          )}
 
           {selectedPlan && paymentType === "emi" && isEMIAllowed && (
             <div className="mb-4 p-6 rounded-2xl bg-gradient-to-br from-orange-900/30 to-orange-900/10 border border-orange-500/50 shadow-lg shadow-orange-500/20">
@@ -894,10 +1118,12 @@ const BuyPlanadmin = () => {
 
           <button
             onClick={handleAssignPlan}
-            className="mt-5 w-full py-3 bg-orange-500 rounded-lg hover:bg-orange-600"
+            disabled={loading}
+            className="mt-5 w-full py-3 bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            Assign Plan ₹
-            {selectedPlan ? (paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal()) : 0}
+            {loading ? "Assigning Plan..." : <>
+              Assign Plan ₹{selectedPlan ? (paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal()) : 0}
+            </>}
           </button>
         </div>
 
@@ -911,7 +1137,7 @@ const BuyPlanadmin = () => {
             <div className="relative">
               {/* Search Input */}
               <div className="flex items-center gap-2 px-3 py-3 bg-gray-900 rounded-lg border border-white/10 focus-within:ring-2 focus-within:ring-orange-500">
-                <Search size={18} className="text-gray-500 flex-shrink-0" />
+                <Search size={18} className="text-white flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="Search by plan name, duration, or price..."
@@ -925,7 +1151,7 @@ const BuyPlanadmin = () => {
                     onClick={() => {
                       setPlanSearch("");
                     }}
-                    className="text-gray-500 hover:text-white flex-shrink-0"
+                    className="text-white hover:text-white/80 flex-shrink-0"
                   >
                     <X size={16} />
                   </button>
@@ -984,7 +1210,7 @@ const BuyPlanadmin = () => {
                     setSelectedPlan(null);
                     setPlanSearch("");
                   }}
-                  className="text-orange-400 hover:text-orange-300"
+                  className="text-white hover:text-white/80"
                 >
                   <X size={18} />
                 </button>
@@ -1001,22 +1227,35 @@ const BuyPlanadmin = () => {
           )}
 
           {selectedPlan && (
-            <div className="p-4 border border-red-400 rounded-lg">
-              <h3 className="font-bold text-lg">
+            <div className="p-5 border border-orange-500/30 rounded-xl bg-orange-500/5 mt-4">
+              <h3 className="font-bold text-xl text-orange-400 mb-2">
                 {selectedPlan.name}
               </h3>
-
-              <p>Duration: {selectedPlan.duration} </p>
-
-              <p>
-                Price ₹
-                {selectedPlan.finalPrice ??
-                  selectedPlan.final_price}
-              </p>
-
-              <p className="text-gray-300 text-sm mt-2">
-                {selectedPlan.description}
-              </p>
+              
+              <div className="space-y-2 text-sm text-gray-300">
+                <p><span className="text-gray-400">Duration:</span> {selectedPlan.duration}</p>
+                <p>
+                  <span className="text-gray-400">Base Price:</span>{" "}
+                  <span className={parseDecimal(discount) > 0 ? "line-through text-gray-500" : "text-white font-semibold"}>
+                    ₹{selectedPlan.finalPrice ?? selectedPlan.final_price}
+                  </span>
+                </p>
+                {parseDecimal(discount) > 0 && (
+                  <>
+                    <p className="text-green-400">
+                      <span className="text-gray-400">Discount Applied:</span> -₹{parseDecimal(discount)}
+                    </p>
+                    <p className="text-orange-400 font-bold text-lg">
+                      <span className="text-gray-400 text-sm font-normal">Final Price:</span> ₹{getSelectedPlanTotal()}
+                    </p>
+                  </>
+                )}
+                {selectedPlan.description && (
+                  <p className="text-gray-400 text-xs mt-3 italic border-t border-white/5 pt-2">
+                    {selectedPlan.description}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -1041,7 +1280,11 @@ const BuyPlanadmin = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-400">
                         <div>
-                          <p>Price: <span className="text-emerald-400 font-semibold">₹{h.price}</span></p>
+                          <p>Original Price: <span className="text-white/60 font-semibold">₹{h.amount || h.price}</span></p>
+                          {h.discount > 0 && (
+                            <p>Discount: <span className="text-red-400 font-semibold">-₹{h.discount}</span></p>
+                          )}
+                          <p>Final Price: <span className="text-emerald-400 font-semibold">₹{h.price}</span></p>
                           <p>Paid: ₹{h.pricePaid}</p>
                         </div>
                         <div className="text-right">

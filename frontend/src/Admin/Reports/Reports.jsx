@@ -99,22 +99,22 @@ const Reports = () => {
   /* ========================
      FILTERED DATA
   ======================== */
-  const filteredMembers = useMemo(() => 
+  const filteredMembers = useMemo(() =>
     filterByDateRange(members, 'join_date', dateRange.type, dateRange.range),
     [members, dateRange]
   );
 
-  const filteredOrders = useMemo(() => 
+  const filteredOrders = useMemo(() =>
     filterByDateRange(orders, 'created_at', dateRange.type, dateRange.range),
     [orders, dateRange]
   );
 
-  const filteredMemberships = useMemo(() => 
+  const filteredMemberships = useMemo(() =>
     filterByDateRange(memberships, 'startDate', dateRange.type, dateRange.range),
     [memberships, dateRange]
   );
 
-  const filteredEnquiries = useMemo(() => 
+  const filteredEnquiries = useMemo(() =>
     filterByDateRange(enquiries, 'created_at', dateRange.type, dateRange.range),
     [enquiries, dateRange]
   );
@@ -129,7 +129,7 @@ const Reports = () => {
       icon: Users,
       color: "bg-blue-500/20 text-blue-400",
       data: filteredMembers,
-      headers: ["#", "Name", "Email", "Phone", "Plan", "Status", "Join Date"],
+      headers: ["#", "Name", "Email", "Mobile Number", "Plan", "Status", "Join Date"],
       rows: filteredMembers.map((m, i) => [
         i + 1,
         m.name || "N/A",
@@ -181,7 +181,7 @@ const Reports = () => {
       icon: MessageSquare,
       color: "bg-purple-500/20 text-purple-400",
       data: filteredEnquiries,
-      headers: ["#", "Name", "Email", "Phone", "Subject", "Status", "Date"],
+      headers: ["#", "Name", "Email", "Mobile Number", "Subject", "Status", "Date"],
       rows: filteredEnquiries.map((e, i) => [
         i + 1,
         e.name || "-",
@@ -244,11 +244,10 @@ const Reports = () => {
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
-                activeTab === t.key
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${activeTab === t.key
                   ? "bg-orange-500 text-white shadow-lg"
                   : "bg-white/10 text-white/70 hover:bg-white/20"
-              }`}
+                }`}
             >
               <Icon size={16} /> {t.label}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === t.key ? "bg-white/20" : "bg-white/10"}`}>

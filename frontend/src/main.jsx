@@ -19,6 +19,7 @@ const lazyWithRetry = (componentImport) =>
       return await componentImport();
     } catch (error) {
       console.error("Chunk load failed, reloading page...", error);
+      // Only reload once to avoid infinite loops
       const hasReloaded = sessionStorage.getItem("chunk_reload_attempted");
       if (!hasReloaded) {
         sessionStorage.setItem("chunk_reload_attempted", "true");
@@ -89,11 +90,13 @@ const MemberAttendance = lazy(() => import("./Admin/Staff/Memberattendance.jsx")
 const BuyPlanadmin = lazy(() => import("./Admin/Plans/BuyPlan.jsx"));
 const EMIList = lazyWithRetry(() => import("./Admin/Plans/EMIList.jsx"));
 const PlanHistory = lazy(() => import("./Admin/Plans/PlanHistory.jsx"));
+const TrainerReferredPlans = lazy(() => import("./Admin/Plans/TrainerReferredPlans.jsx"));
 const MemberDetails = lazy(() => import("./Admin/Members/MemberDetails.jsx"));
 const ExpiryMembers = lazy(() => import("./Admin/Members/ExpiryMembers.jsx"));
 const Offers = lazy(() => import("./Admin/Settingss/Offers.jsx"));
 const PublicOffers = lazy(() => import("./Pages/PublicOffers.jsx"));
 const PublicProductOffers = lazy(() => import("./Pages/PublicProductOffers.jsx"));
+const PrivacyPolicy = lazy(() => import("./Pages/PrivacyPolicy.jsx"));
 
 
 // Trainer Admin Panel
@@ -116,8 +119,6 @@ const PTFormPrint = lazy(() => import("./Admin/PTForm/PTFormPrint.jsx"));
 const SessionTracking = lazy(() => import("./TrainerAdminPanel/SessionTracking/SessionTracking.jsx"));
 
 
-
-const BiometricLogs = lazyWithRetry(() => import("./Admin/Attendance/BiometricLogs.jsx"));
 
 const router = createHashRouter([
   {
@@ -144,6 +145,7 @@ const router = createHashRouter([
       { path: "/register", element: <Register /> },
       { path: "/userenquiry", element: <UserEnquiry /> },
       { path: "/ptformuser", element: <PTFormUser /> },
+      { path: "/privacy-policy", element: <PrivacyPolicy /> },
       { path: "/offers/plans", element: <PublicOffers offerType="plan" /> },
       { path: "/offers/products", element: <PublicProductOffers /> },
     ]
@@ -172,8 +174,6 @@ const router = createHashRouter([
       { path: "orders", element: <AllOrders /> },
       { path: "orders/:id", element: <OrderDetails /> },
       { path: "members", element: <Members /> },
-      { path: "member-attendance", element: <MemberAttendance /> },
-      { path: "biometric-logs", element: <BiometricLogs /> },
       { path: "member_details/:id", element: <MemberDetails /> },
       { path: "expiry-members", element: <ExpiryMembers /> },
       { path: "addmembers", element: <AddMember /> },
@@ -230,6 +230,7 @@ const router = createHashRouter([
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
       { path: "emi", element: <EMIList /> },
       { path: "plan-history", element: <PlanHistory /> },
+      { path: "trainer-referred-plans", element: <TrainerReferredPlans /> },
       { path: "settings/offers", element: <Offers /> },
 
     ],
@@ -239,13 +240,14 @@ const router = createHashRouter([
   {
     path: "/trainer",
     element: (
-      <PrivateRoute allowedRoles={["trainer"]}>
+      <PrivateRoute allowedRoles={["trainer", "admin"]}>
         <TrainerAdminPanel />
       </PrivateRoute>
     ),
     children: [
       { index: true, element: <TrainerDashboard /> },
       { path: "reports", element: <TrainerReports /> },
+      { path: "expiry-members", element: <ExpiryMembers /> },
       { path: "overall-attendance", element: <TrainerOverallAttendance /> },
       { path: "addworkouts", element: <AddWorkout /> },
       { path: "addworkouts/:id", element: <AddWorkout /> },
@@ -280,6 +282,8 @@ const router = createHashRouter([
       { path: "members", element: <Members /> },
       { path: "emi", element: <EMIList /> },
 >>>>>>> Stashed changes
+      { path: "buyplanadmin", element: <BuyPlanadmin /> },
+      { path: "payments", element: <Payments /> },
     ],
 
   },

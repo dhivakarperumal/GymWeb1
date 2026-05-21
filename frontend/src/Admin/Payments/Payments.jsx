@@ -1,5 +1,5 @@
-﻿import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   Users,
@@ -17,11 +17,18 @@ import toast from "react-hot-toast";
 // backend API
 import api from "../../api";
 import cache from "../../cache";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 const MEMBERSHIPS_API = `memberships`;
 const MEMBERS_API = `members`;
 
 const Payments = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, profileName } = useAuth();
+  
+  const isTrainerPanel = location.pathname.startsWith("/trainer");
+  const cacheKey = isTrainerPanel ? `trainerPayments_${user?.id}` : "adminPayments";
+
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -39,8 +46,8 @@ const Payments = () => {
   /* ================= FETCH DATA ================= */
   useEffect(() => {
     const fetchPayments = async () => {
-      if (cache.adminPayments) {
-        setMembers(cache.adminPayments);
+      if (cache[cacheKey]) {
+        setMembers(cache[cacheKey]);
         setLoading(false);
       } else {
         setLoading(true);
@@ -59,7 +66,22 @@ const Payments = () => {
           return;
         }
 
+        const loggedInTrainerName = (profileName || user?.username || user?.name || "").toLowerCase().trim();
+
         membershipsData.forEach((m) => {
+          // If on trainer panel, filter for trainer collected only
+          if (isTrainerPanel) {
+            const referredByLower = (m.referredBy || "").toLowerCase().trim();
+            if (
+              !referredByLower || 
+              (referredByLower !== loggedInTrainerName && 
+               !referredByLower.includes(loggedInTrainerName) && 
+               !loggedInTrainerName.includes(referredByLower))
+            ) {
+              return;
+            }
+          }
+
           const uId = m.userId || `guest_${m.id}`;
           if (!usersMap.has(uId)) {
             usersMap.set(uId, {
@@ -70,33 +92,43 @@ const Payments = () => {
             });
           }
 
+          // Only show plans that are active
+          if (m.status !== "active") return;
+
           usersMap.get(uId).plans.push({
             id: m.id,
             planName: m.planName,
             price: m.price || 0,
             pricePaid: m.pricePaid || 0,
             secondPaymentPaid: m.secondPaymentPaid || 0,
+            duration: m.duration || "",
+            paymentMode: m.paymentMode || "",
             startDate: m.startDate,
             endDate: m.endDate,
+            paymentDate: m.paymentDate || null,
             createdAt: m.createdAt,
             status: m.status || "active",
             paymentStatus: m.paymentStatus || (m.pricePaid >= m.price ? "Paid" : "Pending"),
+            referredBy: m.referredBy || "",
+            phone: m.mobile || m.userPhone || "",
+            discount: m.discount || 0,
+            amount: m.amount || 0,
           });
         });
 
         const finalData = Array.from(usersMap.values());
         setMembers(finalData);
-        cache.adminPayments = finalData;
+        cache[cacheKey] = finalData;
       } catch (error) {
         console.error(error);
-        if (!cache.adminPayments) toast.error("Failed to load payment data");
+        if (!cache[cacheKey]) toast.error("Failed to load payment data");
       } finally {
         setLoading(false);
       }
     };
 
     fetchPayments();
-  }, []);
+  }, [isTrainerPanel, user, profileName]);
 
   /* ================= EXPIRY CHECK ================= */
   const isExpiringPlan = (endDate) => {
@@ -211,27 +243,151 @@ const Payments = () => {
 
   /* ================= PRINT RECEIPT ================= */
   const handlePrintReceipt = (member, plan) => {
+    const receiptNo = `REC-${plan.id || Math.floor(Math.random() * 900000 + 100000)}`;
+    const printedOn = new Date().toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+    });
+
+    const totalAmount   = Number(plan.price || 0);
+    const pricePaid     = Number(plan.pricePaid || 0);
+    const secondPayment = Number(plan.secondPaymentPaid || 0);
+    const totalPaid     = pricePaid + secondPayment;
+    const balance       = Math.max(0, totalAmount - totalPaid);
+    const discount      = Number(plan.discount || 0);
+    const originalPrice = Number(plan.amount || plan.price || 0);
+
+    const paymentModeLabel = (plan.paymentMode || "cash").toUpperCase();
+    const paymentStatusColor =
+      plan.paymentStatus === "Paid"    ? "#16a34a" :
+      plan.paymentStatus === "Pending" ? "#dc2626" :
+      plan.paymentStatus === "Partial" ? "#d97706" : "#6b7280";
+
+    const row = (label, value, valueColor = "#111") => `
+      <tr>
+        <td style="padding:7px 10px; color:#555; font-size:13px; border-bottom:1px solid #f0f0f0;">${label}</td>
+        <td style="padding:7px 10px; font-size:13px; font-weight:600; color:${valueColor}; text-align:right; border-bottom:1px solid #f0f0f0;">${value}</td>
+      </tr>`;
+
     const receiptContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-        <h2 style="text-align: center; color: #f97316; margin-bottom: 5px;">Gym Admin</h2>
-        <h3 style="text-align: center; border-bottom: 2px dashed #ddd; padding-bottom: 15px; margin-top: 0; color: #555;">Payment Receipt</h3>
-        <p style="margin-top: 20px;"><strong>Member Name:</strong> ${member.username}</p>
-        <p><strong>Email:</strong> ${member.email}</p>
-        <p><strong>Plan:</strong> ${plan.planName}</p>
-        <p><strong>Amount Paid:</strong> ₹${plan.pricePaid}</p>
-        <p><strong>Start Date:</strong> ${formatDate(plan.startDate)}</p>
-        <p><strong>End Date:</strong> ${formatDate(plan.endDate)}</p>
-        <p><strong>Status:</strong> <span style="text-transform: capitalize;">${plan.status}</span></p>
-        <div style="border-top: 2px dashed #ddd; margin-top: 30px; padding-top: 15px; text-align: center; color: #777;">
-          <p>Thank you for choosing us!</p>
+      <style>
+        @media print {
+          @page { margin: 0; }
+          body { margin: 0; padding: 0; }
+          .no-print { display: none; }
+          .card { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 10px; }
+        .card { max-width: 400px; margin: auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+        .header { background: linear-gradient(135deg, #f97316, #ea580c); padding: 12px 16px 8px; text-align: center; }
+        .header h1 { margin: 0 0 2px; color: #fff; font-size: 18px; letter-spacing: 1px; }
+        .header p  { margin: 0; color: rgba(255,255,255,0.85); font-size: 11px; }
+        .badge { display: inline-block; margin-top: 6px; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 10px; border-radius: 20px; }
+        .section { padding: 6px 16px 0; }
+        .section-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #f97316; margin-bottom: 2px; border-left: 3px solid #f97316; padding-left: 6px; }
+        table { width: 100%; border-collapse: collapse; }
+        .divider { border: none; border-top: 1px dashed #e5e5e5; margin: 4px 16px; }
+        .total-row td { padding: 4px 10px; font-size: 13px; font-weight: 700; }
+        .footer { background: #fafafa; border-top: 1px solid #eee; padding: 10px 16px; text-align: center; }
+        .footer p { margin: 2px 0; font-size: 10px; color: #888; }
+        .footer .tagline { font-size: 12px; font-weight: 600; color: #f97316; margin-bottom: 2px; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+        .print-btn { display: block; margin: 10px auto 0; padding: 6px 20px; background: #f97316; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+      </style>
+
+      <div class="card">
+        <!-- HEADER -->
+        <div class="header">
+          <h1>💪 DAP Fitness Studio</h1>
+          <p>Official Membership Payment Receipt</p>
+          <div class="badge">RECEIPT NO: ${receiptNo}</div>
+        </div>
+
+        <!-- MEMBER INFO -->
+        <div class="section">
+          <p class="section-title">Member Details</p>
+          <table>
+            ${row("Member Name", member.username || "--")}
+            ${row("Email Address", member.email || "--")}
+            ${row("Mobile Number", plan.phone || "--")}
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- PLAN INFO -->
+        <div class="section">
+          <p class="section-title">Plan Details</p>
+          <table>
+            ${row("Plan Name", plan.planName || "--")}
+            ${row("Duration", plan.duration ? `${plan.duration}` : "--")}
+            ${row("Start Date", formatDate(plan.startDate))}
+            ${row("End Date", formatDate(plan.endDate))}
+            ${row("Days Remaining", getRemainingDays(plan.endDate), getRemainingDays(plan.endDate) === "Expired" ? "#dc2626" : "#16a34a")}
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- PAYMENT INFO -->
+        <div class="section">
+          <p class="section-title">Payment Details</p>
+          <table>
+            ${originalPrice > 0 ? row("Original Price", `&#8377;${originalPrice.toFixed(2)}`) : ""}
+            ${discount > 0 ? row("Discount Amount", `&#8377;${discount.toFixed(2)}`, "#dc2626") : ""}
+            ${row("Total Price (After Discount)", `&#8377;${totalAmount.toFixed(2)}`)}
+            ${row("Initial Amount Paid", `&#8377;${pricePaid.toFixed(2)}`, "#16a34a")}
+            ${secondPayment > 0 ? row("Second Payment", `&#8377;${secondPayment.toFixed(2)}`, "#16a34a") : ""}
+            ${balance > 0 ? row("Balance Due", `&#8377;${balance.toFixed(2)}`, "#dc2626") : ""}
+            ${row("Payment Mode", paymentModeLabel)}
+            ${row("Payment Date", plan.paymentDate ? formatDate(plan.paymentDate) : formatDate(plan.createdAt))}
+            <tr>
+              <td style="padding:7px 10px; color:#555; font-size:13px; border-bottom:1px solid #f0f0f0;">Payment Status</td>
+              <td style="padding:7px 10px; text-align:right; border-bottom:1px solid #f0f0f0;">
+                <span class="status-badge" style="background:${paymentStatusColor}22; color:${paymentStatusColor}; border:1px solid ${paymentStatusColor}44;">
+                  ${plan.paymentStatus || "Paid"}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- TOTAL PAID ROW -->
+        <div class="section" style="padding-bottom:4px;">
+          <table>
+            <tr class="total-row">
+              <td style="color:#111;">Total Amount Paid</td>
+              <td style="text-align:right; color:#f97316;">&#8377;${totalPaid.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- COLLECTED BY + DATES -->
+        <div class="section" style="padding-bottom:14px;">
+          <table>
+            ${row("Collected By", plan.referredBy || "Admin", "#f97316")}
+            ${row("Receipt Printed On", printedOn)}
+          </table>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+          <p class="tagline">Thank you for being a valued member! 🙏</p>
+          <p>Keep up the great work on your fitness journey.</p>
+          <p style="margin-top:8px; font-size:10px; color:#bbb;">This is a computer-generated receipt and does not require a signature.</p>
         </div>
       </div>
+
+      <button class="print-btn no-print" onclick="window.print()">🖨️ Print Receipt</button>
     `;
 
-    const printWindow = window.open("", "_blank", "width=600,height=600");
+    const printWindow = window.open("", "_blank", "width=640,height=820");
     if (printWindow) {
       printWindow.document.write(
-        "<html><head><title>Print Receipt</title></head><body>",
+        "<html><head><title>Receipt – " + receiptNo + "</title></head><body>",
       );
       printWindow.document.write(receiptContent);
       printWindow.document.write("</body></html>");
@@ -239,10 +395,10 @@ const Payments = () => {
       printWindow.focus();
       setTimeout(() => {
         printWindow.print();
-        printWindow.close();
-      }, 300);
+      }, 400);
     }
   };
+
 
   /* ================= FILTER ================= */
   // Get flat list of all plans for counting
@@ -381,7 +537,9 @@ const Payments = () => {
         Name: member.username,
         Email: member.email,
         Plan: plan.planName,
+        "Collected By": plan.referredBy || "Admin",
         Amount: plan.pricePaid,
+        "Payment Date": formatDate(plan.paymentDate),
         "Start Date": formatDate(plan.startDate),
         "End Date": formatDate(plan.endDate),
         Status: plan.status,
@@ -462,7 +620,7 @@ const Payments = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  if (loading && !cache.adminPayments) {
+  if (loading && !cache[cacheKey]) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-6">
         <div className="relative">
@@ -705,8 +863,23 @@ const Payments = () => {
                     </div>
 
                     <div>
-                      <p className="text-gray-400">Amount</p>
-                      <p>₹ {plan.pricePaid}</p>
+                      <p className="text-gray-400">Original Price</p>
+                      <p>₹ {plan.amount || plan.price || 0}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Discount</p>
+                      <p className="text-red-400">₹ {plan.discount || 0}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Final Price</p>
+                      <p>₹ {plan.price || 0}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Amount Paid</p>
+                      <p className="text-green-400 font-semibold">₹ {plan.pricePaid}</p>
                     </div>
 
                     <div>
@@ -735,6 +908,20 @@ const Payments = () => {
                       <p className="text-gray-400">End Date</p>
                       <p className="whitespace-nowrap">
                         {formatDate(plan.endDate)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Payment Date</p>
+                      <p className="whitespace-nowrap text-purple-300">
+                        {formatDate(plan.paymentDate) !== "--" ? formatDate(plan.paymentDate) : <span className="text-gray-500">--</span>}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-gray-400">Collected By</p>
+                      <p className="font-semibold text-orange-400">
+                        {plan.referredBy || "Admin"}
                       </p>
                     </div>
                   </div>
@@ -789,12 +976,16 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Original Price</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Remaining</th>
+                    
                     <th className="px-4 py-4 text-left text-sm font-semibold">Start Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">End Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Payment Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Days Left</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Payment</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Status / Action</th>
@@ -835,6 +1026,19 @@ const Payments = () => {
                         <td className="px-4 py-4 text-base font-medium text-gray-300">
                           {plan.planName}
                         </td>
+                        <td className="px-4 py-4 text-base font-medium text-orange-400">
+                          {plan.referredBy || "Admin"}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-base font-medium text-white/60">
+                            ₹{plan.amount || plan.price || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-base font-medium text-red-400">
+                            ₹{plan.discount || 0}
+                          </span>
+                        </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-orange-400">
                             ₹{totalAmount}
@@ -845,24 +1049,23 @@ const Payments = () => {
                             ₹{plan.pricePaid}
                           </span>
                         </td>
-
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-cyan-300">
                             ₹{plan.secondPaymentPaid || 0}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          {remainingAmount > 0 ? (
-                            <span className="text-base font-medium text-blue-400">₹{remainingAmount.toFixed(2)}</span>
-                          ) : (
-                            <span className="text-white/20 text-xs">-</span>
-                          )}
-                        </td>
+                       
                         <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
                           {formatDate(plan.startDate)}
                         </td>
                         <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
                           {formatDate(plan.endDate)}
+                        </td>
+                        <td className="px-4 py-4 font-medium text-base whitespace-nowrap">
+                          {plan.paymentDate
+                            ? <span className="text-purple-300">{formatDate(plan.paymentDate)}</span>
+                            : <span className="text-gray-600">--</span>
+                          }
                         </td>
                         <td className="px-4 py-4">
                           <span

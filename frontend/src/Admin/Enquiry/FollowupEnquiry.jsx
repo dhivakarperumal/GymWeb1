@@ -173,7 +173,7 @@ const FollowupEnquiry = () => {
       return;
     }
     if (!formData.phone || formData.phone.length !== 10) {
-      toast.error("A valid 10-digit phone number is required");
+      toast.error("A valid 10-digit mobile number is required");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -216,6 +216,18 @@ const FollowupEnquiry = () => {
       toast.success("Activity logged!");
     } catch (err) {
       toast.error("Error logging activity");
+    }
+  };
+
+  const handleMoveToMembers = async (enquiry) => {
+    try {
+      await api.post(`/followups/${enquiry.id}/convert`);
+      toast.success('Member created successfully from followup. Login using Mobile Number as password.');
+      fetchEnquiries();
+    } catch (err) {
+      console.error('Error moving to members:', err);
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to create member';
+      alert(msg);
     }
   };
 
@@ -273,7 +285,7 @@ const FollowupEnquiry = () => {
           // Broad mapping
           const name = (row["Lead Name"] || row["Full Name"] || row.Name || row["Customer Name"] || row.name || "Unknown").toString().trim();
           const email = (row["Email Address"] || row.Email || row.email || "").toString().trim();
-          const rawPhone = row.Phone || row.Mobile || row["Phone Number"] || row["Mobile Number"] || row.phone || row.mobile || "";
+          const rawPhone = row.Phone || row.Mobile || row["Mobile Number"] || row["Mobile Number"] || row.phone || row.mobile || "";
           const phone = rawPhone.toString().replace(/\D/g, '').slice(-10);
 
           if (name === "Unknown" || !phone || phone.length < 10) {
@@ -340,7 +352,7 @@ const FollowupEnquiry = () => {
     const dataToExport = filteredEnquiries.map((e, index) => ({
       "S.No": index + 1,
       "Lead Name": e.name,
-      "Phone": e.phone,
+      "Mobile Number": e.phone,
       "Email": e.email,
       "Organization": e.organization || e.employer || "Direct",
       "Plan": e.plan_name || "N/A",
@@ -362,7 +374,7 @@ const FollowupEnquiry = () => {
     const template = [
       {
         "Lead Name": "John Doe",
-        "Phone": "9876543210",
+        "Mobile Number": "9876543210",
         "Email": "john@example.com",
         "Organization": "ABC Corp",
         "Status": "pending",
@@ -733,6 +745,15 @@ const FollowupEnquiry = () => {
                           >
                             Edit
                           </button>
+                          {enquiry.status === 'pending' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
+                              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
+                              title="Move to Members"
+                            >
+                              <Users size={12} />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteEnquiry(enquiry.id); }}
                             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-red-500 hover:border-red-500/50 transition-all"
@@ -843,6 +864,15 @@ const FollowupEnquiry = () => {
                                 >
                                   <Eye size={14} />
                                 </button>
+                                {enquiry.status === 'pending' && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
+                                    className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
+                                    title="Move to Members"
+                                  >
+                                    <Users size={14} />
+                                  </button>
+                                )}
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setSelectedEnquiry(enquiry); setShowForm(true); }}
                                   className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-orange-500 hover:border-orange-500/50 transition-all"
@@ -1028,7 +1058,7 @@ const FollowupEnquiry = () => {
                     </div>
 
                     <div className="grid grid-cols-3 items-center gap-4">
-                      <label className="text-xs font-bold text-white/60">Work Phone</label>
+                      <label className="text-xs font-bold text-white/60">Work Mobile</label>
                       <input
                         type="tel"
                         value={formData.emergency_contact_phone_work}
