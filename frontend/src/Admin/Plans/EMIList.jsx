@@ -31,6 +31,19 @@ const parseDuration = (value) => {
   return Number.isFinite(amount) ? Math.round(amount) : 0;
 };
 
+const formatDuesEntry = (due) => {
+  const amount = parseDecimal(due?.amount || due?.amt || 0).toFixed(2);
+  const collectedBy = due?.collectedBy || due?.collected_by || "Admin";
+  const paymentId = due?.paymentId || due?.payment_id || "Cash";
+  const collectedAt = due?.collectedAt || due?.collected_at || due?.createdAt || due?.date;
+  const dateLabel = collectedAt ? new Date(collectedAt).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }) : "No date";
+  return `₹${amount} · ${dateLabel} · ${collectedBy} · ${paymentId}`;
+};
+
 const EMIList = () => {
   const { user, role, profileName } = useAuth();
   const [memberships, setMemberships] = useState([]);
@@ -459,7 +472,7 @@ const EMIList = () => {
           {viewMode === "table" ? (
             /* ================= TABLE VIEW ================= */
             <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
-              <table className="w-full min-w-[900px] text-sm text-left text-gray-200 border-collapse">
+              <table className="w-full min-w-[900px] text-sm text-left text-gray-200 border-collapse whitespace-nowrap">
                 <thead className="bg-white/10 text-white">
                   <tr>
                     <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
@@ -522,12 +535,19 @@ const EMIList = () => {
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-gray-300">{membership.planName}</div>
                         </td>
-                        <td className="px-4 py-4">
-                          {/* Show number of dues or a short summary */}
+                        <td className="px-4 py-4 align-top">
                           {membership.dues && Array.isArray(membership.dues) && membership.dues.length > 0 ? (
-                            <div>
-                              <div className="text-sm font-medium text-white">{membership.dues.length} due(s)</div>
-                              <div className="text-xs text-white/50">{membership.dues.slice(-1)[0].amount ? `Last: ₹${membership.dues.slice(-1)[0].amount}` : ''}</div>
+                            <div className="space-y-1 text-[11px] leading-snug">
+                              {membership.dues.slice(0, 3).map((due, dueIndex) => (
+                                <div key={dueIndex} className="text-white/80">
+                                  {formatDuesEntry(due)}
+                                </div>
+                              ))}
+                              {membership.dues.length > 3 && (
+                                <div className="text-xs text-white/50">
+                                  +{membership.dues.length - 3} more dues
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="text-xs text-white/50">No dues recorded</div>
@@ -1095,12 +1115,13 @@ const EMIList = () => {
                 {viewingDetails.dues && Array.isArray(viewingDetails.dues) && viewingDetails.dues.length > 0 ? (
                   <div className="space-y-2">
                     {viewingDetails.dues.map((d, i) => (
-                      <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/6 flex justify-between items-center">
-                        <div>
-                          <div className="text-sm font-semibold text-white">₹{Number(d.amount).toFixed(2)}</div>
-                          <div className="text-xs text-white/50">{d.collectedBy || 'Unknown'}</div>
+                      <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/6">
+                        <div className="flex flex-col gap-1">
+                          <div className="text-sm font-semibold text-white">₹{parseDecimal(d.amount || d.amt || 0).toFixed(2)}</div>
+                          <div className="text-xs text-white/50">Collected by: {d.collectedBy || d.collected_by || 'Unknown'}</div>
+                          <div className="text-xs text-white/50">Payment type: {d.paymentId || d.payment_id || 'Cash'}</div>
+                          <div className="text-xs text-white/50">Date: {d.collectedAt ? new Date(d.collectedAt).toLocaleString() : d.collected_at ? new Date(d.collected_at).toLocaleString() : '-'}</div>
                         </div>
-                        <div className="text-xs text-white/40">{d.collectedAt ? new Date(d.collectedAt).toLocaleString() : '-'}</div>
                       </div>
                     ))}
                   </div>
