@@ -518,34 +518,15 @@ const Account = () => {
 
                       // If we only have a member record (admin-created), pass its fields as a prefill object
                       if (memberData) {
-                        const prefilledEnquiryData = {
-                          // do NOT include an `id` so UserEnquiry treats this as a new/editable form, not an existing enquiry
-                          name: memberData.name || "",
-                          email: memberData.email || "",
-                          phone: memberData.phone || "",
-                          height: memberData.height || "",
-                          weight: memberData.weight || "",
-                          bmi: memberData.bmi || "",
-                          dob: normalizeDateForDateInput(memberData.dob) || memberData.dob || "",
-                          age: memberData.age || "",
-                          address: memberData.address || "",
-                          employer: memberData.employer || "",
-                          occupation: memberData.occupation || "",
-                          fitness_goal: memberData.fitness_goal || "",
-                          blood_group: memberData.blood_group || "",
-                          gender: memberData.gender || "",
-                          plan_name: memberData.plan || memberData.plan_name || "",
-                          plan_duration: memberData.duration || memberData.plan_duration || "",
-                        };
-
+                        // Pass the member as `selectedMember` so UserEnquiry will edit via /members/:id
                         navigate('/userenquiry', {
                           state: {
+                            selectedMember: memberData,
                             prefilledUser: {
                               name: userInfo.username || userInfo.full_name || "",
                               email: userInfo.email || "",
                               phone: userInfo.mobile || "",
                             },
-                            prefilledEnquiryData,
                           },
                         });
                         return;
