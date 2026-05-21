@@ -76,7 +76,17 @@ const AddMember = () => {
             height: data.height || "",
             weight: data.weight || "",
             bmi: data.bmi || "",
-            dob: data.dob && data.dob !== '0000-00-00' ? (data.dob.includes('-') && data.dob.split('-')[2]?.length === 4 ? `${data.dob.split('-')[2]}-${data.dob.split('-')[1]}-${data.dob.split('-')[0]}` : dayjs(data.dob).format('YYYY-MM-DD')) : "",
+            dob: (function(){
+              if (!data.dob) return "";
+              const dStr = String(data.dob);
+              if (dStr.includes('0000') || dStr.includes('1899')) return "";
+              if (dStr.includes('-') && dStr.split('-')[2]?.length === 4) {
+                return `${dStr.split('-')[2]}-${dStr.split('-')[1]}-${dStr.split('-')[0]}`;
+              }
+              const parsed = dayjs(dStr);
+              if (parsed.isValid() && parsed.year() > 1900) return parsed.format('YYYY-MM-DD');
+              return "";
+            })(),
             age: data.age || "",
             plan: data.plan || "",
             duration: data.duration != null ? data.duration.toString() : "",
@@ -233,7 +243,7 @@ const AddMember = () => {
     try {
       const payload = {
         ...form,
-        dob: form.dob ? dayjs(form.dob).format('DD-MM-YYYY') : "",
+        dob: form.dob ? dayjs(form.dob).format('YYYY-MM-DD') : "",
         height: form.height ? Number(form.height) : null,
         weight: form.weight ? Number(form.weight) : null,
         bmi: form.bmi ? Number(form.bmi) : null,

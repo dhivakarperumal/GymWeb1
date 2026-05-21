@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 
 const formatDobToDDMMYYYY = (dateString) => {
-  if (!dateString || dateString === '0000-00-00') return "-";
+  if (!dateString || dateString.includes('0000-00-00') || dateString.includes('1899')) return "-";
   if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) return dateString;
   const parsed = dayjs(dateString);
   if (parsed.isValid()) return parsed.format("DD-MM-YYYY");
