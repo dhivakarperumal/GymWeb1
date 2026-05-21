@@ -278,6 +278,9 @@ const router = createHashRouter([
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
       { path: "payments", element: <Payments /> },
       { path: "members", element: <Members /> },
+      { path: "member_details/:id", element: <MemberDetails /> },
+      { path: "addmembers", element: <AddMember /> },
+      { path: "addmembers/:id", element: <AddMember /> },
       { path: "emi", element: <EMIList /> },
     ],
 
