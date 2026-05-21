@@ -512,6 +512,17 @@ const EMIList = () => {
                           {(currentPage - 1) * itemsPerPage + idx + 1}
                         </td>
                         <td className="px-4 py-4">
+                          <div className="font-medium text-base text-white group-hover:text-orange-400 transition-colors">
+                            {membership.userName || membership.username || "Unknown"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-base font-medium text-gray-300">
+                          {membership.mobile || membership.phone || "N/A"}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-gray-300">{membership.planName}</div>
+                        </td>
+                        <td className="px-4 py-4">
                           {/* Show number of dues or a short summary */}
                           {membership.dues && Array.isArray(membership.dues) && membership.dues.length > 0 ? (
                             <div>
@@ -522,15 +533,6 @@ const EMIList = () => {
                             <div className="text-xs text-white/50">No dues recorded</div>
                           )}
                         </td>
-                          <div className="font-medium text-base text-white group-hover:text-orange-400 transition-colors">
-                            {membership.userName || membership.username || "Unknown"}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-base font-medium text-gray-300">
-                          {membership.mobile || membership.phone || "N/A"}
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="text-base font-medium text-gray-300">{membership.planName}</div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-emerald-400">
