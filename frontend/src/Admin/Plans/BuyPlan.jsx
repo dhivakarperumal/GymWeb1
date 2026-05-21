@@ -607,6 +607,7 @@ const BuyPlanadmin = () => {
         trainerName: profileName || user?.username || user?.name || "",
         discount: discountVal,
         amount: originalPrice,
+        collectedBy: profileName || user?.username || user?.name || "Admin",
       };
 
       const activeOrPendingMembership = memberHistory

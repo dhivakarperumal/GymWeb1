@@ -32,7 +32,7 @@ const parseDuration = (value) => {
 };
 
 const EMIList = () => {
-  const { user, role } = useAuth();
+  const { user, role, profileName } = useAuth();
   const [memberships, setMemberships] = useState([]);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -272,6 +272,7 @@ const EMIList = () => {
         paymentId: paymentReference || selectedMembership.paymentId,
         status: newStatus,
         paymentStatus: newPaymentStatus,
+        collectedBy: profileName || "Admin",
       });
 
       let membershipsQuery = "/memberships";
@@ -511,7 +512,9 @@ const EMIList = () => {
                           <div className="text-base font-medium text-cyan-300">
                             ₹{secondPayment.toFixed(2)}
                           </div>
-                          <div className="text-xs text-white/50">Second payment</div>
+                          <div className="text-xs text-white/50">
+                            {membership.collectedBy ? `By: ${membership.collectedBy}` : "Second payment"}
+                          </div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-blue-400">
@@ -625,6 +628,9 @@ const EMIList = () => {
                         <div className="bg-cyan-500/5 p-3 rounded-xl border border-cyan-500/10 text-center">
                           <p className="text-[10px] text-cyan-500/60 uppercase font-black tracking-wider mb-1">Second Paid</p>
                           <p className="text-base font-bold text-cyan-300">₹{secondPayment.toFixed(2)}</p>
+                          {membership.collectedBy && (
+                            <p className="text-[9px] text-white/40 mt-1 uppercase">By: {membership.collectedBy}</p>
+                          )}
                         </div>
                         <div className="bg-blue-500/5 p-3 rounded-xl border border-blue-500/10 text-center">
                           <p className="text-[10px] text-blue-500/60 uppercase font-black tracking-wider mb-1">Remaining</p>
@@ -792,7 +798,7 @@ const EMIList = () => {
                           Initial Payment (Today)
                         </p>
                         <p className="text-xs text-white/60">
-                          Already collected
+                          Already collected {selectedMembership.referredBy || selectedMembership.collectedBy ? `by ${selectedMembership.referredBy || selectedMembership.collectedBy}` : ""}
                         </p>
                       </div>
                     </div>
@@ -897,12 +903,16 @@ const EMIList = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleUpdatePayment}
-                  disabled={updating}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 py-3 rounded-xl font-semibold text-white transition-all shadow-lg"
-                >
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] text-white/50 text-center uppercase tracking-wide">
+                  Processing collection as: <strong className="text-orange-400">{profileName || user?.username || "Admin"}</strong>
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleUpdatePayment}
+                    disabled={updating}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 py-3 rounded-xl font-semibold text-white transition-all shadow-lg"
+                  >
                   {updating ? "Saving..." : "Save Payment"}
                 </button>
 
@@ -912,6 +922,7 @@ const EMIList = () => {
                 >
                   Cancel
                 </button>
+              </div>
               </div>
             </div>
           </div>
@@ -1037,6 +1048,9 @@ const EMIList = () => {
               <div className="grid md:grid-cols-2 gap-4 mb-6">
                 <Card title="Payment Mode" value={viewingDetails.paymentMode} />
                 <Card title="Status" value={viewingDetails.status} />
+                {viewingDetails.collectedBy && (
+                  <Card title="Second Payment Collected By" value={viewingDetails.collectedBy} />
+                )}
               </div>
 
               <button

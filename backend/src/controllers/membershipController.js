@@ -144,8 +144,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -171,6 +171,7 @@ async function createMembership(req, res) {
       trainerName || null,
       discount !== undefined ? discount : 0,
       amount !== undefined ? amount : 0,
+      req.body.collectedBy || null,
     ];
 
     const [result] = await db.query(query, values);
@@ -282,6 +283,7 @@ async function updateMembership(req, res) {
       "trainerName",
       "discount",
       "amount",
+      "collectedBy",
     ];
 
     const updates = [];
