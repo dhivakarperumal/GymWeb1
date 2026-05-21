@@ -108,12 +108,12 @@ const enquiryController = {
                 [userId_uuid, name, email || null, phone, passwordHash]
             );
 
-            // 2. Generate member_id (MBxxx)
+            // 2. Generate numeric member_id sequence matching admin-created members
             const [maxResult] = await connection.query(
-                "SELECT MAX(CAST(SUBSTRING(member_id,3) AS UNSIGNED)) as maxnum FROM gym_members"
+                "SELECT MAX(CAST(member_id AS UNSIGNED)) as maxnum FROM gym_members"
             );
             let nextNumber = (maxResult[0].maxnum || 0) + 1;
-            let memberId = `MB${String(nextNumber).padStart(3, "0")}`;
+            let memberId = String(nextNumber);
 
             // 3. Create gym_member record
             await connection.query(
@@ -328,12 +328,12 @@ const enquiryController = {
 
             if (existingMembers.length === 0) {
                 // 5. Create gym_member record
-                // Generate member_id (MBxxx)
+                // Generate numeric member_id sequence matching admin-created members
                 const [maxResult] = await connection.query(
-                    "SELECT MAX(CAST(SUBSTRING(member_id,3) AS UNSIGNED)) as maxnum FROM gym_members"
+                    "SELECT MAX(CAST(member_id AS UNSIGNED)) as maxnum FROM gym_members"
                 );
                 let nextNumber = (maxResult[0].maxnum || 0) + 1;
-                let memberId = `MB${String(nextNumber).padStart(3, "0")}`;
+                let memberId = String(nextNumber);
 
                 await connection.query(
                     `INSERT INTO gym_members (
