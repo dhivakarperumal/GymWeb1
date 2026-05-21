@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, Edit, X, Search, ChevronDown, CreditCard, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload, Phone } from "lucide-react";
 import api from "../../api";
 import * as XLSX from "xlsx";
@@ -58,8 +58,12 @@ const EMIList = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        let membershipsQuery = "/memberships";
+        if (role === "trainer" && user?.id) {
+          membershipsQuery = `/memberships?trainerUserId=${user.id}`;
+        }
         const [membershipsRes, plansRes, staffRes] = await Promise.all([
-          api.get("/memberships"),
+          api.get(membershipsQuery),
           api.get("/plans"),
           api.get("/staff"),
         ]);
@@ -270,7 +274,11 @@ const EMIList = () => {
         paymentStatus: newPaymentStatus,
       });
 
-      const res = await api.get("/memberships");
+      let membershipsQuery = "/memberships";
+      if (role === "trainer" && user?.id) {
+        membershipsQuery = `/memberships?trainerUserId=${user.id}`;
+      }
+      const res = await api.get(membershipsQuery);
       setMemberships(Array.isArray(res.data) ? res.data : []);
       setSelectedMembership(null);
       setUpdateAmount("");

@@ -3,7 +3,30 @@ const db = require('../config/db');
 /* ================= GET ALL MEMBERSHIPS ================= */
 async function getAllMemberships(req, res) {
   try {
-    const [rows] = await db.query(`
+    const { trainerUserId } = req.query;
+    let staffId = null;
+
+    if (trainerUserId) {
+      const [userRows] = await db.query(
+        'SELECT id, email, username FROM users WHERE id = ?',
+        [trainerUserId]
+      );
+      if (userRows.length > 0) {
+        const u = userRows[0];
+        const [staffRows] = await db.query(
+          'SELECT id FROM staff WHERE email = ? OR username = ? LIMIT 1',
+          [u.email, u.username]
+        );
+        if (staffRows.length > 0) {
+          staffId = staffRows[0].id;
+        }
+      }
+      if (!staffId) {
+        return res.json([]);
+      }
+    }
+
+    let sql = `
       SELECT m.*, 
              COALESCE(m.userName, u.username) as username, 
              COALESCE(m.userEmail, u.email) as email, 
@@ -18,8 +41,15 @@ async function getAllMemberships(req, res) {
         (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '') OR
         (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
         (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      ORDER BY m.createdAt DESC
-    `);
+    `;
+
+    if (staffId) {
+      sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
+    }
+
+    sql += ` ORDER BY m.createdAt DESC`;
+
+    const [rows] = await db.query(sql, staffId ? [staffId] : []);
     res.json(rows);
   } catch (error) {
     console.error("Error fetching all memberships:", error);
