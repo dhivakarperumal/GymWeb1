@@ -15,6 +15,7 @@ const UserEnquiry = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const prefilledPlan = location.state?.selectedPlan;
+  const prefilledUser = location.state?.prefilledUser;
   const [enquiries, setEnquiries] = useState([]);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,7 +70,17 @@ const UserEnquiry = () => {
         plan_duration: prefilledPlan.duration
       }));
     }
-  }, [prefilledPlan]);
+
+    if (prefilledUser) {
+      setFormData(prev => ({
+        ...prev,
+        name: prefilledUser.name || prev.name,
+        email: prefilledUser.email || prev.email,
+        phone: prefilledUser.phone || prev.phone,
+        participant_name: prefilledUser.name || prev.participant_name,
+      }));
+    }
+  }, [prefilledPlan, prefilledUser]);
 
 
   useEffect(() => {
@@ -118,13 +129,15 @@ const UserEnquiry = () => {
   }, [userId]);
 
   useEffect(() => {
-  if (user?.username) {
-    setFormData(prev => ({
-      ...prev,
-      name: user.username,
-      participant_name: user.username
-    }));
-  }
+  if (!user) return;
+
+  setFormData(prev => ({
+    ...prev,
+    name: prev.name || user.username || "",
+    participant_name: prev.participant_name || user.username || "",
+    email: prev.email || user.email || "",
+    phone: prev.phone || user.mobile || "",
+  }));
 }, [user]);
 
   const fetchEnquiries = async () => {

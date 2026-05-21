@@ -165,6 +165,18 @@ const Account = () => {
     fetchUserEnquiry();
   }, [user?.email, user?.mobile]);
 
+  useEffect(() => {
+    if (userEnquiry) return;
+    if (!userInfo) return;
+
+    setEnquiryFormData((prev) => ({
+      ...prev,
+      name: prev.name || userInfo.username || userInfo.full_name || "",
+      email: prev.email || userInfo.email || "",
+      phone: prev.phone || userInfo.mobile || "",
+    }));
+  }, [userInfo, userEnquiry]);
+
   const formatEnquiryDob = (dob) => {
     if (!dob) return "";
     const parts = dob.split('-');
@@ -385,7 +397,15 @@ const Account = () => {
                   <button
                     onClick={() => {
                       if (!userEnquiry) {
-                        navigate('/userenquiry');
+                        navigate('/userenquiry', {
+                          state: {
+                            prefilledUser: {
+                              name: userInfo.username || userInfo.full_name || "",
+                              email: userInfo.email || "",
+                              phone: userInfo.mobile || ""
+                            }
+                          }
+                        });
                         return;
                       }
                       setEnquiryEditMode((prev) => !prev);
