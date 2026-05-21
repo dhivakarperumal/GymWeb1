@@ -275,15 +275,10 @@ const router = createHashRouter([
       { path: "pricing", element: <TrainerPricing /> },
       { path: "followupenquriy", element: <FollowupEnquiry /> },
       { path: "session-tracking", element: <SessionTracking /> },
-<<<<<<< Updated upstream
-=======
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
       { path: "payments", element: <Payments /> },
       { path: "members", element: <Members /> },
       { path: "emi", element: <EMIList /> },
->>>>>>> Stashed changes
-      { path: "buyplanadmin", element: <BuyPlanadmin /> },
-      { path: "payments", element: <Payments /> },
     ],
 
   },
