@@ -269,7 +269,8 @@ const AddMember = () => {
       }
 
       toast.success(isEdit ? "Member updated ✅" : "Member added 💪");
-      navigate("/admin/members");
+      const basePath = location.pathname.includes('/trainer') ? '/trainer' : '/admin';
+      navigate(`${basePath}/members`);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || err.response?.data?.error || "Server error");
