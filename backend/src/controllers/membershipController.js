@@ -270,8 +270,6 @@ async function updateMembership(req, res) {
       "price",
       "pricePaid",
       "secondPaymentPaid",
-      // `paymentAmount` is a one-time installment delta used to record a dues entry
-      "paymentAmount",
       "paymentMode",
       "paymentDate",
       "paymentId",
