@@ -320,15 +320,32 @@ async function updateMembership(req, res) {
       const collectedBy = req.body.collectedBy || null;
       const paymentId = req.body.paymentId || null;
 
-      // Fetch current dues JSON
-      const [membershipRows] = await db.query("SELECT dues FROM memberships WHERE id = ?", [id]);
+      // Safely fetch current dues JSON; if the `dues` column is missing, attempt to create it.
       let currentDues = [];
-      if (membershipRows && membershipRows[0] && membershipRows[0].dues) {
-        try {
-          currentDues = typeof membershipRows[0].dues === 'string' ? JSON.parse(membershipRows[0].dues) : membershipRows[0].dues;
-        } catch (e) {
-          currentDues = [];
+      try {
+        const [membershipRows] = await db.query("SELECT dues FROM memberships WHERE id = ?", [id]);
+        if (membershipRows && membershipRows[0] && membershipRows[0].dues) {
+          try {
+            currentDues = typeof membershipRows[0].dues === 'string' ? JSON.parse(membershipRows[0].dues) : membershipRows[0].dues;
+          } catch (e) {
+            currentDues = [];
+          }
         }
+      } catch (selectErr) {
+        console.warn('updateMembership: SELECT dues failed, attempting to add `dues` column', selectErr.message);
+        // Try to add a JSON column; if that fails (older MySQL), fall back to LONGTEXT
+        try {
+          await db.query("ALTER TABLE memberships ADD COLUMN dues JSON NULL");
+        } catch (alterErr) {
+          console.warn('updateMembership: adding JSON column failed, trying LONGTEXT', alterErr.message);
+          try {
+            await db.query("ALTER TABLE memberships ADD COLUMN dues LONGTEXT NULL");
+          } catch (alt2) {
+            console.error('updateMembership: failed to add dues column', alt2.message);
+            throw alt2;
+          }
+        }
+        currentDues = [];
       }
 
       const entry = {
@@ -340,7 +357,24 @@ async function updateMembership(req, res) {
 
       currentDues.push(entry);
 
-      await db.query("UPDATE memberships SET dues = ? WHERE id = ?", [JSON.stringify(currentDues), id]);
+      // Try to write dues; if column isn't present, attempt to create it then retry.
+      try {
+        await db.query("UPDATE memberships SET dues = ? WHERE id = ?", [JSON.stringify(currentDues), id]);
+      } catch (updateErr) {
+        console.warn('updateMembership: UPDATE dues failed, attempting to add column then retry', updateErr.message);
+        try {
+          await db.query("ALTER TABLE memberships ADD COLUMN IF NOT EXISTS dues JSON NULL");
+        } catch (alterErr) {
+          // best-effort fallback to LONGTEXT
+          try {
+            await db.query("ALTER TABLE memberships ADD COLUMN dues LONGTEXT NULL");
+          } catch (alt2) {
+            console.error('updateMembership: failed to add dues column on retry', alt2.message);
+            throw alt2;
+          }
+        }
+        await db.query("UPDATE memberships SET dues = ? WHERE id = ?", [JSON.stringify(currentDues), id]);
+      }
     }
 
     // Sync with gym_members table
