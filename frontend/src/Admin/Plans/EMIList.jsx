@@ -68,9 +68,19 @@ const EMIList = () => {
           api.get("/staff"),
         ]);
 
-        setMemberships(
-          Array.isArray(membershipsRes.data) ? membershipsRes.data : [],
-        );
+        const raw = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
+        const normalized = raw.map((m) => {
+          try {
+            if (m && typeof m.dues === 'string') {
+              m.dues = JSON.parse(m.dues || '[]');
+            }
+          } catch (e) {
+            m.dues = [];
+          }
+          if (!m.dues) m.dues = [];
+          return m;
+        });
+        setMemberships(normalized);
         setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
         setTrainers(Array.isArray(staffRes.data) ? staffRes.data : []);
       } catch (err) {
@@ -269,6 +279,8 @@ const EMIList = () => {
     try {
       await api.put(`/memberships/${selectedMembership.id}`, {
         secondPaymentPaid: newSecondPayment,
+        // Include the discrete payment amount so server can append a dues entry
+        paymentAmount: amount,
         paymentId: paymentReference || selectedMembership.paymentId,
         status: newStatus,
         paymentStatus: newPaymentStatus,
@@ -280,7 +292,19 @@ const EMIList = () => {
         membershipsQuery = `/memberships?trainerUserId=${user.id}`;
       }
       const res = await api.get(membershipsQuery);
-      setMemberships(Array.isArray(res.data) ? res.data : []);
+      const raw = Array.isArray(res.data) ? res.data : [];
+      const normalized = raw.map((m) => {
+        try {
+          if (m && typeof m.dues === 'string') {
+            m.dues = JSON.parse(m.dues || '[]');
+          }
+        } catch (e) {
+          m.dues = [];
+        }
+        if (!m.dues) m.dues = [];
+        return m;
+      });
+      setMemberships(normalized);
       setSelectedMembership(null);
       setUpdateAmount("");
       setPaymentReference("");
@@ -442,6 +466,7 @@ const EMIList = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Phone</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Dues</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Payment</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
@@ -487,6 +512,16 @@ const EMIList = () => {
                           {(currentPage - 1) * itemsPerPage + idx + 1}
                         </td>
                         <td className="px-4 py-4">
+                          {/* Show number of dues or a short summary */}
+                          {membership.dues && Array.isArray(membership.dues) && membership.dues.length > 0 ? (
+                            <div>
+                              <div className="text-sm font-medium text-white">{membership.dues.length} due(s)</div>
+                              <div className="text-xs text-white/50">{membership.dues.slice(-1)[0].amount ? `Last: ₹${membership.dues.slice(-1)[0].amount}` : ''}</div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-white/50">No dues recorded</div>
+                          )}
+                        </td>
                           <div className="font-medium text-base text-white group-hover:text-orange-400 transition-colors">
                             {membership.userName || membership.username || "Unknown"}
                           </div>
@@ -1050,6 +1085,26 @@ const EMIList = () => {
                 <Card title="Status" value={viewingDetails.status} />
                 {viewingDetails.collectedBy && (
                   <Card title="Second Payment Collected By" value={viewingDetails.collectedBy} />
+                )}
+              </div>
+
+              {/* Dues History */}
+              <div className="mb-6">
+                <h4 className="text-sm text-white/60 uppercase font-bold mb-2">Collected Dues</h4>
+                {viewingDetails.dues && Array.isArray(viewingDetails.dues) && viewingDetails.dues.length > 0 ? (
+                  <div className="space-y-2">
+                    {viewingDetails.dues.map((d, i) => (
+                      <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/6 flex justify-between items-center">
+                        <div>
+                          <div className="text-sm font-semibold text-white">₹{Number(d.amount).toFixed(2)}</div>
+                          <div className="text-xs text-white/50">{d.collectedBy || 'Unknown'}</div>
+                        </div>
+                        <div className="text-xs text-white/40">{d.collectedAt ? new Date(d.collectedAt).toLocaleString() : '-'}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-white/50">No collected dues recorded yet.</div>
                 )}
               </div>
 

@@ -270,6 +270,8 @@ async function updateMembership(req, res) {
       "price",
       "pricePaid",
       "secondPaymentPaid",
+      // `paymentAmount` is a one-time installment delta used to record a dues entry
+      "paymentAmount",
       "paymentMode",
       "paymentDate",
       "paymentId",
@@ -296,19 +298,49 @@ async function updateMembership(req, res) {
       }
     });
 
-    if (updates.length === 0) {
+    if (updates.length === 0 && req.body.paymentAmount === undefined) {
       return res.status(400).json({ success: false, message: "No valid fields provided for update" });
     }
 
-    values.push(id);
+    // Perform the main update if there are fields to update
+    let result;
+    if (updates.length > 0) {
+      values.push(id);
+      const [resUpdate] = await db.query(`UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`, values);
+      result = resUpdate;
 
-    const [result] = await db.query(
-      `UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`,
-      values
-    );
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: "Membership not found" });
+      }
+    }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Membership not found" });
+    // If a discrete payment amount was provided, append a dues entry (keeps history of instalments)
+    if (req.body.paymentAmount !== undefined) {
+      const paymentAmount = Number(req.body.paymentAmount) || 0;
+      const collectedBy = req.body.collectedBy || null;
+      const paymentId = req.body.paymentId || null;
+
+      // Fetch current dues JSON
+      const [membershipRows] = await db.query("SELECT dues FROM memberships WHERE id = ?", [id]);
+      let currentDues = [];
+      if (membershipRows && membershipRows[0] && membershipRows[0].dues) {
+        try {
+          currentDues = typeof membershipRows[0].dues === 'string' ? JSON.parse(membershipRows[0].dues) : membershipRows[0].dues;
+        } catch (e) {
+          currentDues = [];
+        }
+      }
+
+      const entry = {
+        amount: Number(paymentAmount),
+        collectedBy: collectedBy,
+        collectedAt: new Date().toISOString(),
+        paymentId: paymentId || null,
+      };
+
+      currentDues.push(entry);
+
+      await db.query("UPDATE memberships SET dues = ? WHERE id = ?", [JSON.stringify(currentDues), id]);
     }
 
     // Sync with gym_members table
