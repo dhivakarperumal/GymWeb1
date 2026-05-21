@@ -61,6 +61,7 @@ const Account = () => {
     plan_duration: "",
   });
   const [savingMember, setSavingMember] = useState(false);
+  const [memberEditMode, setMemberEditMode] = useState(false);
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
 
@@ -360,11 +361,19 @@ const Account = () => {
   };
 
   const renderMemberDetailRow = (label, value) => {
-    if (!value) return null;
+    const displayValue =
+      value === undefined || value === null || value === ""
+        ? "-"
+        : typeof value === "boolean"
+        ? value
+          ? "Yes"
+          : "No"
+        : value;
+
     return (
       <div className="bg-gray-900/50 border border-white/5 rounded-2xl p-4">
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-white text-sm">{value}</p>
+        <p className="text-white text-sm">{displayValue}</p>
       </div>
     );
   };
@@ -467,27 +476,28 @@ const Account = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold uppercase text-white">Join Form Details</h3>
-                    <p className="text-sm text-gray-400">Edit your join form details. All changes will be saved to your profile.</p>
+                    <p className="text-sm text-gray-400">View your Join Now form information here. Tap Edit Details to update it on the enquiry page.</p>
                   </div>
                   <button
                     onClick={() => {
-                      if (!memberData && !userEnquiry) {
-                        navigate('/userenquiry', {
-                          state: {
-                            prefilledUser: {
-                              name: userInfo.username || userInfo.full_name || "",
-                              email: userInfo.email || "",
-                              phone: userInfo.mobile || ""
-                            }
+                      navigate('/userenquiry', {
+                        state: {
+                          selectedEnquiry: userEnquiry || null,
+                          prefilledUser: {
+                            name: memberFormData.name || userInfo.username || userInfo.full_name || "",
+                            email: memberFormData.email || userInfo.email || "",
+                            phone: memberFormData.phone || userInfo.mobile || ""
+                          },
+                          prefilledPlan: {
+                            planName: memberFormData.plan_name || "",
+                            duration: memberFormData.plan_duration || ""
                           }
-                        });
-                        return;
-                      }
-                      setMemberEditMode((prev) => !prev);
+                        }
+                      });
                     }}
                     className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-red-500"
                   >
-                    {memberEditMode ? 'Cancel' : 'Edit Details'}
+                    Edit Details
                   </button>
                 </div>
 
