@@ -139,6 +139,78 @@ export default function Workouts() {
                             </button>
                           </td>
                         </tr>
+
+                        {openWorkout === item.id && (
+                          <tr>
+                            <td colSpan={3} className="px-6 pb-6 pt-0">
+                              <div className="space-y-4 pt-4 border-t border-red-500/10">
+                                <div className="grid gap-3">
+                                  <p className="text-sm uppercase tracking-[0.18em] text-gray-400">Trainer</p>
+                                  <p className="text-white font-semibold">{item.trainer_name}</p>
+                                </div>
+
+                                {Object.entries(item.days || {}).map(([day, exercises], idx) => (
+                                  <div key={idx} className="bg-gray-800 rounded-2xl p-4 border border-red-500/20">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <p className="font-semibold text-red-500">{day}</p>
+                                      <span className="text-xs text-gray-400">{exercises.length} Exercises</span>
+                                    </div>
+                                    <div className="space-y-3">
+                                      {exercises.map((ex, j) => (
+                                        <div key={j} className="rounded-2xl border border-red-500/10 bg-black/40 p-3">
+                                          {ex.media && (
+                                            <div
+                                              onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
+                                              className="w-full aspect-video rounded-xl overflow-hidden border border-red-500/20 mb-3 bg-black/60 relative cursor-pointer"
+                                            >
+                                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                                <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                                                  <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
+                                                </div>
+                                              </div>
+                                              {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
+                                                ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
+                                                  <iframe
+                                                    src={getYouTubeEmbedUrl(ex.media)}
+                                                    className="w-full h-full border-0 pointer-events-none"
+                                                    title="Exercise preview"
+                                                  />
+                                                ) : (
+                                                  <video src={ex.media} className="w-full h-full object-cover" />
+                                                )
+                                              ) : (
+                                                <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
+                                              )}
+                                            </div>
+                                          )}
+                                          <p className="font-semibold text-white mb-2">{ex.name}</p>
+                                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                                            <div>
+                                              <p>Time</p>
+                                              <p className="text-white">{ex.time || '--'}</p>
+                                            </div>
+                                            <div>
+                                              <p>Sets</p>
+                                              <p className="text-white">{ex.sets || '--'}</p>
+                                            </div>
+                                            <div>
+                                              <p>Reps</p>
+                                              <p className="text-white">{ex.count || '--'}</p>
+                                            </div>
+                                            <div>
+                                              <p>Type</p>
+                                              <p className="text-orange-400">{ex.type || '--'}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
                       </React.Fragment>
                     ))}
                   </tbody>
