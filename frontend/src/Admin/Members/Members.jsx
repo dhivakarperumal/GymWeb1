@@ -146,9 +146,14 @@ const Members = () => {
 
   // 🗑 DELETE MEMBER
   const handleDelete = async (m) => {
+    if (m.source === "users") {
+      toast.error("Cannot delete a registered user from the Members page. Use User Management instead.");
+      return;
+    }
+
     const idToDelete = m.id || m.member_id;
-    if (!idToDelete && m.source === "users") {
-      toast.error("Cannot delete a registered user from here. Use user management.");
+    if (!idToDelete) {
+      toast.error("Missing member identifier.");
       return;
     }
 
