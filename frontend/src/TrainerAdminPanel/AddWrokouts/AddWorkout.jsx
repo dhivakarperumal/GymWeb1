@@ -56,12 +56,13 @@ const AddWorkout = () => {
     memberMobile: "",
     level: "Beginner",
     goal: "",
+    massGain: "",
     durationWeeks: "",
     memberWeight: "",
   };
 
   const initialDays = {
-    Day1: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", media: "", mediaType: "url" }],
+    Day1: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", massGain: "", media: "", mediaType: "url" }],
   };
 
   const [members, setMembers] = useState([]);
@@ -149,6 +150,7 @@ const AddWorkout = () => {
           memberMobile: data.member_mobile,
           level: data.level,
           goal: data.goal || "",
+          massGain: data.massGain || data.mass_gain || "",
           durationWeeks: data.duration_weeks,
           memberWeight: data.member_weight || "",
         });
@@ -170,7 +172,7 @@ const AddWorkout = () => {
     const nextDay = `Day${Object.keys(days).length + 1}`;
     setDays({
       ...days,
-      [nextDay]: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", media: "", mediaType: "url" }],
+      [nextDay]: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", massGain: "", media: "", mediaType: "url" }],
     });
   };
 
@@ -200,7 +202,7 @@ const AddWorkout = () => {
   const addExercise = (dayKey) => {
     setDays({
       ...days,
-      [dayKey]: [...days[dayKey], { time: "", type: "Weight Training", name: "", sets: "", count: "", media: "", mediaType: "url" }],
+      [dayKey]: [...days[dayKey], { time: "", type: "Weight Training", name: "", sets: "", count: "", massGain: "", media: "", mediaType: "url" }],
     });
   };
 
@@ -254,6 +256,7 @@ const AddWorkout = () => {
             memberMobile: form.memberMobile,
             level: form.level,
             goal: form.goal,
+            massGain: form.massGain,
             durationWeeks: calculatedWeeks,
             memberWeight: form.memberWeight,
             days,
@@ -279,6 +282,7 @@ const AddWorkout = () => {
                 memberEmail: m.email,
                 memberMobile: m.mobile,
                 memberWeight: m.weight,
+                massGain: form.massGain,
                 durationWeeks: calculatedWeeks,
                 days,
               status: "active",
@@ -795,6 +799,19 @@ const AddWorkout = () => {
                           value={item.count}
                           onChange={(e) =>
                             updateExercise(dayKey, index, "count", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* Mass Gain */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Mass Gain</label>
+                        <input
+                          className={inputClass}
+                          placeholder="e.g. Bulk Up focus"
+                          value={item.massGain}
+                          onChange={(e) =>
+                            updateExercise(dayKey, index, "massGain", e.target.value)
                           }
                         />
                       </div>
