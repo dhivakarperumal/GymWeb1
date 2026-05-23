@@ -11,7 +11,8 @@ import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import { toast } from "react-hot-toast";
-import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users } from "lucide-react";
+import dayjs from "dayjs";
+import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users, CreditCard } from "lucide-react";
 
 
 const Account = () => {
@@ -109,7 +110,7 @@ const Account = () => {
             name: data.name || "",
             email: data.email || "",
             phone: data.phone || "",
-            dob: data.dob || "",
+            dob: normalizeDateForDateInput(data.dob) || "",
             age: data.age || "",
             blood_group: data.blood_group || "",
             gender: data.gender || "",
@@ -122,6 +123,9 @@ const Account = () => {
             emergency_contact_address: data.emergency_contact_address || "",
             emergency_contact_phone_home: data.emergency_contact_phone_home || "",
             emergency_contact_phone_work: data.emergency_contact_phone_work || "",
+            height: data.height || "",
+            weight: data.weight || "",
+            bmi: data.bmi || "",
             plan_name: data.plan || "",
             plan_duration: data.duration || "",
           });
@@ -134,7 +138,21 @@ const Account = () => {
       }
     };
 
+    const fetchUserMemberships = async () => {
+      try {
+        const res = await api.get(`/memberships/user/${userId}`);
+        const memberships = Array.isArray(res.data) ? res.data : [];
+        setPlans(memberships);
+        setHasActivePlan(memberships.some((m) => m.status === 'active'));
+      } catch (err) {
+        console.error('Failed to fetch user memberships', err);
+        setPlans([]);
+        setHasActivePlan(false);
+      }
+    };
+
     fetchMemberData();
+    fetchUserMemberships();
   }, [userId]);
 
   useEffect(() => {
@@ -164,7 +182,7 @@ const Account = () => {
             height: match.height || "",
             weight: match.weight || "",
             bmi: match.bmi || "",
-            dob: formatEnquiryDob(match.dob) || "",
+            dob: normalizeDateForDateInput(match.dob) || "",
             age: match.age || "",
             address: match.address || "",
             employer: match.employer || "",
@@ -212,6 +230,30 @@ const Account = () => {
     }));
   }, [userInfo, userEnquiry, memberData]);
 
+  useEffect(() => {
+    if (!memberData || !userEnquiry) return;
+
+    setMemberFormData((prev) => ({
+      ...prev,
+      height: prev.height || memberData.height || "",
+      weight: prev.weight || memberData.weight || "",
+      bmi: prev.bmi || memberData.bmi || "",
+      dob: prev.dob || normalizeDateForDateInput(memberData.dob) || "",
+      age: prev.age || memberData.age || "",
+      blood_group: prev.blood_group || memberData.blood_group || "",
+      gender: prev.gender || memberData.gender || "",
+      address: prev.address || memberData.address || "",
+      employer: prev.employer || memberData.employer || "",
+      occupation: prev.occupation || memberData.occupation || "",
+      emergency_contact_name: prev.emergency_contact_name || memberData.emergency_contact_name || "",
+      emergency_contact_relationship: prev.emergency_contact_relationship || memberData.emergency_contact_relationship || "",
+      emergency_contact_address: prev.emergency_contact_address || memberData.emergency_contact_address || "",
+      emergency_contact_phone_home: prev.emergency_contact_phone_home || memberData.emergency_contact_phone_home || "",
+      emergency_contact_phone_work: prev.emergency_contact_phone_work || memberData.emergency_contact_phone_work || "",
+      fitness_goal: prev.fitness_goal || memberData.fitness_goal || "",
+    }));
+  }, [memberData, userEnquiry]);
+
   // Calculate BMI when height or weight changes
   useEffect(() => {
     if (memberFormData.height && memberFormData.weight) {
@@ -237,7 +279,7 @@ const Account = () => {
       subject: memberFormData.subject || userEnquiry?.subject || null,
       message: memberFormData.message || userEnquiry?.message || null,
       location: memberFormData.location || userEnquiry?.location || null,
-      dob: memberFormData.dob || memberData?.dob || null,
+        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob || null,
       age: memberFormData.age || memberData?.age || null,
       address: memberFormData.address || memberData?.address || null,
       employer: memberFormData.employer || memberData?.employer || null,
@@ -279,7 +321,7 @@ const Account = () => {
       bmi: memberFormData.bmi || memberData?.bmi,
       plan: memberFormData.plan_name || memberData?.plan,
       duration: memberFormData.plan_duration || memberData?.duration,
-      dob: memberFormData.dob || memberData?.dob,
+        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob,
       age: memberFormData.age || memberData?.age,
       address: memberFormData.address || memberData?.address,
       employer: memberFormData.employer || memberData?.employer,
@@ -361,15 +403,7 @@ const Account = () => {
   };
 
   const renderMemberDetailRow = (label, value) => {
-    const displayValue =
-      value === undefined || value === null || value === ""
-        ? "-"
-        : typeof value === "boolean"
-        ? value
-          ? "Yes"
-          : "No"
-        : value;
-
+    const displayValue = value === undefined || value === null || value === "" ? "-" : value;
     return (
       <div className="bg-gray-900/50 border border-white/5 rounded-2xl p-4">
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
@@ -378,11 +412,80 @@ const Account = () => {
     );
   };
 
-  /* ================= SIDEBAR ================= */
+  const formatCurrency = (value) => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `₹${number.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  };
+
+  const safeParseDues = (membership) => {
+    if (!membership) return [];
+    let dues = membership.dues ?? [];
+    if (typeof dues === "string") {
+      try {
+        dues = JSON.parse(dues || "[]");
+      } catch (err) {
+        dues = [];
+      }
+    }
+    return Array.isArray(dues) ? dues : [];
+  };
+
+  const getMembershipField = (membership, ...keys) => {
+    return keys.reduce((value, key) => value ?? membership?.[key], undefined);
+  };
+
+  const getMembershipTotal = (membership) => {
+    const total = getMembershipField(membership, "price", "amount", "total", "total_amount") || 0;
+    return Number(total) || 0;
+  };
+
+  const getMembershipPaid = (membership) => {
+    const initialPaid = Number(getMembershipField(membership, "pricePaid", "price_paid", "paid")) || 0;
+    const secondPaid = Number(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid")) || 0;
+    return initialPaid + secondPaid;
+  };
+
+  const getMembershipRemaining = (membership) => {
+    const remaining = getMembershipTotal(membership) - getMembershipPaid(membership);
+    return Math.max(0, Number.isFinite(remaining) ? remaining : 0);
+  };
+
+  const getMembershipDisplayValue = (membership, fallback = "-") => {
+    return getMembershipField(membership, "planName", "plan_name", "plan") || fallback;
+  };
+
+  const getMembershipDuration = (membership) => {
+    const duration = getMembershipField(membership, "duration", "plan_duration");
+    return duration || "-";
+  };
+
+  const getMembershipPaymentEntries = (membership) => {
+    return safeParseDues(membership).map((due) => {
+      const amount = Number(due?.amount ?? due?.amt ?? 0);
+      const collectedBy = getMembershipField(due, "collectedBy", "collected_by") || "Admin";
+      const paymentId = getMembershipField(due, "paymentId", "payment_id") || "Cash";
+      const collectedAt = getMembershipField(due, "collectedAt", "collected_at", "createdAt", "date");
+      return {
+        amount: Number.isFinite(amount) ? amount : 0,
+        collectedBy,
+        paymentId,
+        collectedAt,
+      };
+    });
+  };
 
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
     { key: "plans", label: "My Plans", icon: CalendarCheck },
+    { key: "emi", label: "EMI Details", icon: CreditCard },
     ...(hasActivePlan
       ? [
         { key: "diet", label: "Diet Chart", icon: Shield },
@@ -480,19 +583,46 @@ const Account = () => {
                   </div>
                   <button
                     onClick={() => {
+                      // If we have an actual enquiry, pass it as selectedEnquiry so UserEnquiry will edit it.
+                      if (userEnquiry) {
+                        navigate('/userenquiry', {
+                          state: {
+                            selectedEnquiry: userEnquiry,
+                            prefilledUser: {
+                              name: userInfo.username || userInfo.full_name || "",
+                              email: userInfo.email || "",
+                              phone: userInfo.mobile || "",
+                            },
+                          },
+                        });
+                        return;
+                      }
+
+                      // If we only have a member record (admin-created), pass its fields as a prefill object
+                      if (memberData) {
+                        // Pass the member as `selectedMember` so UserEnquiry will edit via /members/:id
+                        navigate('/userenquiry', {
+                          state: {
+                            selectedMember: memberData,
+                            prefilledUser: {
+                              name: userInfo.username || userInfo.full_name || "",
+                              email: userInfo.email || "",
+                              phone: userInfo.mobile || "",
+                            },
+                          },
+                        });
+                        return;
+                      }
+
+                      // Fallback: send prefilled user only
                       navigate('/userenquiry', {
                         state: {
-                          selectedEnquiry: userEnquiry || null,
                           prefilledUser: {
-                            name: memberFormData.name || userInfo.username || userInfo.full_name || "",
-                            email: memberFormData.email || userInfo.email || "",
-                            phone: memberFormData.phone || userInfo.mobile || ""
+                            name: userInfo.username || userInfo.full_name || "",
+                            email: userInfo.email || "",
+                            phone: userInfo.mobile || "",
                           },
-                          prefilledPlan: {
-                            planName: memberFormData.plan_name || "",
-                            duration: memberFormData.plan_duration || ""
-                          }
-                        }
+                        },
                       });
                     }}
                     className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-red-500"
@@ -795,6 +925,152 @@ const Account = () => {
       case "plans":
         return <MemberSBuyPlans preFetchedPlans={plans} />
 
+      case "emi": {
+        const activePlans = plans || [];
+        return (
+          <div className="w-full py-4 px-2 sm:px-4" data-aos="fade-up">
+            <div className="max-w-6xl mx-auto space-y-6">
+              <div className="bg-gray-900/50 border border-white/10 rounded-3xl p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold uppercase text-white">EMI Details</h2>
+                    <p className="text-sm text-gray-400 max-w-2xl">
+                      Review your membership EMI schedule, plan summary, total amount paid and remaining dues.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Plans</p>
+                      <p className="text-white font-semibold mt-2">{activePlans.length}</p>
+                    </div>
+                    <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Active Plans</p>
+                      <p className="text-white font-semibold mt-2">{activePlans.filter((membership) => membership.status === "active").length}</p>
+                    </div>
+                    <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Pending Dues</p>
+                      <p className="text-white font-semibold mt-2">
+                        {activePlans.reduce((sum, membership) => sum + getMembershipRemaining(membership), 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {activePlans.length === 0 ? (
+                <div className="rounded-3xl border border-white/10 bg-gray-900/50 p-8 text-center text-gray-400">
+                  No EMI membership records found for your account.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {activePlans.map((membership, index) => {
+                    const planName = getMembershipDisplayValue(membership, "Unknown Plan");
+                    const duration = getMembershipDuration(membership);
+                    const totalAmount = getMembershipTotal(membership);
+                    const paidAmount = getMembershipPaid(membership);
+                    const remainingAmount = getMembershipRemaining(membership);
+                    const dues = getMembershipPaymentEntries(membership);
+                    const status = getMembershipField(membership, "status") || "-";
+                    const paymentStatus = getMembershipField(membership, "paymentStatus", "payment_status") || "-";
+                    const paymentMode = getMembershipField(membership, "paymentMode", "payment_mode") || "-";
+                    const startDate = getMembershipField(membership, "startDate", "start_date");
+                    const endDate = getMembershipField(membership, "endDate", "end_date");
+                    const createdAt = getMembershipField(membership, "createdAt", "created_at");
+                    const membershipId = membership.id || membership.membershipId || index;
+
+                    return (
+                      <div key={membershipId} className="rounded-3xl border border-white/10 bg-gray-900/50 p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+                          <div>
+                            <p className="text-xs uppercase tracking-widest text-gray-500">Plan</p>
+                            <h3 className="text-xl font-bold text-white">{planName}</h3>
+                            <p className="text-sm text-gray-400">{duration !== "-" ? `${duration} month${duration === 1 ? "" : "s"}` : "Duration not set"}</p>
+                          </div>
+                          <div className="space-y-2 text-left sm:text-right">
+                            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold ${status?.toLowerCase() === "active" ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-gray-500/10 text-gray-300 border border-white/10"}`}>
+                              {status}
+                            </span>
+                            <p className="text-xs text-gray-400">Created {formatDate(createdAt)}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Amount</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(totalAmount)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Initial Paid</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "pricePaid", "price_paid") || 0)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Second Paid</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Remaining</p>
+                            <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Status</p>
+                            <p className="text-white font-semibold mt-2">{paymentStatus}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Mode</p>
+                            <p className="text-white font-semibold mt-2">{paymentMode}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Start Date</p>
+                            <p className="text-white font-semibold mt-2">{formatDate(startDate)}</p>
+                          </div>
+                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500">End Date</p>
+                            <p className="text-white font-semibold mt-2">{formatDate(endDate)}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6">
+                          <h4 className="text-sm font-bold uppercase tracking-widest text-white mb-3">EMI Dues History</h4>
+                          {dues.length > 0 ? (
+                            <div className="overflow-x-auto rounded-3xl border border-white/10 bg-black/40">
+                              <table className="min-w-full divide-y divide-white/10 text-sm">
+                                <thead>
+                                  <tr className="bg-white/5 text-left text-xs uppercase tracking-widest text-gray-400">
+                                    <th className="px-4 py-3">Due Amount</th>
+                                    <th className="px-4 py-3">Date</th>
+                                    <th className="px-4 py-3">Collected By</th>
+                                    <th className="px-4 py-3">Reference</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/10 bg-black/20">
+                                  {dues.map((due, dueIndex) => (
+                                    <tr key={dueIndex} className="hover:bg-white/5 transition-colors">
+                                      <td className="px-4 py-4 text-white font-semibold">{formatCurrency(due.amount)}</td>
+                                      <td className="px-4 py-4 text-gray-300">{formatDate(due.collectedAt)}</td>
+                                      <td className="px-4 py-4 text-gray-300">{due.collectedBy}</td>
+                                      <td className="px-4 py-4 text-gray-300">{due.paymentId || "Cash"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p className="text-gray-400">No dues recorded yet for this plan.</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
       case "diet":
         return hasActivePlan ? (
           <DietChart planId={plans[0]?.planId} />
@@ -1083,6 +1359,25 @@ const InputField = ({ label, value, onChange, type = 'text', isTextArea = false,
       />
     </label>
   );
+};
+
+const normalizeDateForDateInput = (value) => {
+  if (!value) return "";
+  const parsed = dayjs(value, ['YYYY-MM-DD', 'DD-MM-YYYY', 'MM/DD/YYYY', 'YYYY/MM/DD', 'DD/MM/YYYY'], true);
+  if (!parsed.isValid()) {
+    const fallback = dayjs(value);
+    return fallback.isValid() ? fallback.format('YYYY-MM-DD') : "";
+  }
+  return parsed.format('YYYY-MM-DD');
+};
+
+const getConsent = (consentData) => {
+  if (!consentData) return {};
+  try {
+    return typeof consentData === 'string' ? JSON.parse(consentData) : consentData;
+  } catch (err) {
+    return {};
+  }
 };
 
 export default Account;

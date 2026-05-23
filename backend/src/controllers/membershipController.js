@@ -3,7 +3,30 @@ const db = require('../config/db');
 /* ================= GET ALL MEMBERSHIPS ================= */
 async function getAllMemberships(req, res) {
   try {
-    const [rows] = await db.query(`
+    const { trainerUserId } = req.query;
+    let staffId = null;
+
+    if (trainerUserId) {
+      const [userRows] = await db.query(
+        'SELECT id, email, username FROM users WHERE id = ?',
+        [trainerUserId]
+      );
+      if (userRows.length > 0) {
+        const u = userRows[0];
+        const [staffRows] = await db.query(
+          'SELECT id FROM staff WHERE email = ? OR username = ? LIMIT 1',
+          [u.email, u.username]
+        );
+        if (staffRows.length > 0) {
+          staffId = staffRows[0].id;
+        }
+      }
+      if (!staffId) {
+        return res.json([]);
+      }
+    }
+
+    let sql = `
       SELECT m.*, 
              COALESCE(m.userName, u.username) as username, 
              COALESCE(m.userEmail, u.email) as email, 
@@ -18,8 +41,15 @@ async function getAllMemberships(req, res) {
         (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '') OR
         (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
         (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-      ORDER BY m.createdAt DESC
-    `);
+    `;
+
+    if (staffId) {
+      sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
+    }
+
+    sql += ` ORDER BY m.createdAt DESC`;
+
+    const [rows] = await db.query(sql, staffId ? [staffId] : []);
     res.json(rows);
   } catch (error) {
     console.error("Error fetching all memberships:", error);
@@ -114,8 +144,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -141,6 +171,7 @@ async function createMembership(req, res) {
       trainerName || null,
       discount !== undefined ? discount : 0,
       amount !== undefined ? amount : 0,
+      req.body.collectedBy || null,
     ];
 
     const [result] = await db.query(query, values);
@@ -252,6 +283,7 @@ async function updateMembership(req, res) {
       "trainerName",
       "discount",
       "amount",
+      "collectedBy",
     ];
 
     const updates = [];
@@ -264,19 +296,83 @@ async function updateMembership(req, res) {
       }
     });
 
-    if (updates.length === 0) {
+    if (updates.length === 0 && req.body.paymentAmount === undefined) {
       return res.status(400).json({ success: false, message: "No valid fields provided for update" });
     }
 
-    values.push(id);
+    // Perform the main update if there are fields to update
+    let result;
+    if (updates.length > 0) {
+      values.push(id);
+      const [resUpdate] = await db.query(`UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`, values);
+      result = resUpdate;
 
-    const [result] = await db.query(
-      `UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`,
-      values
-    );
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: "Membership not found" });
+      }
+    }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Membership not found" });
+    // If a discrete payment amount was provided, append a dues entry (keeps history of instalments)
+    if (req.body.paymentAmount !== undefined) {
+      const paymentAmount = Number(req.body.paymentAmount) || 0;
+      const collectedBy = req.body.collectedBy || null;
+      const paymentId = req.body.paymentId || null;
+
+      // Safely fetch current dues JSON; if the `dues` column is missing, attempt to create it.
+      let currentDues = [];
+      try {
+        const [membershipRows] = await db.query("SELECT dues FROM memberships WHERE id = ?", [id]);
+        if (membershipRows && membershipRows[0] && membershipRows[0].dues) {
+          try {
+            currentDues = typeof membershipRows[0].dues === 'string' ? JSON.parse(membershipRows[0].dues) : membershipRows[0].dues;
+          } catch (e) {
+            currentDues = [];
+          }
+        }
+      } catch (selectErr) {
+        console.warn('updateMembership: SELECT dues failed, attempting to add `dues` column', selectErr.message);
+        // Try to add a JSON column; if that fails (older MySQL), fall back to LONGTEXT
+        try {
+          await db.query("ALTER TABLE memberships ADD COLUMN dues JSON NULL");
+        } catch (alterErr) {
+          console.warn('updateMembership: adding JSON column failed, trying LONGTEXT', alterErr.message);
+          try {
+            await db.query("ALTER TABLE memberships ADD COLUMN dues LONGTEXT NULL");
+          } catch (alt2) {
+            console.error('updateMembership: failed to add dues column', alt2.message);
+            throw alt2;
+          }
+        }
+        currentDues = [];
+      }
+
+      const entry = {
+        amount: Number(paymentAmount),
+        collectedBy: collectedBy,
+        collectedAt: new Date().toISOString(),
+        paymentId: paymentId || null,
+      };
+
+      currentDues.push(entry);
+
+      // Try to write dues; if column isn't present, attempt to create it then retry.
+      try {
+        await db.query("UPDATE memberships SET dues = ? WHERE id = ?", [JSON.stringify(currentDues), id]);
+      } catch (updateErr) {
+        console.warn('updateMembership: UPDATE dues failed, attempting to add column then retry', updateErr.message);
+        try {
+          await db.query("ALTER TABLE memberships ADD COLUMN IF NOT EXISTS dues JSON NULL");
+        } catch (alterErr) {
+          // best-effort fallback to LONGTEXT
+          try {
+            await db.query("ALTER TABLE memberships ADD COLUMN dues LONGTEXT NULL");
+          } catch (alt2) {
+            console.error('updateMembership: failed to add dues column on retry', alt2.message);
+            throw alt2;
+          }
+        }
+        await db.query("UPDATE memberships SET dues = ? WHERE id = ?", [JSON.stringify(currentDues), id]);
+      }
     }
 
     // Sync with gym_members table

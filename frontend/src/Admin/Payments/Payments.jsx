@@ -484,7 +484,13 @@ const Payments = () => {
   /* RESET PAGE ON SEARCH/FILTER */
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedRows([]);
+    setSelectAll(false);
   }, [search, filterType, dateFilter, customStart, customEnd]);
+
+  useEffect(() => {
+    setSelectAll(allPlans.length > 0 && selectedRows.length === allPlans.length);
+  }, [selectedRows, allPlans.length]);
 
   const formatDate = (date) => {
     if (!date) return "--";
@@ -513,6 +519,8 @@ const Payments = () => {
     return `${day} ${month} ${year}`;
   };
 
+  const getRowId = (member, plan) => `${member.uid}_${plan.id}`;
+
   const toggleRow = (id) => {
     setSelectedRows((prev) =>
       prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id],
@@ -522,33 +530,37 @@ const Payments = () => {
   const toggleSelectAll = () => {
     if (selectAll) {
       setSelectedRows([]);
-    } else {
-      const allIds = paginatedPlans.map(({ member }) => member.uid);
-      setSelectedRows(allIds);
+      setSelectAll(false);
+      return;
     }
-    setSelectAll(!selectAll);
+
+    const allIds = allPlans.map(({ member, plan }) => getRowId(member, plan));
+    setSelectedRows(allIds);
+    setSelectAll(true);
   };
 
   const exportToExcel = () => {
-    const selectedData = paginatedPlans
-      .filter(({ member }) => selectedRows.includes(member.uid))
-      .map(({ member, plan }, index) => ({
-        "S.No": index + 1,
-        Name: member.username,
-        Email: member.email,
-        Plan: plan.planName,
-        "Collected By": plan.referredBy || "Admin",
-        Amount: plan.pricePaid,
-        "Payment Date": formatDate(plan.paymentDate),
-        "Start Date": formatDate(plan.startDate),
-        "End Date": formatDate(plan.endDate),
-        Status: plan.status,
-      }));
+    const rowsToExport = selectedRows.length
+      ? allPlans.filter(({ member, plan }) => selectedRows.includes(getRowId(member, plan)))
+      : allPlans;
 
-    if (selectedData.length === 0) {
-      toast.error("Please select rows first");
+    if (rowsToExport.length === 0) {
+      toast.error("No payment rows found to export");
       return;
     }
+
+    const selectedData = rowsToExport.map(({ member, plan }, index) => ({
+      "S.No": index + 1,
+      Name: member.username,
+      Email: member.email,
+      Plan: plan.planName,
+      "Collected By": plan.referredBy || "Admin",
+      Amount: plan.pricePaid,
+      "Payment Date": formatDate(plan.paymentDate),
+      "Start Date": formatDate(plan.startDate),
+      "End Date": formatDate(plan.endDate),
+      Status: plan.status,
+    }));
 
     const worksheet = XLSX.utils.json_to_sheet(selectedData);
     const workbook = XLSX.utils.book_new();
@@ -640,7 +652,7 @@ const Payments = () => {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
           {/* Title */}
-          <h1 className="text-2xl md:text-3xl font-bold">Payment Details</h1>
+          <h1 className="text-2xl md:text-3xl font-bold"></h1>
 
           {/* Right Section */}
           <div className="flex flex-wrap items-center gap-3 mb-5 ml-auto">
@@ -660,7 +672,14 @@ const Payments = () => {
               onClick={exportToExcel}
               className="px-4 py-2.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition"
             >
-              Export Excel
+              Export
+            </button>
+
+            <button
+              onClick={toggleSelectAll}
+              className="px-4 py-2.5 bg-slate-500 text-white rounded-lg text-sm hover:bg-slate-600 transition"
+            >
+              {selectAll ? "Clear Selection" : "Select All"}
             </button>
 
             {/* Toggle Buttons */}
@@ -962,7 +981,7 @@ const Payments = () => {
         {viewType === "table" && (
           <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px] text-sm text-left text-gray-200 border-collapse">
+              <table className="w-full min-w-250 text-sm text-left text-gray-200 border-collapse">
                 <thead className="bg-white/10 text-white">
                   <tr>
                     <th className="px-4 py-4 text-center">
@@ -1007,8 +1026,8 @@ const Payments = () => {
                         <td className="px-4 py-4 text-center">
                           <input
                             type="checkbox"
-                            checked={selectedRows.includes(member.uid)}
-                            onChange={() => toggleRow(member.uid)}
+                            checked={selectedRows.includes(getRowId(member, plan))}
+                            onChange={() => toggleRow(getRowId(member, plan))}
                             className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
                           />
                         </td>

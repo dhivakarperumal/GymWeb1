@@ -16,7 +16,7 @@ import api from '../../api';
 import toast from 'react-hot-toast';
 
 const BiometricLogs = () => {
-  const [deviceIp, setDeviceIp] = useState('192.168.1.1');
+  const [deviceIp, setDeviceIp] = useState('192.168.0.106');
   const [serialNumber, setSerialNumber] = useState('DESKTOP-KM8GPUV\SQLEXPRESS');
   const [username, setUsername] = useState('essl');
   const [password, setPassword] = useState('essl');

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, Edit, X, Search, ChevronDown, CreditCard, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload, Phone } from "lucide-react";
 import api from "../../api";
 import * as XLSX from "xlsx";
@@ -31,8 +31,21 @@ const parseDuration = (value) => {
   return Number.isFinite(amount) ? Math.round(amount) : 0;
 };
 
+const formatDuesEntry = (due) => {
+  const amount = parseDecimal(due?.amount || due?.amt || 0).toFixed(2);
+  const collectedBy = due?.collectedBy || due?.collected_by || "Admin";
+  const paymentId = due?.paymentId || due?.payment_id || "Cash";
+  const collectedAt = due?.collectedAt || due?.collected_at || due?.createdAt || due?.date;
+  const dateLabel = collectedAt ? new Date(collectedAt).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }) : "No date";
+  return `₹${amount} · ${dateLabel} · ${collectedBy} · ${paymentId}`;
+};
+
 const EMIList = () => {
-  const { user, role } = useAuth();
+  const { user, role, profileName } = useAuth();
   const [memberships, setMemberships] = useState([]);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,15 +71,29 @@ const EMIList = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        let membershipsQuery = "/memberships";
+        if (role === "trainer" && user?.id) {
+          membershipsQuery = `/memberships?trainerUserId=${user.id}`;
+        }
         const [membershipsRes, plansRes, staffRes] = await Promise.all([
-          api.get("/memberships"),
+          api.get(membershipsQuery),
           api.get("/plans"),
           api.get("/staff"),
         ]);
 
-        setMemberships(
-          Array.isArray(membershipsRes.data) ? membershipsRes.data : [],
-        );
+        const raw = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
+        const normalized = raw.map((m) => {
+          try {
+            if (m && typeof m.dues === 'string') {
+              m.dues = JSON.parse(m.dues || '[]');
+            }
+          } catch (e) {
+            m.dues = [];
+          }
+          if (!m.dues) m.dues = [];
+          return m;
+        });
+        setMemberships(normalized);
         setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
         setTrainers(Array.isArray(staffRes.data) ? staffRes.data : []);
       } catch (err) {
@@ -265,13 +292,32 @@ const EMIList = () => {
     try {
       await api.put(`/memberships/${selectedMembership.id}`, {
         secondPaymentPaid: newSecondPayment,
+        // Include the discrete payment amount so server can append a dues entry
+        paymentAmount: amount,
         paymentId: paymentReference || selectedMembership.paymentId,
         status: newStatus,
         paymentStatus: newPaymentStatus,
+        collectedBy: profileName || "Admin",
       });
 
-      const res = await api.get("/memberships");
-      setMemberships(Array.isArray(res.data) ? res.data : []);
+      let membershipsQuery = "/memberships";
+      if (role === "trainer" && user?.id) {
+        membershipsQuery = `/memberships?trainerUserId=${user.id}`;
+      }
+      const res = await api.get(membershipsQuery);
+      const raw = Array.isArray(res.data) ? res.data : [];
+      const normalized = raw.map((m) => {
+        try {
+          if (m && typeof m.dues === 'string') {
+            m.dues = JSON.parse(m.dues || '[]');
+          }
+        } catch (e) {
+          m.dues = [];
+        }
+        if (!m.dues) m.dues = [];
+        return m;
+      });
+      setMemberships(normalized);
       setSelectedMembership(null);
       setUpdateAmount("");
       setPaymentReference("");
@@ -426,13 +472,14 @@ const EMIList = () => {
           {viewMode === "table" ? (
             /* ================= TABLE VIEW ================= */
             <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
-              <table className="w-full min-w-[900px] text-sm text-left text-gray-200 border-collapse">
+              <table className="w-full min-w-[900px] text-sm text-left text-gray-200 border-collapse whitespace-nowrap">
                 <thead className="bg-white/10 text-white">
                   <tr>
                     <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Phone</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Dues</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Payment</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
@@ -488,6 +535,24 @@ const EMIList = () => {
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-gray-300">{membership.planName}</div>
                         </td>
+                        <td className="px-4 py-4 align-top">
+                          {membership.dues && Array.isArray(membership.dues) && membership.dues.length > 0 ? (
+                            <div className="space-y-1 text-[11px] leading-snug">
+                              {membership.dues.slice(0, 3).map((due, dueIndex) => (
+                                <div key={dueIndex} className="text-white/80">
+                                  {formatDuesEntry(due)}
+                                </div>
+                              ))}
+                              {membership.dues.length > 3 && (
+                                <div className="text-xs text-white/50">
+                                  +{membership.dues.length - 3} more dues
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-white/50">No dues recorded</div>
+                          )}
+                        </td>
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-emerald-400">
                             ₹{totalPrice.toFixed(2)}
@@ -503,7 +568,9 @@ const EMIList = () => {
                           <div className="text-base font-medium text-cyan-300">
                             ₹{secondPayment.toFixed(2)}
                           </div>
-                          <div className="text-xs text-white/50">Second payment</div>
+                          <div className="text-xs text-white/50">
+                            {membership.collectedBy ? `By: ${membership.collectedBy}` : "Second payment"}
+                          </div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-blue-400">
@@ -617,6 +684,9 @@ const EMIList = () => {
                         <div className="bg-cyan-500/5 p-3 rounded-xl border border-cyan-500/10 text-center">
                           <p className="text-[10px] text-cyan-500/60 uppercase font-black tracking-wider mb-1">Second Paid</p>
                           <p className="text-base font-bold text-cyan-300">₹{secondPayment.toFixed(2)}</p>
+                          {membership.collectedBy && (
+                            <p className="text-[9px] text-white/40 mt-1 uppercase">By: {membership.collectedBy}</p>
+                          )}
                         </div>
                         <div className="bg-blue-500/5 p-3 rounded-xl border border-blue-500/10 text-center">
                           <p className="text-[10px] text-blue-500/60 uppercase font-black tracking-wider mb-1">Remaining</p>
@@ -784,7 +854,7 @@ const EMIList = () => {
                           Initial Payment (Today)
                         </p>
                         <p className="text-xs text-white/60">
-                          Already collected
+                          Already collected {selectedMembership.referredBy || selectedMembership.collectedBy ? `by ${selectedMembership.referredBy || selectedMembership.collectedBy}` : ""}
                         </p>
                       </div>
                     </div>
@@ -889,12 +959,16 @@ const EMIList = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleUpdatePayment}
-                  disabled={updating}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 py-3 rounded-xl font-semibold text-white transition-all shadow-lg"
-                >
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] text-white/50 text-center uppercase tracking-wide">
+                  Processing collection as: <strong className="text-orange-400">{profileName || user?.username || "Admin"}</strong>
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleUpdatePayment}
+                    disabled={updating}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 py-3 rounded-xl font-semibold text-white transition-all shadow-lg"
+                  >
                   {updating ? "Saving..." : "Save Payment"}
                 </button>
 
@@ -904,6 +978,7 @@ const EMIList = () => {
                 >
                   Cancel
                 </button>
+              </div>
               </div>
             </div>
           </div>
@@ -1029,6 +1104,30 @@ const EMIList = () => {
               <div className="grid md:grid-cols-2 gap-4 mb-6">
                 <Card title="Payment Mode" value={viewingDetails.paymentMode} />
                 <Card title="Status" value={viewingDetails.status} />
+                {viewingDetails.collectedBy && (
+                  <Card title="Second Payment Collected By" value={viewingDetails.collectedBy} />
+                )}
+              </div>
+
+              {/* Dues History */}
+              <div className="mb-6">
+                <h4 className="text-sm text-white/60 uppercase font-bold mb-2">Collected Dues</h4>
+                {viewingDetails.dues && Array.isArray(viewingDetails.dues) && viewingDetails.dues.length > 0 ? (
+                  <div className="space-y-2">
+                    {viewingDetails.dues.map((d, i) => (
+                      <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/6">
+                        <div className="flex flex-col gap-1">
+                          <div className="text-sm font-semibold text-white">₹{parseDecimal(d.amount || d.amt || 0).toFixed(2)}</div>
+                          <div className="text-xs text-white/50">Collected by: {d.collectedBy || d.collected_by || 'Unknown'}</div>
+                          <div className="text-xs text-white/50">Payment type: {d.paymentId || d.payment_id || 'Cash'}</div>
+                          <div className="text-xs text-white/50">Date: {d.collectedAt ? new Date(d.collectedAt).toLocaleString() : d.collected_at ? new Date(d.collected_at).toLocaleString() : '-'}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-white/50">No collected dues recorded yet.</div>
+                )}
               </div>
 
               <button
