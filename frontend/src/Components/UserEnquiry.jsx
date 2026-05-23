@@ -146,6 +146,24 @@ const UserEnquiry = () => {
     }
   }, [prefilledPlan, prefilledUser]);
 
+  useEffect(() => {
+    if (initialEditEnquiry) {
+      handleEdit(initialEditEnquiry);
+      return;
+    }
+
+    if (prefilledUser || prefilledPlan) {
+      setFormData(prev => ({
+        ...prev,
+        name: prefilledUser?.name || prev.name,
+        participant_name: prefilledUser?.name || prev.participant_name,
+        email: prefilledUser?.email || prev.email,
+        phone: prefilledUser?.phone || prev.phone,
+        plan_name: prefilledPlan?.planName || prev.plan_name,
+        plan_duration: prefilledPlan?.duration || prev.plan_duration,
+      }));
+    }
+  }, [initialEditEnquiry, prefilledUser, prefilledPlan]);
 
   useEffect(() => {
     if (formData.height && formData.weight) {

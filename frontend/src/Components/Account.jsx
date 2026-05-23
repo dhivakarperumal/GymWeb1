@@ -28,8 +28,6 @@ const Account = () => {
   const [userInfo, setUserInfo] = useState({});
   const [memberData, setMemberData] = useState(null);
   const [userEnquiry, setUserEnquiry] = useState(null);
-  const [memberEditMode, setMemberEditMode] = useState(false);
-  const [showConsent, setShowConsent] = useState(false);
   const [memberFormData, setMemberFormData] = useState({
     name: "",
     email: "",
@@ -64,6 +62,7 @@ const Account = () => {
     plan_duration: "",
   });
   const [savingMember, setSavingMember] = useState(false);
+  const [memberEditMode, setMemberEditMode] = useState(false);
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
 
@@ -580,7 +579,7 @@ const Account = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold uppercase text-white">Join Form Details</h3>
-                    <p className="text-sm text-gray-400">Edit your join form details. All changes will be saved to your profile.</p>
+                    <p className="text-sm text-gray-400">View your Join Now form information here. Tap Edit Details to update it on the enquiry page.</p>
                   </div>
                   <button
                     onClick={() => {
@@ -628,7 +627,7 @@ const Account = () => {
                     }}
                     className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white transition hover:bg-red-500"
                   >
-                    {memberEditMode ? 'Cancel' : 'Edit Details'}
+                    Edit Details
                   </button>
                 </div>
 

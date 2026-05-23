@@ -108,7 +108,7 @@ const DietChart = () => {
       </h2>
 
       {/* DAY TABS */}
-      <div className="flex gap-3 flex-wrap">
+      {/* <div className="flex gap-3 flex-wrap">
         {days.map((day) => (
           <button
             key={day}
@@ -126,7 +126,7 @@ const DietChart = () => {
             })()}
           </button>
         ))}
-      </div>
+      </div> */}
 
       {/* MEALS */}
       <div className="grid md:grid-cols-2 gap-4">
