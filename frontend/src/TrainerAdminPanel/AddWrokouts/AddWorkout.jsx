@@ -805,7 +805,7 @@ const AddWorkout = () => {
 
                       {/* Mass Gain */}
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Mass Gain</label>
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-white/40 ml-1">Muscle Type</label>
                         <input
                           className={inputClass}
                           placeholder="e.g. Bulk Up focus"
