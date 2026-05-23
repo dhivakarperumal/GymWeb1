@@ -141,31 +141,41 @@ export default function Workouts() {
                         </tr>
 
                         {openWorkout === item.id && (
-                          <tr>
-                            <td colSpan={3} className="px-6 pb-6 pt-0">
-                              <div className="space-y-4 pt-4 border-t border-red-500/10">
-                                <div className="grid gap-3">
-                                  <p className="text-sm uppercase tracking-[0.18em] text-gray-400">Trainer</p>
-                                  <p className="text-white font-semibold">{item.trainer_name}</p>
-                                </div>
+                          <tr className="bg-gray-800 border-t border-red-500/60">
+                            <td colSpan={3} className="px-8 py-6">
+                              <div className="grid gap-4 lg:grid-cols-3 mb-6">
+                                {[
+                                  { title: 'Trainer', value: item.trainer_name },
+                                  { title: 'Level', value: item.level },
+                                ].map((meta, idx) => (
+                                  <div key={idx} className="bg-gray-900 p-4 rounded-xl border border-red-500/60 text-center">
+                                    <p className="text-gray-400 text-sm">{meta.title}</p>
+                                    <p className="font-bold">{meta.value}</p>
+                                  </div>
+                                ))}
+                              </div>
 
-                                {Object.entries(item.days || {}).map(([day, exercises], idx) => (
-                                  <div key={idx} className="bg-gray-800 rounded-2xl p-4 border border-red-500/20">
-                                    <div className="flex items-center justify-between mb-3">
-                                      <p className="font-semibold text-red-500">{day}</p>
-                                      <span className="text-xs text-gray-400">{exercises.length} Exercises</span>
-                                    </div>
-                                    <div className="space-y-3">
-                                      {exercises.map((ex, j) => (
-                                        <div key={j} className="rounded-2xl border border-red-500/10 bg-black/40 p-3">
-                                          {ex.media && (
-                                            <div
+                              <h3 className="text-lg font-bold mb-4">Weekly Schedule</h3>
+
+                              {Object.entries(item.days || {}).map(([day, exercises], i) => (
+                                <div key={i} className="bg-gray-900 rounded-xl p-4 mb-4 border border-red-500/60">
+                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
+                                    <span className="text-red-500 font-bold">{day}</span>
+                                    <span className="text-gray-400 text-sm">{exercises.length} Exercises</span>
+                                  </div>
+
+                                  {exercises.map((ex, j) => (
+                                    <div key={j} className="border border-red-500/30 rounded-lg p-4 mb-4 bg-gray-800/50 hover:bg-gray-800 transition">
+                                      <div className="grid gap-4 lg:grid-cols-[150px_minmax(0,1fr)]">
+                                        <div className="flex items-center justify-center">
+                                          {ex.media ? (
+                                            <div 
                                               onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
-                                              className="w-full aspect-video rounded-xl overflow-hidden border border-red-500/20 mb-3 bg-black/60 relative cursor-pointer"
+                                              className="w-full aspect-square rounded-lg overflow-hidden border border-red-500/20 bg-black/40 cursor-pointer hover:scale-105 transition group relative"
                                             >
-                                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                                <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-                                                  <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
+                                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
+                                                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+                                                  <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1"></div>
                                                 </div>
                                               </div>
                                               {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
@@ -182,32 +192,38 @@ export default function Workouts() {
                                                 <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
                                               )}
                                             </div>
+                                          ) : (
+                                            <div className="w-full aspect-square rounded-lg bg-linear-to-br from-red-600/20 to-red-900/20 flex items-center justify-center border border-red-500/20">
+                                              <FaDumbbell size={24} className="text-red-500" />
+                                            </div>
                                           )}
-                                          <p className="font-semibold text-white mb-2">{ex.name}</p>
-                                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
-                                            <div>
-                                              <p>Time</p>
-                                              <p className="text-white">{ex.time || '--'}</p>
-                                            </div>
-                                            <div>
-                                              <p>Sets</p>
-                                              <p className="text-white">{ex.sets || '--'}</p>
-                                            </div>
-                                            <div>
-                                              <p>Reps</p>
-                                              <p className="text-white">{ex.count || '--'}</p>
-                                            </div>
-                                            <div>
-                                              <p>Type</p>
-                                              <p className="text-orange-400">{ex.type || '--'}</p>
-                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                          <div>
+                                            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Exercise Name</p>
+                                            <p className="text-lg font-bold text-white">{ex.name}</p>
+                                          </div>
+
+                                          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                            {[
+                                              { label: 'Time', value: ex.time || '--' },
+                                              { label: 'Sets', value: ex.sets || '--' },
+                                              { label: 'Reps', value: ex.count || '--' },
+                                              { label: 'Type', value: ex.type || '--', highlight: true },
+                                            ].map((info, idx) => (
+                                              <div key={idx} className="bg-black/40 rounded-lg p-3 border border-red-500/20">
+                                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{info.label}</p>
+                                                <p className={`font-semibold ${info.highlight ? 'text-orange-400 text-xs' : 'text-white'}`}>{info.value}</p>
+                                              </div>
+                                            ))}
                                           </div>
                                         </div>
-                                      ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
+                                  ))}
+                                </div>
+                              ))}
                             </td>
                           </tr>
                         )}
@@ -236,10 +252,6 @@ export default function Workouts() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-sm text-gray-400">
-                      {/* <div className="bg-black/40 rounded-2xl p-3 border border-red-500/20">
-                        <p className="text-[10px] uppercase tracking-widest">Duration</p>
-                        <p className="mt-1 text-white font-medium">{item.duration_weeks} Weeks</p>
-                      </div> */}
                       <div className="bg-black/40 rounded-2xl p-3 border border-red-500/20">
                         <p className="text-[10px] uppercase tracking-widest">Level</p>
                         <p className="mt-1 text-white font-medium">{item.level}</p>
