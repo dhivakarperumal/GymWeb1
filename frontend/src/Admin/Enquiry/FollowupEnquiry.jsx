@@ -668,12 +668,25 @@ const FollowupEnquiry = () => {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                    {enquiry.subject && (
+                      <p className="text-white/60 text-[11px] mt-2">Subject: {enquiry.subject}</p>
+                    )}
+                    {enquiry.message && (
+                      <p className="text-white/50 text-[11px] line-clamp-3 mt-1">{enquiry.message}</p>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/5">
                       <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
                         <Phone size={10} className="text-orange-500" /> {enquiry.phone || 'N/A'}
                       </div>
                       <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
-                        <Calendar size={10} className="text-orange-500" /> {dayjs(enquiry.created_at).format('DD/MM/YY')}
+                        <Mail size={10} className="text-orange-500" /> {enquiry.email || 'N/A'}
+                      </div>
+                      <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
+                        <Calendar size={10} className="text-orange-500" /> {enquiry.next_followup_date ? dayjs(enquiry.next_followup_date).format('DD/MM/YY') : 'No follow-up'}
+                      </div>
+                      <div className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
+                        <span className="uppercase tracking-[0.2em]">{enquiry.status || 'pending'}</span>
                       </div>
                     </div>
                   </div>
@@ -715,8 +728,26 @@ const FollowupEnquiry = () => {
                           <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-0.5">
                             {enquiry.organization || enquiry.employer || 'Direct Lead'}
                           </p>
+                          {enquiry.subject && (
+                            <p className="text-white/60 text-[11px] mt-3">Subject: {enquiry.subject}</p>
+                          )}
+                          {enquiry.message && (
+                            <p className="text-sm text-gray-300 mt-2 line-clamp-3">{enquiry.message}</p>
+                          )}
+                          <div className="mt-3 space-y-2 text-[11px] text-white/50">
+                            {enquiry.location && (
+                              <div className="flex items-center gap-2">
+                                <MapPin size={12} className="text-orange-500" /> {enquiry.location}
+                              </div>
+                            )}
+                            {enquiry.referred_by && (
+                              <div className="flex items-center gap-2">
+                                <Target size={12} className="text-orange-500" /> Referred by {enquiry.referred_by}
+                              </div>
+                            )}
+                          </div>
                           {enquiry.plan_name && (
-                            <div className="mt-2 flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2 py-1 w-fit">
+                            <div className="mt-3 flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2 py-1 w-fit">
                               <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">{enquiry.plan_name}</span>
                               {enquiry.plan_price && <span className="text-[10px] font-black text-white/60 border-l border-white/10 pl-2">₹{enquiry.plan_price}</span>}
                             </div>
@@ -724,20 +755,23 @@ const FollowupEnquiry = () => {
                         </div>
 
                         {/* Card Footer */}
-                        <div className="flex flex-col gap-1 mt-auto pt-3 border-t border-white/5">
+                        <div className="flex flex-col gap-2 mt-auto pt-3 border-t border-white/5">
                           <span className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
                             <Phone size={10} className="text-orange-500" /> {enquiry.phone || 'N/A'}
                           </span>
                           <span className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
                             <Mail size={10} className="text-orange-500" /> {enquiry.email || 'N/A'}
                           </span>
+                          <span className="flex items-center gap-2 text-white/50 text-[10px] font-bold">
+                            <Calendar size={10} className="text-orange-500" /> Next: {enquiry.next_followup_date ? dayjs(enquiry.next_followup_date).format('DD/MM/YY') : 'Not set'}
+                          </span>
                           {enquiry.trainer_name && (
                             <span className="flex items-center gap-2 text-orange-400 text-[10px] font-bold">
                               <Users size={10} className="text-orange-500" /> Trainer: {enquiry.trainer_name}
                             </span>
                           )}
-                          <span className="flex items-center gap-2 text-white/30 text-[9px] font-bold uppercase tracking-widest mt-1">
-                            {dayjs(enquiry.created_at).format('MMM DD, YYYY')} • By {enquiry.updated_by || 'Admin'} ({getStaffRole(enquiry.updated_by)})
+                          <span className="text-white/30 text-[9px] uppercase tracking-widest mt-1">
+                            {dayjs(enquiry.created_at).format('MMM DD, YYYY')} • Updated by {enquiry.updated_by || 'Admin'} ({getStaffRole(enquiry.updated_by)})
                           </span>
                         </div>
 
@@ -784,6 +818,7 @@ const FollowupEnquiry = () => {
                       <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Mobile</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Organization</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Subject</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
@@ -797,7 +832,7 @@ const FollowupEnquiry = () => {
                   </thead>
                   <tbody className="divide-y divide-white/10">
                     {loading ? (
-                      <tr><td colSpan="12" className="py-32 text-center"><div className="animate-spin w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
+                      <tr><td colSpan="13" className="py-32 text-center"><div className="animate-spin w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
                     ) : paginatedEnquiries.length > 0 ? (
                       paginatedEnquiries.map((enquiry) => (
                         <tr
@@ -828,6 +863,9 @@ const FollowupEnquiry = () => {
                           </td>
                           <td className="px-4 py-4 text-base text-gray-300 truncate max-w-[100px]">
                             {enquiry.organization || enquiry.employer || 'Direct'}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-300 truncate max-w-[140px]">
+                            {enquiry.subject || '—'}
                           </td>
 
                            <td className="px-4 py-4">
@@ -909,7 +947,7 @@ const FollowupEnquiry = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="12" className="py-32 text-center">
+                        <td colSpan="13" className="py-32 text-center">
                           <div className="flex flex-col items-center gap-3 text-white/20">
                             <History size={48} strokeWidth={1} />
                             <p className="text-sm font-medium">No records found</p>
