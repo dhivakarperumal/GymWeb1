@@ -1142,15 +1142,7 @@ const FollowupEnquiry = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 items-center gap-4">
-                      <label className="text-xs font-bold text-white/60">Next Follow-up</label>
-                      <input
-                        type="date"
-                        value={formData.next_followup_date}
-                        onChange={(e) => setFormData({ ...formData, next_followup_date: e.target.value })}
-                        className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none text-xs"
-                      />
-                    </div>
+                   
                   </div>
 
                   {/* Right Side: Professional Info */}
