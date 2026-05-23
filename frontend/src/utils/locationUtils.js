@@ -2,10 +2,10 @@
  * GYM Location configuration
  */
 export const GYM_LOCATION = {
-  lat: 12.479724, // Tirupattur Gym Location
+  lat: 12.479724, 
   lng: 78.573769,
-  radius: 1000, // 1km radius (in meters)
-  name: "Tirupattur Gym Main Office"
+  radius: 1000, 
+  name: "No 9, 2nd floor Rajiv Ghandhi Salai (Next to Accenture Company) OMR, Sholinganallur Chennai 600119"
 };
 
 /**
