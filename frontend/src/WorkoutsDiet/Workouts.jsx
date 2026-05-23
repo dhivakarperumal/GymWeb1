@@ -143,7 +143,7 @@ export default function Workouts() {
                         {openWorkout === item.id && (
                           <tr className="bg-gray-800 border-t border-red-500/60">
                             <td colSpan={3} className="px-8 py-6">
-                              <div className="grid gap-4 lg:grid-cols-3 mb-6">
+                              <div className="grid gap-4 md:grid-cols-2 mb-6 max-w-4xl">
                                 {[
                                   { title: 'Trainer', value: item.trainer_name },
                                   { title: 'Level', value: item.level },
