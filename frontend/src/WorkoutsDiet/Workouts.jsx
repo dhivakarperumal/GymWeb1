@@ -205,12 +205,13 @@ export default function Workouts() {
                                             <p className="text-lg font-bold text-white">{ex.name}</p>
                                           </div>
 
-                                          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
                                             {[
                                               { label: 'Time', value: ex.time || '--' },
                                               { label: 'Sets', value: ex.sets || '--' },
                                               { label: 'Reps', value: ex.count || '--' },
                                               { label: 'Type', value: ex.type || '--', highlight: true },
+                                              { label: 'Muscle Type', value: ex.massGain || '--' }
                                             ].map((info, idx) => (
                                               <div key={idx} className="bg-black/40 rounded-lg p-3 border border-red-500/20">
                                                 <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{info.label}</p>
@@ -316,6 +317,10 @@ export default function Workouts() {
                                     <div>
                                       <p>Type</p>
                                       <p className="text-orange-400">{ex.type || '--'}</p>
+                                    </div>
+                                    <div>
+                                      <p>Muscle Type</p>
+                                      <p className="text-orange-400">{ex.massGain || '--'}</p>
                                     </div>
                                   </div>
                                 </div>
