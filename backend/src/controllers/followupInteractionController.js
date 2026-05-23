@@ -32,10 +32,11 @@ const followupInteractionController = {
                 [followup_id, interaction_date, notes || null, status || 'pending', next_followup_date || null, staff_name || 'Admin']
             );
 
-            // Update the main followup status
-            if (status) {
-                await pool.query('UPDATE followups SET status = ? WHERE id = ?', [status, followup_id]);
-            }
+            // Update the main followup status and next_followup_date
+            await pool.query(
+                'UPDATE followups SET status = ?, next_followup_date = ? WHERE id = ?',
+                [status || 'pending', next_followup_date || null, followup_id]
+            );
 
             const [rows] = await pool.query('SELECT * FROM followup_interactions WHERE id = ?', [result.insertId]);
             res.status(201).json(rows[0]);

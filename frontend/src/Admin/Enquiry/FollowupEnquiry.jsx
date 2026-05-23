@@ -77,6 +77,8 @@ const FollowupEnquiry = () => {
     t.phone === user?.mobile
   ), [trainers, user]);
 
+  const latestInteraction = followups.length > 0 ? followups[0] : null;
+
   // Effects
   useEffect(() => {
     fetchEnquiries();
@@ -130,9 +132,12 @@ const FollowupEnquiry = () => {
     try {
       setLoading(true);
       const res = await api.get("/followups");
-      setEnquiries(Array.isArray(res.data) ? res.data : []);
+      const data = Array.isArray(res.data) ? res.data : [];
+      setEnquiries(data);
+      return data;
     } catch (err) {
       setError("Failed to load follow-ups");
+      return [];
     } finally {
       setLoading(false);
     }
@@ -207,6 +212,21 @@ const FollowupEnquiry = () => {
         ...followupFormData,
         staff_name: user?.name || user?.username || 'Admin'
       });
+
+      const updatedData = await fetchEnquiries();
+      const updatedEnquiry = updatedData.find((item) => item.id === selectedEnquiry.id);
+      if (updatedEnquiry) {
+        setSelectedEnquiry(updatedEnquiry);
+        setFormData((prev) => ({
+          ...prev,
+          ...updatedEnquiry,
+          dob: updatedEnquiry.dob ? dayjs(updatedEnquiry.dob).format('YYYY-MM-DD') : "",
+          next_followup_date: updatedEnquiry.next_followup_date ? dayjs(updatedEnquiry.next_followup_date).format('YYYY-MM-DD') : "",
+          status: updatedEnquiry.status || "pending",
+          updated_by: updatedEnquiry.updated_by || user?.username || "Admin"
+        }));
+      }
+
       setFollowupFormData({
         interaction_date: dayjs().format('YYYY-MM-DDTHH:mm'),
         notes: "",
@@ -214,7 +234,6 @@ const FollowupEnquiry = () => {
         next_followup_date: ""
       });
       fetchFollowups(selectedEnquiry.id);
-      fetchEnquiries();
       toast.success("Activity logged!");
     } catch (err) {
       toast.error("Error logging activity");
@@ -1010,6 +1029,11 @@ const FollowupEnquiry = () => {
                     <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-0.5">
                       {selectedEnquiry ? `ID: #F-${selectedEnquiry.id}` : 'New Entry'}
                     </p>
+                    {latestInteraction && (
+                      <p className="text-white/40 text-xs mt-2">
+                        Latest note: {latestInteraction.notes || 'No note'} • Next follow-up: {latestInteraction.next_followup_date ? dayjs(latestInteraction.next_followup_date).format('DD MMM YYYY') : 'Not set'}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
@@ -1225,7 +1249,15 @@ const FollowupEnquiry = () => {
                       </select>
                     </div>
 
-                    
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <label className="text-xs font-bold text-white/60">Next Follow-up Date</label>
+                      <input
+                        type="date"
+                        value={formData.next_followup_date || ""}
+                        onChange={(e) => setFormData({ ...formData, next_followup_date: e.target.value })}
+                        className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none text-xs"
+                      />
+                    </div>
 
                     <div className="grid grid-cols-3 items-center gap-4">
                       <label className="text-xs font-bold text-white/60">Plan</label>
