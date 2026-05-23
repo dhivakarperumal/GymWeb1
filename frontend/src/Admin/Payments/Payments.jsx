@@ -675,6 +675,13 @@ const Payments = () => {
               Export
             </button>
 
+            <button
+              onClick={toggleSelectAll}
+              className="px-4 py-2.5 bg-slate-500 text-white rounded-lg text-sm hover:bg-slate-600 transition"
+            >
+              {selectAll ? "Clear Selection" : "Select All"}
+            </button>
+
             {/* Toggle Buttons */}
             <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1">
               <button
