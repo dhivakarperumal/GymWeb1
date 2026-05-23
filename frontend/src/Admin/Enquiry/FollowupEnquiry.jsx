@@ -59,6 +59,7 @@ const FollowupEnquiry = () => {
     fitness_goal: "", blood_group: "", gender: "", status: "pending",
     plan_name: "", plan_price: "", plan_duration: "",
     reg_no: "", organization: "", website: "", best_time_to_reach: "",
+    next_followup_date: "",
     updated_by: "", referred_by: "",
     trainer_id: "", trainer_name: ""
   });
@@ -108,6 +109,7 @@ const FollowupEnquiry = () => {
       setFormData({
         ...selectedEnquiry,
         dob: selectedEnquiry.dob ? dayjs(selectedEnquiry.dob).format('YYYY-MM-DD') : "",
+        next_followup_date: selectedEnquiry.next_followup_date ? dayjs(selectedEnquiry.next_followup_date).format('YYYY-MM-DD') : "",
         status: selectedEnquiry.status || "pending",
         updated_by: selectedEnquiry.updated_by || user?.username || "Admin"
       });
@@ -241,6 +243,7 @@ const FollowupEnquiry = () => {
       fitness_goal: "", blood_group: "", gender: "", status: "pending",
       plan_name: "", plan_duration: "", plan_price: "",
       reg_no: "", organization: "", website: "", best_time_to_reach: "",
+      next_followup_date: "",
       updated_by: user?.username || "Admin", referred_by: "",
       trainer_id: (role !== 'admin' && currentStaff) ? currentStaff.id : "",
       trainer_name: (role !== 'admin' && currentStaff) ? (currentStaff.name || currentStaff.username) : ""
@@ -784,6 +787,9 @@ const FollowupEnquiry = () => {
                       <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Message</th>
+                     
+                      <th className="px-4 py-4 text-left text-sm font-semibold">Next Follow-up</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Assigned Trainer</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Last Updated By</th>
                       <th className="px-4 py-4 text-right text-sm font-semibold">Actions</th>
@@ -791,7 +797,7 @@ const FollowupEnquiry = () => {
                   </thead>
                   <tbody className="divide-y divide-white/10">
                     {loading ? (
-                      <tr><td colSpan="10" className="py-32 text-center"><div className="animate-spin w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
+                      <tr><td colSpan="12" className="py-32 text-center"><div className="animate-spin w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full mx-auto" /></td></tr>
                     ) : paginatedEnquiries.length > 0 ? (
                       paginatedEnquiries.map((enquiry) => (
                         <tr
@@ -823,7 +829,8 @@ const FollowupEnquiry = () => {
                           <td className="px-4 py-4 text-base text-gray-300 truncate max-w-[100px]">
                             {enquiry.organization || enquiry.employer || 'Direct'}
                           </td>
-                          <td className="px-4 py-4">
+
+                           <td className="px-4 py-4">
                             {enquiry.plan_name ? (
                               <div className="flex flex-col">
                                 <span className="text-sm font-medium text-white truncate max-w-[120px]">{enquiry.plan_name}</span>
@@ -836,8 +843,17 @@ const FollowupEnquiry = () => {
                           <td className="px-4 py-4">
                             {getStatusBadge(enquiry.status)}
                           </td>
+                         
                           <td className="px-4 py-4 text-sm text-gray-300 font-medium">
                             {dayjs(enquiry.created_at).format('DD/MM/YY')}
+                          </td>
+                           <td className="px-4 py-4 text-sm text-gray-300 truncate max-w-[160px]">
+                            {enquiry.message ? enquiry.message : 'No message'}
+                          </td>
+                         
+                          
+                          <td className="px-4 py-4 text-sm text-gray-300 font-medium">
+                            {enquiry.next_followup_date ? dayjs(enquiry.next_followup_date).format('DD/MM/YY') : '—'}
                           </td>
                           <td className="px-4 py-4">
                             {enquiry.trainer_name ? (
@@ -893,7 +909,7 @@ const FollowupEnquiry = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="10" className="py-32 text-center">
+                        <td colSpan="12" className="py-32 text-center">
                           <div className="flex flex-col items-center gap-3 text-white/20">
                             <History size={48} strokeWidth={1} />
                             <p className="text-sm font-medium">No records found</p>
@@ -1093,6 +1109,16 @@ const FollowupEnquiry = () => {
                         <span className="absolute -right-4 top-4 text-red-500 font-bold">*</span>
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-3 items-center gap-4">
+                      <label className="text-xs font-bold text-white/60">Next Follow-up</label>
+                      <input
+                        type="date"
+                        value={formData.next_followup_date}
+                        onChange={(e) => setFormData({ ...formData, next_followup_date: e.target.value })}
+                        className="col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none text-xs"
+                      />
+                    </div>
                   </div>
 
                   {/* Right Side: Professional Info */}
@@ -1174,6 +1200,8 @@ const FollowupEnquiry = () => {
                         <option value="cancelled">Cancelled</option>
                       </select>
                     </div>
+
+                    
 
                     <div className="grid grid-cols-3 items-center gap-4">
                       <label className="text-xs font-bold text-white/60">Plan</label>
