@@ -484,7 +484,13 @@ const Payments = () => {
   /* RESET PAGE ON SEARCH/FILTER */
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedRows([]);
+    setSelectAll(false);
   }, [search, filterType, dateFilter, customStart, customEnd]);
+
+  useEffect(() => {
+    setSelectAll(false);
+  }, [currentPage]);
 
   const formatDate = (date) => {
     if (!date) return "--";
@@ -513,6 +519,8 @@ const Payments = () => {
     return `${day} ${month} ${year}`;
   };
 
+  const getRowId = (member, plan) => `${member.uid}_${plan.id}`;
+
   const toggleRow = (id) => {
     setSelectedRows((prev) =>
       prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id],
@@ -523,32 +531,34 @@ const Payments = () => {
     if (selectAll) {
       setSelectedRows([]);
     } else {
-      const allIds = paginatedPlans.map(({ member }) => member.uid);
+      const allIds = allPlans.map(({ member, plan }) => getRowId(member, plan));
       setSelectedRows(allIds);
     }
     setSelectAll(!selectAll);
   };
 
   const exportToExcel = () => {
-    const selectedData = paginatedPlans
-      .filter(({ member }) => selectedRows.includes(member.uid))
-      .map(({ member, plan }, index) => ({
-        "S.No": index + 1,
-        Name: member.username,
-        Email: member.email,
-        Plan: plan.planName,
-        "Collected By": plan.referredBy || "Admin",
-        Amount: plan.pricePaid,
-        "Payment Date": formatDate(plan.paymentDate),
-        "Start Date": formatDate(plan.startDate),
-        "End Date": formatDate(plan.endDate),
-        Status: plan.status,
-      }));
+    const rowsToExport = selectedRows.length
+      ? allPlans.filter(({ member, plan }) => selectedRows.includes(getRowId(member, plan)))
+      : allPlans;
 
-    if (selectedData.length === 0) {
-      toast.error("Please select rows first");
+    if (rowsToExport.length === 0) {
+      toast.error("No payment rows found to export");
       return;
     }
+
+    const selectedData = rowsToExport.map(({ member, plan }, index) => ({
+      "S.No": index + 1,
+      Name: member.username,
+      Email: member.email,
+      Plan: plan.planName,
+      "Collected By": plan.referredBy || "Admin",
+      Amount: plan.pricePaid,
+      "Payment Date": formatDate(plan.paymentDate),
+      "Start Date": formatDate(plan.startDate),
+      "End Date": formatDate(plan.endDate),
+      Status: plan.status,
+    }));
 
     const worksheet = XLSX.utils.json_to_sheet(selectedData);
     const workbook = XLSX.utils.book_new();
@@ -1007,8 +1017,8 @@ const Payments = () => {
                         <td className="px-4 py-4 text-center">
                           <input
                             type="checkbox"
-                            checked={selectedRows.includes(member.uid)}
-                            onChange={() => toggleRow(member.uid)}
+                            checked={selectedRows.includes(getRowId(member, plan))}
+                            onChange={() => toggleRow(getRowId(member, plan))}
                             className="w-4 h-4 bg-transparent border-white/20 rounded focus:ring-orange-500 cursor-pointer"
                           />
                         </td>
