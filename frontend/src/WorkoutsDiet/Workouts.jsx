@@ -97,7 +97,7 @@ export default function Workouts() {
                   <thead className="bg-gray-900 text-gray-300 text-sm uppercase border-b border-red-500/20">
                     <tr>
                       <th className="px-6 py-4 text-left">Goal</th>
-                      <th className="px-6 py-4 text-left">Duration</th>
+                      {/* <th className="px-6 py-4 text-left">Duration</th> */}
                       <th className="px-6 py-4 text-left">Level</th>
                       <th className="px-6 py-4 text-center">Action</th>
                     </tr>
@@ -106,109 +106,39 @@ export default function Workouts() {
                   <tbody>
                     {workouts.map((item, index) => (
                       <React.Fragment key={index}>
-                        <tr className="border-t border-zinc-700 hover:bg-gray-800 transition">
-                          <td className="px-6 py-4 text-gray-400">{item.goal}</td>
-                          <td className="px-6 py-4 text-gray-400">{item.duration_weeks} Weeks</td>
-                          <td className="px-6 py-4 text-gray-400">{item.level}</td>
-                          <td className="px-6 py-4 text-center">
+                        <tr>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                                <FaDumbbell className="text-red-500 text-xl" />
+                              </div>
+
+                              <div>
+                                <h3 className="text-lg font-bold text-white">
+                                  {item.goal}
+                                </h3>
+                                <p className="text-gray-400 text-sm">
+                                  {item.level} Program
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-5">
+                            {item.level}
+                          </td>
+
+                          <td className="px-6 py-5 text-center">
                             <button
-                              onClick={() => setOpenWorkout(openWorkout === item.id ? null : item.id)}
-                              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold"
+                              onClick={() =>
+                                setOpenWorkout(openWorkout === item.id ? null : item.id)
+                              }
+                              className="bg-red-600 px-4 py-2 rounded-lg"
                             >
                               {openWorkout === item.id ? "Close" : "View"}
                             </button>
                           </td>
                         </tr>
-
-                        {openWorkout === item.id && (
-                          <tr className="bg-gray-800 border-t border-red-500/60">
-                            <td colSpan="4" className="px-8 py-6">
-                              {/* WORKOUT DETAILS */}
-                              <div className="grid gap-4 lg:grid-cols-3 mb-6">
-                                {[
-                                  { title: 'Trainer', value: item.trainer_name },
-                                  { title: 'Level', value: item.level },
-                                  { title: 'Duration', value: `${item.duration_weeks} Weeks` },
-                                ].map((meta, idx) => (
-                                  <div key={idx} className="bg-gray-900 p-4 rounded-xl border border-red-500/60 text-center">
-                                    <p className="text-gray-400 text-sm">{meta.title}</p>
-                                    <p className="font-bold">{meta.value}</p>
-                                  </div>
-                                ))}
-                              </div>
-
-                              <h3 className="text-lg font-bold mb-4">Weekly Schedule</h3>
-
-                              {Object.entries(item.days || {}).map(([day, exercises], i) => (
-                                <div key={i} className="bg-gray-900 rounded-xl p-4 mb-4 border border-red-500/60">
-                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
-                                    <span className="text-red-500 font-bold">{day}</span>
-                                    <span className="text-gray-400 text-sm">{exercises.length} Exercises</span>
-                                  </div>
-
-                                  {exercises.map((ex, j) => (
-                                    <div key={j} className="border border-red-500/30 rounded-lg p-4 mb-4 bg-gray-800/50 hover:bg-gray-800 transition">
-                                      <div className="grid gap-4 lg:grid-cols-[150px_minmax(0,1fr)]">
-                                        <div className="flex items-center justify-center">
-                                          {ex.media ? (
-                                            <div 
-                                              onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
-                                              className="w-full aspect-square rounded-lg overflow-hidden border border-red-500/20 bg-black/40 cursor-pointer hover:scale-105 transition group relative"
-                                            >
-                                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
-                                                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                                                  <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1"></div>
-                                                </div>
-                                              </div>
-                                              {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
-                                                ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
-                                                  <iframe
-                                                    src={getYouTubeEmbedUrl(ex.media)}
-                                                    className="w-full h-full border-0 pointer-events-none"
-                                                    title="Exercise preview"
-                                                  />
-                                                ) : (
-                                                  <video src={ex.media} className="w-full h-full object-cover" />
-                                                )
-                                              ) : (
-                                                <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
-                                              )}
-                                            </div>
-                                          ) : (
-                                            <div className="w-full aspect-square rounded-lg bg-linear-to-br from-red-600/20 to-red-900/20 flex items-center justify-center border border-red-500/20">
-                                              <FaDumbbell size={24} className="text-red-500" />
-                                            </div>
-                                          )}
-                                        </div>
-
-                                        <div className="space-y-3">
-                                          <div>
-                                            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Exercise Name</p>
-                                            <p className="text-lg font-bold text-white">{ex.name}</p>
-                                          </div>
-
-                                          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                                            {[
-                                              { label: 'Time', value: ex.time || '--' },
-                                              { label: 'Sets', value: ex.sets || '--' },
-                                              { label: 'Reps', value: ex.count || '--' },
-                                              { label: 'Type', value: ex.type || '--', highlight: true },
-                                            ].map((info, idx) => (
-                                              <div key={idx} className="bg-black/40 rounded-lg p-3 border border-red-500/20">
-                                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{info.label}</p>
-                                                <p className={`font-semibold ${info.highlight ? 'text-orange-400 text-xs' : 'text-white'}`}>{info.value}</p>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
-                            </td>
-                          </tr>
-                        )}
                       </React.Fragment>
                     ))}
                   </tbody>
@@ -234,10 +164,10 @@ export default function Workouts() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-sm text-gray-400">
-                      <div className="bg-black/40 rounded-2xl p-3 border border-red-500/20">
+                      {/* <div className="bg-black/40 rounded-2xl p-3 border border-red-500/20">
                         <p className="text-[10px] uppercase tracking-widest">Duration</p>
                         <p className="mt-1 text-white font-medium">{item.duration_weeks} Weeks</p>
-                      </div>
+                      </div> */}
                       <div className="bg-black/40 rounded-2xl p-3 border border-red-500/20">
                         <p className="text-[10px] uppercase tracking-widest">Level</p>
                         <p className="mt-1 text-white font-medium">{item.level}</p>
@@ -261,14 +191,14 @@ export default function Workouts() {
                               {exercises.map((ex, j) => (
                                 <div key={j} className="rounded-2xl border border-red-500/10 bg-black/40 p-3">
                                   {ex.media && (
-                                    <div 
+                                    <div
                                       onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
                                       className="w-full aspect-video rounded-xl overflow-hidden border border-red-500/20 mb-3 bg-black/60 relative cursor-pointer"
                                     >
                                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                         <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-                                            <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
-                                         </div>
+                                        <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                                          <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
+                                        </div>
                                       </div>
                                       {ex.media.startsWith('data:video') || ex.media.match(/\.(mp4|webm|ogg)$/i) || ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
                                         ex.media.includes('youtube.com') || ex.media.includes('youtu.be') ? (
@@ -322,16 +252,16 @@ export default function Workouts() {
       {/* VIDEO POPUP MODAL */}
       {playingVideo && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6 lg:p-10">
-          <div 
+          <div
             className="absolute inset-0 bg-black/90 backdrop-blur-sm"
             onClick={() => setPlayingVideo(null)}
           ></div>
-          
+
           <div className="relative w-full max-w-4xl bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in duration-300">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/10 bg-black/40">
               <h3 className="text-white font-bold tracking-tight">{playingVideo.name}</h3>
-              <button 
+              <button
                 onClick={() => setPlayingVideo(null)}
                 className="w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center transition-all"
               >
@@ -350,11 +280,11 @@ export default function Workouts() {
                   title="Video Player"
                 />
               ) : (
-                <video 
-                  src={playingVideo.url} 
-                  className="w-full h-full object-contain" 
-                  controls 
-                  autoPlay 
+                <video
+                  src={playingVideo.url}
+                  className="w-full h-full object-contain"
+                  controls
+                  autoPlay
                 />
               )}
             </div>
