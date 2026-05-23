@@ -489,8 +489,8 @@ const Payments = () => {
   }, [search, filterType, dateFilter, customStart, customEnd]);
 
   useEffect(() => {
-    setSelectAll(false);
-  }, [currentPage]);
+    setSelectAll(allPlans.length > 0 && selectedRows.length === allPlans.length);
+  }, [selectedRows, allPlans.length]);
 
   const formatDate = (date) => {
     if (!date) return "--";
@@ -530,11 +530,13 @@ const Payments = () => {
   const toggleSelectAll = () => {
     if (selectAll) {
       setSelectedRows([]);
-    } else {
-      const allIds = allPlans.map(({ member, plan }) => getRowId(member, plan));
-      setSelectedRows(allIds);
+      setSelectAll(false);
+      return;
     }
-    setSelectAll(!selectAll);
+
+    const allIds = allPlans.map(({ member, plan }) => getRowId(member, plan));
+    setSelectedRows(allIds);
+    setSelectAll(true);
   };
 
   const exportToExcel = () => {
@@ -670,7 +672,7 @@ const Payments = () => {
               onClick={exportToExcel}
               className="px-4 py-2.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition"
             >
-              Export Excel
+              Export
             </button>
 
             {/* Toggle Buttons */}
@@ -972,7 +974,7 @@ const Payments = () => {
         {viewType === "table" && (
           <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-hidden custom-scrollbar">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px] text-sm text-left text-gray-200 border-collapse">
+              <table className="w-full min-w-250 text-sm text-left text-gray-200 border-collapse">
                 <thead className="bg-white/10 text-white">
                   <tr>
                     <th className="px-4 py-4 text-center">
