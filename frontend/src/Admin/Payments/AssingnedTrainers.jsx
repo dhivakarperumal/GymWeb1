@@ -179,8 +179,23 @@ const AssingnedTrainers = () => {
         if (!assignData[userId]) assignData[userId] = [];
         assignData[userId].push(a);
       });
-      setAssignments(assignData);
-      cache.adminAssignments = assignData;
+
+      const dedupedAssignments = Object.fromEntries(
+        Object.entries(assignData).map(([userId, list]) => {
+          const uniqueList = list.filter((assign, index, self) => {
+            const key = `${assign.trainerId || ''}:${assign.trainerName || ''}:${assign.planId || ''}`;
+            return index === self.findIndex((item) =>
+              (item.trainerId || '') === (assign.trainerId || '') &&
+              (item.trainerName || '') === (assign.trainerName || '') &&
+              (item.planId || '') === (assign.planId || '')
+            );
+          });
+          return [userId, uniqueList];
+        })
+      );
+
+      setAssignments(dedupedAssignments);
+      cache.adminAssignments = dedupedAssignments;
     } catch (err) {
       console.error(err);
       toast.error("Assignment failed");
@@ -473,16 +488,24 @@ const AssingnedTrainers = () => {
                       </td>
                       <td className="px-4 py-4">
                         {assigned.length > 0 ? (
-                          assigned.map((a) => (
-                            <div
-                              key={a.id}
-                              onClick={() => handleQuickAssign(m.uid, true)}
-                              className="text-green-400 text-base font-medium cursor-pointer hover:text-white transition-colors flex items-center gap-2"
-                              title="Click to Reassign"
-                            >
-                              <Dumbbell size={12} /> {a.trainerName}
-                            </div>
-                          ))
+                          assigned
+                            .filter((assign, index, self) =>
+                              index === self.findIndex((item) =>
+                                (item.trainerId || '') === (assign.trainerId || '') &&
+                                (item.trainerName || '') === (assign.trainerName || '') &&
+                                (item.planId || '') === (assign.planId || '')
+                              )
+                            )
+                            .map((a) => (
+                              <div
+                                key={`${a.id || a.trainerId || a.trainerName}-${a.planId || ''}`}
+                                onClick={() => handleQuickAssign(m.uid, true)}
+                                className="text-green-400 text-base font-medium cursor-pointer hover:text-white transition-colors flex items-center gap-2"
+                                title="Click to Reassign"
+                              >
+                                <Dumbbell size={12} /> {a.trainerName}
+                              </div>
+                            ))
                         ) : (
                           <button
                             onClick={() => handleQuickAssign(m.uid, false)}
