@@ -16,6 +16,7 @@ const UserEnquiry = () => {
   const location = useLocation();
   const prefilledPlan = location.state?.selectedPlan;
   const prefilledUser = location.state?.prefilledUser;
+  const initialEditEnquiry = location.state?.initialEditEnquiry || null;
   const { user } = useAuth();
   const userId = user?.id;
   const [enquiries, setEnquiries] = useState([]);
