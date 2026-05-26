@@ -940,10 +940,11 @@ const Members = () => {
               }}
               className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
             >
-              <option value="5" className="bg-gray-900">5</option>
-              <option value="10" className="bg-gray-900">10</option>
-              <option value="20" className="bg-gray-900">20</option>
-              <option value="50" className="bg-gray-900">50</option>
+              <option value={5} className="bg-gray-900">5</option>
+              <option value={10} className="bg-gray-900">10</option>
+              <option value={20} className="bg-gray-900">20</option>
+              <option value={50} className="bg-gray-900">50</option>
+              <option value={500} className="bg-gray-900">500</option>
             </select>
           </div>
         </div>
