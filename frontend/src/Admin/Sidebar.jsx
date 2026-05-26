@@ -33,7 +33,7 @@ const navItems = [
 
   { path: "/admin/followupenquriy", label: "Follow Up Enquiry", icon: PhoneCall },
 
-  { path: "/admin/enquiry", label: "Client Enquiry", icon: MessageSquare },
+  // { path: "/admin/enquiry", label: "Client Enquiry", icon: MessageSquare },
 
   { path: "/admin/members", label: "Members", icon: Users },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
