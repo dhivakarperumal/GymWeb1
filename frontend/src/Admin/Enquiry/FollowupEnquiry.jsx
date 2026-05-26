@@ -46,6 +46,7 @@ const FollowupEnquiry = () => {
   const [staffFilter, setStaffFilter] = useState('all');
   const [isStaffOpen, setIsStaffOpen] = useState(false);
   const [assignedTrainerFilter, setAssignedTrainerFilter] = useState('all');
+  const [isAssignedTrainerOpen, setIsAssignedTrainerOpen] = useState(false);
   const [trainers, setTrainers] = useState([]);
   const [importErrors, setImportErrors] = useState([]);
 
@@ -416,12 +417,13 @@ const FollowupEnquiry = () => {
 
   // Filters
   const filteredEnquiries = enquiries.filter(enquiry => {
+    const q = (searchTerm || "").toString().toLowerCase();
     const matchesSearch =
-      enquiry.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.phone?.includes(searchTerm) ||
-      enquiry.organization?.toLowerCase().includes(searchTerm.toLowerCase());
+      (enquiry.name || "").toString().toLowerCase().includes(q) ||
+      (enquiry.phone || "").toString().includes(searchTerm) ||
+      (enquiry.organization || "").toString().toLowerCase().includes(q);
 
-    const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || ((enquiry.status || "").toString().toLowerCase() === statusFilter.toString().toLowerCase());
     const isAdmin = role && role.toLowerCase().includes('admin');
 
     // Trainers see leads they updated OR leads assigned to them (by ID or Name)
@@ -432,12 +434,23 @@ const FollowupEnquiry = () => {
 
     let matchesStaff = true;
     if (isAdmin && staffFilter !== 'all') {
-      matchesStaff = (enquiry.updated_by || 'Admin') === staffFilter;
+      const normStaff = staffFilter.toString().toLowerCase();
+      const updatedBy = ((enquiry.updated_by || 'Admin') || "").toString().toLowerCase();
+      // find trainer record for this updated_by if any
+      const updaterTrainer = trainers.find(t => ((t.username || t.name) || "").toString().toLowerCase() === updatedBy);
+      const updaterName = updaterTrainer ? ((updaterTrainer.name || updaterTrainer.username) || "").toString().toLowerCase() : updatedBy;
+      matchesStaff = (updatedBy === normStaff) || (updaterName === normStaff);
     }
 
     let matchesAssignedTrainer = true;
     if (assignedTrainerFilter !== 'all') {
-      matchesAssignedTrainer = enquiry.trainer_name === assignedTrainerFilter;
+      const normAssigned = assignedTrainerFilter.toString().toLowerCase();
+      const trainerName = ((enquiry.trainer_name || "") ).toString().toLowerCase().trim();
+      const trainerId = enquiry.trainer_id ? enquiry.trainer_id.toString() : "";
+      // match by name (contains), exact name, username, or id
+      const trainerRecord = trainers.find(t => (t.id && t.id.toString() === trainerId) || ((t.username || t.name) || "").toString().toLowerCase() === normAssigned);
+      const trainerRecordName = trainerRecord ? ((trainerRecord.name || trainerRecord.username) || "").toString().toLowerCase() : "";
+      matchesAssignedTrainer = trainerName.includes(normAssigned) || trainerName === normAssigned || trainerRecordName === normAssigned || trainerId === normAssigned;
     }
 
     if (!matchesSearch || !matchesStatus || !matchesAccess || !matchesStaff || !matchesAssignedTrainer) return false;
@@ -561,38 +574,39 @@ const FollowupEnquiry = () => {
               )}
             </div>
 
-            {/* Staff Filter (Updated By) */}
+          
+
+            {/* Assigned Trainer Filter */}
             {role === 'admin' && (
               <div className="relative inline-block text-left">
                 <button
-                  onClick={() => setIsStaffOpen(!isStaffOpen)}
+                  onClick={() => setIsAssignedTrainerOpen(!isAssignedTrainerOpen)}
                   className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl border border-white/10 transition-all backdrop-blur-md"
                 >
-                  <User className="text-orange-500 w-4 h-4" />
+                  <Users className="text-orange-500 w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-widest truncate max-w-[100px]">
-                    {staffFilter === 'all' ? 'All Staff' : staffFilter}
+                    {assignedTrainerFilter === 'all' ? 'Assigned Trainer' : assignedTrainerFilter}
                   </span>
-                  <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isStaffOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isAssignedTrainerOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {isStaffOpen && (
+                {isAssignedTrainerOpen && (
                   <>
-                    <div className="fixed inset-0 z-[90]" onClick={() => setIsStaffOpen(false)} />
+                    <div className="fixed inset-0 z-[90]" onClick={() => setIsAssignedTrainerOpen(false)} />
                     <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#0f172a] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                       {[
-                        { id: 'all', label: 'All Staff', icon: <Users size={14} /> },
-                        { id: 'Admin', label: 'Admin', icon: <User size={14} /> },
-                        ...trainers.map(s => ({ id: s.username || s.name, label: s.name || s.username, icon: <User size={14} /> }))
+                        { id: 'all', label: 'All Trainers', icon: <Users size={14} /> },
+                        ...trainers.map(s => ({ id: (s.name || s.username || s.id?.toString()), label: s.name || s.username || `Trainer ${s.id}`, icon: <User size={14} /> }))
                       ].map((option) => (
                         <button
                           key={option.id}
                           onClick={() => {
-                            setStaffFilter(option.id);
+                            setAssignedTrainerFilter(option.id);
                             setCurrentPage(1);
-                            setIsStaffOpen(false);
+                            setIsAssignedTrainerOpen(false);
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                            staffFilter === option.id 
+                            assignedTrainerFilter === option.id 
                               ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
                               : 'text-gray-400 hover:bg-white/5 hover:text-white'
                           }`}
