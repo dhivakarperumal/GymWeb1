@@ -37,24 +37,38 @@ const AssingnedTrainers = () => {
         const res = await api.get("/memberships");
         const membershipsData = Array.isArray(res.data) ? res.data : [];
 
-        const usersData = membershipsData.map((m) => ({
-          uid: m.userId || `m_${m.id}`,
-          membershipId: m.id,
-          username: m.username || m.userName || "No Name",
-          email: m.email || m.userEmail || "",
-          userEmail: m.userEmail || m.email || "",
-          workoutCount: 0,
-          dietCount: 0,
-          plans: [{
-            id: m.id.toString(),
-            planName: m.planName,
-            duration: m.duration,
-            startDate: m.startDate,
-            endDate: m.endDate,
-            pricePaid: m.pricePaid,
-          }],
-          source: "memberships",
-        }));
+        const usersMap = {};
+        membershipsData.forEach((m) => {
+          const uid = m.userId?.toString?.() || m.email?.toLowerCase() || m.userEmail?.toLowerCase() || m.username?.toLowerCase() || m.userName?.toLowerCase() || `m_${m.id}`;
+          if (!usersMap[uid]) {
+            usersMap[uid] = {
+              uid,
+              membershipId: m.id,
+              username: m.username || m.userName || "No Name",
+              email: m.email || m.userEmail || "",
+              userEmail: m.userEmail || m.email || "",
+              workoutCount: 0,
+              dietCount: 0,
+              plans: [],
+              source: "memberships",
+            };
+          }
+
+          const planId = m.id?.toString() || `${m.planName}-${m.startDate}-${m.endDate}`;
+          const existingPlans = usersMap[uid].plans;
+          if (!existingPlans.some((plan) => plan.id === planId)) {
+            existingPlans.push({
+              id: planId,
+              planName: m.planName,
+              duration: m.duration,
+              startDate: m.startDate,
+              endDate: m.endDate,
+              pricePaid: m.pricePaid,
+            });
+          }
+        });
+
+        const usersData = Object.values(usersMap);
 
         setMembers(usersData);
         cache.adminAssignmentsMembers = usersData;
@@ -107,8 +121,22 @@ const AssingnedTrainers = () => {
           if (!assignData[userId]) assignData[userId] = [];
           assignData[userId].push(a);
         });
-        setAssignments(assignData);
-        cache.adminAssignments = assignData;
+
+        const dedupedAssignments = Object.fromEntries(
+          Object.entries(assignData).map(([userId, list]) => {
+            const uniqueList = list.filter((assign, index, self) =>
+              index === self.findIndex((item) =>
+                (item.trainerId || '') === (assign.trainerId || '') &&
+                (item.trainerName || '') === (assign.trainerName || '') &&
+                (item.planId || '') === (assign.planId || '')
+              )
+            );
+            return [userId, uniqueList];
+          })
+        );
+
+        setAssignments(dedupedAssignments);
+        cache.adminAssignments = dedupedAssignments;
       } catch (error) {
         console.error("Error fetching assignments:", error);
       }
@@ -623,6 +651,10 @@ const AssingnedTrainers = () => {
                 <option value="10">10</option>
                 <option value="20">20</option>
                 <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="300">300</option>
+                <option value="500">500</option>
               </select>
             </div>
           </div>
