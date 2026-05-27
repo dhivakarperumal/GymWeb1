@@ -289,6 +289,14 @@ const AddWorkout = () => {
     setDays(nextDays);
   };
 
+  const removeDayKey = (dayKey) => {
+    const dayKeys = getSortedDayKeys(days);
+    if (dayKeys.length <= 1) return;
+    const nextDays = { ...days };
+    delete nextDays[dayKey];
+    setDays(nextDays);
+  };
+
   /* ---------------- COPY DAY 1 TO ALL ---------------- */
   const copyDay1ToAll = () => {
     if (!window.confirm("Copy Day 1 to all other days? This will overwrite existing data.")) return;
@@ -857,7 +865,7 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
                   key={dayKey}
                   className={`bg-black/40 p-4 rounded-xl ${highlightDay === dayKey ? "border border-orange-500/50 shadow-lg shadow-orange-500/10" : ""}`}
                 >
-                  <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                  <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2 gap-3">
                     <input
                       type="text"
                       value={dayLabels[dayKey] || formatDayLabel(dayKey)}
@@ -867,17 +875,29 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
                           updateDayLabel(dayKey, formatDayLabel(dayKey));
                         }
                       }}
-                      className="w-1/4 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="flex-1 w-1/4 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
-                    {dayKey === "Day1" && Object.keys(days).length > 1 && (
-                      <button
-                        type="button"
-                        onClick={copyDay1ToAll}
-                        className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
-                      >
-                        Copy to All Days
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {dayKey === "Day1" && Object.keys(days).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={copyDay1ToAll}
+                          className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
+                        >
+                          Copy to All Days
+                        </button>
+                      )}
+                      {getSortedDayKeys(days).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeDayKey(dayKey)}
+                          className="text-white/70 hover:text-red-400 bg-white/5 hover:bg-red-500/10 rounded-full p-2 transition"
+                          title="Delete this day"
+                        >
+                          <X size={18} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {dayExercises.map((item, index) => (
