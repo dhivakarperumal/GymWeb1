@@ -444,7 +444,7 @@ const Members = () => {
                 setCurrentPage(1);
               }}
               className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
-            bg-white/10 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
+            bg-white/50 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
             >
               <option value="all">All Trainers</option>
               {trainerOptions.map((trainer) => (
