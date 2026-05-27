@@ -875,7 +875,7 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
                           updateDayLabel(dayKey, formatDayLabel(dayKey));
                         }
                       }}
-                      className="flex-1 w-1/4 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-32 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <div className="flex items-center gap-2">
                       {dayKey === "Day1" && Object.keys(days).length > 1 && (
