@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import imageCompression from "browser-image-compression";
 import { useAuth } from "../../PrivateRouter/AuthContext";
@@ -25,6 +25,84 @@ const workoutTypes = [
   "Rest Day",
 ];
 
+const createExercise = (data = {}) => ({
+  time: "",
+  type: "Weight Training",
+  name: "",
+  sets: "",
+  count: "",
+  massGain: "",
+  media: "",
+  mediaType: "url",
+  ...data,
+});
+
+const normalizeDayKey = (rawKey) => {
+  const key = String(rawKey || "").trim();
+  const match = key.match(/\d+/);
+  const dayNumber = match ? Number(match[0]) : 1;
+  return `Day${dayNumber > 0 ? dayNumber : 1}`;
+};
+
+const normalizeExercise = (entry) => {
+  if (!entry || typeof entry !== "object") return createExercise();
+  return createExercise(entry);
+};
+
+const normalizeDays = (rawDays) => {
+  if (!rawDays) {
+    return { Day1: [createExercise()] };
+  }
+
+  if (Array.isArray(rawDays)) {
+    return rawDays.reduce((acc, day, index) => {
+      const dayKey = `Day${index + 1}`;
+      if (Array.isArray(day)) {
+        acc[dayKey] = day.length > 0 ? day.map(normalizeExercise) : [createExercise()];
+      } else {
+        acc[dayKey] = [normalizeExercise(day)];
+      }
+      return acc;
+    }, {});
+  }
+
+  const normalized = {};
+  Object.entries(rawDays).forEach(([key, value]) => {
+    const dayKey = normalizeDayKey(key);
+    if (Array.isArray(value)) {
+      normalized[dayKey] = value.length > 0 ? value.map(normalizeExercise) : [createExercise()];
+    } else {
+      normalized[dayKey] = [normalizeExercise(value)];
+    }
+  });
+
+  return Object.keys(normalized)
+    .sort((a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")))
+    .reduce((acc, key) => {
+      acc[key] = normalized[key];
+      return acc;
+    }, {});
+};
+
+const getDayNumber = (dayKey) => {
+  const match = String(dayKey || "").match(/\d+/);
+  return match ? Number(match[0]) : 0;
+};
+
+const getSortedDayKeys = (daysObj) =>
+  Object.keys(daysObj || {}).sort((a, b) => getDayNumber(a) - getDayNumber(b));
+
+const getNextDayKey = (daysObj) => {
+  const keys = getSortedDayKeys(daysObj);
+  const maxDay = keys.reduce((max, key) => Math.max(max, getDayNumber(key)), 0);
+  return `Day${maxDay + 1}`;
+};
+
+const formatDayLabel = (dayKey) => {
+  const dayNumber = getDayNumber(dayKey);
+  return dayNumber ? `Day ${dayNumber}` : dayKey;
+};
+
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return "";
   let videoId = "";
@@ -46,6 +124,10 @@ const AddWorkout = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+  const requestedDayParam = searchParams.get("day");
+  const requestedDay = requestedDayParam ? normalizeDayKey(requestedDayParam) : null;
+  const [highlightDay, setHighlightDay] = useState(requestedDay);
   const isEditMode = !!id;
 
   const initialForm = {
@@ -62,7 +144,7 @@ const AddWorkout = () => {
   };
 
   const initialDays = {
-    Day1: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", massGain: "", media: "", mediaType: "url" }],
+    Day1: [createExercise()],
   };
 
   const [members, setMembers] = useState([]);
@@ -70,12 +152,23 @@ const AddWorkout = () => {
 
   const [form, setForm] = useState(initialForm);
   const [days, setDays] = useState(initialDays);
+  const [dayLabels, setDayLabels] = useState({ Day1: formatDayLabel("Day1") });
 
   // For debugging - show all assignments
   const [allAssignments, setAllAssignments] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!requestedDay) return;
+    const dayKey = requestedDay;
+    const el = document.getElementById(dayKey);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setHighlightDay(dayKey);
+  }, [days, requestedDay]);
 
   /* ---------------- FETCH MEMBERS/USERS ---------------- */
   useEffect(() => {
@@ -154,7 +247,11 @@ const AddWorkout = () => {
           durationWeeks: data.duration_weeks,
           memberWeight: data.member_weight || "",
         });
-        setDays(data.days || initialDays);
+        const normalized = normalizeDays(data.days || initialDays);
+      setDays(normalized);
+      if (requestedDay && normalized[requestedDay]) {
+        setHighlightDay(requestedDay);
+      }
       } catch (err) {
         console.error(err);
         toast.error("Failed to load workout");
@@ -168,30 +265,36 @@ const AddWorkout = () => {
   }, [id, isEditMode]);
 
   /* ---------------- ADD DAY ---------------- */
-  const addDay = () => {
-    const nextDay = `Day${Object.keys(days).length + 1}`;
+  const addDay = (focusNewDay = false) => {
+    const nextDay = getNextDayKey(days);
     setDays({
       ...days,
-      [nextDay]: [{ time: "", type: "Weight Training", name: "", sets: "", count: "", massGain: "", media: "", mediaType: "url" }],
+      [nextDay]: [createExercise()],
     });
+
+    if (focusNewDay) {
+      window.requestAnimationFrame(() => {
+        const nextInput = document.querySelector(`#${nextDay} input, #${nextDay} select`);
+        nextInput?.focus();
+      });
+    }
   };
 
   /* ---------------- REMOVE DAY ---------------- */
   const removeDay = () => {
-    const dayCount = Object.keys(days).length;
-    if (dayCount <= 1) return;
+    const dayKeys = getSortedDayKeys(days);
+    if (dayKeys.length <= 1) return;
     const nextDays = { ...days };
-    delete nextDays[`Day${dayCount}`];
+    delete nextDays[dayKeys[dayKeys.length - 1]];
     setDays(nextDays);
   };
 
   /* ---------------- COPY DAY 1 TO ALL ---------------- */
   const copyDay1ToAll = () => {
     if (!window.confirm("Copy Day 1 to all other days? This will overwrite existing data.")) return;
-    const day1Data = days["Day1"];
+    const day1Data = days["Day1"] && days["Day1"].length > 0 ? days["Day1"] : [createExercise()];
     const newDays = {};
     Object.keys(days).forEach((day) => {
-      // Deep copy day1Data to each day
       newDays[day] = JSON.parse(JSON.stringify(day1Data));
     });
     setDays(newDays);
@@ -225,8 +328,45 @@ const AddWorkout = () => {
     setDays({
       ...days,
       [dayKey]:
-        updated.length > 0 ? updated : [{ time: "", type: "Weight Training", name: "", sets: "", count: "", media: "", mediaType: "url" }],
+        updated.length > 0 ? updated : [createExercise()],
     });
+  };
+
+  const updateDayLabel = (dayKey, value) => {
+    setDayLabels((prev) => ({
+      ...prev,
+      [dayKey]: value,
+    }));
+  };
+
+  useEffect(() => {
+    setDayLabels((prev) => {
+      const next = {};
+      getSortedDayKeys(days).forEach((key) => {
+        next[key] = prev[key] || formatDayLabel(key);
+      });
+      return next;
+    });
+  }, [days]);
+
+  const handleFormKeyDown = (e) => {
+    if (e.key !== "Enter") return;
+    const tag = e.target.tagName.toLowerCase();
+    if (tag !== "input" && tag !== "select") return;
+
+    e.preventDefault();
+    const exerciseRow = e.target.closest("[data-day-key]");
+    if (!exerciseRow) return;
+
+    const rowDayKey = exerciseRow.dataset.dayKey;
+    const rowIndex = Number(exerciseRow.dataset.exerciseIndex);
+    const sortedKeys = getSortedDayKeys(days);
+    const lastDayKey = sortedKeys[sortedKeys.length - 1];
+    const lastIndex = (days[lastDayKey] || []).length - 1;
+
+    if (rowDayKey === lastDayKey && rowIndex === lastIndex) {
+      addDay(true);
+    }
   };
 
   /* ---------------- SUBMIT ---------------- */
@@ -407,7 +547,7 @@ const AddWorkout = () => {
           }
 
           // 2. Build Exercises Structure
-          const dayKey = row.Day || row.day || "Day1";
+const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNumber || "Day1");
           if (!importedDays[dayKey]) importedDays[dayKey] = [];
 
           const exercise = {
@@ -441,7 +581,7 @@ const AddWorkout = () => {
         });
 
         if (Object.keys(importedDays).length > 0) {
-          setDays(importedDays);
+          setDays(normalizeDays(importedDays));
         }
 
         setSelected(newSelected);
@@ -515,7 +655,7 @@ const AddWorkout = () => {
             : "Create Workout Schedule"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="space-y-6">
 
           {/* MEMBER SELECTION */}
           {!isEditMode ? (
@@ -709,30 +849,45 @@ const AddWorkout = () => {
           </div>
 
           {/* DAYS */}
-          {Object.keys(days)
-            .sort((a, b) => parseInt(a.slice(3)) - parseInt(b.slice(3)))
-            .map((dayKey) => (
-              <div key={dayKey} className="bg-black/40 p-4 rounded-xl">
-                <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
-                  <h3 className="font-semibold text-orange-400">
-                    {dayKey}
-                  </h3>
-                  {dayKey === "Day1" && Object.keys(days).length > 1 && (
-                    <button
-                      type="button"
-                      onClick={copyDay1ToAll}
-                      className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
-                    >
-                      Copy to All Days
-                    </button>
-                  )}
-                </div>
+          {getSortedDayKeys(days).map((dayKey) => {
+              const dayExercises = Array.isArray(days[dayKey]) && days[dayKey].length > 0 ? days[dayKey] : [createExercise()];
+              return (
+                <div
+                  id={dayKey}
+                  key={dayKey}
+                  className={`bg-black/40 p-4 rounded-xl ${highlightDay === dayKey ? "border border-orange-500/50 shadow-lg shadow-orange-500/10" : ""}`}
+                >
+                  <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                    <input
+                      type="text"
+                      value={dayLabels[dayKey] || formatDayLabel(dayKey)}
+                      onChange={(e) => updateDayLabel(dayKey, e.target.value)}
+                      onBlur={(e) => {
+                        if (!e.target.value.trim()) {
+                          updateDayLabel(dayKey, formatDayLabel(dayKey));
+                        }
+                      }}
+                      className="w-1/4 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    {dayKey === "Day1" && Object.keys(days).length > 1 && (
+                      <button
+                        type="button"
+                        onClick={copyDay1ToAll}
+                        className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
+                      >
+                        Copy to All Days
+                      </button>
+                    )}
+                  </div>
 
-                {days[dayKey].map((item, index) => (
-                  <div
-                    key={index}
-                    className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4 space-y-4 shadow-inner"
-                  >
+                  {dayExercises.map((item, index) => (
+                    <div
+                      key={index}
+                      data-day-key={dayKey}
+                      data-exercise-index={index}
+                      className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4 space-y-4 shadow-inner"
+                    >
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {/* Time Slot */}
                       <div className="space-y-1">
@@ -920,7 +1075,7 @@ const AddWorkout = () => {
                   + Add Exercise
                 </button>
               </div>
-            ))}
+            )})}
 
           <button
             type="button"
