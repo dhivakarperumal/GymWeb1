@@ -10,7 +10,16 @@ import api from "../../api";
 const inputClass =
   "w-full bg-black/40 border border-white/20 rounded-lg px-3 py-3.5 text-white text-sm";
 
-const meals = ["Early-morning", "Breakfast", "Mid-morning", "Lunch", "Evening", "Dinner", "Pre-workout", "Post-workout"];
+const meals = [
+  "Early-morning",
+  "Breakfast",
+  "Mid-morning",
+  "Lunch",
+  "Evening",
+  "Dinner",
+  "Pre-workout",
+  "Post-workout",
+];
 
 /* ---------- GENERATE SINGLE DAY ---------- */
 const generateSingleDay = () => {
@@ -18,9 +27,10 @@ const generateSingleDay = () => {
   meals.forEach((meal) => {
     day[meal] = {
       time: "",
-      items: [{ food: "", quantity: "", calories: "" }]
+      items: [{ food: "", quantity: "", calories: "" }],
     };
   });
+  day.notes = "";
   return day;
 };
 
@@ -52,7 +62,6 @@ const AddDietPlans = () => {
     totalCalories: "",
     duration: 1,
     days: [generateSingleDay()],
-    notes: "",
   });
 
   /* ================= FETCH MEMBERS ================= */
@@ -102,7 +111,7 @@ const AddDietPlans = () => {
     (form.days || []).forEach((day) => {
       Object.values(day || {}).forEach((meal) => {
         if (meal && Array.isArray(meal.items)) {
-          meal.items.forEach(item => {
+          meal.items.forEach((item) => {
             total += Number(item.calories || 0);
           });
         }
@@ -150,51 +159,67 @@ const AddDietPlans = () => {
         const memberName = data.memberName || data.member_name;
 
         let daysData = data.days;
-        if (typeof daysData === 'string') {
-          try { daysData = JSON.parse(daysData); } catch { daysData = []; }
+        if (typeof daysData === "string") {
+          try {
+            daysData = JSON.parse(daysData);
+          } catch {
+            daysData = [];
+          }
         }
 
         let fixedDays = [];
 
         // Handle both object {Day1: ...} and array [...]
         if (Array.isArray(daysData)) {
-          fixedDays = daysData.map(day => {
+          fixedDays = daysData.map((day) => {
             const normalizedDay = {};
-            meals.forEach(meal => {
+            meals.forEach((meal) => {
               const mealData = day[meal];
               if (!mealData) {
-                normalizedDay[meal] = { time: "", items: [{ food: "", quantity: "", calories: "" }] };
+                normalizedDay[meal] = {
+                  time: "",
+                  items: [{ food: "", quantity: "", calories: "" }],
+                };
               } else {
                 normalizedDay[meal] = {
                   time: mealData.time || "",
-                  items: Array.isArray(mealData.items) ? mealData.items : [{ food: "", quantity: "", calories: "" }]
+                  items: Array.isArray(mealData.items)
+                    ? mealData.items
+                    : [{ food: "", quantity: "", calories: "" }],
                 };
               }
             });
+            normalizedDay.notes = day.notes || day.note || "";
             return normalizedDay;
           });
         } else {
           // Object format conversion
           const keys = Object.keys(daysData || {}).sort((a, b) => {
-            const numA = parseInt(a.replace(/\D/g, '')) || 0;
-            const numB = parseInt(b.replace(/\D/g, '')) || 0;
+            const numA = parseInt(a.replace(/\D/g, "")) || 0;
+            const numB = parseInt(b.replace(/\D/g, "")) || 0;
             return numA - numB;
           });
 
-          fixedDays = keys.map(key => {
+          fixedDays = keys.map((key) => {
             const day = daysData[key];
             const normalizedDay = {};
-            meals.forEach(meal => {
+            meals.forEach((meal) => {
               const mealData = day[meal];
               if (!mealData) {
-                normalizedDay[meal] = { time: "", items: [{ food: "", quantity: "", calories: "" }] };
+                normalizedDay[meal] = {
+                  time: "",
+                  items: [{ food: "", quantity: "", calories: "" }],
+                };
               } else {
                 normalizedDay[meal] = {
                   time: mealData.time || "",
-                  items: Array.isArray(mealData.items) ? mealData.items : [{ food: "", quantity: "", calories: "" }]
+                  items: Array.isArray(mealData.items)
+                    ? mealData.items
+                    : [{ food: "", quantity: "", calories: "" }],
                 };
               }
             });
+            normalizedDay.notes = day.notes || day.note || "";
             return normalizedDay;
           });
         }
@@ -213,7 +238,6 @@ const AddDietPlans = () => {
           totalCalories: data.totalCalories || data.total_calories || "",
           duration: data.duration || fixedDays.length,
           days: fixedDays,
-          notes: data.notes || data.note || "",
         });
       } catch (err) {
         console.error(err);
@@ -258,6 +282,17 @@ const AddDietPlans = () => {
     });
   };
 
+  const handleDayNotesChange = (dayIndex, value) => {
+    setForm((prev) => {
+      const updatedDays = [...prev.days];
+      updatedDays[dayIndex] = {
+        ...updatedDays[dayIndex],
+        notes: value,
+      };
+      return { ...prev, days: updatedDays };
+    });
+  };
+
   const handleAddFoodItem = (dayIndex, meal) => {
     setForm((prev) => {
       const updatedDays = [...prev.days];
@@ -265,7 +300,10 @@ const AddDietPlans = () => {
         ...updatedDays[dayIndex],
         [meal]: {
           ...updatedDays[dayIndex][meal],
-          items: [...updatedDays[dayIndex][meal].items, { food: "", quantity: "", calories: "" }],
+          items: [
+            ...updatedDays[dayIndex][meal].items,
+            { food: "", quantity: "", calories: "" },
+          ],
         },
       };
       return { ...prev, days: updatedDays };
@@ -276,7 +314,9 @@ const AddDietPlans = () => {
     setForm((prev) => {
       if (prev.days[dayIndex][meal].items.length <= 1) return prev;
       const updatedDays = [...prev.days];
-      const updatedItems = updatedDays[dayIndex][meal].items.filter((_, i) => i !== itemIndex);
+      const updatedItems = updatedDays[dayIndex][meal].items.filter(
+        (_, i) => i !== itemIndex,
+      );
 
       updatedDays[dayIndex] = {
         ...updatedDays[dayIndex],
@@ -333,7 +373,9 @@ const AddDietPlans = () => {
     const getDeepCopy = () => JSON.parse(JSON.stringify(day1Data));
 
     setForm((prev) => {
-      const updatedDays = prev.days.map((day, i) => i === 0 ? day : getDeepCopy());
+      const updatedDays = prev.days.map((day, i) =>
+        i === 0 ? day : getDeepCopy(),
+      );
       return { ...prev, days: updatedDays };
     });
     toast.success("Day 1 copied to all days");
@@ -347,21 +389,29 @@ const AddDietPlans = () => {
     for (const key of keys) {
       if (Object.prototype.hasOwnProperty.call(row, key)) {
         const value = row[key];
-        if (value !== undefined && value !== null && String(value).trim() !== "") {
+        if (
+          value !== undefined &&
+          value !== null &&
+          String(value).trim() !== ""
+        ) {
           return String(value).trim();
         }
       }
     }
 
     const lowerMap = Object.fromEntries(
-      Object.keys(row).map((key) => [key.toLowerCase(), row[key]])
+      Object.keys(row).map((key) => [key.toLowerCase(), row[key]]),
     );
 
     for (const key of keys) {
       const lowerKey = key.toLowerCase();
       if (Object.prototype.hasOwnProperty.call(lowerMap, lowerKey)) {
         const value = lowerMap[lowerKey];
-        if (value !== undefined && value !== null && String(value).trim() !== "") {
+        if (
+          value !== undefined &&
+          value !== null &&
+          String(value).trim() !== ""
+        ) {
           return String(value).trim();
         }
       }
@@ -392,7 +442,9 @@ const AddDietPlans = () => {
     if (["early morning", "early-morning", "early"].includes(normalized)) {
       return "Early-morning";
     }
-    if (["mid morning", "mid-morning", "mid", "midmorning"].includes(normalized)) {
+    if (
+      ["mid morning", "mid-morning", "mid", "midmorning"].includes(normalized)
+    ) {
       return "Mid-morning";
     }
     if (["breakfast"].includes(normalized)) return "Breakfast";
@@ -417,7 +469,8 @@ const AddDietPlans = () => {
 
     if (raw.includes("pre") && raw.includes("workout")) return "Pre-workout";
     if (raw.includes("post") && raw.includes("workout")) return "Post-workout";
-    if (raw.includes("early") && raw.includes("morning")) return "Early-morning";
+    if (raw.includes("early") && raw.includes("morning"))
+      return "Early-morning";
     if (raw.includes("mid") && raw.includes("morning")) return "Mid-morning";
     if (raw.includes("breakfast")) return "Breakfast";
     if (raw.includes("lunch")) return "Lunch";
@@ -431,45 +484,206 @@ const AddDietPlans = () => {
   const downloadDietPlanTemplate = () => {
     const template = [
       // Day 1
-      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Warm Water", Qty: "1 glass", Kcal: "0" },
-      { Day: "1", Meal: "Early-morning", Time: "06:00", Food: "Almonds", Qty: "5 pcs", Kcal: "50" },
+      {
+        Day: "1",
+        Meal: "Early-morning",
+        Time: "06:00",
+        Food: "Warm Water",
+        Qty: "1 glass",
+        Kcal: "0",
+      },
+      {
+        Day: "1",
+        Meal: "Early-morning",
+        Time: "06:00",
+        Food: "Almonds",
+        Qty: "5 pcs",
+        Kcal: "50",
+      },
 
-      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Oats", Qty: "1 bowl", Kcal: "200" },
-      { Day: "1", Meal: "Breakfast", Time: "08:00", Food: "Milk", Qty: "1 cup", Kcal: "100" },
+      {
+        Day: "1",
+        Meal: "Breakfast",
+        Time: "08:00",
+        Food: "Oats",
+        Qty: "1 bowl",
+        Kcal: "200",
+      },
+      {
+        Day: "1",
+        Meal: "Breakfast",
+        Time: "08:00",
+        Food: "Milk",
+        Qty: "1 cup",
+        Kcal: "100",
+      },
 
-      { Day: "1", Meal: "Mid-morning", Time: "11:00", Food: "Apple", Qty: "1", Kcal: "80" },
+      {
+        Day: "1",
+        Meal: "Mid-morning",
+        Time: "11:00",
+        Food: "Apple",
+        Qty: "1",
+        Kcal: "80",
+      },
 
-      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
-      { Day: "1", Meal: "Lunch", Time: "13:30", Food: "Chicken", Qty: "150g", Kcal: "250" },
+      {
+        Day: "1",
+        Meal: "Lunch",
+        Time: "13:30",
+        Food: "Rice",
+        Qty: "1 plate",
+        Kcal: "300",
+      },
+      {
+        Day: "1",
+        Meal: "Lunch",
+        Time: "13:30",
+        Food: "Chicken",
+        Qty: "150g",
+        Kcal: "250",
+      },
 
-      { Day: "1", Meal: "Evening", Time: "16:30", Food: "Nuts", Qty: "50g", Kcal: "200" },
+      {
+        Day: "1",
+        Meal: "Evening",
+        Time: "16:30",
+        Food: "Nuts",
+        Qty: "50g",
+        Kcal: "200",
+      },
 
-      { Day: "1", Meal: "Pre-workout", Time: "17:30", Food: "Banana", Qty: "1", Kcal: "90" },
+      {
+        Day: "1",
+        Meal: "Pre-workout",
+        Time: "17:30",
+        Food: "Banana",
+        Qty: "1",
+        Kcal: "90",
+      },
 
-      { Day: "1", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+      {
+        Day: "1",
+        Meal: "Post-workout",
+        Time: "19:00",
+        Food: "Protein Shake",
+        Qty: "1 scoop",
+        Kcal: "120",
+      },
 
-      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Chapati", Qty: "2 pcs", Kcal: "200" },
-      { Day: "1", Meal: "Dinner", Time: "21:00", Food: "Veg Curry", Qty: "1 bowl", Kcal: "150" },
+      {
+        Day: "1",
+        Meal: "Dinner",
+        Time: "21:00",
+        Food: "Chapati",
+        Qty: "2 pcs",
+        Kcal: "200",
+      },
+      {
+        Day: "1",
+        Meal: "Dinner",
+        Time: "21:00",
+        Food: "Veg Curry",
+        Qty: "1 bowl",
+        Kcal: "150",
+      },
 
       // Day 2
-      { Day: "2", Meal: "Early-morning", Time: "06:00", Food: "Green Tea", Qty: "1 cup", Kcal: "5" },
+      {
+        Day: "2",
+        Meal: "Early-morning",
+        Time: "06:00",
+        Food: "Green Tea",
+        Qty: "1 cup",
+        Kcal: "5",
+      },
 
-      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Eggs", Qty: "2 pcs", Kcal: "140" },
-      { Day: "2", Meal: "Breakfast", Time: "08:00", Food: "Bread", Qty: "2 slices", Kcal: "160" },
+      {
+        Day: "2",
+        Meal: "Breakfast",
+        Time: "08:00",
+        Food: "Eggs",
+        Qty: "2 pcs",
+        Kcal: "140",
+      },
+      {
+        Day: "2",
+        Meal: "Breakfast",
+        Time: "08:00",
+        Food: "Bread",
+        Qty: "2 slices",
+        Kcal: "160",
+      },
 
-      { Day: "2", Meal: "Mid-morning", Time: "11:00", Food: "Banana", Qty: "1", Kcal: "90" },
+      {
+        Day: "2",
+        Meal: "Mid-morning",
+        Time: "11:00",
+        Food: "Banana",
+        Qty: "1",
+        Kcal: "90",
+      },
 
-      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Rice", Qty: "1 plate", Kcal: "300" },
-      { Day: "2", Meal: "Lunch", Time: "13:30", Food: "Fish", Qty: "150g", Kcal: "250" },
+      {
+        Day: "2",
+        Meal: "Lunch",
+        Time: "13:30",
+        Food: "Rice",
+        Qty: "1 plate",
+        Kcal: "300",
+      },
+      {
+        Day: "2",
+        Meal: "Lunch",
+        Time: "13:30",
+        Food: "Fish",
+        Qty: "150g",
+        Kcal: "250",
+      },
 
-      { Day: "2", Meal: "Evening", Time: "16:30", Food: "Peanuts", Qty: "50g", Kcal: "250" },
+      {
+        Day: "2",
+        Meal: "Evening",
+        Time: "16:30",
+        Food: "Peanuts",
+        Qty: "50g",
+        Kcal: "250",
+      },
 
-      { Day: "2", Meal: "Pre-workout", Time: "17:30", Food: "Dates", Qty: "3 pcs", Kcal: "70" },
+      {
+        Day: "2",
+        Meal: "Pre-workout",
+        Time: "17:30",
+        Food: "Dates",
+        Qty: "3 pcs",
+        Kcal: "70",
+      },
 
-      { Day: "2", Meal: "Post-workout", Time: "19:00", Food: "Protein Shake", Qty: "1 scoop", Kcal: "120" },
+      {
+        Day: "2",
+        Meal: "Post-workout",
+        Time: "19:00",
+        Food: "Protein Shake",
+        Qty: "1 scoop",
+        Kcal: "120",
+      },
 
-      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Salad", Qty: "1 bowl", Kcal: "150" },
-      { Day: "2", Meal: "Dinner", Time: "21:00", Food: "Soup", Qty: "1 cup", Kcal: "100" },
+      {
+        Day: "2",
+        Meal: "Dinner",
+        Time: "21:00",
+        Food: "Salad",
+        Qty: "1 bowl",
+        Kcal: "150",
+      },
+      {
+        Day: "2",
+        Meal: "Dinner",
+        Time: "21:00",
+        Food: "Soup",
+        Qty: "1 cup",
+        Kcal: "100",
+      },
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -500,14 +714,52 @@ const AddDietPlans = () => {
       let rowsParsed = 0;
 
       rows.forEach((row) => {
-        const dayRaw = getRowValue(row, ["Day", "Day Number", "Day No", "DayNo", "Day#", "day"]);
-        const mealRaw = getRowValue(row, ["Meal", "Meal Name", "Meal Type", "MealType", "meal"]);
+        const dayRaw = getRowValue(row, [
+          "Day",
+          "Day Number",
+          "Day No",
+          "DayNo",
+          "Day#",
+          "day",
+        ]);
+        const mealRaw = getRowValue(row, [
+          "Meal",
+          "Meal Name",
+          "Meal Type",
+          "MealType",
+          "meal",
+        ]);
         const dayNumber = parseDayNumber(dayRaw) || 1;
         const mealName = normalizeMeal(mealRaw);
-        const time = getRowValue(row, ["Time", "Timing", "Meal Time", "MealTime", "time"]);
-        const food = getRowValue(row, ["Food", "Food Item", "FoodItem", "Item", "Description", "food"]);
-        const quantity = getRowValue(row, ["Qty", "Quantity", "QTY", "Serving", "quantity"]);
-        const calories = getRowValue(row, ["Kcal", "Calories", "Cal", "Energy", "calories"]);
+        const time = getRowValue(row, [
+          "Time",
+          "Timing",
+          "Meal Time",
+          "MealTime",
+          "time",
+        ]);
+        const food = getRowValue(row, [
+          "Food",
+          "Food Item",
+          "FoodItem",
+          "Item",
+          "Description",
+          "food",
+        ]);
+        const quantity = getRowValue(row, [
+          "Qty",
+          "Quantity",
+          "QTY",
+          "Serving",
+          "quantity",
+        ]);
+        const calories = getRowValue(row, [
+          "Kcal",
+          "Calories",
+          "Cal",
+          "Energy",
+          "calories",
+        ]);
 
         if (!mealName) {
           return;
@@ -539,11 +791,13 @@ const AddDietPlans = () => {
       });
 
       const dayIndices = Object.keys(parsedDays)
-        .map(key => parseInt(key.replace("Day", "")))
+        .map((key) => parseInt(key.replace("Day", "")))
         .sort((a, b) => a - b);
 
       if (dayIndices.length === 0 || rowsParsed === 0) {
-        toast.error("No valid diet rows found. Use columns like Day, Meal, Time, Food, Qty, Kcal.");
+        toast.error(
+          "No valid diet rows found. Use columns like Day, Meal, Time, Food, Qty, Kcal.",
+        );
         return;
       }
 
@@ -561,12 +815,16 @@ const AddDietPlans = () => {
             mergedDay[meal] = {
               ...dayTemplate[meal],
               time: mealData.time || dayTemplate[meal].time,
-              items: mealData.items.length > 0 ? mealData.items : dayTemplate[meal].items,
+              items:
+                mealData.items.length > 0
+                  ? mealData.items
+                  : dayTemplate[meal].items,
             };
           } else {
             mergedDay[meal] = dayTemplate[meal];
           }
         });
+        mergedDay.notes = "";
         newDaysArray.push(mergedDay);
       }
 
@@ -606,7 +864,9 @@ const AddDietPlans = () => {
     }
 
     const hasFood = Object.values(form.days).some((day) =>
-      Object.values(day).some((meal) => meal.items?.some(item => item.food.trim() !== ""))
+      Object.values(day).some((meal) =>
+        meal.items?.some((item) => item.food.trim() !== ""),
+      ),
     );
 
     if (!hasFood) {
@@ -631,39 +891,37 @@ const AddDietPlans = () => {
           totalCalories: Number(form.totalCalories) || 0,
           duration: Number(form.duration) || form.days.length,
           days: form.days,
-          notes: form.notes || "",
           status: "active",
         };
         await api.put(`/diet-plans/${id}`, payload);
         toast.success("Diet Plan Updated 🥗");
         setTimeout(() => navigate("/trainer/alladddietplans"), 1200);
       } else {
-          // Bulk Create
-          const selectedMembers = members.filter((m) => selected.has(m.id));
-          let successCount = 0;
-          let failCount = 0;
+        // Bulk Create
+        const selectedMembers = members.filter((m) => selected.has(m.id));
+        let successCount = 0;
+        let failCount = 0;
 
-          for (const m of selectedMembers) {
-            try {
-              const payload = {
-                trainerId,
-                trainerName,
-                trainerSource: user?.role || "trainer",
-                memberId: m.gymMemberId || m.userId || m.id,
-                userId: m.userId || m.id,
-                memberName: m.name,
-                memberEmail: m.email,
-                memberMobile: m.mobile,
-                memberWeight: m.weight,
-                title: form.title,
-                totalCalories: Number(totalCalories) || 0,
-                duration: Number(form.duration) || form.days.length,
-                days: form.days,
-                notes: form.notes || "",
-                status: "active",
-              };
-              await api.post(`/diet-plans`, payload);
-              successCount++;
+        for (const m of selectedMembers) {
+          try {
+            const payload = {
+              trainerId,
+              trainerName,
+              trainerSource: user?.role || "trainer",
+              memberId: m.gymMemberId || m.userId || m.id,
+              userId: m.userId || m.id,
+              memberName: m.name,
+              memberEmail: m.email,
+              memberMobile: m.mobile,
+              memberWeight: m.weight,
+              title: form.title,
+              totalCalories: Number(totalCalories) || 0,
+              duration: Number(form.duration) || form.days.length,
+              days: form.days,
+              status: "active",
+            };
+            await api.post(`/diet-plans`, payload);
+            successCount++;
           } catch (err) {
             console.error(`Failed for member ${m.name}:`, err);
             failCount++;
@@ -705,14 +963,14 @@ const AddDietPlans = () => {
       if (next.has(mId)) {
         next.delete(mId);
         if (next.size === 0) {
-          setForm(p => ({ ...p, memberWeight: "" }));
+          setForm((p) => ({ ...p, memberWeight: "" }));
         }
       } else {
         next.add(mId);
         // Find member in state
-        const member = members.find(m => String(m.id) === String(mId));
+        const member = members.find((m) => String(m.id) === String(mId));
         if (member && member.weight) {
-          setForm(p => ({ ...p, memberWeight: member.weight }));
+          setForm((p) => ({ ...p, memberWeight: member.weight }));
         }
       }
       return next;
@@ -720,14 +978,18 @@ const AddDietPlans = () => {
   };
 
   const selectAll = () => {
-    if (selected.size === filteredMembers.length && filteredMembers.length > 0) {
+    if (
+      selected.size === filteredMembers.length &&
+      filteredMembers.length > 0
+    ) {
       setSelected(new Set());
     } else {
       setSelected(new Set(filteredMembers.map((m) => m.id)));
     }
   };
 
-  const allSelected = filteredMembers.length > 0 && selected.size === filteredMembers.length;
+  const allSelected =
+    filteredMembers.length > 0 && selected.size === filteredMembers.length;
 
   if (loading || !trainerId) {
     return (
@@ -740,7 +1002,6 @@ const AddDietPlans = () => {
   return (
     <div className="min-h-screen p-6 text-white">
       <div className="max-w-6xl mx-auto bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-6">
-
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">
             {id ? "Edit Diet Plan" : "Create Custom Diet Plan"}
@@ -768,14 +1029,14 @@ const AddDietPlans = () => {
             </div>
 
             <label className="text-[10px] text-white/50 max-w-md text-right">
-              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal. Use meal names:
-              Early-morning, Breakfast, Mid-morning, Lunch, Evening, Dinner, Pre-workout, Post-workout.
+              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal. Use
+              meal names: Early-morning, Breakfast, Mid-morning, Lunch, Evening,
+              Dinner, Pre-workout, Post-workout.
             </label>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
           {/* MEMBER SELECTION */}
           {!id ? (
             <div className="bg-black/40 border border-white/10 rounded-xl p-4 space-y-4">
@@ -801,7 +1062,10 @@ const AddDietPlans = () => {
 
               {/* Member Search */}
               <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"
+                />
                 <input
                   type="text"
                   placeholder="Search members..."
@@ -824,7 +1088,10 @@ const AddDietPlans = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {loading ? (
                   <div className="col-span-full py-4 text-center text-white/40 text-sm flex items-center justify-center gap-2">
-                    <RefreshCw size={16} className="animate-spin text-emerald-400" />
+                    <RefreshCw
+                      size={16}
+                      className="animate-spin text-emerald-400"
+                    />
                     Loading members...
                   </div>
                 ) : filteredMembers.length === 0 ? (
@@ -838,18 +1105,31 @@ const AddDietPlans = () => {
                       <div
                         key={m.id}
                         onClick={() => toggleOne(m.id)}
-                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${isSelected ? "bg-emerald-500/20 border-emerald-500/50" : "bg-white/5 border-white/5 hover:bg-white/10"
-                          }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${
+                          isSelected
+                            ? "bg-emerald-500/20 border-emerald-500/50"
+                            : "bg-white/5 border-white/5 hover:bg-white/10"
+                        }`}
                       >
                         {isSelected ? (
-                          <CheckSquare size={18} className="text-emerald-400 shrink-0" />
+                          <CheckSquare
+                            size={18}
+                            className="text-emerald-400 shrink-0"
+                          />
                         ) : (
-                          <Square size={18} className="text-white/20 shrink-0" />
+                          <Square
+                            size={18}
+                            className="text-white/20 shrink-0"
+                          />
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate flex items-center gap-2">
                             {m.name}
-                            {m.weight && <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">({m.weight}kg)</span>}
+                            {m.weight && (
+                              <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                ({m.weight}kg)
+                              </span>
+                            )}
                           </p>
                           <p className="text-[10px] text-white/40 truncate">
                             {[m.email, m.planName].filter(Boolean).join(" • ")}
@@ -869,9 +1149,15 @@ const AddDietPlans = () => {
                 <div>
                   <p className="text-sm font-medium flex items-center gap-2">
                     {form.memberName || "Selected Member"}
-                    {form.memberWeight && <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">({form.memberWeight}kg)</span>}
+                    {form.memberWeight && (
+                      <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                        ({form.memberWeight}kg)
+                      </span>
+                    )}
                   </p>
-                  <p className="text-xs text-white/40">{form.memberEmail || "No Email"}</p>
+                  <p className="text-xs text-white/40">
+                    {form.memberEmail || "No Email"}
+                  </p>
                 </div>
               </div>
               <p className="text-yellow-400 text-[10px] mt-2 italic">
@@ -883,7 +1169,9 @@ const AddDietPlans = () => {
           {/* TOP FIELDS: TITLE, CALORIES, DAYS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1 sm:col-span-2 lg:col-span-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Diet Plan Title</label>
+              <label className="text-xs font-medium text-white/50 ml-1">
+                Diet Plan Title
+              </label>
               <select
                 className={`${inputClass} [&>option]:text-black`}
                 value={form.title}
@@ -891,11 +1179,17 @@ const AddDietPlans = () => {
                   setForm((p) => ({ ...p, title: e.target.value }))
                 }
               >
-                <option value="" disabled>Select Diet Plan Title...</option>
-                <option value="Weight Loss Strategy">Weight Loss Strategy</option>
+                <option value="" disabled>
+                  Select Diet Plan Title...
+                </option>
+                <option value="Weight Loss Strategy">
+                  Weight Loss Strategy
+                </option>
                 <option value="High Protein Bulk">High Protein Bulk</option>
                 <option value="Keto Diet Plan">Keto Diet Plan</option>
-                <option value="Lean Muscle Building">Lean Muscle Building</option>
+                <option value="Lean Muscle Building">
+                  Lean Muscle Building
+                </option>
                 <option value="General Fitness">General Fitness</option>
                 <option value="Endurance & Stamina">Endurance & Stamina</option>
                 <option value="Vegan Plan">Vegan Plan</option>
@@ -903,7 +1197,9 @@ const AddDietPlans = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Total Calories (Auto)</label>
+              <label className="text-xs font-medium text-white/50 ml-1">
+                Total Calories (Auto)
+              </label>
               <input
                 type="number"
                 className={inputClass}
@@ -914,41 +1210,62 @@ const AddDietPlans = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Member Weight (kg)</label>
+              <label className="text-xs font-medium text-white/50 ml-1">
+                Member Weight (kg)
+              </label>
               <input
                 type="number"
                 step="0.1"
                 className={inputClass}
                 placeholder="Weight"
                 value={form.memberWeight}
-                onChange={(e) => setForm(p => ({ ...p, memberWeight: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, memberWeight: e.target.value }))
+                }
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Duration (Days)</label>
-              <div className={`${inputClass} flex items-center justify-between bg-black/60`}>
-                <span>{form.days.length} Days</span>
-                <div className="flex gap-2">
-                  <button type="button" onClick={handleRemoveDay} className="text-red-400 hover:text-red-300 font-bold px-1">-</button>
-                  <button type="button" onClick={handleAddDay} className="text-emerald-400 hover:text-emerald-300 font-bold px-1">+</button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-white/50 ml-1">
+                  Duration (Days)
+                </label>
+                <div
+                  className={`${inputClass} flex items-center justify-between bg-black/60`}
+                >
+                  <span>{form.days.length} Days</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRemoveDay}
+                      className="text-red-400 hover:text-red-300 font-bold px-1"
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddDay}
+                      className="text-emerald-400 hover:text-emerald-300 font-bold px-1"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-
-
           </div>
 
           {/* DAYS */}
           <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
-
             {form.days.map((dayData, dayIndex) => (
               <div
                 key={dayIndex}
                 className="bg-black/30 border border-white/10 rounded-lg p-4 space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-emerald-400">Day {dayIndex + 1}</h3>
+                  <h3 className="font-semibold text-emerald-400">
+                    Day {dayIndex + 1}
+                  </h3>
                   {dayIndex === 0 && form.days.length > 1 && (
                     <button
                       type="button"
@@ -969,13 +1286,21 @@ const AddDietPlans = () => {
                   const mealItems = dayData[meal]?.items || [];
 
                   return (
-                    <div key={meal} className="bg-white/5 rounded-xl p-4 border border-white/5 space-y-2">
+                    <div
+                      key={meal}
+                      className="bg-white/5 rounded-xl p-4 border border-white/5 space-y-2"
+                    >
                       {mealItems.map((item, idx) => (
-                        <div key={idx} className="flex flex-wrap md:flex-nowrap items-center gap-3">
+                        <div
+                          key={idx}
+                          className="flex flex-wrap md:flex-nowrap items-center gap-3"
+                        >
                           {/* Meal Category (Left) */}
                           <div className="w-full md:w-32 shrink-0">
                             {idx === 0 ? (
-                              <div className={`px-2 py-3 rounded-lg text-[10px] font-black uppercase tracking-tighter text-center border shadow-sm ${mealColorClass}`}>
+                              <div
+                                className={`px-2 py-3 rounded-lg text-[10px] font-black uppercase tracking-tighter text-center border shadow-sm ${mealColorClass}`}
+                              >
                                 {meal}
                               </div>
                             ) : (
@@ -990,8 +1315,16 @@ const AddDietPlans = () => {
                                 <input
                                   type="time"
                                   className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
-                                  value={convertTo24Hour(dayData[meal]?.time || "")}
-                                  onChange={(e) => handleMealTimeChange(dayIndex, meal, e.target.value)}
+                                  value={convertTo24Hour(
+                                    dayData[meal]?.time || "",
+                                  )}
+                                  onChange={(e) =>
+                                    handleMealTimeChange(
+                                      dayIndex,
+                                      meal,
+                                      e.target.value,
+                                    )
+                                  }
                                 />
                               </div>
                             ) : (
@@ -1005,7 +1338,15 @@ const AddDietPlans = () => {
                               className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
                               placeholder="Food Item"
                               value={item.food}
-                              onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "food", e.target.value)}
+                              onChange={(e) =>
+                                handleFoodItemChange(
+                                  dayIndex,
+                                  meal,
+                                  idx,
+                                  "food",
+                                  e.target.value,
+                                )
+                              }
                             />
                           </div>
 
@@ -1015,7 +1356,15 @@ const AddDietPlans = () => {
                               className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
                               placeholder="Qty"
                               value={item.quantity}
-                              onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "quantity", e.target.value)}
+                              onChange={(e) =>
+                                handleFoodItemChange(
+                                  dayIndex,
+                                  meal,
+                                  idx,
+                                  "quantity",
+                                  e.target.value,
+                                )
+                              }
                             />
                           </div>
 
@@ -1026,12 +1375,17 @@ const AddDietPlans = () => {
                               className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
                               placeholder="Kcal"
                               value={item.calories}
-                              onChange={(e) => handleFoodItemChange(dayIndex, meal, idx, "calories", e.target.value)}
+                              onChange={(e) =>
+                                handleFoodItemChange(
+                                  dayIndex,
+                                  meal,
+                                  idx,
+                                  "calories",
+                                  e.target.value,
+                                )
+                              }
                             />
                           </div>
-
-
-                          
 
                           {/* Actions */}
                           <div className="flex gap-1 shrink-0">
@@ -1045,58 +1399,58 @@ const AddDietPlans = () => {
                             {mealItems.length > 1 && (
                               <button
                                 type="button"
-                                onClick={() => handleRemoveFoodItem(dayIndex, meal, idx)}
+                                onClick={() =>
+                                  handleRemoveFoodItem(dayIndex, meal, idx)
+                                }
                                 className="w-10 h-10 flex items-center justify-center bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/40 transition"
                               >
                                 -
                               </button>
                             )}
                           </div>
-                          
                         </div>
                       ))}
-                      
                     </div>
-                    
                   );
                 })}
-                 <div className="space-y-1">
-              <label className="text-xs font-medium text-white/50 ml-1">Notes</label>
-              <textarea
-                className={`${inputClass} min-h-[120px] resize-none`}
-                placeholder="Overall notes for this diet plan"
-                value={form.notes}
-                onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-              />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-white/50 ml-1">
+                    Day Notes
+                  </label>
+                  <textarea
+                    className={`${inputClass} min-h-[120px] resize-none`}
+                    placeholder="Notes for this day"
+                    value={dayData.notes}
+                    onChange={(e) =>
+                      handleDayNotesChange(dayIndex, e.target.value)
+                    }
+                  />
+                </div>
               </div>
             ))}
-
           </div>
 
           <div className="space-y-4">
-           
-
             {/* SUBMIT */}
             <div className="flex justify-end">
-
               <button
                 type="submit"
                 disabled={submitting}
-                className={`px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center gap-2 hover:scale-105 transition ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center gap-2 hover:scale-105 transition ${submitting ? "opacity-70 cursor-not-allowed" : ""}`}
               >
                 {submitting && <RefreshCw size={18} className="animate-spin" />}
-                {submitting ? "Processing..." : (id ? "Update Diet Plan" : "Save Diet Plan")}
+                {submitting
+                  ? "Processing..."
+                  : id
+                    ? "Update Diet Plan"
+                    : "Save Diet Plan"}
               </button>
-
             </div>
           </div>
-
         </form>
-
       </div>
     </div>
   );
-}
+};
 
 export default AddDietPlans;
