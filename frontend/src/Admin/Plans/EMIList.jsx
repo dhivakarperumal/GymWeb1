@@ -65,20 +65,39 @@ const EMIList = () => {
   const [trainers, setTrainers] = useState([]);
   const [importErrors, setImportErrors] = useState([]);
   const [viewMode, setViewMode] = useState("table");
+
+  useEffect(() => {
+    const loadTrainers = async () => {
+      try {
+        const res = await api.get("/users");
+        const trainerUsers = Array.isArray(res.data)
+          ? res.data.filter((u) => String(u.role).toLowerCase() === "trainer")
+          : [];
+        setTrainers(trainerUsers);
+      } catch (err) {
+        console.error("Failed to load trainer users", err);
+      }
+    };
+
+    loadTrainers();
+  }, []);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         let membershipsQuery = "/memberships";
         if (role === "trainer" && user?.id) {
           membershipsQuery = `/memberships?trainerUserId=${user.id}`;
+        } else if (trainerFilter !== "all") {
+          membershipsQuery = `/memberships?trainerUserId=${trainerFilter}`;
         }
-        const [membershipsRes, plansRes, staffRes] = await Promise.all([
+
+        const [membershipsRes, plansRes] = await Promise.all([
           api.get(membershipsQuery),
           api.get("/plans"),
-          api.get("/staff"),
         ]);
 
         const raw = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
@@ -95,7 +114,6 @@ const EMIList = () => {
         });
         setMemberships(normalized);
         setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
-        setTrainers(Array.isArray(staffRes.data) ? staffRes.data : []);
       } catch (err) {
         console.error("Failed to load EMI records", err);
       } finally {
@@ -104,7 +122,7 @@ const EMIList = () => {
     };
 
     fetchData();
-  }, []);
+  }, [trainerFilter, role, user]);
 
   const emiMemberships = memberships.filter((m) => m.paymentMode === "emi");
 
@@ -421,6 +439,36 @@ const EMIList = () => {
               </>
             )}
           </div>
+
+          {role !== "trainer" && (
+            <div className="relative inline-flex items-center bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl px-4 py-2.5 transition-all duration-200 backdrop-blur-md min-w-[180px]">
+              <span className="pointer-events-none text-white text-sm font-medium truncate">
+                {trainerFilter === 'all'
+                  ? 'All Trainers'
+                  : trainers.find((trainer) => String(trainer.id) === String(trainerFilter))?.name ||
+                    trainers.find((trainer) => String(trainer.id) === String(trainerFilter))?.username ||
+                    'All Trainers'}
+              </span>
+              <select
+                value={trainerFilter}
+                onChange={(e) => {
+                  setTrainerFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              >
+                <option value="all">All Trainers</option>
+                {trainers.map((trainer) => (
+                  <option key={trainer.id} value={trainer.id}>
+                    {trainer.name || trainer.username || `Trainer ${trainer.id}`}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white/40">
+                <ChevronDown size={18} />
+              </div>
+            </div>
+          )}
 
           {/* Import/Export */}
           <div className="flex items-center gap-2">

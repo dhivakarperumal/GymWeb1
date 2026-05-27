@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
@@ -436,25 +436,34 @@ const Members = () => {
           </button> */}
 
           {role !== "trainer" && (
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedTrainer}
-              onChange={(e) => {
-                setSelectedTrainer(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
-            bg-white/50 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
-            >
-              <option value="all">All Trainers</option>
-              {trainerOptions.map((trainer) => (
-                <option key={trainer.id} value={trainer.id}>
-                  {trainer.name || trainer.username || trainer.email || `Trainer ${trainer.id}`}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+            <div className="relative inline-flex items-center bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-5 py-2.5 transition-all duration-200 backdrop-blur-md min-w-[180px]">
+              <span className="text-white text-sm font-semibold truncate">
+                {selectedTrainer === 'all'
+                  ? 'All Trainers'
+                  : trainerOptions.find((trainer) => String(trainer.id) === String(selectedTrainer))?.name ||
+                    trainerOptions.find((trainer) => String(trainer.id) === String(selectedTrainer))?.username ||
+                    'All Trainers'}
+              </span>
+              <select
+                value={selectedTrainer}
+                onChange={(e) => {
+                  setSelectedTrainer(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              >
+                <option value="all">All Trainers</option>
+                {trainerOptions.map((trainer) => (
+                  <option key={trainer.id} value={trainer.id}>
+                    {trainer.name || trainer.username || trainer.email || `Trainer ${trainer.id}`}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/40">
+                <ChevronDown size={18} />
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => navigate(`${basePath}/pt-form`)}
