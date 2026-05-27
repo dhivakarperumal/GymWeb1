@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -52,6 +52,7 @@ const AddDietPlans = () => {
     totalCalories: "",
     duration: 1,
     days: [generateSingleDay()],
+    notes: "",
   });
 
   /* ================= FETCH MEMBERS ================= */
@@ -95,7 +96,7 @@ const AddDietPlans = () => {
   }, [user]);
 
   /* ================= AUTO CALCULATE CALORIES ================= */
-  useEffect(() => {
+  const totalCalories = useMemo(() => {
     let total = 0;
 
     (form.days || []).forEach((day) => {
@@ -108,10 +109,7 @@ const AddDietPlans = () => {
       });
     });
 
-    setForm((prev) => ({
-      ...prev,
-      totalCalories: total,
-    }));
+    return total;
   }, [form.days]);
 
   /* ================= TIME FORMAT HELPERS ================= */
@@ -153,7 +151,7 @@ const AddDietPlans = () => {
 
         let daysData = data.days;
         if (typeof daysData === 'string') {
-          try { daysData = JSON.parse(daysData); } catch (e) { daysData = []; }
+          try { daysData = JSON.parse(daysData); } catch { daysData = []; }
         }
 
         let fixedDays = [];
@@ -215,6 +213,7 @@ const AddDietPlans = () => {
           totalCalories: data.totalCalories || data.total_calories || "",
           duration: data.duration || fixedDays.length,
           days: fixedDays,
+          notes: data.notes || data.note || "",
         });
       } catch (err) {
         console.error(err);
@@ -623,21 +622,22 @@ const AddDietPlans = () => {
           trainerName,
           trainerSource: user?.role || "trainer",
           memberId: form.memberId,
-            userId: form.userId || form.memberId,
-            memberName: form.memberName,
-            memberEmail: form.memberEmail,
-            memberMobile: form.memberMobile,
-            memberWeight: form.memberWeight,
-            title: form.title,
-            totalCalories: Number(form.totalCalories) || 0,
-            duration: Number(form.duration) || form.days.length,
-            days: form.days,
-            status: "active",
-          };
-          await api.put(`/diet-plans/${id}`, payload);
-          toast.success("Diet Plan Updated 🥗");
-          setTimeout(() => navigate("/trainer/alladddietplans"), 1200);
-        } else {
+          userId: form.userId || form.memberId,
+          memberName: form.memberName,
+          memberEmail: form.memberEmail,
+          memberMobile: form.memberMobile,
+          memberWeight: form.memberWeight,
+          title: form.title,
+          totalCalories: Number(form.totalCalories) || 0,
+          duration: Number(form.duration) || form.days.length,
+          days: form.days,
+          notes: form.notes || "",
+          status: "active",
+        };
+        await api.put(`/diet-plans/${id}`, payload);
+        toast.success("Diet Plan Updated 🥗");
+        setTimeout(() => navigate("/trainer/alladddietplans"), 1200);
+      } else {
           // Bulk Create
           const selectedMembers = members.filter((m) => selected.has(m.id));
           let successCount = 0;
@@ -656,13 +656,14 @@ const AddDietPlans = () => {
                 memberMobile: m.mobile,
                 memberWeight: m.weight,
                 title: form.title,
-                totalCalories: Number(form.totalCalories) || 0,
+                totalCalories: Number(totalCalories) || 0,
                 duration: Number(form.duration) || form.days.length,
                 days: form.days,
-              status: "active",
-            };
-            await api.post(`/diet-plans`, payload);
-            successCount++;
+                notes: form.notes || "",
+                status: "active",
+              };
+              await api.post(`/diet-plans`, payload);
+              successCount++;
           } catch (err) {
             console.error(`Failed for member ${m.name}:`, err);
             failCount++;
@@ -907,7 +908,7 @@ const AddDietPlans = () => {
                 type="number"
                 className={inputClass}
                 placeholder="Total Calories"
-                value={form.totalCalories}
+                value={totalCalories}
                 readOnly
               />
             </div>
@@ -1029,6 +1030,9 @@ const AddDietPlans = () => {
                             />
                           </div>
 
+
+                          
+
                           {/* Actions */}
                           <div className="flex gap-1 shrink-0">
                             <button
@@ -1048,28 +1052,44 @@ const AddDietPlans = () => {
                               </button>
                             )}
                           </div>
+                          
                         </div>
                       ))}
+                      
                     </div>
+                    
                   );
                 })}
+                 <div className="space-y-1">
+              <label className="text-xs font-medium text-white/50 ml-1">Notes</label>
+              <textarea
+                className={`${inputClass} min-h-[120px] resize-none`}
+                placeholder="Overall notes for this diet plan"
+                value={form.notes}
+                onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+              />
+            </div>
               </div>
             ))}
 
           </div>
 
-          {/* SUBMIT */}
-          <div className="flex justify-end">
+          <div className="space-y-4">
+           
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center gap-2 hover:scale-105 transition ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-            >
-              {submitting && <RefreshCw size={18} className="animate-spin" />}
-              {submitting ? "Processing..." : (id ? "Update Diet Plan" : "Save Diet Plan")}
-            </button>
+            {/* SUBMIT */}
+            <div className="flex justify-end">
 
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center gap-2 hover:scale-105 transition ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {submitting && <RefreshCw size={18} className="animate-spin" />}
+                {submitting ? "Processing..." : (id ? "Update Diet Plan" : "Save Diet Plan")}
+              </button>
+
+            </div>
           </div>
 
         </form>
