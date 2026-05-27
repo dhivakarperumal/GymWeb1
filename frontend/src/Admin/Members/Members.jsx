@@ -54,6 +54,8 @@ const Members = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
   const [filterType, setFilterType] = useState("all"); // all, withPlan, withoutPlan
+  const [selectedTrainer, setSelectedTrainer] = useState("all");
+  const [trainerOptions, setTrainerOptions] = useState([]);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
@@ -72,9 +74,21 @@ const Members = () => {
   const [ptViewMemberId, setPtViewMemberId] = useState(null);
   const [isPtModalOpen, setIsPtModalOpen] = useState(false);
 
+  const fetchTrainers = async () => {
+    try {
+      const res = await api.get("/users");
+      const trainers = Array.isArray(res.data)
+        ? res.data.filter((u) => String(u.role).toLowerCase() === "trainer")
+        : [];
+      setTrainerOptions(trainers);
+    } catch (err) {
+      console.error("Failed to load trainers", err);
+    }
+  };
+
   // 🔄 FETCH MEMBERS
   const fetchMembers = async () => {
-    if (cache.adminMembers) {
+    if (cache.adminMembers && selectedTrainer === "all") {
       setMembers(cache.adminMembers.filter((m) => m.source !== "users"));
     } else {
       setLoading(true);
@@ -84,12 +98,15 @@ const Members = () => {
       let query = "/members";
       if (role === "trainer" && user?.id) {
         query = `/members?trainerUserId=${user.id}`;
+      } else if (selectedTrainer !== "all") {
+        query = `/members?trainerUserId=${selectedTrainer}`;
       }
+
       const res = await api.get(query);
       const data = Array.isArray(res.data) ? res.data : [];
       const onlyGymMembers = data.filter((m) => m.source !== "users");
       setMembers(onlyGymMembers);
-      if (role !== "trainer") {
+      if (role !== "trainer" && selectedTrainer === "all") {
         cache.adminMembers = onlyGymMembers;
       }
     } catch {
@@ -100,8 +117,12 @@ const Members = () => {
   };
 
   useEffect(() => {
-    fetchMembers();
+    fetchTrainers();
   }, []);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [selectedTrainer, role, user]);
 
   // 🔎 SEARCH & DATE FILTER - Robust filtering
   const filtered = (members || []).filter((m) => {
@@ -339,7 +360,7 @@ const Members = () => {
 
 
   return (
-    <div className="min-h-screen px-0 py-8">
+    <div className="min-h-screen px-0 py-8 ">
 
       {/* IMPORT ERRORS SUMMARY */}
       {importErrors.length > 0 && (
@@ -374,6 +395,8 @@ const Members = () => {
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
+
+        
 
         {/* ➕ ADD MEMBER + IMPORT/EXPORT */}
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -411,6 +434,27 @@ const Members = () => {
             <Download size={16} className="text-purple-500" />
             Export
           </button> */}
+
+          {role !== "trainer" && (
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedTrainer}
+              onChange={(e) => {
+                setSelectedTrainer(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
+            bg-white/10 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
+            >
+              <option value="all">All Trainers</option>
+              {trainerOptions.map((trainer) => (
+                <option key={trainer.id} value={trainer.id}>
+                  {trainer.name || trainer.username || trainer.email || `Trainer ${trainer.id}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
           <button
             onClick={() => navigate(`${basePath}/pt-form`)}
