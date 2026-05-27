@@ -195,6 +195,39 @@ const DietChart = () => {
         })}
 
       </div>
+
+      {/* DAY NOTES SECTION */}
+      {Object.values(meals).some(m => m.notes) && (
+        <div className="mt-6 bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 backdrop-blur-sm">
+          <h3 className="text-sm font-bold text-orange-400 mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+            Trainer Notes for this Day
+          </h3>
+          <div className="space-y-2">
+            {Object.entries(meals).map(([meal, value]) => 
+              value.notes ? (
+                <div key={`${activeDay}-${meal}-note`} className="text-white/70 text-sm leading-relaxed">
+                  <span className="text-orange-400 font-semibold text-xs uppercase">{meal}:</span>{" "}
+                  <span>{value.notes}</span>
+                </div>
+              ) : null
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* GET DAY NOTES FROM DIET OBJECT */}
+      {diet[activeDay]?.notes && (
+        <div className="mt-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 backdrop-blur-sm">
+          <h3 className="text-sm font-bold text-yellow-400 mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+            Important Note
+          </h3>
+          <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap break-words">
+            {diet[activeDay].notes}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
