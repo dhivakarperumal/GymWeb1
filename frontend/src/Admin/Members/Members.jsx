@@ -608,7 +608,11 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="px-4 py-5">
-                      {m.has_pt_plan ? (
+                      {m.pt_plan ? (
+                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400">
+                          ✓ {m.pt_plan}
+                        </span>
+                      ) : m.has_pt_plan ? (
                         <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400">
                           ✓ PT Plan
                         </span>
@@ -617,31 +621,77 @@ const Members = () => {
                       )}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                      <div className="flex flex-col gap-1.5">
+                        {hasActiveOrPendingPlan(m) && m.join_date && (
+                          <div className="flex items-center gap-1.5" title="Normal Plan">
+                            <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-bold uppercase w-8 text-center">Nrm</span>
+                            {dayjs(m.join_date).format("DD-MM-YYYY")}
+                          </div>
+                        )}
+                        {m.pt_plan && m.pt_join_date && (
+                          <div className="flex items-center gap-1.5" title="PT Plan">
+                            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[9px] font-bold uppercase w-8 text-center">PT</span>
+                            {dayjs(m.pt_join_date).format("DD-MM-YYYY")}
+                          </div>
+                        )}
+                        {(!hasActiveOrPendingPlan(m) || !m.join_date) && !(m.pt_plan && m.pt_join_date) && "-"}
+                      </div>
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
-                      {(hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                      <div className="flex flex-col gap-1.5">
+                        {hasActiveOrPendingPlan(m) && m.expiry_date && (
+                          <div className="flex items-center gap-1.5" title="Normal Plan">
+                            <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-bold uppercase w-8 text-center">Nrm</span>
+                            {dayjs(m.expiry_date).format("DD-MM-YYYY")}
+                          </div>
+                        )}
+                        {m.pt_plan && m.pt_expiry_date && (
+                          <div className="flex items-center gap-1.5" title="PT Plan">
+                            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[9px] font-bold uppercase w-8 text-center">PT</span>
+                            {dayjs(m.pt_expiry_date).format("DD-MM-YYYY")}
+                          </div>
+                        )}
+                        {(!hasActiveOrPendingPlan(m) || !m.expiry_date) && !(m.pt_plan && m.pt_expiry_date) && "-"}
+                      </div>
                     </td>
 
                     <td className="px-4 py-5">
-                      {(() => {
-                        if (!hasActiveOrPendingPlan(m) || !m.expiry_date) return <span className="text-white/30">-</span>;
-                        // Use startOf('day') for both to ensure we count full days and add +1 for inclusive counting
-                        const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
-                        if (days <= 0) {
+                      <div className="flex flex-col gap-1.5 items-start">
+                        {/* Normal Plan Remaining */}
+                        {hasActiveOrPendingPlan(m) && m.expiry_date && (() => {
+                          const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
                           return (
-                            <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">
-                              Expired
-                            </span>
+                            <div className="flex items-center gap-1.5" title="Normal Plan">
+                              <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-bold uppercase w-8 text-center">Nrm</span>
+                              {days <= 0 ? (
+                                <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">Exp</span>
+                              ) : (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${days > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"}`}>
+                                  {days}d
+                                </span>
+                              )}
+                            </div>
                           );
-                        }
-                        return (
-                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${days > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"
-                            }`}>
-                            {days} {days === 1 ? 'Day' : 'Days'}
-                          </span>
-                        );
-                      })()}
+                        })()}
+
+                        {/* PT Plan Remaining */}
+                        {m.pt_plan && m.pt_expiry_date && (() => {
+                          const ptDays = dayjs(m.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
+                          return (
+                            <div className="flex items-center gap-1.5" title="PT Plan">
+                              <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[9px] font-bold uppercase w-8 text-center">PT</span>
+                              {ptDays <= 0 ? (
+                                <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">Exp</span>
+                              ) : (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${ptDays > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-purple-500/20 text-purple-400"}`}>
+                                  {ptDays}d
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        {(!hasActiveOrPendingPlan(m) || !m.expiry_date) && !(m.pt_plan && m.pt_expiry_date) && <span className="text-white/30">-</span>}
+                      </div>
                     </td>
 
                     <td className="px-4 py-5">
@@ -867,11 +917,15 @@ const Members = () => {
                       <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
                         {m.plan || m.role || "Member"}
                       </span>
-                      {m.has_pt_plan && (
+                      {m.pt_plan ? (
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
+                          ✓ {m.pt_plan}
+                        </span>
+                      ) : m.has_pt_plan ? (
                         <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
                           ✓ PT Plan
                         </span>
-                      )}
+                      ) : null}
                       {m.price && (
                         <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
                           ₹{m.price}

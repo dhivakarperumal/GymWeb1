@@ -5,7 +5,7 @@ import "aos/dist/aos.css";
 import api from "../../api";
 import emailjs from "@emailjs/browser";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { Search, X } from "lucide-react";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 const MEMBERS_API = "/members";
@@ -482,7 +482,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     const originalPrice = parseDecimal(selectedPlan?.finalPrice ?? selectedPlan?.final_price ?? selectedPlan?.price);
     const discountVal = parseDecimal(discount);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 100,
       head: [["Description", "Details"]],
       body: [
@@ -572,7 +572,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       const paymentModeValue = isEMI ? "emi" : form.paymentMode;
 
       // ===== UPDATE/CREATE MEMBER FIRST =====
-      const updatedMember = {
+      let updatedMember = {
         ...selectedUser,
         phone: form.phone,
         email: form.email,
@@ -580,12 +580,23 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         height: form.height,
         weight: form.weight,
         bmi: form.bmi,
-        plan: selectedPlan.name,
-        duration: selectedPlan.duration,
-        joinDate: form.startDate,
-        expiryDate: form.endDate,
-        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
       };
+
+      if (!filterTrainerPlans) {
+        updatedMember.plan = selectedPlan.name;
+        updatedMember.duration = selectedPlan.duration;
+        updatedMember.joinDate = form.startDate;
+        updatedMember.expiryDate = form.endDate;
+        updatedMember.status = location.pathname.startsWith("/trainer") ? "pending" : "active";
+      } else {
+        // We do not overwrite normal plan details during a PT plan purchase.
+        // We can optionally pass PT details, though they will be primarily handled by the memberships API later.
+        updatedMember.pt_plan = selectedPlan.name;
+        updatedMember.pt_duration = selectedPlan.duration;
+        updatedMember.pt_join_date = form.startDate;
+        updatedMember.pt_expiry_date = form.endDate;
+        updatedMember.pt_status = location.pathname.startsWith("/trainer") ? "pending" : "active";
+      }
 
       let finalUserId = selectedUser.u_id || selectedUser.user_id || selectedUser.id;
       let finalUserUuid = selectedUser.u_uuid || selectedUser.user_id;
@@ -615,30 +626,58 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       );
       const discountVal = parseDecimal(discount);
 
-      const membershipData = {
+      let membershipData = {
         userId: finalUserId,
         userName: selectedUser.name || selectedUser.username,
         userEmail: form.email,
         userPhone: form.phone,
-        planId: selectedPlan.id,
-        planName: selectedPlan.name,
-        price: planTotal,
-        pricePaid: amountNow,
-        secondPaymentPaid: 0,
-        duration: selectedPlan.duration,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        paymentMode: paymentModeValue,
-        paymentDate: form.paymentDate || today,
-        paymentStatus: isEMI ? "Pending" : "Paid",
-        status: location.pathname.startsWith("/trainer") ? "pending" : "active",
-        referredBy: user?.username || user?.name || profileName || "",
-        trainerId: user?.user_id || user?.id || null,
-        trainerName: profileName || user?.username || user?.name || "",
-        discount: discountVal,
-        amount: originalPrice,
         collectedBy: profileName || user?.username || user?.name || "Admin",
       };
+
+      if (filterTrainerPlans) {
+        membershipData = {
+          ...membershipData,
+          pt_planId: selectedPlan.id,
+          pt_planName: selectedPlan.name,
+          pt_price: planTotal,
+          pt_pricePaid: amountNow,
+          pt_secondPaymentPaid: 0,
+          pt_duration: selectedPlan.duration,
+          pt_startDate: form.startDate,
+          pt_endDate: form.endDate,
+          pt_paymentMode: paymentModeValue,
+          pt_paymentDate: form.paymentDate || today,
+          pt_paymentStatus: isEMI ? "Pending" : "Paid",
+          pt_status: location.pathname.startsWith("/trainer") ? "pending" : "active",
+          pt_trainerId: selectedTrainer || user?.user_id || user?.id || null,
+          pt_trainerName: selectedTrainer ? (trainers.find((t) => t.id === selectedTrainer)?.name || "") : (profileName || user?.username || user?.name || ""),
+          pt_discount: discountVal,
+          pt_amount: originalPrice,
+          isPTPlanPurchase: true,
+        };
+      } else {
+        membershipData = {
+          ...membershipData,
+          planId: selectedPlan.id,
+          planName: selectedPlan.name,
+          price: planTotal,
+          pricePaid: amountNow,
+          secondPaymentPaid: 0,
+          duration: selectedPlan.duration,
+          startDate: form.startDate,
+          endDate: form.endDate,
+          paymentMode: paymentModeValue,
+          paymentDate: form.paymentDate || today,
+          paymentStatus: isEMI ? "Pending" : "Paid",
+          status: location.pathname.startsWith("/trainer") ? "pending" : "active",
+          referredBy: user?.username || user?.name || profileName || "",
+          trainerId: user?.user_id || user?.id || null,
+          trainerName: profileName || user?.username || user?.name || "",
+          discount: discountVal,
+          amount: originalPrice,
+          isPTPlanPurchase: false,
+        };
+      }
 
       const activeOrPendingMembership = memberHistory
         .filter((h) => h && h.status)

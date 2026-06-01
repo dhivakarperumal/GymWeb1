@@ -119,14 +119,30 @@ async function createMembership(req, res) {
       trainerName,
       discount,
       amount,
+      
+      pt_planId,
+      pt_planName,
+      pt_price,
+      pt_pricePaid,
+      pt_duration,
+      pt_startDate,
+      pt_endDate,
+      pt_paymentMode,
+      pt_paymentDate,
+      pt_paymentStatus,
+      pt_trainerId,
+      pt_trainerName,
+      pt_discount,
+      pt_amount,
+      isPTPlanPurchase,
     } = req.body;
 
-    const actualPricePaid = pricePaid !== undefined ? pricePaid : price;
+    const actualPricePaid = pricePaid !== undefined ? pricePaid : (price || 0);
     const actualSecondPaymentPaid = secondPaymentPaid !== undefined ? secondPaymentPaid : 0;
 
-    // Auto-calculate payment status if not provided
+    // Auto-calculate payment status if not provided for normal plans
     let finalPaymentStatus = paymentStatus;
-    if (!finalPaymentStatus) {
+    if (!finalPaymentStatus && price !== undefined) {
       const totalPaid = Number(actualPricePaid) + Number(actualSecondPaymentPaid);
       const totalDue = Number(price);
       if (totalPaid >= totalDue) finalPaymentStatus = 'Paid';
@@ -145,9 +161,9 @@ async function createMembership(req, res) {
       }
     }
 
-    // Check if the plan is a PT plan
-    let isPTPlan = 0;
-    if (planId) {
+    // Check if the plan is a PT plan (fallback logic)
+    let isPTPlan = isPTPlanPurchase ? 1 : 0;
+    if (!isPTPlanPurchase && planId) {
       try {
         const [planRows] = await db.query('SELECT trainer_included FROM gym_plans WHERE id = ?', [planId]);
         if (planRows.length > 0) {
@@ -160,8 +176,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan, pt_planId, pt_planName, pt_price, pt_pricePaid, pt_duration, pt_startDate, pt_endDate, pt_paymentMode, pt_paymentDate, pt_paymentStatus, pt_trainerId, pt_trainerName, pt_discount, pt_amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -169,19 +185,19 @@ async function createMembership(req, res) {
       userName || null,
       userEmail || null,
       userPhone || null,
-      planId,
-      planName,
-      price,
+      planId || null,
+      planName || null,
+      price || null,
       actualPricePaid,
       actualSecondPaymentPaid,
-      duration,
-      startDate,
-      endDate,
+      duration || null,
+      startDate || null,
+      endDate || null,
       paymentId || null,
       paymentMode || null,
       paymentDate || null,
       status || 'active',
-      finalPaymentStatus,
+      finalPaymentStatus || null,
       referredBy || null,
       trainerId || null,
       trainerName || null,
@@ -189,6 +205,20 @@ async function createMembership(req, res) {
       amount !== undefined ? amount : 0,
       req.body.collectedBy || null,
       isPTPlan,
+      pt_planId || null,
+      pt_planName || null,
+      pt_price || null,
+      pt_pricePaid || null,
+      pt_duration || null,
+      pt_startDate || null,
+      pt_endDate || null,
+      pt_paymentMode || null,
+      pt_paymentDate || null,
+      pt_paymentStatus || null,
+      pt_trainerId || null,
+      pt_trainerName || null,
+      pt_discount || 0,
+      pt_amount || 0,
     ];
 
     const [result] = await db.query(query, values);
@@ -198,17 +228,32 @@ async function createMembership(req, res) {
       const [userRows] = await db.query("SELECT email, mobile FROM users WHERE id = ?", [userId]);
       if (userRows.length > 0) {
         const u = userRows[0];
-        await db.query(
-          `UPDATE gym_members 
-           SET plan = ?, 
-               duration = ?, 
-               join_date = ?, 
-               expiry_date = ?,
-               status = ?
-           WHERE (email = ? AND email IS NOT NULL AND email != '') 
-              OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
-          [planName, duration, startDate, endDate, status || 'active', u.email, u.mobile]
-        );
+        
+        if (isPTPlanPurchase) {
+          await db.query(
+            `UPDATE gym_members 
+             SET pt_plan = ?, 
+                 pt_duration = ?, 
+                 pt_join_date = ?, 
+                 pt_expiry_date = ?,
+                 pt_status = ?
+             WHERE (email = ? AND email IS NOT NULL AND email != '') 
+                OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
+            [pt_planName, pt_duration, pt_startDate, pt_endDate, pt_status || 'active', u.email, u.mobile]
+          );
+        } else {
+          await db.query(
+            `UPDATE gym_members 
+             SET plan = ?, 
+                 duration = ?, 
+                 join_date = ?, 
+                 expiry_date = ?,
+                 status = ?
+             WHERE (email = ? AND email IS NOT NULL AND email != '') 
+                OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
+            [planName, duration, startDate, endDate, status || 'active', u.email, u.mobile]
+          );
+        }
       }
     } catch (syncErr) {
       console.warn('createMembership: failed to sync gym_members', syncErr.message);
@@ -302,6 +347,23 @@ async function updateMembership(req, res) {
       "amount",
       "collectedBy",
       "has_pt_plan",
+      "pt_planId",
+      "pt_planName",
+      "pt_price",
+      "pt_pricePaid",
+      "pt_secondPaymentPaid",
+      "pt_duration",
+      "pt_startDate",
+      "pt_endDate",
+      "pt_paymentId",
+      "pt_paymentMode",
+      "pt_paymentDate",
+      "pt_paymentStatus",
+      "pt_status",
+      "pt_trainerId",
+      "pt_trainerName",
+      "pt_discount",
+      "pt_amount"
     ];
 
     const updates = [];
@@ -407,23 +469,37 @@ async function updateMembership(req, res) {
 
     // Sync with gym_members table
     try {
-      const [membershipRows] = await db.query("SELECT userId, planName, duration, startDate, endDate, status FROM memberships WHERE id = ?", [id]);
+      const [membershipRows] = await db.query("SELECT userId, planName, duration, startDate, endDate, status, pt_planName, pt_duration, pt_startDate, pt_endDate, pt_status FROM memberships WHERE id = ?", [id]);
       if (membershipRows.length > 0) {
         const m = membershipRows[0];
         const [userRows] = await db.query("SELECT email, mobile FROM users WHERE id = ?", [m.userId]);
         if (userRows.length > 0) {
           const u = userRows[0];
-          await db.query(
-            `UPDATE gym_members 
-             SET plan = ?, 
-                 duration = ?, 
-                 join_date = ?, 
-                 expiry_date = ?,
-                 status = ?
-             WHERE (email = ? AND email IS NOT NULL AND email != '') 
-                OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
-            [m.planName, m.duration, m.startDate, m.endDate, m.status, u.email, u.mobile]
-          );
+          if (req.body.isPTPlanPurchase) {
+            await db.query(
+              `UPDATE gym_members 
+               SET pt_plan = ?, 
+                   pt_duration = ?, 
+                   pt_join_date = ?, 
+                   pt_expiry_date = ?,
+                   pt_status = ?
+               WHERE (email = ? AND email IS NOT NULL AND email != '') 
+                  OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
+              [m.pt_planName, m.pt_duration, m.pt_startDate, m.pt_endDate, m.pt_status, u.email, u.mobile]
+            );
+          } else {
+            await db.query(
+              `UPDATE gym_members 
+               SET plan = ?, 
+                   duration = ?, 
+                   join_date = ?, 
+                   expiry_date = ?,
+                   status = ?
+               WHERE (email = ? AND email IS NOT NULL AND email != '') 
+                  OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
+              [m.planName, m.duration, m.startDate, m.endDate, m.status, u.email, u.mobile]
+            );
+          }
         }
       }
     } catch (syncErr) {
