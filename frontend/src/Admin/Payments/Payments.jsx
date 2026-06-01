@@ -997,7 +997,8 @@ const Payments = () => {
                     </th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Original Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
@@ -1044,8 +1045,23 @@ const Payments = () => {
                             {member.email}
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-base font-medium text-gray-300">
-                          {plan.planName}
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-orange-500/20 text-orange-400 inline-block whitespace-nowrap">
+                            {plan.planName || "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {plan.pt_planName ? (
+                            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
+                              ✓ {plan.pt_planName}
+                            </span>
+                          ) : plan.planName?.toLowerCase().includes("pt") ? (
+                            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
+                              ✓ {plan.planName}
+                            </span>
+                          ) : (
+                            <span className="text-white/30 text-xs">-</span>
+                          )}
                         </td>
                         <td className="px-4 py-4 text-base font-medium text-orange-400">
                           {plan.referredBy || "Admin"}
