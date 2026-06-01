@@ -269,8 +269,15 @@ const PlansAll = ({
           {filteredPlans.map((p) => (
             <div key={p.id} className={`${glassCard} p-6 space-y-3`}>
 
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold">{p.name}</h3>
+              <div className="flex justify-between items-center gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-xl font-semibold">{p.name}</h3>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] uppercase tracking-[0.12em] font-semibold bg-white/10 text-gray-200 mt-2">
+                    {p.trainerIncluded === true || p.trainer_included === 1 || p.trainerIncluded === 1
+                      ? "PT Plan"
+                      : "Normal Plan"}
+                  </span>
+                </div>
 
                 <span
                   className={`px-3 py-1 text-xs rounded-full font-semibold
@@ -348,7 +355,14 @@ const PlansAll = ({
               {filteredPlans.map((p, index) => (
                 <tr key={p.id} className="border-b border-white/5 hover:bg-white/5 transition">
                   <td className="px-4 py-4 text-base font-medium text-gray-400">{index + 1}</td>
-                  <td className="px-4 py-4 text-base font-medium text-white">{p.name}</td>
+                  <td className="px-4 py-4 text-base font-medium text-white">
+                    {p.name}
+                    <div className="mt-1 text-[11px] text-gray-400 uppercase tracking-[0.08em]">
+                      {p.trainerIncluded === true || p.trainer_included === 1 || p.trainerIncluded === 1
+                        ? "PT Plan"
+                        : "Normal Plan"}
+                    </div>
+                  </td>
                   <td className="px-4 py-4 text-base font-medium text-gray-300">{p.duration}</td>
                   <td className="px-4 py-4 text-base font-medium text-gray-300">
                     ₹{p.finalPrice ?? p.final_price ?? p.price}

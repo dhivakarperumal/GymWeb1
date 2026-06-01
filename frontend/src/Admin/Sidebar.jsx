@@ -36,7 +36,7 @@ const navItems = [
   // { path: "/admin/enquiry", label: "Client Enquiry", icon: MessageSquare },
 
   { path: "/admin/members", label: "Members", icon: Users },
-  { path: "/admin/pt-plans", label: "PT Plans", icon: CalendarCheck },
+  // { path: "/admin/pt-plans", label: "PT Plans", icon: CalendarCheck },
   { path: "/admin/buy-pt-plan", label: "Buy PT Plans", icon: CreditCard },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
   { path: "/admin/emi", label: "EMI", icon: BarChart3 },

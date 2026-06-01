@@ -111,29 +111,71 @@ async function updatePlan(req, res) {
     const idNum = parseInt(id, 10);
     const isNum = !isNaN(idNum);
     
-    let query;
-    let params;
+    // Build dynamic query only for provided fields
+    const updates = [];
+    const params = [];
     
-    const baseParams = [
-      name, description, duration, Number(price), Number(discount),
-      Number(finalPrice), JSON.stringify(facilities || []), trainerIncluded ? 1 : 0,
-      JSON.stringify(dietPlans || []), active !== false ? 1 : 0, JSON.stringify(features || [])
-    ];
+    if (name !== undefined) {
+      updates.push('name=?');
+      params.push(name);
+    }
+    if (description !== undefined) {
+      updates.push('description=?');
+      params.push(description);
+    }
+    if (duration !== undefined) {
+      updates.push('duration=?');
+      params.push(duration);
+    }
+    if (price !== undefined) {
+      updates.push('price=?');
+      params.push(Number(price) || 0);
+    }
+    if (discount !== undefined) {
+      updates.push('discount=?');
+      params.push(Number(discount) || 0);
+    }
+    if (finalPrice !== undefined) {
+      updates.push('final_price=?');
+      params.push(Number(finalPrice) || 0);
+    }
+    if (facilities !== undefined) {
+      updates.push('facilities=?');
+      params.push(JSON.stringify(facilities || []));
+    }
+    if (trainerIncluded !== undefined) {
+      updates.push('trainer_included=?');
+      params.push(trainerIncluded ? 1 : 0);
+    }
+    if (dietPlans !== undefined) {
+      updates.push('diet_plans=?');
+      params.push(JSON.stringify(dietPlans || []));
+    }
+    if (active !== undefined) {
+      updates.push('active=?');
+      params.push(active !== false ? 1 : 0);
+    }
+    if (features !== undefined) {
+      updates.push('features=?');
+      params.push(JSON.stringify(features || []));
+    }
 
+    // Always update timestamp
+    updates.push('updated_at=CURRENT_TIMESTAMP');
+
+    if (updates.length === 1) {
+      // Only timestamp update, skip
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    let query = `UPDATE gym_plans SET ${updates.join(', ')} WHERE `;
+    
     if (isNum) {
-      query = `UPDATE gym_plans SET
-        name=?, description=?, duration=?, price=?, discount=?,
-        final_price=?, facilities=?, trainer_included=?, diet_plans=?,
-        active=?, features=?, updated_at=CURRENT_TIMESTAMP
-       WHERE id=?`;
-      params = [...baseParams, idNum];
+      query += 'id=?';
+      params.push(idNum);
     } else {
-      query = `UPDATE gym_plans SET
-        name=?, description=?, duration=?, price=?, discount=?,
-        final_price=?, facilities=?, trainer_included=?, diet_plans=?,
-        active=?, features=?, updated_at=CURRENT_TIMESTAMP
-       WHERE plan_id=?`;
-      params = [...baseParams, id];
+      query += 'plan_id=?';
+      params.push(id);
     }
 
     const [result] = await db.query(query, params);
