@@ -295,7 +295,17 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     const fetchMembers = async () => {
       try {
         const res = await api.get(MEMBERS_API);
-        setMembers(res.data || []);
+        const raw = Array.isArray(res.data) ? res.data : [];
+        const normalized = raw.map((m) => ({
+          ...m,
+          id: m.id ?? m._id ?? m.u_id,
+          name: m.name ?? m.username ?? m.fullname,
+          phone: m.phone ?? m.mobile ?? m.user_mobile,
+          email: m.email ?? m.user_email ?? m.userEmail,
+          has_pt_plan: m.has_pt_plan ?? m.hasPtPlan ?? (m.has_pt_plan === 1),
+          status: m.status ?? m.state,
+        }));
+        setMembers(normalized);
       } catch (err) {
         console.error("Failed to load members:", err);
       }
@@ -309,7 +319,21 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     const fetchPlans = async () => {
       try {
         const res = await api.get(PLANS_API);
-        setPlans((res.data || []).filter((p) => p.active));
+        const raw = (res.data || []);
+        const normalized = raw
+          .map((p) => ({
+            ...p,
+            id: p.id ?? p._id ?? p.plan_id,
+            name: p.name ?? p.title,
+            duration: p.duration ?? p.duration_months ?? p.plan_duration,
+            price: p.price ?? p.final_price ?? p.finalPrice,
+            finalPrice: p.finalPrice ?? p.final_price ?? p.price,
+            trainerIncluded: p.trainerIncluded ?? p.trainer_included ?? (p.trainer_included === 1),
+            active: p.active === undefined ? true : (p.active === 1 || p.active === true),
+          }))
+          .filter((p) => p.active);
+
+        setPlans(normalized);
       } catch (err) {
         console.error("Failed to load plans:", err);
       }
@@ -415,11 +439,27 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         // FETCH HISTORY
         const uId = user.u_id || user.user_id || user.id;
         api.get(`/memberships/user/${uId}`)
-          .then(res =>
-            setMemberHistory(
-              Array.isArray(res.data) ? res.data : []
-            )
-          )
+          .then(res => {
+            const data = Array.isArray(res.data) ? res.data : [];
+            const normalized = data.map((m) => ({
+              ...m,
+              id: m.id ?? m._id,
+              planId: m.planId ?? m.plan_id,
+              planName: m.planName ?? m.plan_name,
+              pt_planId: m.pt_planId ?? m.pt_plan_id,
+              pt_planName: m.pt_planName ?? m.pt_plan_name,
+              pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
+              pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
+              pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
+              pt_startDate: m.pt_startDate ?? m.pt_start_date,
+              pt_endDate: m.pt_endDate ?? m.pt_end_date,
+              pt_paymentMode: m.pt_paymentMode ?? m.pt_payment_mode,
+              pt_paymentDate: m.pt_paymentDate ?? m.pt_payment_date,
+              pt_paymentStatus: m.pt_paymentStatus ?? m.pt_payment_status,
+              pt_status: m.pt_status ?? m.ptStatus,
+            }));
+            setMemberHistory(normalized);
+          })
           .catch(err =>
             console.error("History fetch error:", err)
           );
@@ -465,9 +505,16 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     // Use 30 days per month for consistent plan durations
     end.setDate(start.getDate() + (durationMonths * 30));
 
+    const endDateStr = end.toISOString().split("T")[0];
+    console.log("📅 Auto-calculating endDate:", {
+      startDate: form.startDate,
+      durationMonths,
+      calculatedEnd: endDateStr
+    });
+    
     setForm((prev) => ({
       ...prev,
-      endDate: end.toISOString().split("T")[0],
+      endDate: endDateStr,
     }));
   }, [selectedPlan, form.startDate]);
 
@@ -670,22 +717,22 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       if (filterTrainerPlans) {
         membershipData = {
           ...membershipData,
-          pt_planId: selectedPlan.id,
-          pt_planName: selectedPlan.name,
-          pt_price: planTotal,
-          pt_pricePaid: amountNow,
+          pt_planId: selectedPlan.id || null,
+          pt_planName: selectedPlan.name || null,
+          pt_price: planTotal || 0,
+          pt_pricePaid: amountNow || 0,
           pt_secondPaymentPaid: 0,
-          pt_duration: getSelectedPlanDuration(),
-          pt_startDate: form.startDate,
-          pt_endDate: form.endDate,
-          pt_paymentMode: paymentModeValue,
-          pt_paymentDate: form.paymentDate || today,
+          pt_duration: getSelectedPlanDuration() || 0,
+          pt_startDate: (form.startDate && form.startDate.trim()) ? form.startDate : today,
+          pt_endDate: (form.endDate && form.endDate.trim()) ? form.endDate : today,
+          pt_paymentMode: paymentModeValue || "cash",
+          pt_paymentDate: (form.paymentDate && form.paymentDate.trim()) ? form.paymentDate : today,
           pt_paymentStatus: isEMI ? "Pending" : "Paid",
           pt_status: location.pathname.startsWith("/trainer") ? "pending" : "active",
-          pt_trainerId: selectedTrainer || user?.user_id || user?.id || null,
-          pt_trainerName: selectedTrainer ? (trainers.find((t) => t.id === selectedTrainer)?.name || "") : (profileName || user?.username || user?.name || ""),
-          pt_discount: discountVal,
-          pt_amount: originalPrice,
+          pt_trainerId: (selectedTrainer && selectedTrainer.trim()) ? selectedTrainer : (user?.user_id || user?.id || null),
+          pt_trainerName: (selectedTrainer && selectedTrainer.trim()) ? (trainers.find((t) => t.id === selectedTrainer)?.name || "") : (profileName || user?.username || user?.name || ""),
+          pt_discount: discountVal || 0,
+          pt_amount: originalPrice || 0,
           isPTPlanPurchase: true,
         };
       } else {
@@ -716,6 +763,28 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         .filter((h) => h && h.status)
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .find((h) => ["active", "pending"].includes((h.status || "").toLowerCase()));
+
+      // DEBUG LOG
+      console.log("🔍 PT Plan Assignment Debug:", {
+        filterTrainerPlans,
+        selectedPlan: selectedPlan ? { id: selectedPlan.id, name: selectedPlan.name } : null,
+        formDates: { startDate: form.startDate, endDate: form.endDate, paymentDate: form.paymentDate },
+        membershipData: filterTrainerPlans ? {
+          pt_planId: membershipData.pt_planId,
+          pt_planName: membershipData.pt_planName,
+          pt_price: membershipData.pt_price,
+          pt_pricePaid: membershipData.pt_pricePaid,
+          pt_duration: membershipData.pt_duration,
+          pt_startDate: membershipData.pt_startDate,
+          pt_endDate: membershipData.pt_endDate,
+          pt_paymentMode: membershipData.pt_paymentMode,
+          pt_paymentDate: membershipData.pt_paymentDate,
+          pt_paymentStatus: membershipData.pt_paymentStatus,
+          pt_status: membershipData.pt_status,
+        } : null,
+        isUpdating: !!activeOrPendingMembership,
+        membershipId: activeOrPendingMembership?.id,
+      });
 
       // If member already has an active/pending membership, update it
       // This applies to both regular plans and PT plan upgrades

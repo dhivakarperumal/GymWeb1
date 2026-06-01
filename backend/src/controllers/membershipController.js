@@ -130,6 +130,7 @@ async function createMembership(req, res) {
       pt_paymentMode,
       pt_paymentDate,
       pt_paymentStatus,
+      pt_status,
       pt_trainerId,
       pt_trainerName,
       pt_discount,
@@ -176,8 +177,8 @@ async function createMembership(req, res) {
 
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan, pt_planId, pt_planName, pt_price, pt_pricePaid, pt_duration, pt_startDate, pt_endDate, pt_paymentMode, pt_paymentDate, pt_paymentStatus, pt_trainerId, pt_trainerName, pt_discount, pt_amount)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan, pt_planId, pt_planName, pt_price, pt_pricePaid, pt_duration, pt_startDate, pt_endDate, pt_paymentMode, pt_paymentDate, pt_paymentStatus, pt_status, pt_trainerId, pt_trainerName, pt_discount, pt_amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -215,6 +216,7 @@ async function createMembership(req, res) {
       pt_paymentMode || null,
       pt_paymentDate || null,
       pt_paymentStatus || null,
+      pt_status || 'active',
       pt_trainerId || null,
       pt_trainerName || null,
       pt_discount || 0,
@@ -222,6 +224,24 @@ async function createMembership(req, res) {
     ];
 
     const [result] = await db.query(query, values);
+
+    console.log("✅ Membership created:", {
+      id: result.insertId,
+      isPTPlanPurchase,
+      ptFields: {
+        pt_planId: pt_planId || null,
+        pt_planName: pt_planName || null,
+        pt_price: pt_price || null,
+        pt_pricePaid: pt_pricePaid || null,
+        pt_duration: pt_duration || null,
+        pt_startDate: pt_startDate || null,
+        pt_endDate: pt_endDate || null,
+        pt_paymentMode: pt_paymentMode || null,
+        pt_paymentDate: pt_paymentDate || null,
+        pt_paymentStatus: pt_paymentStatus || null,
+        pt_status: pt_status || 'active',
+      }
+    });
 
     // Sync with gym_members table if a record exists for this user
     try {
@@ -351,11 +371,9 @@ async function updateMembership(req, res) {
       "pt_planName",
       "pt_price",
       "pt_pricePaid",
-      "pt_secondPaymentPaid",
       "pt_duration",
       "pt_startDate",
       "pt_endDate",
-      "pt_paymentId",
       "pt_paymentMode",
       "pt_paymentDate",
       "pt_paymentStatus",
@@ -381,6 +399,15 @@ async function updateMembership(req, res) {
       }
     }
 
+    // If any PT fields are being updated, ensure has_pt_plan is set to 1
+    const hasPTFieldsInUpdate = allowedFields
+      .filter(f => f.startsWith('pt_'))
+      .some(f => req.body[f] !== undefined && req.body[f] !== null);
+    
+    if (hasPTFieldsInUpdate && req.body.has_pt_plan === undefined) {
+      req.body.has_pt_plan = 1;
+    }
+
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         updates.push(`${field} = ?`);
@@ -396,11 +423,76 @@ async function updateMembership(req, res) {
     let result;
     if (updates.length > 0) {
       values.push(id);
-      const [resUpdate] = await db.query(`UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`, values);
-      result = resUpdate;
+      console.log("🔄 Updating membership:", { id, updates: updates.slice(0, 10), valuesCount: values.length });
+      try {
+        const [resUpdate] = await db.query(`UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`, values);
+        result = resUpdate;
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ success: false, message: "Membership not found" });
+        }
+      } catch (updateErr) {
+        // If the update failed due to missing columns, try to add them then retry.
+        if (updateErr && updateErr.code === 'ER_BAD_FIELD_ERROR' && updateErr.sqlMessage && updateErr.sqlMessage.includes('Unknown column')) {
+          // Collect missing column names from the SQL error message
+          const missing = [];
+          const re = /Unknown column '([^']+)' in 'field list'/g;
+          let m;
+          while ((m = re.exec(updateErr.sqlMessage)) !== null) missing.push(m[1]);
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, message: "Membership not found" });
+          // Fallback: derive column names from the updates list
+          if (missing.length === 0) {
+            updates.forEach(u => {
+              const col = u.split('=')[0].trim();
+              if (col) missing.push(col.replace(/`/g, ''));
+            });
+          }
+
+          // Determine columns that actually don't exist and prepare ALTER clauses
+          const alterClauses = [];
+          for (const col of missing) {
+            try {
+              const [cols] = await db.query('SHOW COLUMNS FROM memberships LIKE ?', [col]);
+              if (!cols || cols.length === 0) {
+                // Heuristic for column type
+                let colDef = `\`${col}\` VARCHAR(255) NULL`;
+                const lname = col.toLowerCase();
+                if (lname.includes('price') || lname.includes('amount') || lname.includes('discount')) {
+                  colDef = `\`${col}\` DECIMAL(10,2) NULL`;
+                } else if (lname.includes('duration')) {
+                  colDef = `\`${col}\` INT NULL`;
+                } else if (lname.includes('date')) {
+                  colDef = `\`${col}\` DATE NULL`;
+                } else if (lname.endsWith('id')) {
+                  // Many id fields in this app are strings (UUID) or ints; use VARCHAR to be safe
+                  colDef = `\`${col}\` VARCHAR(255) NULL`;
+                } else if (lname.includes('status')) {
+                  colDef = `\`${col}\` VARCHAR(50) NULL`;
+                }
+                alterClauses.push(`ADD COLUMN IF NOT EXISTS ${colDef}`);
+              }
+            } catch (chkErr) {
+              console.warn('updateMembership: failed to check column existence', chkErr.message);
+            }
+          }
+
+          if (alterClauses.length > 0) {
+            try {
+              await db.query(`ALTER TABLE memberships ${alterClauses.join(', ')}`);
+            } catch (alterErr) {
+              console.error('updateMembership: failed to add missing columns', alterErr.message);
+              throw alterErr;
+            }
+          }
+
+          // Retry the update after adding missing columns
+          const [resUpdate2] = await db.query(`UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`, values);
+          result = resUpdate2;
+          if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "Membership not found" });
+          }
+        } else {
+          throw updateErr;
+        }
       }
     }
 
