@@ -301,10 +301,23 @@ async function updateMembership(req, res) {
       "discount",
       "amount",
       "collectedBy",
+      "has_pt_plan",
     ];
 
     const updates = [];
     const values = [];
+
+    // If planId is being updated, automatically calculate has_pt_plan
+    if (req.body.planId !== undefined) {
+      try {
+        const [planRows] = await db.query('SELECT trainer_included FROM gym_plans WHERE id = ?', [req.body.planId]);
+        if (planRows.length > 0) {
+          req.body.has_pt_plan = planRows[0].trainer_included ? 1 : 0;
+        }
+      } catch (e) {
+        console.warn('Failed to fetch plan for has_pt_plan calculation', e.message);
+      }
+    }
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {

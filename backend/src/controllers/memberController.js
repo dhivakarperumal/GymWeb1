@@ -73,13 +73,14 @@ async function getAllMembers(req, res) {
           m_pay.price,
           m_pay.pricePaid,
           m_pay.secondPaymentPaid,
+          COALESCE(m_pay.has_pt_plan, 0) as has_pt_plan,
           'members' as source
         FROM gym_members gm
         INNER JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
                           OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
         INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
         LEFT JOIN (
-          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid
+          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
@@ -129,6 +130,7 @@ async function getAllMembers(req, res) {
           NULL as price,
           NULL as pricePaid,
           NULL as secondPaymentPaid,
+          0 as has_pt_plan,
           'users' as source
         FROM users u
         INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
@@ -182,12 +184,13 @@ async function getAllMembers(req, res) {
           m_pay.price,
           m_pay.pricePaid,
           m_pay.secondPaymentPaid,
+          COALESCE(m_pay.has_pt_plan, 0) as has_pt_plan,
           'members' as source
         FROM gym_members gm
         LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
                           OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
         LEFT JOIN (
-          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid
+          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
@@ -237,6 +240,7 @@ async function getAllMembers(req, res) {
           NULL as price,
           NULL as pricePaid,
           NULL as secondPaymentPaid,
+          0 as has_pt_plan,
           'users' as source
         FROM users u
         WHERE u.role = 'user' AND NOT EXISTS (

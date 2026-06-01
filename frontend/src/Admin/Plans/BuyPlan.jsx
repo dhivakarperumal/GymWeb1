@@ -70,16 +70,12 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         // only gym members converted from enquiry should appear
         if (m.source === "users") return false;
 
-        // For PT Buy Plan, only show active members without existing PT plan
+        // For PT Buy Plan, only show active members without PT plan
         if (filterTrainerPlans) {
           // Only show active members
           if (m.status !== "active") return false;
-          // Skip if already has active/pending plan
-          const status = (m.status || "").toLowerCase();
-          const hasExistingPlan = m.plan && (status === "active" || status === "pending");
-          if (hasExistingPlan) return false;
           // Skip if already has PT plan
-          if (m.has_pt_plan) return false;
+          if (m.has_pt_plan === 1 || m.has_pt_plan === true) return false;
         } else {
           // For regular Buy Plan, show active/pending members without existing plans
           const status = (m.status || "").toLowerCase();
@@ -109,13 +105,27 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
 
   // ================= FILTER PLANS FOR DROPDOWN =================
   const getFilteredPlans = () => {
-    const availablePlans = filterTrainerPlans
-      ? plans.filter(
-          (p) => p.trainerIncluded === true || p.trainer_included === 1 || p.trainerIncluded === 1
-        )
-      : plans.filter(
-          (p) => p.trainerIncluded === false || p.trainer_included === 0 || p.trainer_included === 0 || p.trainerIncluded == null
-        );
+    let availablePlans;
+    
+    if (filterTrainerPlans) {
+      // PT Buy Plan page - show ONLY PT plans (trainer_included = true/1)
+      availablePlans = plans.filter((p) => {
+        const isPT = p.trainerIncluded === true || 
+                     p.trainerIncluded === 1 || 
+                     p.trainer_included === true || 
+                     p.trainer_included === 1;
+        return isPT;
+      });
+    } else {
+      // Regular Buy Plan page - show ONLY normal plans (trainer_included = false/0/null)
+      availablePlans = plans.filter((p) => {
+        const isPT = p.trainerIncluded === true || 
+                     p.trainerIncluded === 1 || 
+                     p.trainer_included === true || 
+                     p.trainer_included === 1;
+        return !isPT;
+      });
+    }
 
     const searchLower = planSearch.toLowerCase().trim();
     if (!searchLower) return availablePlans;
@@ -635,6 +645,8 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .find((h) => ["active", "pending"].includes((h.status || "").toLowerCase()));
 
+      // If member already has an active/pending membership, update it
+      // This applies to both regular plans and PT plan upgrades
       if (activeOrPendingMembership) {
         await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
       } else {
