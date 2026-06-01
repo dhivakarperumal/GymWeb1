@@ -14,6 +14,19 @@ import dayjs from "dayjs";
 
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return "";
+  let videoId = "";
+  if (url.includes("youtube.com/shorts/")) {
+    videoId = url.split("shorts/")[1].split("?")[0];
+  } else if (url.includes("youtube.com/watch?v=")) {
+    videoId = url.split("v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+};
+
 const formatDobToDDMMYYYY = (dateString) => {
   if (!dateString || dateString.includes('0000-00-00') || dateString.includes('1899')) return "-";
   if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) return dateString;
@@ -1300,14 +1313,45 @@ const Members = () => {
                           <h4 className="text-lg font-bold text-white mb-2">{workout.name || workout.title || `Workout ${idx + 1}`}</h4>
                           <div className="space-y-2">
                             {items.map((it, i) => (
-                              <div key={i} className="bg-white/2 p-3 rounded">
-                                <div className="text-sm">
-                                  <div className="font-semibold text-white">{it.name || it.exerciseName || it.food || `Item ${i + 1}`}</div>
-                                  <div className="text-xs text-gray-400">
-                                    {it.sets ? `Sets: ${it.sets}` : ''} {it.reps ? ` • Reps: ${it.reps}` : ''} {it.duration ? ` • Duration: ${it.duration}` : ''}
+                              <div key={i} className="bg-white/2 p-3 rounded grid grid-cols-1 md:grid-cols-[120px_minmax(0,1fr)] gap-3 items-start">
+                                <div className="w-full md:w-28 h-20 bg-black/10 rounded overflow-hidden flex items-center justify-center border border-white/5">
+                                  {it.media ? (
+                                    it.media.includes('youtube.com') || it.media.includes('youtu.be') ? (
+                                      <iframe
+                                        src={getYouTubeEmbedUrl(it.media)}
+                                        title={it.name || it.exerciseName || 'Preview'}
+                                        className="w-full h-full border-0 pointer-events-none"
+                                      />
+                                    ) : it.media.match(/\.(mp4|webm|ogg)$/i) || it.media.startsWith('data:video') ? (
+                                      <video src={it.media} className="w-full h-full object-cover" controls />
+                                    ) : (
+                                      <img src={it.media} alt={it.name || it.food || 'media'} className="w-full h-full object-cover" />
+                                    )
+                                  ) : (
+                                    <div className="text-white/30 text-sm">No media</div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <div className="font-semibold text-white">{it.name || it.exerciseName || it.food || `Item ${i + 1}`}</div>
+                                      <div className="text-xs text-gray-400 mt-1">{it.notes && (typeof it.notes === 'string' ? it.notes : JSON.stringify(it.notes))}</div>
+                                    </div>
+                                    <div className="text-right text-sm text-gray-200">
+                                      <div>Qty: <span className="font-bold text-white">{it.quantity ?? it.qty ?? '--'}</span></div>
+                                      <div className="mt-1">{(it.calories || it.kcal) ? (<span className="font-bold text-emerald-400">{it.calories || it.kcal} kcal</span>) : <span className="text-white/40">-- kcal</span>}</div>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-400">
+                                    {it.time && <div><div className="text-white/40">Time</div><div className="text-white font-bold">{it.time}</div></div>}
+                                    {it.sets && <div><div className="text-white/40">Sets</div><div className="text-white font-bold">{it.sets}</div></div>}
+                                    {it.count && <div><div className="text-white/40">Reps/Count</div><div className="text-white font-bold">{it.count}</div></div>}
+                                    {it.type && <div><div className="text-white/40">Type</div><div className="text-white font-bold">{it.type}</div></div>}
+                                    {it.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="text-white font-bold">{it.massGain}</div></div>}
                                   </div>
                                 </div>
-                                {it.notes && <div className="text-white/80 text-sm mt-2">{typeof it.notes === 'string' ? it.notes : JSON.stringify(it.notes)}</div>}
                               </div>
                             ))}
                           </div>
@@ -1319,13 +1363,32 @@ const Members = () => {
                     return (
                       <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
                         <h4 className="text-lg font-bold text-white mb-2">{workout.exerciseName || workout.name || "Unnamed Exercise"}</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                          {workout.sets && <div><span className="text-gray-400">Sets:</span> <span className="text-white font-bold">{workout.sets}</span></div>}
-                          {workout.reps && <div><span className="text-gray-400">Reps:</span> <span className="text-white font-bold">{workout.reps}</span></div>}
-                          {workout.weight && <div><span className="text-gray-400">Weight:</span> <span className="text-white font-bold">{workout.weight}</span></div>}
-                          {workout.duration && <div><span className="text-gray-400">Duration:</span> <span className="text-white font-bold">{workout.duration}</span></div>}
-                          {workout.notes && <div className="col-span-2 sm:col-span-3"><span className="text-gray-400">Notes:</span> <span className="text-white">{typeof workout.notes === 'string' ? workout.notes : JSON.stringify(workout.notes)}</span></div>}
-                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-[120px_minmax(0,1fr)] gap-4">
+                              <div className="w-full md:w-28 h-28 bg-black/10 rounded overflow-hidden flex items-center justify-center border border-white/5">
+                                {workout.media ? (
+                                  workout.media.includes('youtube.com') || workout.media.includes('youtu.be') ? (
+                                    <iframe src={getYouTubeEmbedUrl(workout.media)} title={workout.exerciseName || workout.name} className="w-full h-full border-0 pointer-events-none" />
+                                  ) : workout.media.match(/\.(mp4|webm|ogg)$/i) || workout.media.startsWith('data:video') ? (
+                                    <video src={workout.media} className="w-full h-full object-cover" controls />
+                                  ) : (
+                                    <img src={workout.media} alt={workout.exerciseName || workout.name || 'exercise'} className="w-full h-full object-cover" />
+                                  )
+                                ) : (
+                                  <div className="text-white/30 text-sm">No media</div>
+                                )}
+                              </div>
+
+                              <div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                                  {workout.time && <div><div className="text-white/40">Time</div><div className="text-white font-bold">{workout.time}</div></div>}
+                                  {workout.sets && <div><div className="text-white/40">Sets</div><div className="text-white font-bold">{workout.sets}</div></div>}
+                                  {workout.count && <div><div className="text-white/40">Reps</div><div className="text-white font-bold">{workout.count}</div></div>}
+                                  {workout.type && <div><div className="text-white/40">Type</div><div className="text-white font-bold">{workout.type}</div></div>}
+                                  {workout.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="text-white font-bold">{workout.massGain}</div></div>}
+                                </div>
+                                {workout.notes && <div className="mt-3 text-white/80 text-sm">{typeof workout.notes === 'string' ? workout.notes : JSON.stringify(workout.notes)}</div>}
+                              </div>
+                            </div>
                       </div>
                     );
                   })}
@@ -1405,18 +1468,37 @@ const Members = () => {
                           ) : Array.isArray(meal) ? (
                             <div className="space-y-2">
                               {meal.map((it, i) => (
-                                <div key={i} className="text-white text-sm">
-                                  {typeof it === 'string' ? it : it.food || it.name || JSON.stringify(it)}
+                                <div key={i} className="flex items-center justify-between">
+                                  <div className="text-white text-sm">{typeof it === 'string' ? it : it.food || it.name || JSON.stringify(it)}</div>
+                                  <div className="text-sm text-gray-200">{(it.calories || it.kcal) ? `${it.calories || it.kcal} kcal` : ''}</div>
                                 </div>
                               ))}
+                              {/* total calories */}
+                              <div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-sm text-white/80">
+                                <div>Total</div>
+                                <div className="font-bold text-amber-400">{meal.reduce((s, it) => s + (parseInt(it.calories || it.kcal) || 0), 0)} kcal</div>
+                              </div>
                             </div>
                           ) : meal && Array.isArray(meal.items) ? (
                             <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="text-sm text-white/40">Time</div>
+                                {meal.time && <div className="text-sm font-semibold text-amber-400">{meal.time}</div>}
+                              </div>
                               {meal.items.map((it, i) => (
-                                <div key={i} className="text-white text-sm">
-                                  {it.food || it.name || JSON.stringify(it)}
+                                <div key={i} className="flex items-center justify-between">
+                                  <div className="text-white text-sm">
+                                    <div className="font-semibold">{it.food || it.name || JSON.stringify(it)}</div>
+                                    <div className="text-xs text-gray-400">Qty: <span className="text-white/80">{it.quantity ?? it.qty ?? '--'}</span></div>
+                                  </div>
+                                  <div className="text-sm text-emerald-400 font-bold">{(it.calories || it.kcal) ? `${it.calories || it.kcal} kcal` : '0 kcal'}</div>
                                 </div>
                               ))}
+                              {/* total calories */}
+                              <div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-sm text-white/80">
+                                <div>Total</div>
+                                <div className="font-bold text-amber-400">{meal.items.reduce((s, it) => s + (parseInt(it.calories || it.kcal) || 0), 0)} kcal</div>
+                              </div>
                             </div>
                           ) : (
                             <pre className="text-white whitespace-pre-wrap">{JSON.stringify(meal)}</pre>
