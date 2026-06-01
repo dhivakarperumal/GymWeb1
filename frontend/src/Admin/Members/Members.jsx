@@ -46,27 +46,71 @@ const canChangePlan = (m) => {
 };
 
 const Members = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const querySearch = searchParams.get("search") || "";
+  const queryTrainer = searchParams.get("trainer") || "all";
+  const queryFilterType = searchParams.get("filterType") || "all";
+  const queryViewMode = searchParams.get("viewMode") || "table";
+  const queryPage = Number(searchParams.get("page")) || 1;
+  const parseDateRangeFromParams = (params) => {
+    const type = params.get("dateType") || "All Time";
+    if (type === "Custom") {
+      const from = params.get("from") || null;
+      const to = params.get("to") || null;
+      return {
+        type,
+        range: from && to ? { from, to } : null,
+      };
+    }
+    return { type, range: null };
+  };
+
   const [search, setSearch] = useState(querySearch);
   const [members, setMembers] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(queryPage);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
-  const [filterType, setFilterType] = useState("all"); // all, withPlan, withoutPlan
-  const [selectedTrainer, setSelectedTrainer] = useState("all");
+  const [dateRange, setDateRange] = useState(() => parseDateRangeFromParams(searchParams));
+  const [filterType, setFilterType] = useState(queryFilterType); // all, withPlan, withoutPlan
+  const [selectedTrainer, setSelectedTrainer] = useState(queryTrainer);
   const [trainerOptions, setTrainerOptions] = useState([]);
+  const [viewMode, setViewMode] = useState(queryViewMode);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
   }, []);
 
   useEffect(() => {
-    setSearch(querySearch);
-  }, [querySearch]);
+    const queryTrainer = searchParams.get("trainer") || "all";
+    const queryFilterType = searchParams.get("filterType") || "all";
+    const queryViewMode = searchParams.get("viewMode") || "table";
+    const queryPage = Number(searchParams.get("page")) || 1;
+    setSearch(searchParams.get("search") || "");
+    setSelectedTrainer(queryTrainer);
+    setFilterType(queryFilterType);
+    setViewMode(queryViewMode);
+    setCurrentPage(queryPage);
+    setDateRange(parseDateRangeFromParams(searchParams));
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (selectedTrainer !== "all") params.set("trainer", selectedTrainer);
+    if (filterType !== "all") params.set("filterType", filterType);
+    if (viewMode !== "table") params.set("viewMode", viewMode);
+    if (currentPage > 1) params.set("page", currentPage.toString());
+    if (dateRange.type && dateRange.type !== "All Time") {
+      params.set("dateType", dateRange.type);
+      if (dateRange.type === "Custom" && dateRange.range) {
+        if (dateRange.range.from) params.set("from", dateRange.range.from);
+        if (dateRange.range.to) params.set("to", dateRange.range.to);
+      }
+    }
+    setSearchParams(params, { replace: true });
+  }, [search, selectedTrainer, filterType, viewMode, currentPage, dateRange, setSearchParams]);
+
   const [loading, setLoading] = useState(false);
   const [importErrors, setImportErrors] = useState([]);
-  const [viewMode, setViewMode] = useState("table"); // table, card
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.includes("/trainer") ? "/trainer" : "/admin";
@@ -467,7 +511,7 @@ const Members = () => {
           )}
 
           <button
-            onClick={() => navigate(`${basePath}/pt-form`)}
+            onClick={() => navigate(`${basePath}/pt-form`, { state: { returnUrl: location.pathname + location.search } })}
             className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
             bg-white/10 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
           >
@@ -500,7 +544,7 @@ const Members = () => {
           </div>
 
           <button
-            onClick={() => navigate(`${basePath}/addmembers`)}
+            onClick={() => navigate(`${basePath}/addmembers`, { state: { returnUrl: location.pathname + location.search } })}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white
             bg-gradient-to-r from-orange-500 to-orange-600
             hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
@@ -541,7 +585,7 @@ const Members = () => {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center lg:justify-end">
           <button
-            onClick={() => navigate(`${basePath}/buyplanadmin`)}
+            onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { returnUrl: location.pathname + location.search } })}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
           >
             Buy Plan
@@ -666,7 +710,7 @@ const Members = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                           className="flex items-center gap-1 text-orange-400"
                         >
                           <Clock size={16} />
@@ -681,7 +725,7 @@ const Members = () => {
 
                     <td className="px-4 py-5 flex gap-2">
                       <button
-                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                         className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
                         title="View Details"
                       >
@@ -692,7 +736,7 @@ const Members = () => {
                         return (
                           <button
                             onClick={() => {
-                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m } });
+                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m, returnUrl: location.pathname + location.search } });
                             }}
                             disabled={!enabled}
                             className={`p-2 rounded-lg text-white transition ${enabled
@@ -707,7 +751,7 @@ const Members = () => {
                       })()}
                       {!isTrainer && canChangePlan(m) && (
                         <button
-                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
+                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true, returnUrl: location.pathname + location.search } })}
                           className="p-2 rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition"
                           title="Change Plan"
                         >
@@ -717,9 +761,9 @@ const Members = () => {
                       <button
                         onClick={() => {
                           if (m.source === "users") {
-                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`);
+                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`, { state: { returnUrl: location.pathname + location.search } });
                           } else {
-                            navigate(`${basePath}/addmembers/${m.id}`);
+                            navigate(`${basePath}/addmembers/${m.id}`, { state: { returnUrl: location.pathname + location.search } });
                           }
                         }}
                         className="p-2 rounded-lg bg-yellow-500/80 hover:bg-yellow-500 text-white transition"
@@ -780,7 +824,7 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                         className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
                         title="View Details"
                       >
@@ -791,7 +835,7 @@ const Members = () => {
                         return (
                           <button
                             onClick={() => {
-                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m } });
+                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m, returnUrl: location.pathname + location.search } });
                             }}
                             disabled={!enabled}
                             className={`p-2 rounded-lg transition ${enabled
@@ -806,7 +850,7 @@ const Members = () => {
                       })()}
                       {!isTrainer && canChangePlan(m) && (
                         <button
-                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
+                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true, returnUrl: location.pathname + location.search } })}
                           className="p-2 rounded-lg bg-violet-500/20 text-violet-500 hover:bg-violet-500 hover:text-white transition"
                           title="Change Plan"
                         >
@@ -816,9 +860,9 @@ const Members = () => {
                       <button
                         onClick={() => {
                           if (m.source === "users") {
-                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`);
+                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`, { state: { returnUrl: location.pathname + location.search } });
                           } else {
-                            navigate(`${basePath}/addmembers/${m.id}`);
+                            navigate(`${basePath}/addmembers/${m.id}`, { state: { returnUrl: location.pathname + location.search } });
                           }
                         }}
                         className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white transition"
@@ -900,7 +944,7 @@ const Members = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                           className="flex items-center gap-1 text-orange-400 hover:text-orange-500 text-[10px] font-bold underline decoration-dotted underline-offset-2"
                         >
                           <Clock size={12} /> PENDING
@@ -1038,7 +1082,7 @@ const Members = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigate(`${basePath}/pt-form?member_id=${ptViewMemberId}`)}
+                  onClick={() => navigate(`${basePath}/pt-form?member_id=${ptViewMemberId}`, { state: { returnUrl: location.pathname + location.search } })}
                   className="p-2 bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-white rounded-lg transition"
                   title="Edit PT Form"
                 >

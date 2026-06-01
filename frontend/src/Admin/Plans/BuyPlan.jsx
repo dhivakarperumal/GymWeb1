@@ -669,7 +669,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       // sendWhatsApp();
       await sendEmailReceipt();
 
-      navigate(location.pathname.startsWith("/trainer") ? "/trainer" : "/admin/members");
+      navigate(location.state?.returnUrl || (location.pathname.startsWith("/trainer") ? "/trainer" : "/admin/members"));
     } catch (err) {
       console.error(err);
       alert("Plan save failed");
