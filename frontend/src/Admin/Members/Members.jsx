@@ -1270,20 +1270,52 @@ const Members = () => {
 
             {/* Modal Content */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-              {workoutData && workoutData.length > 0 ? (
+                  {workoutData && workoutData.length > 0 ? (
                 <div className="space-y-4">
-                  {workoutData.map((workout, idx) => (
-                    <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                      <h4 className="text-lg font-bold text-white mb-2">{workout.exerciseName || "Unnamed Exercise"}</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                        {workout.sets && <div><span className="text-gray-400">Sets:</span> <span className="text-white font-bold">{workout.sets}</span></div>}
-                        {workout.reps && <div><span className="text-gray-400">Reps:</span> <span className="text-white font-bold">{workout.reps}</span></div>}
-                        {workout.weight && <div><span className="text-gray-400">Weight:</span> <span className="text-white font-bold">{workout.weight}</span></div>}
-                        {workout.duration && <div><span className="text-gray-400">Duration:</span> <span className="text-white font-bold">{workout.duration}</span></div>}
-                        {workout.notes && <div className="col-span-2 sm:col-span-3"><span className="text-gray-400">Notes:</span> <span className="text-white">{workout.notes}</span></div>}
+                  {workoutData.map((workout, idx) => {
+                    // Normalize possible shapes: workout may be a single exercise object
+                    // or an object like { time, items: [...] } (collection). Handle both safely.
+                    const items = Array.isArray(workout.items)
+                      ? workout.items
+                      : Array.isArray(workout.exercises)
+                      ? workout.exercises
+                      : null;
+
+                    if (items && items.length > 0) {
+                      return (
+                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                          <h4 className="text-lg font-bold text-white mb-2">{workout.name || workout.title || `Workout ${idx + 1}`}</h4>
+                          <div className="space-y-2">
+                            {items.map((it, i) => (
+                              <div key={i} className="bg-white/2 p-3 rounded">
+                                <div className="text-sm">
+                                  <div className="font-semibold text-white">{it.name || it.exerciseName || it.food || `Item ${i + 1}`}</div>
+                                  <div className="text-xs text-gray-400">
+                                    {it.sets ? `Sets: ${it.sets}` : ''} {it.reps ? ` • Reps: ${it.reps}` : ''} {it.duration ? ` • Duration: ${it.duration}` : ''}
+                                  </div>
+                                </div>
+                                {it.notes && <div className="text-white/80 text-sm mt-2">{typeof it.notes === 'string' ? it.notes : JSON.stringify(it.notes)}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Fallback: treat as single workout object
+                    return (
+                      <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <h4 className="text-lg font-bold text-white mb-2">{workout.exerciseName || workout.name || "Unnamed Exercise"}</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                          {workout.sets && <div><span className="text-gray-400">Sets:</span> <span className="text-white font-bold">{workout.sets}</span></div>}
+                          {workout.reps && <div><span className="text-gray-400">Reps:</span> <span className="text-white font-bold">{workout.reps}</span></div>}
+                          {workout.weight && <div><span className="text-gray-400">Weight:</span> <span className="text-white font-bold">{workout.weight}</span></div>}
+                          {workout.duration && <div><span className="text-gray-400">Duration:</span> <span className="text-white font-bold">{workout.duration}</span></div>}
+                          {workout.notes && <div className="col-span-2 sm:col-span-3"><span className="text-gray-400">Notes:</span> <span className="text-white">{typeof workout.notes === 'string' ? workout.notes : JSON.stringify(workout.notes)}</span></div>}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -1354,7 +1386,28 @@ const Members = () => {
                       {Object.entries(dietData[activeDietDay]).map(([time, meal], idx) => (
                         <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
                           <h4 className="text-sm font-bold text-amber-400 mb-2 uppercase">{time}</h4>
-                          <p className="text-white whitespace-pre-wrap">{meal}</p>
+                          {/* meal may be a string, an array, or an object like { time, items } */}
+                          {typeof meal === 'string' ? (
+                            <p className="text-white whitespace-pre-wrap">{meal}</p>
+                          ) : Array.isArray(meal) ? (
+                            <div className="space-y-2">
+                              {meal.map((it, i) => (
+                                <div key={i} className="text-white text-sm">
+                                  {typeof it === 'string' ? it : it.food || it.name || JSON.stringify(it)}
+                                </div>
+                              ))}
+                            </div>
+                          ) : meal && Array.isArray(meal.items) ? (
+                            <div className="space-y-2">
+                              {meal.items.map((it, i) => (
+                                <div key={i} className="text-white text-sm">
+                                  {it.food || it.name || JSON.stringify(it)}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <pre className="text-white whitespace-pre-wrap">{JSON.stringify(meal)}</pre>
+                          )}
                         </div>
                       ))}
                     </div>
