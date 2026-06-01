@@ -574,10 +574,10 @@ const Members = () => {
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Mobile Number</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
-                <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">PT Plan</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Normal Validity</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">PT Validity</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Normal Validity</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">PT Validity</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Actions</th>
               </tr>
@@ -601,25 +601,25 @@ const Members = () => {
                     </td>
 
 
-                    <td className="px-4 py-5">
-                      <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
+                    <td className="px-4 py-5 whitespace-nowrap">
+                      <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400 inline-block whitespace-nowrap">
                         {m.plan || m.role || "Member"}
                       </span>
                     </td>
-                    <td className="px-4 py-5">
+                    <td className="px-4 py-5 whitespace-nowrap">
                       {m.pt_plan ? (
-                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400">
+                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
                           ✓ {m.pt_plan}
                         </span>
                       ) : m.has_pt_plan ? (
-                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400">
+                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
                           ✓ PT Plan
                         </span>
                       ) : (
                         <span className="text-white/30 text-xs">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
+                    <td className="px-4 py-5 text-white/70 text-xs font-medium whitespace-nowrap">
                       <div className="flex flex-col gap-2">
                         {hasActiveOrPendingPlan(m) ? (() => {
                           const joinDateStr = m.join_date ? dayjs(m.join_date).format("DD-MM-YYYY") : "N/A";
@@ -651,7 +651,7 @@ const Members = () => {
                         })() : <span className="text-white/30">-</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-5 text-white/70 text-xs font-medium">
+                    <td className="px-4 py-5 text-white/70 text-xs font-medium whitespace-nowrap">
                       <div className="flex flex-col gap-2">
                         {m.pt_plan ? (() => {
                           const ptJoinDateStr = m.pt_join_date ? dayjs(m.pt_join_date).format("DD-MM-YYYY") : "N/A";
