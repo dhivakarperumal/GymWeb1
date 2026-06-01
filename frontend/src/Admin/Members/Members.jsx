@@ -460,7 +460,44 @@ const Members = () => {
     reader.readAsArrayBuffer(file);
   };
 
+  // 🏋️ FETCH WORKOUTS
+  const openWorkoutModal = async (memberId) => {
+    setWorkoutMemberId(memberId);
+    try {
+      const res = await api.get(`/workouts?memberId=${memberId}`);
+      const workouts = Array.isArray(res.data) ? res.data : [];
+      setWorkoutData(workouts);
+    } catch (err) {
+      console.error("Error fetching workouts:", err);
+      setWorkoutData([]);
+    }
+    setIsWorkoutModalOpen(true);
+  };
 
+  // 🥗 FETCH DIET
+  const openDietModal = async (memberId, memberEmail) => {
+    setDietMemberId(memberId);
+    try {
+      const res = await api.get(`/diet-plans?email=${encodeURIComponent(memberEmail)}`);
+      const diets = Array.isArray(res.data) ? res.data : [];
+      if (diets.length > 0) {
+        const latestDiet = diets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        setDietTitle(latestDiet.title || "Diet Plan");
+        let daysData = latestDiet.days;
+        if (typeof daysData === "string") {
+          try { daysData = JSON.parse(daysData); } catch (e) { daysData = null; }
+        }
+        setDietData(daysData);
+        if (daysData) setActiveDietDay(Object.keys(daysData)[0]);
+      } else {
+        setDietData(null);
+      }
+    } catch (err) {
+      console.error("Error fetching diet:", err);
+      setDietData(null);
+    }
+    setIsDietModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen px-0 py-8 ">
@@ -817,14 +854,14 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleOpenWorkout(m.id || m.member_id)}
+                        onClick={() => openWorkoutModal(m.id || m.member_id)}
                         className="p-2 rounded-lg bg-green-500/80 hover:bg-green-500 text-white transition"
                         title="View Workout"
                       >
                         <Dumbbell size={16} />
                       </button>
                       <button
-                        onClick={() => handleOpenDiet(m.id || m.member_id)}
+                        onClick={() => openDietModal(m.id || m.member_id, m.email || m.user_email)}
                         className="p-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 text-white transition"
                         title="View Diet Plan"
                       >
@@ -930,14 +967,14 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleOpenWorkout(m.id || m.member_id)}
+                        onClick={() => openWorkoutModal(m.id || m.member_id)}
                         className="p-2 rounded-lg bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition"
                         title="View Workout"
                       >
                         <Dumbbell size={14} />
                       </button>
                       <button
-                        onClick={() => handleOpenDiet(m.id || m.member_id)}
+                        onClick={() => openDietModal(m.id || m.member_id, m.email || m.user_email)}
                         className="p-2 rounded-lg bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition"
                         title="View Diet Plan"
                       >
