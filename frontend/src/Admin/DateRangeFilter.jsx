@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaCalendarAlt, FaChevronDown } from 'react-icons/fa';
 
-const DateRangeFilter = ({ onRangeChange, initialRange = 'All Time' }) => {
+const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range: null } }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedRange, setSelectedRange] = useState(initialRange);
-  const [customRange, setCustomRange] = useState({ start: '', end: '' });
-  const [showCustom, setShowCustom] = useState(false);
+  const [selectedRange, setSelectedRange] = useState(dateRange.type || 'All Time');
+  const [customRange, setCustomRange] = useState(dateRange.range || { start: '', end: '' });
+  const [showCustom, setShowCustom] = useState(dateRange.type === 'Custom');
+
+  // Update UI when dateRange prop changes (e.g., from URL query params)
+  useEffect(() => {
+    if (dateRange) {
+      setSelectedRange(dateRange.type || 'All Time');
+      if (dateRange.type === 'Custom' && dateRange.range) {
+        // Handle both 'start/end' and 'from/to' property names
+        setCustomRange({
+          start: dateRange.range.start || dateRange.range.from || '',
+          end: dateRange.range.end || dateRange.range.to || ''
+        });
+      }
+    }
+  }, [dateRange]);
 
   const ranges = [
     'All Time',
@@ -42,7 +56,11 @@ const DateRangeFilter = ({ onRangeChange, initialRange = 'All Time' }) => {
         className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/20 transition backdrop-blur-md"
       >
         <FaCalendarAlt className="text-orange-500" />
-        <span className="text-sm font-medium">{selectedRange}</span>
+        <span className="text-sm font-medium">
+          {selectedRange === 'Custom' && customRange.start && customRange.end
+            ? `${customRange.start} to ${customRange.end}`
+            : selectedRange}
+        </span>
         <FaChevronDown className={`text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 

@@ -55,11 +55,11 @@ const Members = () => {
   const parseDateRangeFromParams = (params) => {
     const type = params.get("dateType") || "All Time";
     if (type === "Custom") {
-      const from = params.get("from") || null;
-      const to = params.get("to") || null;
+      const start = params.get("start") || params.get("from") || null;
+      const end = params.get("end") || params.get("to") || null;
       return {
         type,
-        range: from && to ? { from, to } : null,
+        range: start && end ? { start, end } : null,
       };
     }
     return { type, range: null };
@@ -102,8 +102,8 @@ const Members = () => {
     if (dateRange.type && dateRange.type !== "All Time") {
       params.set("dateType", dateRange.type);
       if (dateRange.type === "Custom" && dateRange.range) {
-        if (dateRange.range.from) params.set("from", dateRange.range.from);
-        if (dateRange.range.to) params.set("to", dateRange.range.to);
+        if (dateRange.range.start) params.set("start", dateRange.range.start);
+        if (dateRange.range.end) params.set("end", dateRange.range.end);
       }
     }
     setSearchParams(params, { replace: true });
@@ -521,7 +521,7 @@ const Members = () => {
 
 
 
-          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+          <DateRangeFilter dateRange={dateRange} onRangeChange={(type, range) => setDateRange({ type, range })} />
 
           {/* 🖥 View Toggle */}
           <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 ml-0 sm:ml-2">
