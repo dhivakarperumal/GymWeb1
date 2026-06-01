@@ -580,11 +580,17 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         height: form.height,
         weight: form.weight,
         bmi: form.bmi,
+        // Ensure existing normal plan details are passed to prevent them from being set to NULL
+        plan: selectedUser.plan,
+        duration: selectedUser.duration,
+        joinDate: selectedUser.joinDate || selectedUser.join_date,
+        expiryDate: selectedUser.expiryDate || selectedUser.expiry_date,
+        status: selectedUser.status,
       };
 
       if (!filterTrainerPlans) {
         updatedMember.plan = selectedPlan.name;
-        updatedMember.duration = selectedPlan.duration;
+        updatedMember.duration = getSelectedPlanDuration();
         updatedMember.joinDate = form.startDate;
         updatedMember.expiryDate = form.endDate;
         updatedMember.status = location.pathname.startsWith("/trainer") ? "pending" : "active";
@@ -592,7 +598,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         // We do not overwrite normal plan details during a PT plan purchase.
         // We can optionally pass PT details, though they will be primarily handled by the memberships API later.
         updatedMember.pt_plan = selectedPlan.name;
-        updatedMember.pt_duration = selectedPlan.duration;
+        updatedMember.pt_duration = getSelectedPlanDuration();
         updatedMember.pt_join_date = form.startDate;
         updatedMember.pt_expiry_date = form.endDate;
         updatedMember.pt_status = location.pathname.startsWith("/trainer") ? "pending" : "active";
@@ -642,7 +648,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
           pt_price: planTotal,
           pt_pricePaid: amountNow,
           pt_secondPaymentPaid: 0,
-          pt_duration: selectedPlan.duration,
+          pt_duration: getSelectedPlanDuration(),
           pt_startDate: form.startDate,
           pt_endDate: form.endDate,
           pt_paymentMode: paymentModeValue,
@@ -663,7 +669,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
           price: planTotal,
           pricePaid: amountNow,
           secondPaymentPaid: 0,
-          duration: selectedPlan.duration,
+          duration: getSelectedPlanDuration(),
           startDate: form.startDate,
           endDate: form.endDate,
           paymentMode: paymentModeValue,
