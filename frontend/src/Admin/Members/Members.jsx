@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap, Dumbbell, Utensils, X, Award } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap, Dumbbell, Utensils, X, Award, MoreHorizontal } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
@@ -148,6 +148,7 @@ const Members = () => {
   const [dietData, setDietData] = useState(null);
   const [dietTitle, setDietTitle] = useState("");
   const [activeDietDay, setActiveDietDay] = useState(null);
+  const [expandedActionRow, setExpandedActionRow] = useState(null);
 
   const fetchTrainers = async () => {
     try {
@@ -190,6 +191,17 @@ const Members = () => {
       setLoading(false);
     }
   };
+
+  // Close action dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (expandedActionRow !== null && !e.target.closest('.action-dropdown-wrapper')) {
+        setExpandedActionRow(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [expandedActionRow]);
 
   useEffect(() => {
     fetchTrainers();
@@ -854,84 +866,110 @@ const Members = () => {
 
 
 
-                    <td className="px-4 py-5 flex gap-2">
-                      <button
-                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
-                        className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
-                        title="View Details"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      {(() => {
-                        const enabled = isUpdatePlanEnabled(m);
-                        return (
-                          <button
-                            onClick={() => {
-                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m, returnUrl: location.pathname + location.search } });
-                            }}
-                            disabled={!enabled}
-                            className={`p-2 rounded-lg text-white transition ${enabled
-                                ? "bg-orange-500/80 hover:bg-orange-500 cursor-pointer"
-                                : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
-                              }`}
-                            title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
-                          >
-                            <CreditCard size={16} />
-                          </button>
-                        );
-                      })()}
-                      {!isTrainer && canChangePlan(m) && (
+                    <td className="px-4 py-5">
+                      <div className="flex items-center gap-1.5 relative action-dropdown-wrapper">
+                        {/* Primary actions - always visible */}
                         <button
-                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true, returnUrl: location.pathname + location.search } })}
-                          className="p-2 rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition"
-                          title="Change Plan"
+                          onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
+                          className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
+                          title="View Details"
                         >
-                          <Zap size={16} />
+                          <Eye size={16} />
                         </button>
-                      )}
-                      <button
-                        onClick={() => navigate(`${basePath}/buy-pt-plan`, { state: { member: m, returnUrl: location.pathname + location.search } })}
-                        className="p-2 rounded-lg bg-gradient-to-br from-purple-500/90 to-fuchsia-500/90 hover:from-purple-500 hover:to-fuchsia-500 text-white transition shadow-lg shadow-purple-500/20"
-                        title="PT Plan Update"
-                      >
-                        <Award size={16} />
-                      </button>
-                      <button
-                        onClick={() => openWorkoutModal(m.id || m.member_id)}
-                        className="p-2 rounded-lg bg-green-500/80 hover:bg-green-500 text-white transition"
-                        title="View Workout"
-                      >
-                        <Dumbbell size={16} />
-                      </button>
-                      <button
-                        onClick={() => openDietModal(m.id || m.member_id, m.email || m.user_email)}
-                        className="p-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 text-white transition"
-                        title="View Diet Plan"
-                      >
-                        <Utensils size={16} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (m.source === "users") {
-                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`, { state: { returnUrl: location.pathname + location.search } });
-                          } else {
-                            navigate(`${basePath}/addmembers/${m.id}`, { state: { returnUrl: location.pathname + location.search } });
-                          }
-                        }}
-                        className="p-2 rounded-lg bg-yellow-500/80 hover:bg-yellow-500 text-white transition"
-                        title={m.source === "users" ? "Convert to Gym Member" : "Edit Member"}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      {role !== "trainer" && (
+                        {(() => {
+                          const enabled = isUpdatePlanEnabled(m);
+                          return (
+                            <button
+                              onClick={() => {
+                                if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m, returnUrl: location.pathname + location.search } });
+                              }}
+                              disabled={!enabled}
+                              className={`p-2 rounded-lg text-white transition ${enabled
+                                  ? "bg-orange-500/80 hover:bg-orange-500 cursor-pointer"
+                                  : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
+                                }`}
+                              title={enabled ? "Update Plan" : "Can only renew 5 days before expiry"}
+                            >
+                              <CreditCard size={16} />
+                            </button>
+                          );
+                        })()}
                         <button
-                          onClick={() => handleDelete(m)}
-                          className="p-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition"
-                          title="Delete Member"
+                          onClick={() => navigate(`${basePath}/buy-pt-plan`, { state: { member: m, returnUrl: location.pathname + location.search } })}
+                          className="p-2 rounded-lg bg-gradient-to-br from-purple-500/90 to-fuchsia-500/90 hover:from-purple-500 hover:to-fuchsia-500 text-white transition shadow-lg shadow-purple-500/20"
+                          title="PT Plan Update"
                         >
-                          <Trash2 size={16} />
+                          <Award size={16} />
                         </button>
-                      )}
+
+                        {/* Ellipsis toggle */}
+                        <button
+                          onClick={() => setExpandedActionRow(expandedActionRow === (m.id || m.member_id) ? null : (m.id || m.member_id))}
+                          className={`p-2 rounded-lg text-white transition ${
+                            expandedActionRow === (m.id || m.member_id)
+                              ? "bg-white/20 ring-2 ring-white/30"
+                              : "bg-white/10 hover:bg-white/20"
+                          }`}
+                          title="More Actions"
+                        >
+                          <MoreHorizontal size={16} />
+                        </button>
+
+                        {/* Dropdown menu */}
+                        {expandedActionRow === (m.id || m.member_id) && (
+                          <div className="absolute right-0 top-full mt-2 z-50 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl shadow-black/40 p-2 min-w-[180px] animate-in fade-in slide-in-from-top-2">
+                            {!isTrainer && canChangePlan(m) && (
+                              <button
+                                onClick={() => { setExpandedActionRow(null); navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true, returnUrl: location.pathname + location.search } }); }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-violet-500/20 transition"
+                              >
+                                <Zap size={15} className="text-violet-400" />
+                                Change Plan
+                              </button>
+                            )}
+                            <button
+                              onClick={() => { setExpandedActionRow(null); openWorkoutModal(m.id || m.member_id); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-green-500/20 transition"
+                            >
+                              <Dumbbell size={15} className="text-green-400" />
+                              View Workout
+                            </button>
+                            <button
+                              onClick={() => { setExpandedActionRow(null); openDietModal(m.id || m.member_id, m.email || m.user_email); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-amber-500/20 transition"
+                            >
+                              <Utensils size={15} className="text-amber-400" />
+                              View Diet Plan
+                            </button>
+                            <button
+                              onClick={() => {
+                                setExpandedActionRow(null);
+                                if (m.source === "users") {
+                                  navigate(`${basePath}/addmembers?user_id=${m.u_id}`, { state: { returnUrl: location.pathname + location.search } });
+                                } else {
+                                  navigate(`${basePath}/addmembers/${m.id}`, { state: { returnUrl: location.pathname + location.search } });
+                                }
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-yellow-500/20 transition"
+                            >
+                              <Pencil size={15} className="text-yellow-400" />
+                              {m.source === "users" ? "Convert to Member" : "Edit Member"}
+                            </button>
+                            {role !== "trainer" && (
+                              <>
+                                <div className="border-t border-white/10 my-1"></div>
+                                <button
+                                  onClick={() => { setExpandedActionRow(null); handleDelete(m); }}
+                                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-red-500/20 transition"
+                                >
+                                  <Trash2 size={15} />
+                                  Delete Member
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
