@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap, Dumbbell, Utensils, X } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
@@ -118,6 +118,14 @@ const Members = () => {
   const isTrainer = role === "trainer" || location.pathname.startsWith("/trainer");
   const [ptViewMemberId, setPtViewMemberId] = useState(null);
   const [isPtModalOpen, setIsPtModalOpen] = useState(false);
+  const [workoutMemberId, setWorkoutMemberId] = useState(null);
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [workoutData, setWorkoutData] = useState([]);
+  const [dietMemberId, setDietMemberId] = useState(null);
+  const [isDietModalOpen, setIsDietModalOpen] = useState(false);
+  const [dietData, setDietData] = useState(null);
+  const [dietTitle, setDietTitle] = useState("");
+  const [activeDietDay, setActiveDietDay] = useState(null);
 
   const fetchTrainers = async () => {
     try {
@@ -232,6 +240,56 @@ const Members = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || "Delete failed");
+    }
+  };
+
+  // 💪 FETCH AND DISPLAY WORKOUT DATA
+  const handleOpenWorkout = (memberId) => {
+    setWorkoutMemberId(memberId);
+    setIsWorkoutModalOpen(true);
+    fetchWorkoutData(memberId);
+  };
+
+  const fetchWorkoutData = async (memberId) => {
+    try {
+      const res = await api.get(`/workouts?memberId=${memberId}`);
+      const workouts = Array.isArray(res.data) ? res.data : [];
+      setWorkoutData(workouts);
+    } catch (err) {
+      console.error("Workout fetch error:", err);
+      toast.error("Failed to load workout data");
+      setWorkoutData([]);
+    }
+  };
+
+  // 🍽 FETCH AND DISPLAY DIET DATA
+  const handleOpenDiet = (memberId) => {
+    setDietMemberId(memberId);
+    setIsDietModalOpen(true);
+    fetchDietData(memberId);
+  };
+
+  const fetchDietData = async (memberId) => {
+    try {
+      const res = await api.get(`/diet-plans?memberId=${memberId}`);
+      const plans = Array.isArray(res.data) ? res.data : [];
+      if (plans.length > 0) {
+        const latestPlan = plans.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        setDietTitle(latestPlan.title || "Diet Plan");
+        let daysData = latestPlan.days;
+        if (typeof daysData === "string") {
+          daysData = JSON.parse(daysData);
+        }
+        setDietData(daysData);
+        setActiveDietDay(Object.keys(daysData)[0]);
+      } else {
+        setDietData(null);
+        setDietTitle("");
+      }
+    } catch (err) {
+      console.error("Diet fetch error:", err);
+      toast.error("Failed to load diet data");
+      setDietData(null);
     }
   };
 
@@ -759,6 +817,20 @@ const Members = () => {
                         </button>
                       )}
                       <button
+                        onClick={() => handleOpenWorkout(m.id || m.member_id)}
+                        className="p-2 rounded-lg bg-green-500/80 hover:bg-green-500 text-white transition"
+                        title="View Workout"
+                      >
+                        <Dumbbell size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleOpenDiet(m.id || m.member_id)}
+                        className="p-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 text-white transition"
+                        title="View Diet Plan"
+                      >
+                        <Utensils size={16} />
+                      </button>
+                      <button
                         onClick={() => {
                           if (m.source === "users") {
                             navigate(`${basePath}/addmembers?user_id=${m.u_id}`, { state: { returnUrl: location.pathname + location.search } });
@@ -857,6 +929,20 @@ const Members = () => {
                           <Zap size={14} />
                         </button>
                       )}
+                      <button
+                        onClick={() => handleOpenWorkout(m.id || m.member_id)}
+                        className="p-2 rounded-lg bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition"
+                        title="View Workout"
+                      >
+                        <Dumbbell size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleOpenDiet(m.id || m.member_id)}
+                        className="p-2 rounded-lg bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition"
+                        title="View Diet Plan"
+                      >
+                        <Utensils size={14} />
+                      </button>
                       <button
                         onClick={() => {
                           if (m.source === "users") {
