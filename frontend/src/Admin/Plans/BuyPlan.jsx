@@ -62,6 +62,33 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     paymentDate: today,
   });
 
+  // Reset state when switching between regular plan and PT plan
+  useEffect(() => {
+    if (!location.state?.member) {
+      setSelectedUser(null);
+      setSelectedPlan(null);
+      setMemberSearch("");
+      setPlanSearch("");
+      setDiscount("");
+      setInitialPayment("");
+      setPaymentType("full");
+      setSelectedTrainer("");
+      setSessionTime("");
+      setForm({
+        phone: "",
+        email: "",
+        address: "",
+        height: "",
+        weight: "",
+        bmi: "",
+        startDate: today,
+        endDate: "",
+        paymentMode: "cash",
+        paymentDate: today,
+      });
+    }
+  }, [location.pathname, filterTrainerPlans]);
+
   // ================= FILTER MEMBERS FOR DROPDOWN =================
   const getFilteredMembers = () => {
     const seenPhones = new Set();
