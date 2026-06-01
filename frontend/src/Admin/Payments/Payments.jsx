@@ -113,6 +113,9 @@ const Payments = () => {
             phone: m.mobile || m.userPhone || "",
             discount: m.discount || 0,
             amount: m.amount || 0,
+            pt_planName: m.pt_planName || "",
+            pt_startDate: m.pt_startDate || null,
+            pt_endDate: m.pt_endDate || null,
           });
         });
 
@@ -1002,10 +1005,9 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
                     
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Start Date</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">End Date</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Payment Date</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Days Left</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Normal Validity</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Validity</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Payment Date</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Payment</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Status / Action</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Receipt</th>
@@ -1074,30 +1076,71 @@ const Payments = () => {
                           </span>
                         </td>
                        
-                        <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
-                          {formatDate(plan.startDate)}
+                        <td className="px-4 py-4 text-white/70 text-xs font-medium whitespace-nowrap">
+                          <div className="flex flex-col gap-2">
+                            {plan.planName && (!plan.planName?.toLowerCase().includes("pt") || plan.pt_planName) ? (
+                              <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 w-max">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded self-center bg-orange-500/20 text-orange-400`}>
+                                  NRM
+                                </span>
+                                <div className="flex flex-col text-[11px] text-gray-300 gap-0.5">
+                                  <div><span className="text-gray-500 font-medium">S-</span> {formatDate(plan.startDate)}</div>
+                                  <div><span className="text-gray-500 font-medium">E-</span> {formatDate(plan.endDate)}</div>
+                                </div>
+                                <div className="flex items-center ml-1 border-l border-white/10 pl-3">
+                                  {plan.endDate ? (
+                                    getRemainingDays(plan.endDate) === "Expired" ? (
+                                      <span className="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold uppercase">
+                                        EXPIRED
+                                      </span>
+                                    ) : (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                                        isExpiringPlan(plan.endDate) ? "bg-yellow-500/20 text-yellow-400" : "bg-emerald-500/20 text-emerald-400"
+                                      }`}>
+                                        {getRemainingDays(plan.endDate).replace(' days', 'D').replace(' day', 'D')} LEFT
+                                      </span>
+                                    )
+                                  ) : null}
+                                </div>
+                              </div>
+                            ) : <span className="text-white/30">-</span>}
+                          </div>
                         </td>
-                        <td className="px-4 py-4 text-gray-400 font-medium text-base whitespace-nowrap">
-                          {formatDate(plan.endDate)}
+                        <td className="px-4 py-4 text-white/70 text-xs font-medium whitespace-nowrap">
+                          <div className="flex flex-col gap-2">
+                            {plan.pt_planName || plan.pt_startDate || plan.pt_endDate || plan.planName?.toLowerCase().includes("pt") ? (
+                              <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 w-max">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded self-center bg-purple-500/20 text-purple-400`}>
+                                  PT
+                                </span>
+                                <div className="flex flex-col text-[11px] text-gray-300 gap-0.5">
+                                  <div><span className="text-gray-500 font-medium">S-</span> {formatDate(plan.pt_startDate || (plan.planName?.toLowerCase().includes("pt") ? plan.startDate : null))}</div>
+                                  <div><span className="text-gray-500 font-medium">E-</span> {formatDate(plan.pt_endDate || (plan.planName?.toLowerCase().includes("pt") ? plan.endDate : null))}</div>
+                                </div>
+                                <div className="flex items-center ml-1 border-l border-white/10 pl-3">
+                                  {(plan.pt_endDate || (plan.planName?.toLowerCase().includes("pt") && plan.endDate)) ? (
+                                    getRemainingDays(plan.pt_endDate || plan.endDate) === "Expired" ? (
+                                      <span className="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold uppercase">
+                                        EXPIRED
+                                      </span>
+                                    ) : (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                                        isExpiringPlan(plan.pt_endDate || plan.endDate) ? "bg-yellow-500/20 text-yellow-400" : "bg-purple-500/20 text-purple-400"
+                                      }`}>
+                                        {getRemainingDays(plan.pt_endDate || plan.endDate).replace(' days', 'D').replace(' day', 'D')} LEFT
+                                      </span>
+                                    )
+                                  ) : null}
+                                </div>
+                              </div>
+                            ) : <span className="text-white/30">-</span>}
+                          </div>
                         </td>
                         <td className="px-4 py-4 font-medium text-base whitespace-nowrap">
                           {plan.paymentDate
                             ? <span className="text-purple-300">{formatDate(plan.paymentDate)}</span>
                             : <span className="text-gray-600">--</span>
                           }
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              getRemainingDays(plan.endDate) === "Expired"
-                                ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                                : isExpiringPlan(plan.endDate)
-                                  ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                                  : "bg-green-500/10 text-green-400 border border-green-500/20"
-                            }`}
-                          >
-                            {getRemainingDays(plan.endDate)}
-                          </span>
                         </td>
                         <td className="px-4 py-4 text-center">
                           {(() => {

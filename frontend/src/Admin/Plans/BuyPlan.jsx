@@ -452,65 +452,65 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
 
 
   // ================= GENERATE PDF =================
-  const generateAndDownloadPDF = () => {
-    const doc = new jsPDF();
+  // const generateAndDownloadPDF = () => {
+  //   const doc = new jsPDF();
 
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(249, 115, 22); // Orange
-    doc.text("GYM MEMBERSHIP RECEIPT", 105, 20, null, null, "center");
+  //   // Header
+  //   doc.setFontSize(20);
+  //   doc.setTextColor(249, 115, 22); // Orange
+  //   doc.text("GYM MEMBERSHIP RECEIPT", 105, 20, null, null, "center");
 
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 35);
-    doc.text(`Receipt No: REC-${Math.floor(Math.random() * 1000000)}`, 15, 45);
+  //   doc.setFontSize(12);
+  //   doc.setTextColor(0, 0, 0);
+  //   doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 35);
+  //   doc.text(`Receipt No: REC-${Math.floor(Math.random() * 1000000)}`, 15, 45);
 
-    // Member Info
-    doc.setFontSize(14);
-    doc.setTextColor(249, 115, 22);
-    doc.text("Member Details", 15, 60);
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Name: ${selectedUser?.name || selectedUser?.username || "Member"}`, 15, 70);
-    doc.text(`Mobile: ${form.phone}`, 15, 80);
-    doc.text(`Email: ${form.email}`, 15, 90);
+  //   // Member Info
+  //   doc.setFontSize(14);
+  //   doc.setTextColor(249, 115, 22);
+  //   doc.text("Member Details", 15, 60);
+  //   doc.setFontSize(12);
+  //   doc.setTextColor(0, 0, 0);
+  //   doc.text(`Name: ${selectedUser?.name || selectedUser?.username || "Member"}`, 15, 70);
+  //   doc.text(`Mobile: ${form.phone}`, 15, 80);
+  //   doc.text(`Email: ${form.email}`, 15, 90);
 
-    // Plan Info
-    const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
-    const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
+  //   // Plan Info
+  //   const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
+  //   const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
 
-    const originalPrice = parseDecimal(selectedPlan?.finalPrice ?? selectedPlan?.final_price ?? selectedPlan?.price);
-    const discountVal = parseDecimal(discount);
+  //   const originalPrice = parseDecimal(selectedPlan?.finalPrice ?? selectedPlan?.final_price ?? selectedPlan?.price);
+  //   const discountVal = parseDecimal(discount);
 
-    autoTable(doc, {
-      startY: 100,
-      head: [["Description", "Details"]],
-      body: [
-        ["Plan Name", selectedPlan?.name || "N/A"],
-        ["Duration", `${selectedPlan?.duration || "N/A"} Months`],
-        ["Start Date", form.startDate],
-        ["End Date", form.endDate],
-        ["Original Price", `Rs. ${originalPrice}`],
-        ["Discount Amount", `Rs. ${discountVal}`],
-        ["Total Amount (After Discount)", `Rs. ${getSelectedPlanTotal()}`],
-        ["Amount Paid", `Rs. ${paidNow}`],
-        ["Payment Mode", paymentModeLabel],
-        ["Payment Status", paymentType === "emi" && isEMIAllowed ? "Partial Payment" : "Paid"],
-      ],
-      theme: "grid",
-      headStyles: { fillColor: [249, 115, 22] }, // Orange header
-    });
+  //   autoTable(doc, {
+  //     startY: 100,
+  //     head: [["Description", "Details"]],
+  //     body: [
+  //       ["Plan Name", selectedPlan?.name || "N/A"],
+  //       ["Duration", `${selectedPlan?.duration || "N/A"} Months`],
+  //       ["Start Date", form.startDate],
+  //       ["End Date", form.endDate],
+  //       ["Original Price", `Rs. ${originalPrice}`],
+  //       ["Discount Amount", `Rs. ${discountVal}`],
+  //       ["Total Amount (After Discount)", `Rs. ${getSelectedPlanTotal()}`],
+  //       ["Amount Paid", `Rs. ${paidNow}`],
+  //       ["Payment Mode", paymentModeLabel],
+  //       ["Payment Status", paymentType === "emi" && isEMIAllowed ? "Partial Payment" : "Paid"],
+  //     ],
+  //     theme: "grid",
+  //     headStyles: { fillColor: [249, 115, 22] }, // Orange header
+  //   });
 
-    // Footer
-    doc.setFontSize(10);
-    doc.text("Thank you for joining our gym!", 105, doc.lastAutoTable.finalY + 20, null, null, "center");
+  //   // Footer
+  //   doc.setFontSize(10);
+  //   doc.text("Thank you for joining our gym!", 105, doc.lastAutoTable.finalY + 20, null, null, "center");
 
-    // Download the PDF
-    doc.save(`Receipt_${selectedUser?.name || selectedUser?.username || "Member"}.pdf`);
+  //   // Download the PDF
+  //   doc.save(`Receipt_${selectedUser?.name || selectedUser?.username || "Member"}.pdf`);
 
-    // Return Data URI for email attachment
-    return doc.output('datauristring');
-  };
+  //   // Return Data URI for email attachment
+  //   return doc.output('datauristring');
+  // };
 
   // ================= EMAIL JS =================
   const sendEmailReceipt = async () => {

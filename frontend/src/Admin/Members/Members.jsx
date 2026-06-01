@@ -653,7 +653,7 @@ const Members = () => {
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium whitespace-nowrap">
                       <div className="flex flex-col gap-2">
-                        {m.pt_plan ? (() => {
+                        {m.pt_plan || m.pt_join_date || m.pt_expiry_date ? (() => {
                           const ptJoinDateStr = m.pt_join_date ? dayjs(m.pt_join_date).format("DD-MM-YYYY") : "N/A";
                           const ptExpiryDateStr = m.pt_expiry_date ? dayjs(m.pt_expiry_date).format("DD-MM-YYYY") : "N/A";
                           const isPtExpired = m.pt_expiry_date && dayjs(m.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), "day") <= 0;
@@ -893,13 +893,13 @@ const Members = () => {
                       <div>
                         <p className="text-[10px] text-gray-500 uppercase tracking-wider">Start Date</p>
                         <p className="text-xs text-gray-300 font-medium">
-                          {(hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
+                          {m.join_date ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
                         </p>
                       </div>
                       <div>
                         <p className="text-[10px] text-gray-500 uppercase tracking-wider">End Date</p>
                         <p className="text-xs text-gray-300 font-medium">
-                          {(hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
+                          {m.expiry_date ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "-"}
                         </p>
                       </div>
                     </div>
