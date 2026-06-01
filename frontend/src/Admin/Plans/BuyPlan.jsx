@@ -70,16 +70,28 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         // only gym members converted from enquiry should appear
         if (m.source === "users") return false;
 
-        // 1. Skip if already has a pending or active plan
-        const status = (m.status || "").toLowerCase();
-        const hasExistingPlan = m.plan && (status === "active" || status === "pending");
-        if (hasExistingPlan) return false;
+        // For PT Buy Plan, only show active members without existing PT plan
+        if (filterTrainerPlans) {
+          // Only show active members
+          if (m.status !== "active") return false;
+          // Skip if already has active/pending plan
+          const status = (m.status || "").toLowerCase();
+          const hasExistingPlan = m.plan && (status === "active" || status === "pending");
+          if (hasExistingPlan) return false;
+          // Skip if already has PT plan
+          if (m.has_pt_plan) return false;
+        } else {
+          // For regular Buy Plan, show active/pending members without existing plans
+          const status = (m.status || "").toLowerCase();
+          const hasExistingPlan = m.plan && (status === "active" || status === "pending");
+          if (hasExistingPlan) return false;
+        }
 
-        // 2. Skip duplicates by phone
+        // Skip duplicates by phone
         if (seenPhones.has(m.phone)) return false;
         seenPhones.add(m.phone);
 
-        // 3. Filter by search term
+        // Filter by search term
         const searchLower = memberSearch.toLowerCase().trim();
         if (!searchLower) return true;
 
@@ -101,7 +113,9 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       ? plans.filter(
           (p) => p.trainerIncluded === true || p.trainer_included === 1 || p.trainerIncluded === 1
         )
-      : plans;
+      : plans.filter(
+          (p) => p.trainerIncluded === false || p.trainer_included === 0 || p.trainer_included === 0 || p.trainerIncluded == null
+        );
 
     const searchLower = planSearch.toLowerCase().trim();
     if (!searchLower) return availablePlans;

@@ -575,6 +575,7 @@ const Members = () => {
                 <th className="px-4 py-5 text-left text-sm font-semibold">Mobile Number</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold">Plan</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold">PT Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Start Date</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">End Date</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Remaining</th>
@@ -585,7 +586,7 @@ const Members = () => {
             <tbody className="divide-y divide-white/10">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="p-8 text-center text-gray-400">
+                  <td colSpan="11" className="p-8 text-center text-gray-400">
                     {loading ? "Loading members..." : filtered.length === 0 ? "No records found" : "No data on this page"}
                   </td>
                 </tr>
@@ -605,6 +606,15 @@ const Members = () => {
                       <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400">
                         {m.plan || m.role || "Member"}
                       </span>
+                    </td>
+                    <td className="px-4 py-5">
+                      {m.has_pt_plan ? (
+                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400">
+                          ✓ PT Plan
+                        </span>
+                      ) : (
+                        <span className="text-white/30 text-xs">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium">
                       {(hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("DD-MM-YYYY") : "-"}
@@ -857,6 +867,11 @@ const Members = () => {
                       <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
                         {m.plan || m.role || "Member"}
                       </span>
+                      {m.has_pt_plan && (
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
+                          ✓ PT Plan
+                        </span>
+                      )}
                       {m.price && (
                         <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
                           ₹{m.price}

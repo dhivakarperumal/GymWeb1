@@ -33,7 +33,9 @@ async function getAllMemberships(req, res) {
              COALESCE(m.userPhone, u.mobile) as mobile, 
              u.role,
              gm.join_date as memberJoinDate,
-             gm.expiry_date as memberExpiryDate
+             gm.expiry_date as memberExpiryDate,
+             COALESCE(gp.trainer_included, m.has_pt_plan, 0) as has_pt_plan,
+             gp.trainer_included
       FROM memberships m
       LEFT JOIN users u ON m.userId = u.id
       LEFT JOIN gym_members gm ON 
@@ -41,6 +43,7 @@ async function getAllMemberships(req, res) {
         (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '') OR
         (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
         (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+      LEFT JOIN gym_plans gp ON m.planId = gp.id
     `;
 
     if (staffId) {
@@ -142,10 +145,23 @@ async function createMembership(req, res) {
       }
     }
 
+    // Check if the plan is a PT plan
+    let isPTPlan = 0;
+    if (planId) {
+      try {
+        const [planRows] = await db.query('SELECT trainer_included FROM gym_plans WHERE id = ?', [planId]);
+        if (planRows.length > 0) {
+          isPTPlan = planRows[0].trainer_included ? 1 : 0;
+        }
+      } catch (e) {
+        isPTPlan = 0;
+      }
+    }
+
     const query = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -172,6 +188,7 @@ async function createMembership(req, res) {
       discount !== undefined ? discount : 0,
       amount !== undefined ? amount : 0,
       req.body.collectedBy || null,
+      isPTPlan,
     ];
 
     const [result] = await db.query(query, values);
