@@ -1338,10 +1338,7 @@ const Members = () => {
                                       <div className="font-semibold text-white">{it.name || it.exerciseName || it.food || `Item ${i + 1}`}</div>
                                       <div className="text-xs text-gray-400 mt-1">{it.notes && (typeof it.notes === 'string' ? it.notes : JSON.stringify(it.notes))}</div>
                                     </div>
-                                    <div className="text-right text-sm text-gray-200">
-                                      <div>Qty: <span className="font-bold text-white">{it.quantity ?? it.qty ?? '--'}</span></div>
-                                      <div className="mt-1">{(it.calories || it.kcal) ? (<span className="font-bold text-emerald-400">{it.calories || it.kcal} kcal</span>) : <span className="text-white/40">-- kcal</span>}</div>
-                                    </div>
+                                   
                                   </div>
 
                                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-400">
