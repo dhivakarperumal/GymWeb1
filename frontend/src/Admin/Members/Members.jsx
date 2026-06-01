@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap, Dumbbell, Utensils, X } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap, Dumbbell, Utensils, X, Award } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
@@ -889,6 +889,13 @@ const Members = () => {
                           <Zap size={16} />
                         </button>
                       )}
+                      <button
+                        onClick={() => navigate(`${basePath}/buy-pt-plan`, { state: { member: m, returnUrl: location.pathname + location.search } })}
+                        className="p-2 rounded-lg bg-gradient-to-br from-purple-500/90 to-fuchsia-500/90 hover:from-purple-500 hover:to-fuchsia-500 text-white transition shadow-lg shadow-purple-500/20"
+                        title="PT Plan Update"
+                      >
+                        <Award size={16} />
+                      </button>
                       <button
                         onClick={() => openWorkoutModal(m.id || m.member_id)}
                         className="p-2 rounded-lg bg-green-500/80 hover:bg-green-500 text-white transition"
