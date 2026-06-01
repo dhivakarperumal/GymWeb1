@@ -71,6 +71,7 @@ const Members = () => {
   const location = useLocation();
   const basePath = location.pathname.includes("/trainer") ? "/trainer" : "/admin";
   const { user, role } = useAuth();
+  const isTrainer = role === "trainer" || location.pathname.startsWith("/trainer");
   const [ptViewMemberId, setPtViewMemberId] = useState(null);
   const [isPtModalOpen, setIsPtModalOpen] = useState(false);
 
@@ -694,7 +695,7 @@ const Members = () => {
                           </button>
                         );
                       })()}
-                      {canChangePlan(m) && (
+                      {!isTrainer && canChangePlan(m) && (
                         <button
                           onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
                           className="p-2 rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition"
@@ -793,7 +794,7 @@ const Members = () => {
                           </button>
                         );
                       })()}
-                      {canChangePlan(m) && (
+                      {!isTrainer && canChangePlan(m) && (
                         <button
                           onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
                           className="p-2 rounded-lg bg-violet-500/20 text-violet-500 hover:bg-violet-500 hover:text-white transition"
