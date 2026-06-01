@@ -744,7 +744,7 @@ const Members = () => {
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Normal Validity</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">PT Validity</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">PT Form</th>
+
                 <th className="px-4 py-5 text-left text-sm font-semibold">Actions</th>
               </tr>
             </thead>
@@ -850,38 +850,7 @@ const Members = () => {
                       </div>
                     </td>
 
-                    <td className="px-4 py-5">
-                      {!hasActiveOrPendingPlan(m) ? (
-                        <span className="text-white/30">-</span>
-                      ) : m.pt_form_completed ? (
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 text-emerald-500 font-bold">
-                            <CheckCircle size={16} />
-                            <span className="text-[10px] uppercase">Done</span>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setPtViewMemberId(m.id || m.member_id);
-                              setIsPtModalOpen(true);
-                            }}
-                            className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition shadow-sm"
-                            title="View PT Form"
-                          >
-                            <Eye size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
-                          className="flex items-center gap-1 text-orange-400"
-                        >
-                          <Clock size={16} />
-                          <span className="text-[10px] uppercase font-bold">
-                            Pending
-                          </span>
-                        </button>
-                      )}
-                    </td>
+
 
 
 
