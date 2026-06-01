@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   ChevronLeft, User, Phone, Mail, MapPin, Calendar,
   Clock, CreditCard, Activity, FileText, Trash2, Pencil,
@@ -12,6 +12,8 @@ import toast from "react-hot-toast";
 const MemberDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnUrl = location.state?.returnUrl;
 
   // State
   const [member, setMember] = useState(null);
@@ -122,7 +124,7 @@ const MemberDetails = () => {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-6 text-white">
         <p className="text-white/40 text-lg">Member not found</p>
-        <button onClick={() => navigate("/admin/members")} className="flex items-center gap-2 px-6 py-2 bg-white/10 rounded-xl">
+        <button onClick={() => navigate(returnUrl || "/admin/members")} className="flex items-center gap-2 px-6 py-2 bg-white/10 rounded-xl">
           <ChevronLeft size={20} /> Back to Directory
         </button>
       </div>
@@ -134,7 +136,7 @@ const MemberDetails = () => {
     try {
       await api.delete(`/members/${id}`);
       toast.success("Deleted successfully");
-      navigate("/admin/members");
+      navigate(returnUrl || "/admin/members");
     } catch (err) {
       toast.error("Delete failed");
     }
@@ -156,13 +158,13 @@ const MemberDetails = () => {
     <div className="min-h-screen pb-12 text-white">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <button onClick={() => navigate("/admin/members")} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+        <button onClick={() => navigate(returnUrl || "/admin/members")} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
           <ChevronLeft size={20} />
           <span className="font-bold uppercase tracking-wider text-xs">Back to Directory</span>
         </button>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/admin/addmembers/${id}`)} className="flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-all font-bold text-sm">
+          <button onClick={() => navigate(`/admin/addmembers/${id}`, { state: { returnUrl: returnUrl || "/admin/members" } })} className="flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-all font-bold text-sm">
             <Pencil size={18} className="text-orange-500" />
             Edit Profile
           </button>

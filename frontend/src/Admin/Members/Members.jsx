@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap } from "lucide-react";
+import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap, Dumbbell, Utensils, X } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
@@ -14,12 +14,34 @@ import dayjs from "dayjs";
 
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return "";
+  let videoId = "";
+  if (url.includes("youtube.com/shorts/")) {
+    videoId = url.split("shorts/")[1].split("?")[0];
+  } else if (url.includes("youtube.com/watch?v=")) {
+    videoId = url.split("v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+};
+
 const formatDobToDDMMYYYY = (dateString) => {
   if (!dateString || dateString.includes('0000-00-00') || dateString.includes('1899')) return "-";
   if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) return dateString;
   const parsed = dayjs(dateString);
   if (parsed.isValid()) return parsed.format("DD-MM-YYYY");
   return dateString;
+};
+
+const formatDayLabel = (day) => {
+  if (day == null) return "";
+  const s = String(day);
+  if (/^\d+$/.test(s)) return `Day ${parseInt(s, 10) + 1}`;
+  const m = s.match(/^Day\s*(\d+)$/i) || s.match(/^Day(\d+)$/i);
+  if (m) return `Day ${parseInt(m[1], 10)}`;
+  return s;
 };
 
 const isUpdatePlanEnabled = (m) => {
@@ -46,27 +68,71 @@ const canChangePlan = (m) => {
 };
 
 const Members = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const querySearch = searchParams.get("search") || "";
+  const queryTrainer = searchParams.get("trainer") || "all";
+  const queryFilterType = searchParams.get("filterType") || "all";
+  const queryViewMode = searchParams.get("viewMode") || "table";
+  const queryPage = Number(searchParams.get("page")) || 1;
+  const parseDateRangeFromParams = (params) => {
+    const type = params.get("dateType") || "All Time";
+    if (type === "Custom") {
+      const start = params.get("start") || params.get("from") || null;
+      const end = params.get("end") || params.get("to") || null;
+      return {
+        type,
+        range: start && end ? { start, end } : null,
+      };
+    }
+    return { type, range: null };
+  };
+
   const [search, setSearch] = useState(querySearch);
   const [members, setMembers] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(queryPage);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
-  const [filterType, setFilterType] = useState("all"); // all, withPlan, withoutPlan
-  const [selectedTrainer, setSelectedTrainer] = useState("all");
+  const [dateRange, setDateRange] = useState(() => parseDateRangeFromParams(searchParams));
+  const [filterType, setFilterType] = useState(queryFilterType); // all, withPlan, withoutPlan
+  const [selectedTrainer, setSelectedTrainer] = useState(queryTrainer);
   const [trainerOptions, setTrainerOptions] = useState([]);
+  const [viewMode, setViewMode] = useState(queryViewMode);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
   }, []);
 
   useEffect(() => {
-    setSearch(querySearch);
-  }, [querySearch]);
+    const queryTrainer = searchParams.get("trainer") || "all";
+    const queryFilterType = searchParams.get("filterType") || "all";
+    const queryViewMode = searchParams.get("viewMode") || "table";
+    const queryPage = Number(searchParams.get("page")) || 1;
+    setSearch(searchParams.get("search") || "");
+    setSelectedTrainer(queryTrainer);
+    setFilterType(queryFilterType);
+    setViewMode(queryViewMode);
+    setCurrentPage(queryPage);
+    setDateRange(parseDateRangeFromParams(searchParams));
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (selectedTrainer !== "all") params.set("trainer", selectedTrainer);
+    if (filterType !== "all") params.set("filterType", filterType);
+    if (viewMode !== "table") params.set("viewMode", viewMode);
+    if (currentPage > 1) params.set("page", currentPage.toString());
+    if (dateRange.type && dateRange.type !== "All Time") {
+      params.set("dateType", dateRange.type);
+      if (dateRange.type === "Custom" && dateRange.range) {
+        if (dateRange.range.start) params.set("start", dateRange.range.start);
+        if (dateRange.range.end) params.set("end", dateRange.range.end);
+      }
+    }
+    setSearchParams(params, { replace: true });
+  }, [search, selectedTrainer, filterType, viewMode, currentPage, dateRange, setSearchParams]);
+
   const [loading, setLoading] = useState(false);
   const [importErrors, setImportErrors] = useState([]);
-  const [viewMode, setViewMode] = useState("table"); // table, card
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.includes("/trainer") ? "/trainer" : "/admin";
@@ -74,6 +140,14 @@ const Members = () => {
   const isTrainer = role === "trainer" || location.pathname.startsWith("/trainer");
   const [ptViewMemberId, setPtViewMemberId] = useState(null);
   const [isPtModalOpen, setIsPtModalOpen] = useState(false);
+  const [workoutMemberId, setWorkoutMemberId] = useState(null);
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [workoutData, setWorkoutData] = useState([]);
+  const [dietMemberId, setDietMemberId] = useState(null);
+  const [isDietModalOpen, setIsDietModalOpen] = useState(false);
+  const [dietData, setDietData] = useState(null);
+  const [dietTitle, setDietTitle] = useState("");
+  const [activeDietDay, setActiveDietDay] = useState(null);
 
   const fetchTrainers = async () => {
     try {
@@ -188,6 +262,56 @@ const Members = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || "Delete failed");
+    }
+  };
+
+  // 💪 FETCH AND DISPLAY WORKOUT DATA
+  const handleOpenWorkout = (memberId) => {
+    setWorkoutMemberId(memberId);
+    setIsWorkoutModalOpen(true);
+    fetchWorkoutData(memberId);
+  };
+
+  const fetchWorkoutData = async (memberId) => {
+    try {
+      const res = await api.get(`/workouts?memberId=${memberId}`);
+      const workouts = Array.isArray(res.data) ? res.data : [];
+      setWorkoutData(workouts);
+    } catch (err) {
+      console.error("Workout fetch error:", err);
+      toast.error("Failed to load workout data");
+      setWorkoutData([]);
+    }
+  };
+
+  // 🍽 FETCH AND DISPLAY DIET DATA
+  const handleOpenDiet = (memberId) => {
+    setDietMemberId(memberId);
+    setIsDietModalOpen(true);
+    fetchDietData(memberId);
+  };
+
+  const fetchDietData = async (memberId) => {
+    try {
+      const res = await api.get(`/diet-plans?memberId=${memberId}`);
+      const plans = Array.isArray(res.data) ? res.data : [];
+      if (plans.length > 0) {
+        const latestPlan = plans.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        setDietTitle(latestPlan.title || "Diet Plan");
+        let daysData = latestPlan.days;
+        if (typeof daysData === "string") {
+          daysData = JSON.parse(daysData);
+        }
+        setDietData(daysData);
+        setActiveDietDay(Object.keys(daysData)[0]);
+      } else {
+        setDietData(null);
+        setDietTitle("");
+      }
+    } catch (err) {
+      console.error("Diet fetch error:", err);
+      toast.error("Failed to load diet data");
+      setDietData(null);
     }
   };
 
@@ -358,7 +482,44 @@ const Members = () => {
     reader.readAsArrayBuffer(file);
   };
 
+  // 🏋️ FETCH WORKOUTS
+  const openWorkoutModal = async (memberId) => {
+    setWorkoutMemberId(memberId);
+    try {
+      const res = await api.get(`/workouts?memberId=${memberId}`);
+      const workouts = Array.isArray(res.data) ? res.data : [];
+      setWorkoutData(workouts);
+    } catch (err) {
+      console.error("Error fetching workouts:", err);
+      setWorkoutData([]);
+    }
+    setIsWorkoutModalOpen(true);
+  };
 
+  // 🥗 FETCH DIET
+  const openDietModal = async (memberId, memberEmail) => {
+    setDietMemberId(memberId);
+    try {
+      const res = await api.get(`/diet-plans?email=${encodeURIComponent(memberEmail)}`);
+      const diets = Array.isArray(res.data) ? res.data : [];
+      if (diets.length > 0) {
+        const latestDiet = diets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        setDietTitle(latestDiet.title || "Diet Plan");
+        let daysData = latestDiet.days;
+        if (typeof daysData === "string") {
+          try { daysData = JSON.parse(daysData); } catch (e) { daysData = null; }
+        }
+        setDietData(daysData);
+        if (daysData) setActiveDietDay(Object.keys(daysData)[0]);
+      } else {
+        setDietData(null);
+      }
+    } catch (err) {
+      console.error("Error fetching diet:", err);
+      setDietData(null);
+    }
+    setIsDietModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen px-0 py-8 ">
@@ -467,7 +628,7 @@ const Members = () => {
           )}
 
           <button
-            onClick={() => navigate(`${basePath}/pt-form`)}
+            onClick={() => navigate(`${basePath}/pt-form`, { state: { returnUrl: location.pathname + location.search } })}
             className="flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-semibold text-white
             bg-white/10 border border-white/20 hover:bg-white/20 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
           >
@@ -477,7 +638,7 @@ const Members = () => {
 
 
 
-          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+          <DateRangeFilter dateRange={dateRange} onRangeChange={(type, range) => setDateRange({ type, range })} />
 
           {/* 🖥 View Toggle */}
           <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 ml-0 sm:ml-2">
@@ -500,7 +661,7 @@ const Members = () => {
           </div>
 
           <button
-            onClick={() => navigate(`${basePath}/addmembers`)}
+            onClick={() => navigate(`${basePath}/addmembers`, { state: { returnUrl: location.pathname + location.search } })}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white
             bg-gradient-to-r from-orange-500 to-orange-600
             hover:scale-105 active:scale-95 transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
@@ -541,7 +702,7 @@ const Members = () => {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-center lg:justify-end">
           <button
-            onClick={() => navigate(`${basePath}/buyplanadmin`)}
+            onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { returnUrl: location.pathname + location.search } })}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all shadow-lg whitespace-nowrap flex-1 sm:flex-none"
           >
             Buy Plan
@@ -706,7 +867,7 @@ const Members = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                           className="flex items-center gap-1 text-orange-400"
                         >
                           <Clock size={16} />
@@ -721,7 +882,7 @@ const Members = () => {
 
                     <td className="px-4 py-5 flex gap-2">
                       <button
-                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                         className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
                         title="View Details"
                       >
@@ -732,7 +893,7 @@ const Members = () => {
                         return (
                           <button
                             onClick={() => {
-                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m } });
+                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m, returnUrl: location.pathname + location.search } });
                             }}
                             disabled={!enabled}
                             className={`p-2 rounded-lg text-white transition ${enabled
@@ -747,7 +908,7 @@ const Members = () => {
                       })()}
                       {!isTrainer && canChangePlan(m) && (
                         <button
-                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
+                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true, returnUrl: location.pathname + location.search } })}
                           className="p-2 rounded-lg bg-violet-500/80 hover:bg-violet-500 text-white transition"
                           title="Change Plan"
                         >
@@ -755,11 +916,25 @@ const Members = () => {
                         </button>
                       )}
                       <button
+                        onClick={() => openWorkoutModal(m.id || m.member_id)}
+                        className="p-2 rounded-lg bg-green-500/80 hover:bg-green-500 text-white transition"
+                        title="View Workout"
+                      >
+                        <Dumbbell size={16} />
+                      </button>
+                      <button
+                        onClick={() => openDietModal(m.id || m.member_id, m.email || m.user_email)}
+                        className="p-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 text-white transition"
+                        title="View Diet Plan"
+                      >
+                        <Utensils size={16} />
+                      </button>
+                      <button
                         onClick={() => {
                           if (m.source === "users") {
-                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`);
+                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`, { state: { returnUrl: location.pathname + location.search } });
                           } else {
-                            navigate(`${basePath}/addmembers/${m.id}`);
+                            navigate(`${basePath}/addmembers/${m.id}`, { state: { returnUrl: location.pathname + location.search } });
                           }
                         }}
                         className="p-2 rounded-lg bg-yellow-500/80 hover:bg-yellow-500 text-white transition"
@@ -820,7 +995,7 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`)}
+                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                         className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
                         title="View Details"
                       >
@@ -831,7 +1006,7 @@ const Members = () => {
                         return (
                           <button
                             onClick={() => {
-                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m } });
+                              if (enabled) navigate(`${basePath}/buyplanadmin`, { state: { member: m, returnUrl: location.pathname + location.search } });
                             }}
                             disabled={!enabled}
                             className={`p-2 rounded-lg transition ${enabled
@@ -846,7 +1021,7 @@ const Members = () => {
                       })()}
                       {!isTrainer && canChangePlan(m) && (
                         <button
-                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true } })}
+                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m, forceChange: true, returnUrl: location.pathname + location.search } })}
                           className="p-2 rounded-lg bg-violet-500/20 text-violet-500 hover:bg-violet-500 hover:text-white transition"
                           title="Change Plan"
                         >
@@ -854,11 +1029,25 @@ const Members = () => {
                         </button>
                       )}
                       <button
+                        onClick={() => openWorkoutModal(m.id || m.member_id)}
+                        className="p-2 rounded-lg bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition"
+                        title="View Workout"
+                      >
+                        <Dumbbell size={14} />
+                      </button>
+                      <button
+                        onClick={() => openDietModal(m.id || m.member_id, m.email || m.user_email)}
+                        className="p-2 rounded-lg bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition"
+                        title="View Diet Plan"
+                      >
+                        <Utensils size={14} />
+                      </button>
+                      <button
                         onClick={() => {
                           if (m.source === "users") {
-                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`);
+                            navigate(`${basePath}/addmembers?user_id=${m.u_id}`, { state: { returnUrl: location.pathname + location.search } });
                           } else {
-                            navigate(`${basePath}/addmembers/${m.id}`);
+                            navigate(`${basePath}/addmembers/${m.id}`, { state: { returnUrl: location.pathname + location.search } });
                           }
                         }}
                         className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white transition"
@@ -944,7 +1133,7 @@ const Members = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
                           className="flex items-center gap-1 text-orange-400 hover:text-orange-500 text-[10px] font-bold underline decoration-dotted underline-offset-2"
                         >
                           <Clock size={12} /> PENDING
@@ -1082,7 +1271,7 @@ const Members = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigate(`${basePath}/pt-form?member_id=${ptViewMemberId}`)}
+                  onClick={() => navigate(`${basePath}/pt-form?member_id=${ptViewMemberId}`, { state: { returnUrl: location.pathname + location.search } })}
                   className="p-2 bg-yellow-500/20 hover:bg-yellow-500 text-yellow-500 hover:text-white rounded-lg transition"
                   title="Edit PT Form"
                 >
@@ -1116,6 +1305,265 @@ const Members = () => {
                 className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl transition-all shadow-lg"
               >
                 Close View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🏋️ WORKOUT MODAL */}
+      {isWorkoutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1a1625] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <Dumbbell size={20} className="text-green-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Workout Plan</h3>
+                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{workoutMemberId}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsWorkoutModalOpen(false)}
+                className="p-2 bg-white/5 hover:bg-red-500/20 hover:text-red-500 text-white rounded-lg transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                  {workoutData && workoutData.length > 0 ? (
+                <div className="space-y-4">
+                  {workoutData.map((workout, idx) => {
+                    // Normalize possible shapes: workout may be a single exercise object
+                    // or an object like { time, items: [...] } (collection). Handle both safely.
+                    const items = Array.isArray(workout.items)
+                      ? workout.items
+                      : Array.isArray(workout.exercises)
+                      ? workout.exercises
+                      : Array.isArray(workout.days)
+                      ? workout.days
+                      : workout.days && typeof workout.days === 'object'
+                      ? Object.values(workout.days).flat()
+                      : null;
+
+                    if (items && items.length > 0) {
+                      return (
+                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                          <h4 className="text-lg font-bold text-white mb-2">{workout.name || workout.title || `Workout ${idx + 1}`}</h4>
+                          <div className="space-y-2">
+                            {items.map((it, i) => (
+                              <div key={i} className="bg-white/2 p-3 rounded grid grid-cols-1 md:grid-cols-[120px_minmax(0,1fr)] gap-3 items-start">
+                                <div className="w-full md:w-28 h-20 bg-black/10 rounded overflow-hidden flex items-center justify-center border border-white/5">
+                                  {it.media ? (
+                                    it.media.includes('youtube.com') || it.media.includes('youtu.be') ? (
+                                      <iframe
+                                        src={getYouTubeEmbedUrl(it.media)}
+                                        title={it.name || it.exerciseName || 'Preview'}
+                                        className="w-full h-full border-0 pointer-events-none"
+                                      />
+                                    ) : it.media.match(/\.(mp4|webm|ogg)$/i) || it.media.startsWith('data:video') ? (
+                                      <video src={it.media} className="w-full h-full object-cover" controls />
+                                    ) : (
+                                      <img src={it.media} alt={it.name || it.food || 'media'} className="w-full h-full object-cover" />
+                                    )
+                                  ) : (
+                                    <div className="text-white/30 text-sm">No media</div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <div className="font-semibold text-white">{it.name || it.exerciseName || it.food || `Item ${i + 1}`}</div>
+                                      <div className="text-xs text-gray-400 mt-1">{it.notes && (typeof it.notes === 'string' ? it.notes : JSON.stringify(it.notes))}</div>
+                                    </div>
+                                   
+                                  </div>
+
+                                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-400">
+                                    {it.time && <div><div className="text-white/40">Time</div><div className="text-white font-bold">{it.time}</div></div>}
+                                    {it.sets && <div><div className="text-white/40">Sets</div><div className="text-white font-bold">{it.sets}</div></div>}
+                                    {it.count && <div><div className="text-white/40">Reps/Count</div><div className="text-white font-bold">{it.count}</div></div>}
+                                    {it.type && <div><div className="text-white/40">Type</div><div className="text-white font-bold">{it.type}</div></div>}
+                                    {it.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="text-white font-bold">{it.massGain}</div></div>}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Fallback: treat as single workout object
+                    return (
+                      <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <h4 className="text-lg font-bold text-white mb-2">{workout.exerciseName || workout.name || "Unnamed Exercise"}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-[120px_minmax(0,1fr)] gap-4">
+                              <div className="w-full md:w-28 h-28 bg-black/10 rounded overflow-hidden flex items-center justify-center border border-white/5">
+                                {workout.media ? (
+                                  workout.media.includes('youtube.com') || workout.media.includes('youtu.be') ? (
+                                    <iframe src={getYouTubeEmbedUrl(workout.media)} title={workout.exerciseName || workout.name} className="w-full h-full border-0 pointer-events-none" />
+                                  ) : workout.media.match(/\.(mp4|webm|ogg)$/i) || workout.media.startsWith('data:video') ? (
+                                    <video src={workout.media} className="w-full h-full object-cover" controls />
+                                  ) : (
+                                    <img src={workout.media} alt={workout.exerciseName || workout.name || 'exercise'} className="w-full h-full object-cover" />
+                                  )
+                                ) : (
+                                  <div className="text-white/30 text-sm">No media</div>
+                                )}
+                              </div>
+
+                              <div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                                  {workout.time && <div><div className="text-white/40">Time</div><div className="text-white font-bold">{workout.time}</div></div>}
+                                  {workout.sets && <div><div className="text-white/40">Sets</div><div className="text-white font-bold">{workout.sets}</div></div>}
+                                  {workout.count && <div><div className="text-white/40">Reps</div><div className="text-white font-bold">{workout.count}</div></div>}
+                                  {workout.type && <div><div className="text-white/40">Type</div><div className="text-white font-bold">{workout.type}</div></div>}
+                                  {workout.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="text-white font-bold">{workout.massGain}</div></div>}
+                                </div>
+                                {workout.notes && <div className="mt-3 text-white/80 text-sm">{typeof workout.notes === 'string' ? workout.notes : JSON.stringify(workout.notes)}</div>}
+                              </div>
+                            </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Dumbbell size={48} className="text-white/20 mb-3" />
+                  <p className="text-white/40 text-sm">No workout plan assigned</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white/5 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setIsWorkoutModalOpen(false)}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all shadow-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🥗 DIET MODAL */}
+      {isDietModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1a1625] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/20 rounded-lg">
+                  <Utensils size={20} className="text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">{dietTitle || "Diet Plan"}</h3>
+                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{dietMemberId}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDietModalOpen(false)}
+                className="p-2 bg-white/5 hover:bg-red-500/20 hover:text-red-500 text-white rounded-lg transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              {dietData ? (
+                <div className="space-y-4">
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    {Object.keys(dietData).map((day) => (
+                      <button
+                        key={day}
+                        onClick={() => setActiveDietDay(day)}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+                          activeDietDay === day
+                            ? "bg-amber-500 text-white"
+                            : "bg-white/5 text-white/40 hover:bg-white/10"
+                        }`}
+                      >
+                        {formatDayLabel(day)}
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeDietDay && dietData[activeDietDay] && (
+                    <div className="space-y-3">
+                      {Object.entries(dietData[activeDietDay]).map(([time, meal], idx) => (
+                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                          <h4 className="text-sm font-bold text-amber-400 mb-2 uppercase">{time}</h4>
+                          {/* meal may be a string, an array, or an object like { time, items } */}
+                          {typeof meal === 'string' ? (
+                            <p className="text-white whitespace-pre-wrap">{meal}</p>
+                          ) : Array.isArray(meal) ? (
+                            <div className="space-y-2">
+                              {meal.map((it, i) => (
+                                <div key={i} className="flex items-center justify-between">
+                                  <div className="text-white text-sm">{typeof it === 'string' ? it : it.food || it.name || JSON.stringify(it)}</div>
+                                  <div className="text-sm text-gray-200">{(it.calories || it.kcal) ? `${it.calories || it.kcal} kcal` : ''}</div>
+                                </div>
+                              ))}
+                              {/* total calories */}
+                              <div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-sm text-white/80">
+                                <div>Total</div>
+                                <div className="font-bold text-amber-400">{meal.reduce((s, it) => s + (parseInt(it.calories || it.kcal) || 0), 0)} kcal</div>
+                              </div>
+                            </div>
+                          ) : meal && Array.isArray(meal.items) ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="text-sm text-white/40">Time</div>
+                                {meal.time && <div className="text-sm font-semibold text-amber-400">{meal.time}</div>}
+                              </div>
+                              {meal.items.map((it, i) => (
+                                <div key={i} className="flex items-center justify-between">
+                                  <div className="text-white text-sm">
+                                    <div className="font-semibold">{it.food || it.name || JSON.stringify(it)}</div>
+                                    <div className="text-xs text-gray-400">Qty: <span className="text-white/80">{it.quantity ?? it.qty ?? '--'}</span></div>
+                                  </div>
+                                  <div className="text-sm text-emerald-400 font-bold">{(it.calories || it.kcal) ? `${it.calories || it.kcal} kcal` : '0 kcal'}</div>
+                                </div>
+                              ))}
+                              {/* total calories */}
+                              <div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-sm text-white/80">
+                                <div>Total</div>
+                                <div className="font-bold text-amber-400">{meal.items.reduce((s, it) => s + (parseInt(it.calories || it.kcal) || 0), 0)} kcal</div>
+                              </div>
+                            </div>
+                          ) : (
+                            <pre className="text-white whitespace-pre-wrap">{JSON.stringify(meal)}</pre>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Utensils size={48} className="text-white/20 mb-3" />
+                  <p className="text-white/40 text-sm">No diet plan assigned</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white/5 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setIsDietModalOpen(false)}
+                className="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition-all shadow-lg"
+              >
+                Close
               </button>
             </div>
           </div>

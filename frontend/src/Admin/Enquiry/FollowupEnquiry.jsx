@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import {
   Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X,
   ChevronLeft, ChevronRight, MessageSquare, Phone, Mail, Calendar,
@@ -16,6 +16,8 @@ import toast from "react-hot-toast";
 
 const FollowupEnquiry = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, role } = useAuth();
   // State
   const [enquiries, setEnquiries] = useState([]);
@@ -26,26 +28,39 @@ const FollowupEnquiry = () => {
   const [error, setError] = useState(null);
 
   // Search & Filter
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
+  const parseDateRangeFromParams = (params) => {
+    const type = params.get("dateType") || "All Time";
+    if (type === "Custom") {
+      const from = params.get("from") || null;
+      const to = params.get("to") || null;
+      return {
+        type,
+        range: from && to ? { from, to } : null,
+      };
+    }
+    return { type, range: null };
+  };
+
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get("search") || "");
+  const [dateRange, setDateRange] = useState(() => parseDateRangeFromParams(searchParams));
 
   // Selection
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
   // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => Number(searchParams.get("page")) || 1);
   const itemsPerPage = 25;
 
   // View mode: 'table' | 'card'
-  const [viewMode, setViewMode] = useState('table');
+  const [viewMode, setViewMode] = useState(() => searchParams.get("viewMode") || 'table');
 
   // Status filter
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get("status") || 'all');
   const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [staffFilter, setStaffFilter] = useState('all');
+  const [staffFilter, setStaffFilter] = useState(() => searchParams.get("staff") || 'all');
   const [isStaffOpen, setIsStaffOpen] = useState(false);
-  const [assignedTrainerFilter, setAssignedTrainerFilter] = useState('all');
+  const [assignedTrainerFilter, setAssignedTrainerFilter] = useState(() => searchParams.get("assignedTrainer") || 'all');
   const [isAssignedTrainerOpen, setIsAssignedTrainerOpen] = useState(false);
   const [trainers, setTrainers] = useState([]);
   const [importErrors, setImportErrors] = useState([]);
@@ -86,6 +101,35 @@ const FollowupEnquiry = () => {
     fetchPlans();
     fetchTrainers();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setSearchTerm(params.get("search") || "");
+    setStatusFilter(params.get("status") || 'all');
+    setStaffFilter(params.get("staff") || 'all');
+    setAssignedTrainerFilter(params.get("assignedTrainer") || 'all');
+    setViewMode(params.get("viewMode") || 'table');
+    setCurrentPage(Number(params.get("page")) || 1);
+    setDateRange(parseDateRangeFromParams(params));
+  }, [location.search]);
+
+  useEffect(() => {
+    const params = {};
+    if (searchTerm) params.search = searchTerm;
+    if (statusFilter !== 'all') params.status = statusFilter;
+    if (staffFilter !== 'all') params.staff = staffFilter;
+    if (assignedTrainerFilter !== 'all') params.assignedTrainer = assignedTrainerFilter;
+    if (viewMode !== 'table') params.viewMode = viewMode;
+    if (currentPage > 1) params.page = currentPage.toString();
+    if (dateRange.type && dateRange.type !== 'All Time') {
+      params.dateType = dateRange.type;
+      if (dateRange.type === 'Custom' && dateRange.range) {
+        if (dateRange.range.from) params.from = dateRange.range.from;
+        if (dateRange.range.to) params.to = dateRange.range.to;
+      }
+    }
+    setSearchParams(params, { replace: true });
+  }, [searchTerm, statusFilter, staffFilter, assignedTrainerFilter, viewMode, currentPage, dateRange, setSearchParams]);
 
   const fetchTrainers = async () => {
     try {

@@ -41,6 +41,7 @@ const AddMember = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const returnUrl = location.state?.returnUrl;
   const isEdit = Boolean(id);
 
   // ✏️ FETCH PLANS
@@ -269,8 +270,12 @@ const AddMember = () => {
       }
 
       toast.success(isEdit ? "Member updated ✅" : "Member added 💪");
-      const basePath = location.pathname.includes('/trainer') ? '/trainer' : '/admin';
-      navigate(`${basePath}/members`);
+      if (returnUrl) {
+        navigate(returnUrl);
+      } else {
+        const basePath = location.pathname.includes('/trainer') ? '/trainer' : '/admin';
+        navigate(`${basePath}/members`);
+      }
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || err.response?.data?.error || "Server error");

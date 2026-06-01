@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -16,9 +16,11 @@ const PTForm = () => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { role, profileName } = useAuth();
   const memberId = searchParams.get("member_id");
+  const returnUrl = location.state?.returnUrl;
 
   useEffect(() => {
     if (memberId) {
@@ -156,7 +158,9 @@ const PTForm = () => {
 
         await api.post("/pt-forms", payload);
         toast.success("PT Registration completed and stored successfully!");
-        if (role === 'trainer') {
+        if (returnUrl) {
+          navigate(returnUrl);
+        } else if (role === 'trainer') {
           navigate('/trainer');
         } else {
           navigate('/admin/members');
