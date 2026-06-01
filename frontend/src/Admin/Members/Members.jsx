@@ -1245,6 +1245,142 @@ const Members = () => {
         </div>
       )}
 
+      {/* 🏋️ WORKOUT MODAL */}
+      {isWorkoutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1a1625] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <Dumbbell size={20} className="text-green-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Workout Plan</h3>
+                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{workoutMemberId}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsWorkoutModalOpen(false)}
+                className="p-2 bg-white/5 hover:bg-red-500/20 hover:text-red-500 text-white rounded-lg transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              {workoutData && workoutData.length > 0 ? (
+                <div className="space-y-4">
+                  {workoutData.map((workout, idx) => (
+                    <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                      <h4 className="text-lg font-bold text-white mb-2">{workout.exerciseName || "Unnamed Exercise"}</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                        {workout.sets && <div><span className="text-gray-400">Sets:</span> <span className="text-white font-bold">{workout.sets}</span></div>}
+                        {workout.reps && <div><span className="text-gray-400">Reps:</span> <span className="text-white font-bold">{workout.reps}</span></div>}
+                        {workout.weight && <div><span className="text-gray-400">Weight:</span> <span className="text-white font-bold">{workout.weight}</span></div>}
+                        {workout.duration && <div><span className="text-gray-400">Duration:</span> <span className="text-white font-bold">{workout.duration}</span></div>}
+                        {workout.notes && <div className="col-span-2 sm:col-span-3"><span className="text-gray-400">Notes:</span> <span className="text-white">{workout.notes}</span></div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Dumbbell size={48} className="text-white/20 mb-3" />
+                  <p className="text-white/40 text-sm">No workout plan assigned</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white/5 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setIsWorkoutModalOpen(false)}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all shadow-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🥗 DIET MODAL */}
+      {isDietModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1a1625] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/20 rounded-lg">
+                  <Utensils size={20} className="text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">{dietTitle || "Diet Plan"}</h3>
+                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{dietMemberId}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDietModalOpen(false)}
+                className="p-2 bg-white/5 hover:bg-red-500/20 hover:text-red-500 text-white rounded-lg transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              {dietData ? (
+                <div className="space-y-4">
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    {Object.keys(dietData).map((day) => (
+                      <button
+                        key={day}
+                        onClick={() => setActiveDietDay(day)}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+                          activeDietDay === day
+                            ? "bg-amber-500 text-white"
+                            : "bg-white/5 text-white/40 hover:bg-white/10"
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeDietDay && dietData[activeDietDay] && (
+                    <div className="space-y-3">
+                      {Object.entries(dietData[activeDietDay]).map(([time, meal], idx) => (
+                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                          <h4 className="text-sm font-bold text-amber-400 mb-2 uppercase">{time}</h4>
+                          <p className="text-white whitespace-pre-wrap">{meal}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Utensils size={48} className="text-white/20 mb-3" />
+                  <p className="text-white/40 text-sm">No diet plan assigned</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white/5 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setIsDietModalOpen(false)}
+                className="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition-all shadow-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
