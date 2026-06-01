@@ -12,7 +12,7 @@ const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
 const MEMBERSHIP_API = "/memberships";
 
-const BuyPlanadmin = () => {
+const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profileName, user } = useAuth();
@@ -97,10 +97,16 @@ const BuyPlanadmin = () => {
 
   // ================= FILTER PLANS FOR DROPDOWN =================
   const getFilteredPlans = () => {
-    const searchLower = planSearch.toLowerCase().trim();
-    if (!searchLower) return plans;
+    const availablePlans = filterTrainerPlans
+      ? plans.filter(
+          (p) => p.trainerIncluded === true || p.trainer_included === 1 || p.trainerIncluded === 1
+        )
+      : plans;
 
-    return plans.filter((p) => {
+    const searchLower = planSearch.toLowerCase().trim();
+    if (!searchLower) return availablePlans;
+
+    return availablePlans.filter((p) => {
       const name = (p.name || "").toLowerCase();
       const duration = (p.duration || "").toLowerCase();
       const price = ((p.finalPrice ?? p.final_price ?? p.price) || "").toString();
@@ -660,6 +666,9 @@ const BuyPlanadmin = () => {
 
   return (
     <div className="text-white min-h-screen p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-white">{pageTitle}</h1>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-10">
 

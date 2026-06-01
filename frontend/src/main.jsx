@@ -183,9 +183,12 @@ const router = createHashRouter([
       { path: "billing", element: <Billings /> },
 
 
-      { path: "plansall", element: <PlansAll /> },
+      { path: "plansall", element: <PlansAll pageTitle="Normal Plans" buttonLabel="Add Normal Plan" /> },
+      { path: "pt-plans", element: <PlansAll filterTrainerPlans={true} pageTitle="PT Plans" buttonLabel="Add PT Plan" buttonPath="/admin/add-pt-plan" /> },
       { path: "addplan", element: <AddEditGymPlan /> },
       { path: "addplan/:id", element: <AddEditGymPlan /> },
+      { path: "add-pt-plan", element: <AddEditGymPlan defaultTrainerIncluded={true} pageTitle="PT Plan" /> },
+      { path: "add-pt-plan/:id", element: <AddEditGymPlan /> },
 
       { path: "fecilities", element: <FacilitiesAll /> },
       { path: "addfecilities", element: <AddEditFacility /> },
@@ -228,6 +231,7 @@ const router = createHashRouter([
       { path: "pt-form", element: <PTForm /> },
       { path: "pt-form/print/:id", element: <PTFormPrint /> },
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
+      { path: "buy-pt-plan", element: <BuyPlanadmin filterTrainerPlans={true} pageTitle="Buy PT Plans" /> },
       { path: "emi", element: <EMIList /> },
       { path: "plan-history", element: <PlanHistory /> },
       { path: "trainer-referred-plans", element: <TrainerReferredPlans /> },

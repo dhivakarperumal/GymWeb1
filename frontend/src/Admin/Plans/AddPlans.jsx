@@ -51,7 +51,7 @@ const FACILITIES = [
 const MEALS = ["Morning", "Breakfast", "Lunch", "Evening", "Dinner"];
 
 /* ================= COMPONENT ================= */
-const AddEditGymPlan = () => {
+const AddEditGymPlan = ({ defaultTrainerIncluded = false, pageTitle = "Gym Membership Plan" }) => {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ const AddEditGymPlan = () => {
     discount: 0,
     finalPrice: 0,
     facilities: [],
-    trainerIncluded: false,
+    trainerIncluded: defaultTrainerIncluded,
     dietPlans: [],
     active: true,
   });

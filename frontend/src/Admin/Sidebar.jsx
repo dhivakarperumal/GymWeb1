@@ -36,6 +36,8 @@ const navItems = [
   // { path: "/admin/enquiry", label: "Client Enquiry", icon: MessageSquare },
 
   { path: "/admin/members", label: "Members", icon: Users },
+  { path: "/admin/pt-plans", label: "PT Plans", icon: CalendarCheck },
+  { path: "/admin/buy-pt-plan", label: "Buy PT Plans", icon: CreditCard },
   { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
   { path: "/admin/emi", label: "EMI", icon: BarChart3 },
   { path: "/admin/trainer-referred-plans", label: "Trainer Referred Plans", icon: UserCheck },
@@ -51,7 +53,7 @@ const navItems = [
     icon: Package,
     children: [
       { path: "/admin/products", label: "Products", icon: Dumbbell },
-      { path: "/admin/plansall", label: "Plans", icon: ClipboardList },
+      { path: "/admin/plansall", label: "Normal Plans", icon: ClipboardList },
       { path: "/admin/fecilities", label: "Facilities", icon: Activity },
       { path: "/admin/stockdetails", label: "Supplements Stock", icon: Boxes },
     ],
@@ -96,6 +98,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     "/admin/staff": ["/admin/staff", "/admin/addstaff", "/admin/viewstaff"],
     "/admin/products": ["/admin/products", "/admin/addproducts", "/admin/productdetail"],
     "/admin/plansall": ["/admin/plansall", "/admin/addplan"],
+    "/admin/pt-plans": ["/admin/pt-plans", "/admin/add-pt-plan"],
     "/admin/fecilities": ["/admin/fecilities", "/admin/addfecilities"],
     "/admin/stockdetails": ["/admin/stockdetails", "/admin/add-stock"],
     // Each attendance route is only active for its own exact path

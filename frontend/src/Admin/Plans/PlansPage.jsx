@@ -8,7 +8,7 @@ import {
   FaList,
   FaThLarge,
 } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import cache from "../../cache";
 
@@ -23,11 +23,26 @@ const glassInput =
   "w-full bg-gray-800 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30";
 
 /* ================= COMPONENT ================= */
-const PlansAll = () => {
+const PlansAll = ({
+  filterTrainerPlans = false,
+  pageTitle = "Normal Plans",
+  buttonLabel = "Add Normal Plan",
+  buttonPath = "/admin/addplan",
+}) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState(
+    location.pathname.includes("/pt-plans") ? "pt" : "normal"
+  );
+
+  useEffect(() => {
+    if (!filterTrainerPlans) {
+      setActiveTab(location.pathname.includes("/pt-plans") ? "pt" : "normal");
+    }
+  }, [location.pathname, filterTrainerPlans]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("table"); // "card" or "table"
@@ -78,7 +93,18 @@ const PlansAll = () => {
   };
 
   /* ================= FILTER ================= */
-  const filteredPlans = plans.filter((p) => {
+  const isPTView = filterTrainerPlans || activeTab === "pt";
+
+  const displayPlans = isPTView
+    ? plans.filter(
+        (p) => p.trainerIncluded === true || p.trainer_included === 1 || p.trainerIncluded === 1
+      )
+    : plans.filter(
+        (p) =>
+          p.trainerIncluded === false || p.trainer_included === 0 || p.trainerIncluded === 0 || p.trainerIncluded == null
+      );
+
+  const filteredPlans = displayPlans.filter((p) => {
     const matchSearch = p.name
       ?.toLowerCase()
       .includes(search.toLowerCase());
@@ -91,8 +117,23 @@ const PlansAll = () => {
     return matchSearch && matchStatus;
   });
 
-  const totalPlans = plans.length;
-  const activePlans = plans.filter((p) => p.active).length;
+  const totalPlans = displayPlans.length;
+  const activePlans = displayPlans.filter((p) => p.active).length;
+  const currentTitle = filterTrainerPlans
+    ? pageTitle
+    : activeTab === "pt"
+    ? "PT Plans"
+    : "Normal Plans";
+  const currentButtonLabel = filterTrainerPlans
+    ? buttonLabel
+    : activeTab === "pt"
+    ? "Add PT Plan"
+    : "Add Normal Plan";
+  const currentButtonPath = filterTrainerPlans
+    ? buttonPath
+    : activeTab === "pt"
+    ? "/admin/add-pt-plan"
+    : "/admin/addplan";
 
   return (
     <div className="min-h-screen  p-0 text-white space-y-6">
@@ -100,22 +141,44 @@ const PlansAll = () => {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
 
-        <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">
-          Gym Membership Plans
-        </h2>
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">
+            {currentTitle}
+          </h2>
+          {!filterTrainerPlans && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => setActiveTab("normal")}
+                className={`px-4 py-2 rounded-full transition ${
+                  activeTab === "normal"
+                    ? "bg-orange-500 text-white"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                }`}
+              >
+                Normal Plans
+              </button>
+              <button
+                onClick={() => setActiveTab("pt")}
+                className={`px-4 py-2 rounded-full transition ${
+                  activeTab === "pt"
+                    ? "bg-orange-500 text-white"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                }`}
+              >
+                PT Plans
+              </button>
+            </div>
+          )}
+        </div>
 
         <button
-          onClick={() => navigate("/admin/addplan")}
-          className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-xl text-white font-semibold
-    bg-gradient-to-r from-orange-500 to-orange-600 
-    hover:scale-105 transition shadow-lg flex items-center justify-center"
+          onClick={() => navigate(currentButtonPath)}
+          className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-orange-500 to-orange-600 hover:scale-105 transition shadow-lg flex items-center justify-center"
         >
           <FaPlus className="mr-2" />
-          Add Plan
+          {currentButtonLabel}
         </button>
-
       </div>
-
 
       {/* STATS */}
       <div className="grid sm:grid-cols-2 gap-6">
