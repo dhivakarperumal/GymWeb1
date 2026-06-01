@@ -739,7 +739,6 @@ const Members = () => {
                   Member ID
                 </th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
-                <th className="px-4 py-5 text-left text-sm font-semibold">Mobile Number</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
@@ -762,9 +761,9 @@ const Members = () => {
                     <td className="px-4 py-5 font-medium text-gray-400">
                       {m.member_id || "-"}
                     </td>
-                    <td className="px-4 py-5 font-medium text-white">{m.name || "N/A"}</td>
                     <td className="px-4 py-5">
-                      <div className="font-medium text-gray-300">{m.phone || "N/A"}</div>
+                      <div className="font-medium text-white">{m.name || "N/A"}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{m.phone || ""}</div>
                     </td>
 
 
