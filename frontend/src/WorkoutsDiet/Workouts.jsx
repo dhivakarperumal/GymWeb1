@@ -20,6 +20,15 @@ const getYouTubeEmbedUrl = (url) => {
   return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
 };
 
+const formatDayLabel = (day) => {
+  if (day == null) return "";
+  const s = String(day);
+  if (/^\d+$/.test(s)) return `Day ${parseInt(s, 10) + 1}`;
+  const m = s.match(/^Day\s*(\d+)$/i) || s.match(/^Day(\d+)$/i);
+  if (m) return `Day ${parseInt(m[1], 10)}`;
+  return s;
+};
+
 export default function Workouts() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -160,7 +169,7 @@ export default function Workouts() {
                               {Object.entries(item.days || {}).map(([day, exercises], i) => (
                                 <div key={i} className="bg-gray-900 rounded-xl p-4 mb-4 border border-red-500/60">
                                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
-                                    <span className="text-red-500 font-bold">{day}</span>
+                                    <span className="text-red-500 font-bold">{formatDayLabel(day)}</span>
                                     <span className="text-gray-400 text-sm">{exercises.length} Exercises</span>
                                   </div>
 
@@ -170,7 +179,7 @@ export default function Workouts() {
                                         <div className="flex items-center justify-center">
                                           {ex.media ? (
                                             <div 
-                                              onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
+                                              onClick={() => setPlayingVideo({ url: ex.media, name: ex.name || 'Exercise Preview' })}
                                               className="w-full aspect-square rounded-lg overflow-hidden border border-red-500/20 bg-black/40 cursor-pointer hover:scale-105 transition group relative"
                                             >
                                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
@@ -189,7 +198,7 @@ export default function Workouts() {
                                                   <video src={ex.media} className="w-full h-full object-cover" />
                                                 )
                                               ) : (
-                                                <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
+                                                <img src={ex.media} alt={ex.name || 'exercise'} className="w-full h-full object-cover" />
                                               )}
                                             </div>
                                           ) : (
@@ -202,7 +211,7 @@ export default function Workouts() {
                                         <div className="space-y-3">
                                           <div>
                                             <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Exercise Name</p>
-                                            <p className="text-lg font-bold text-white">{ex.name}</p>
+                                            <p className="text-lg font-bold text-white">{ex.name || 'Unnamed Exercise'}</p>
                                           </div>
 
                                           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -268,16 +277,16 @@ export default function Workouts() {
 
                         {Object.entries(item.days || {}).map(([day, exercises], idx) => (
                           <div key={idx} className="bg-gray-800 rounded-2xl p-4 border border-red-500/20">
-                            <div className="flex items-center justify-between mb-3">
-                              <p className="font-semibold text-red-500">{day}</p>
-                              <span className="text-xs text-gray-400">{exercises.length} Exercises</span>
-                            </div>
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="font-semibold text-red-500">{formatDayLabel(day)}</p>
+                                <span className="text-xs text-gray-400">{exercises.length} Exercises</span>
+                              </div>
                             <div className="space-y-3">
                               {exercises.map((ex, j) => (
                                 <div key={j} className="rounded-2xl border border-red-500/10 bg-black/40 p-3">
                                   {ex.media && (
                                     <div
-                                      onClick={() => setPlayingVideo({ url: ex.media, name: ex.name })}
+                                      onClick={() => setPlayingVideo({ url: ex.media, name: ex.name || 'Exercise Preview' })}
                                       className="w-full aspect-video rounded-xl overflow-hidden border border-red-500/20 mb-3 bg-black/60 relative cursor-pointer"
                                     >
                                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -295,12 +304,12 @@ export default function Workouts() {
                                         ) : (
                                           <video src={ex.media} className="w-full h-full object-cover" />
                                         )
-                                      ) : (
-                                        <img src={ex.media} alt={ex.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                        <img src={ex.media} alt={ex.name || 'exercise'} className="w-full h-full object-cover" />
                                       )}
                                     </div>
                                   )}
-                                  <p className="font-semibold text-white mb-2">{ex.name}</p>
+                                  <p className="font-semibold text-white mb-2">{ex.name || 'Unnamed Exercise'}</p>
                                   <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
                                     <div>
                                       <p>Time</p>

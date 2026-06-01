@@ -22,6 +22,15 @@ const formatDobToDDMMYYYY = (dateString) => {
   return dateString;
 };
 
+const formatDayLabel = (day) => {
+  if (day == null) return "";
+  const s = String(day);
+  if (/^\d+$/.test(s)) return `Day ${parseInt(s, 10) + 1}`;
+  const m = s.match(/^Day\s*(\d+)$/i) || s.match(/^Day(\d+)$/i);
+  if (m) return `Day ${parseInt(m[1], 10)}`;
+  return s;
+};
+
 const isUpdatePlanEnabled = (m) => {
   // If the member does not have an active plan, they need a plan
   if (!m.plan || m.plan === 'user' || m.status !== 'active') {
@@ -1279,6 +1288,10 @@ const Members = () => {
                       ? workout.items
                       : Array.isArray(workout.exercises)
                       ? workout.exercises
+                      : Array.isArray(workout.days)
+                      ? workout.days
+                      : workout.days && typeof workout.days === 'object'
+                      ? Object.values(workout.days).flat()
                       : null;
 
                     if (items && items.length > 0) {
@@ -1376,7 +1389,7 @@ const Members = () => {
                             : "bg-white/5 text-white/40 hover:bg-white/10"
                         }`}
                       >
-                        {day}
+                        {formatDayLabel(day)}
                       </button>
                     ))}
                   </div>
