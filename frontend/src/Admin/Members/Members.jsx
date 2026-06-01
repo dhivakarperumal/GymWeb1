@@ -624,25 +624,27 @@ const Members = () => {
                         {hasActiveOrPendingPlan(m) ? (() => {
                           const joinDateStr = m.join_date ? dayjs(m.join_date).format("DD-MM-YYYY") : "N/A";
                           const expiryDateStr = m.expiry_date ? dayjs(m.expiry_date).format("DD-MM-YYYY") : "N/A";
-                          let remainingDaysElement = null;
-                          if (m.expiry_date) {
-                            const days = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
-                            remainingDaysElement = days <= 0 ? (
-                              <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">Exp</span>
-                            ) : (
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${days > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"}`}>
-                                {days}d left
-                              </span>
-                            );
-                          } else {
-                            remainingDaysElement = <span className="text-white/50 text-[10px]">-</span>;
-                          }
+                          const daysLeft = m.expiry_date ? dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), "day") : null;
+                          const isExpired = daysLeft !== null && daysLeft <= 0;
                           return (
-                            <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-lg border border-white/10 w-max" title="Normal Plan">
-                              <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-bold uppercase w-8 text-center">Nrm</span>
-                              <span className="text-[10px] font-mono text-white/70">{joinDateStr} to {expiryDateStr}</span>
-                              <div className="ml-2 border-l border-white/10 pl-2">
-                                {remainingDaysElement}
+                            <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 w-max">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 self-center">
+                                NRM
+                              </span>
+                              <div className="flex flex-col text-[11px] text-gray-300 gap-0.5">
+                                <div><span className="text-gray-500 font-medium">S-</span> {joinDateStr}</div>
+                                <div><span className="text-gray-500 font-medium">E-</span> {expiryDateStr}</div>
+                              </div>
+                              <div className="flex items-center ml-1 border-l border-white/10 pl-3">
+                                {isExpired ? (
+                                  <span className="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold">
+                                    EXPIRED
+                                  </span>
+                                ) : daysLeft !== null ? (
+                                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${daysLeft > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"}`}>
+                                    {daysLeft}D LEFT
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                           );
@@ -654,25 +656,27 @@ const Members = () => {
                         {m.pt_plan ? (() => {
                           const ptJoinDateStr = m.pt_join_date ? dayjs(m.pt_join_date).format("DD-MM-YYYY") : "N/A";
                           const ptExpiryDateStr = m.pt_expiry_date ? dayjs(m.pt_expiry_date).format("DD-MM-YYYY") : "N/A";
-                          let ptRemainingElement = null;
-                          if (m.pt_expiry_date) {
-                            const ptDays = dayjs(m.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), "day");
-                            ptRemainingElement = ptDays <= 0 ? (
-                              <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">Exp</span>
-                            ) : (
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${ptDays > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-purple-500/20 text-purple-400"}`}>
-                                {ptDays}d left
-                              </span>
-                            );
-                          } else {
-                            ptRemainingElement = <span className="text-white/50 text-[10px]">-</span>;
-                          }
+                          const isPtExpired = m.pt_expiry_date && dayjs(m.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), "day") <= 0;
+                          const ptDays = m.pt_expiry_date ? dayjs(m.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), "day") : null;
                           return (
-                            <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-lg border border-white/10 w-max" title="PT Plan">
-                              <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[9px] font-bold uppercase w-8 text-center">PT</span>
-                              <span className="text-[10px] font-mono text-white/70">{ptJoinDateStr} to {ptExpiryDateStr}</span>
-                              <div className="ml-2 border-l border-white/10 pl-2">
-                                {ptRemainingElement}
+                            <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 w-max">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 self-center">
+                                PT
+                              </span>
+                              <div className="flex flex-col text-[11px] text-gray-300 gap-0.5">
+                                <div><span className="text-gray-500 font-medium">S-</span> {ptJoinDateStr}</div>
+                                <div><span className="text-gray-500 font-medium">E-</span> {ptExpiryDateStr}</div>
+                              </div>
+                              <div className="flex items-center ml-1 border-l border-white/10 pl-3">
+                                {isPtExpired ? (
+                                  <span className="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold">
+                                    EXPIRED
+                                  </span>
+                                ) : ptDays !== null ? (
+                                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${ptDays > 10 ? "bg-emerald-500/20 text-emerald-400" : "bg-purple-500/20 text-purple-400"}`}>
+                                    {ptDays}D LEFT
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                           );
