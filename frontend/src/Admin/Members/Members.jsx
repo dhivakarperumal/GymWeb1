@@ -221,8 +221,12 @@ const Members = () => {
     // 2. Plan Filter
     let matchesPlanFilter = true;
     const hasPlan = hasActiveOrPendingPlan(m);
+    const hasPTPlan = Boolean(m.pt_plan) || Boolean(m.plan?.toLowerCase().includes("pt")) || Boolean(m.has_pt_plan);
+    
     if (filterType === "withPlan") matchesPlanFilter = hasPlan;
     if (filterType === "withoutPlan") matchesPlanFilter = !hasPlan;
+    if (filterType === "withPTPlan") matchesPlanFilter = hasPTPlan;
+    if (filterType === "withoutPTPlan") matchesPlanFilter = !hasPTPlan;
 
     if (!matchesPlanFilter) return false;
 
@@ -680,6 +684,8 @@ const Members = () => {
             { id: 'all', label: 'All Members', icon: <Users size={16} /> },
             { id: 'withPlan', label: 'Active Plan', icon: <Calendar size={16} /> },
             { id: 'withoutPlan', label: 'No Plan', icon: <Mail size={16} /> },
+            { id: 'withPTPlan', label: 'PT Plan Buy', icon: <Calendar size={16} /> },
+            { id: 'withoutPTPlan', label: 'Not Buy PT', icon: <Mail size={16} /> },
           ].map((tab) => (
             <button
               key={tab.id}
