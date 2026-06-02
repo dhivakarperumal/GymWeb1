@@ -671,6 +671,7 @@ async function updateMember(req, res) {
       emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
       emergency_contact_phone_home, emergency_contact_phone_work,
       fitness_goal, blood_group, pt_form_completed,
+      pt_plan, pt_duration, pt_join_date, pt_expiry_date, pt_status,
       fingerprintId } = req.body;
     // ensure numeric values are correctly typed
     const numHeight = height != null && !isNaN(height) ? Number(height) : null;
@@ -709,6 +710,7 @@ async function updateMember(req, res) {
         emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
         emergency_contact_phone_home=?, emergency_contact_phone_work=?,
         fitness_goal=?, blood_group=?, pt_form_completed=?,
+        pt_plan=?, pt_duration=?, pt_join_date=?, pt_expiry_date=?, pt_status=?,
         fingerprint_id=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE id=?`;
@@ -721,6 +723,7 @@ async function updateMember(req, res) {
         emergency_contact_phone_home || null, emergency_contact_phone_work || null,
         fitness_goal || null, blood_group || null,
         pt_form_completed ? 1 : 0,
+        pt_plan || null, pt_duration || null, pt_join_date || null, pt_expiry_date || null, pt_status || null,
         fingerprintId || null,
         idNum
       ];
@@ -734,6 +737,7 @@ async function updateMember(req, res) {
         emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
         emergency_contact_phone_home=?, emergency_contact_phone_work=?,
         fitness_goal=?, blood_group=?, pt_form_completed=?,
+        pt_plan=?, pt_duration=?, pt_join_date=?, pt_expiry_date=?, pt_status=?,
         fingerprint_id=?,
         updated_at=CURRENT_TIMESTAMP
        WHERE member_id=?`;
@@ -746,6 +750,7 @@ async function updateMember(req, res) {
         emergency_contact_phone_home || null, emergency_contact_phone_work || null,
         fitness_goal || null, blood_group || null,
         pt_form_completed ? 1 : 0,
+        pt_plan || null, pt_duration || null, pt_join_date || null, pt_expiry_date || null, pt_status || null,
         fingerprintId || null,
         id
       ];
@@ -818,6 +823,42 @@ async function updateMember(req, res) {
             updatedMember.u_id
           ]
         );
+        // If PT-plan related fields were intentionally cleared by the caller, also clear PT fields
+        // in the latest membership record so the PT plan is removed from membership history/view.
+        const wantsClearPt = (Object.prototype.hasOwnProperty.call(req.body, 'pt_plan') && req.body.pt_plan === null)
+          || req.body.has_pt_plan === false
+          || (Object.prototype.hasOwnProperty.call(req.body, 'pt_expiry_date') && req.body.pt_expiry_date === null);
+
+        if (wantsClearPt) {
+          try {
+            // Update only the most recent membership for this user
+            await connection.query(
+              `UPDATE memberships SET 
+                 has_pt_plan = 0,
+                 pt_planId = NULL,
+                 pt_planName = NULL,
+                 pt_price = NULL,
+                 pt_pricePaid = NULL,
+                 pt_duration = NULL,
+                 pt_startDate = NULL,
+                 pt_endDate = NULL,
+                 pt_paymentMode = NULL,
+                 pt_paymentDate = NULL,
+                 pt_paymentStatus = NULL,
+                 pt_status = NULL,
+                 pt_trainerId = NULL,
+                 pt_trainerName = NULL,
+                 pt_discount = NULL,
+                 pt_amount = NULL
+               WHERE id = (
+                 SELECT id FROM (SELECT id FROM memberships WHERE userId = ? ORDER BY createdAt DESC LIMIT 1) AS latest
+               )`,
+              [updatedMember.u_id]
+            );
+          } catch (ptClearErr) {
+            console.warn('updateMember: failed to clear PT fields in memberships', ptClearErr.message || ptClearErr);
+          }
+        }
       } catch (syncErr) {
         console.warn('updateMember: failed to sync memberships table', syncErr.message);
       }

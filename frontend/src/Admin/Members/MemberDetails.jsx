@@ -154,6 +154,30 @@ const MemberDetails = () => {
     }
   };
 
+  const handleDeletePtPlan = async () => {
+    if (!member) return;
+    if (!window.confirm(`Delete PT Plan for ${member.name}? This will not affect the normal plan.`)) return;
+    try {
+      const updated = {
+        ...member,
+        pt_plan: null,
+        pt_join_date: null,
+        pt_expiry_date: null,
+        pt_price: 0,
+        pt_pricePaid: 0,
+        pt_payment_status: null,
+        pt_status: null,
+        has_pt_plan: false
+      };
+      const res = await api.put(`/members/${id}`, updated);
+      setMember(res.data);
+      toast.success("PT Plan removed");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete PT Plan");
+    }
+  };
+
   return (
     <div className="min-h-screen pb-12 text-white">
       {/* Header */}
@@ -350,12 +374,24 @@ const MemberDetails = () => {
                     <p className="text-white/40 text-xs">{member.pt_form_completed ? 'Form completed' : 'Awaiting completion'}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => navigate(member.pt_form_completed ? `/admin/pt-form/print/${id}` : `/admin/pt-form?member_id=${id}`)}
-                  className={`px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all ${member.pt_form_completed ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white'}`}
-                >
-                  {member.pt_form_completed ? 'View Form' : 'Complete Now'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate(member.pt_form_completed ? `/admin/pt-form/print/${id}` : `/admin/pt-form?member_id=${id}`)}
+                    className={`px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all ${member.pt_form_completed ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white'}`}
+                  >
+                    {member.pt_form_completed ? 'View Form' : 'Complete Now'}
+                  </button>
+
+                  {(member.pt_plan || member.has_pt_plan) && (
+                    <button
+                      onClick={handleDeletePtPlan}
+                      className="px-4 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white"
+                      title="Delete PT Plan"
+                    >
+                      Delete PT Plan
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
