@@ -47,16 +47,16 @@ const formatDuesEntry = (due) => {
 // Calculate next payment date based on the initial payment date or membership creation date
 const calculateNextPaymentDate = (membership) => {
   // Get the base date - either paymentDate or createdAt
-  const baseDate = membership.paymentDate 
+  const baseDate = membership.paymentDate
     ? new Date(membership.paymentDate)
     : membership.createdAt
       ? new Date(membership.createdAt)
       : new Date();
-  
+
   // Add 30 days to the base date
   const nextDueDate = new Date(baseDate);
   nextDueDate.setDate(nextDueDate.getDate() + 30);
-  
+
   return nextDueDate;
 };
 
@@ -150,7 +150,7 @@ const EMIList = () => {
       (m.paymentId || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || m.status === statusFilter;
-    
+
     // Date Range Filter
     const matchesDate = filterByDateRange([m], 'createdAt', dateRange.type, dateRange.range).length > 0;
 
@@ -174,7 +174,7 @@ const EMIList = () => {
     const dataToExport = filteredEMIs.map((m, index) => {
       const plan = findPlanForMembership(m);
       const duration = parseDuration(m.duration) || 1;
-      const totalPrice = m.price 
+      const totalPrice = m.price
         ? parseDecimal(m.price)
         : plan
           ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
@@ -182,7 +182,7 @@ const EMIList = () => {
       const initialPayment = parseDecimal(m.pricePaid);
       const secondPayment = parseDecimal(m.secondPaymentPaid);
       const balanceDue = Math.max(0, Number((totalPrice - initialPayment - secondPayment).toFixed(2)));
-      
+
       return {
         "S.No": index + 1,
         Member: m.userName || m.username || "N/A",
@@ -233,9 +233,9 @@ const EMIList = () => {
           const phone = (row.Phone || row.Mobile || "").toString().replace(/\D/g, '').slice(-10);
 
           if (!username || !phone || phone.length < 10) {
-            errors.push({ 
-              name: username || "Unknown Row", 
-              reason: !username ? "Missing Username" : "Invalid Phone" 
+            errors.push({
+              name: username || "Unknown Row",
+              reason: !username ? "Missing Username" : "Invalid Phone"
             });
             failCount++;
             continue;
@@ -392,7 +392,7 @@ const EMIList = () => {
           </div>
         </div>
       )}
-      
+
       {/* Header Area */}
       <div className="p-2 flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
@@ -442,11 +442,10 @@ const EMIList = () => {
                         setCurrentPage(1);
                         setIsStatusOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                        statusFilter === option.id 
-                          ? 'bg-orange-500 text-white shadow-lg' 
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${statusFilter === option.id
+                          ? 'bg-orange-500 text-white shadow-lg'
                           : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                      }`}
+                        }`}
                     >
                       {option.label}
                     </button>
@@ -462,8 +461,8 @@ const EMIList = () => {
                 {trainerFilter === 'all'
                   ? 'All Trainers'
                   : trainers.find((trainer) => String(trainer.id) === String(trainerFilter))?.name ||
-                    trainers.find((trainer) => String(trainer.id) === String(trainerFilter))?.username ||
-                    'All Trainers'}
+                  trainers.find((trainer) => String(trainer.id) === String(trainerFilter))?.username ||
+                  'All Trainers'}
               </span>
               <select
                 value={trainerFilter}
@@ -549,6 +548,8 @@ const EMIList = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Remaining Due</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Created</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Next Payment</th>
+
                     <th className="px-4 py-4 text-left text-sm font-semibold">Payment</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Actions</th>
                   </tr>
@@ -557,12 +558,12 @@ const EMIList = () => {
                   {paginatedEMIs.map((membership, idx) => {
                     const plan = findPlanForMembership(membership);
                     const duration = parseDuration(membership.duration) || 1;
-                    const totalPrice = membership.price 
+                    const totalPrice = membership.price
                       ? parseDecimal(membership.price)
                       : plan
                         ? parseDecimal(
-                            plan.finalPrice ?? plan.final_price ?? plan.price,
-                          )
+                          plan.finalPrice ?? plan.final_price ?? plan.price,
+                        )
                         : parseDecimal(membership.pricePaid) * duration;
                     const initialPayment = parseDecimal(membership.pricePaid);
                     const secondPayment = parseDecimal(membership.secondPaymentPaid);
@@ -643,13 +644,43 @@ const EMIList = () => {
                             {remainingDue <= 0
                               ? "Completed"
                               : `Due ${dueDate.toLocaleDateString("en-IN", {
-                                  day: "numeric",
-                                  month: "short",
-                                })}`}
+                                day: "numeric",
+                                month: "short",
+                              })}`}
                           </div>
                         </td>
+
                         <td className="px-4 py-4 text-base font-medium text-gray-300">
-                          {new Date(membership.createdAt).toLocaleDateString()}
+                          {new Date(membership.createdAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="px-4 py-4">
+                          {remainingDue > 0 ? (
+                            <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg px-3 py-2 text-center">
+                              <div className="text-base font-bold text-blue-300">
+                                {dueDate.toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric"
+                                })}
+                              </div>
+                              <div className="text-xs text-blue-400/70 mt-1">
+                                {(() => {
+                                  const today = new Date();
+                                  const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                                  if (daysLeft < 0) return `Overdue by ${Math.abs(daysLeft)} days`;
+                                  if (daysLeft === 0) return "Due today";
+                                  if (daysLeft === 1) return "Due tomorrow";
+                                  return `${daysLeft} days left`;
+                                })()}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-white/50 text-center py-2">Paid</div>
+                          )}
                         </td>
                         <td className="px-4 py-4">
                           {getPaymentStatusBadge(membership.paymentStatus)}
@@ -671,7 +702,7 @@ const EMIList = () => {
                                 title="Process Remaining Payment"
                               >
                                 <CreditCard size={14} />
-                                Pay 
+                                Pay
                               </button>
                             )}
                           </div>
@@ -688,7 +719,7 @@ const EMIList = () => {
               {paginatedEMIs.map((membership, idx) => {
                 const plan = findPlanForMembership(membership);
                 const duration = parseDuration(membership.duration) || 1;
-                const totalPrice = membership.price 
+                const totalPrice = membership.price
                   ? parseDecimal(membership.price)
                   : plan
                     ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
@@ -699,14 +730,13 @@ const EMIList = () => {
                 const dueDate = calculateNextPaymentDate(membership);
 
                 return (
-                  <div 
+                  <div
                     key={membership.id}
                     className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-orange-500/30 transition-all group relative overflow-hidden"
                   >
                     <div className="absolute top-0 right-0 p-3 flex flex-col gap-2 items-end">
-                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
-                        membership.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${membership.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'
+                        }`}>
                         {membership.status || 'Active'}
                       </span>
                       {(() => {
@@ -809,11 +839,10 @@ const EMIList = () => {
                     <button
                       key={i + 1}
                       onClick={() => setCurrentPage(i + 1)}
-                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                        currentPage === i + 1
+                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${currentPage === i + 1
                           ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30 scale-110 z-10"
                           : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
-                      }`}
+                        }`}
                     >
                       {i + 1}
                     </button>
@@ -953,14 +982,14 @@ const EMIList = () => {
                       ₹
                       {(() => {
                         const plan = findPlanForMembership(selectedMembership);
-                        const totalPrice = selectedMembership.price 
+                        const totalPrice = selectedMembership.price
                           ? parseDecimal(selectedMembership.price)
                           : plan
                             ? parseDecimal(
-                                plan.finalPrice ?? plan.final_price ?? plan.price,
-                              )
+                              plan.finalPrice ?? plan.final_price ?? plan.price,
+                            )
                             : parseDecimal(selectedMembership.pricePaid) *
-                              parseDuration(selectedMembership.duration);
+                            parseDuration(selectedMembership.duration);
                         return (
                           totalPrice -
                           parseDecimal(selectedMembership.pricePaid)
@@ -1031,16 +1060,16 @@ const EMIList = () => {
                     disabled={updating}
                     className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 py-3 rounded-xl font-semibold text-white transition-all shadow-lg"
                   >
-                  {updating ? "Saving..." : "Save Payment"}
-                </button>
+                    {updating ? "Saving..." : "Save Payment"}
+                  </button>
 
-                <button
-                  onClick={() => setSelectedMembership(null)}
-                  className="flex-1 border border-white/20 hover:border-white/40 py-3 rounded-xl font-semibold text-white transition-all hover:bg-white/5"
-                >
-                  Cancel
-                </button>
-              </div>
+                  <button
+                    onClick={() => setSelectedMembership(null)}
+                    className="flex-1 border border-white/20 hover:border-white/40 py-3 rounded-xl font-semibold text-white transition-all hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1098,7 +1127,7 @@ const EMIList = () => {
                     const total = plan
                       ? parseDecimal(plan.finalPrice ?? plan.price)
                       : parseDecimal(viewingDetails.pricePaid) *
-                        parseDuration(viewingDetails.duration);
+                      parseDuration(viewingDetails.duration);
                     return (
                       total - parseDecimal(viewingDetails.pricePaid)
                     ).toFixed(2);
@@ -1139,7 +1168,7 @@ const EMIList = () => {
                         const total = plan
                           ? parseDecimal(plan.finalPrice ?? plan.price)
                           : parseDecimal(viewingDetails.pricePaid) *
-                            parseDuration(viewingDetails.duration);
+                          parseDuration(viewingDetails.duration);
                         return (
                           total - parseDecimal(viewingDetails.pricePaid)
                         ).toFixed(2);
