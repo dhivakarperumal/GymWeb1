@@ -158,18 +158,15 @@ const MemberDetails = () => {
     if (!member) return;
     if (!window.confirm(`Delete PT Plan for ${member.name}? This will not affect the normal plan.`)) return;
     try {
-      const updated = {
-        ...member,
+      const payload = {
         pt_plan: null,
         pt_join_date: null,
         pt_expiry_date: null,
-        pt_price: 0,
-        pt_pricePaid: 0,
-        pt_payment_status: null,
+        pt_duration: null,
         pt_status: null,
         has_pt_plan: false
       };
-      const res = await api.put(`/members/${id}`, updated);
+      const res = await api.put(`/members/${id}`, payload);
       setMember(res.data);
       toast.success("PT Plan removed");
     } catch (err) {

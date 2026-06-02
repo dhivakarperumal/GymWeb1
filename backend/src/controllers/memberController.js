@@ -664,15 +664,57 @@ async function updateMember(req, res) {
     const idNum = parseInt(id, 10);
     const isNum = !isNaN(idNum);
 
-    const { name, phone, email, gender, height, weight, bmi,
-      plan, duration, joinDate, expiryDate, status,
-      photo, notes, address, username,
-      dob, age, employer, occupation,
-      emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
-      emergency_contact_phone_home, emergency_contact_phone_work,
-      fitness_goal, blood_group, pt_form_completed,
-      pt_plan, pt_duration, pt_join_date, pt_expiry_date, pt_status,
-      fingerprintId } = req.body;
+    const selectExistingQuery = isNum
+      ? `SELECT * FROM gym_members WHERE id = ?`
+      : `SELECT * FROM gym_members WHERE member_id = ?`;
+    const [existingRows] = await connection.query(selectExistingQuery, [isNum ? idNum : id]);
+    if (existingRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    const existingMember = existingRows[0];
+    const rawBody = req.body || {};
+    const getField = (camel, snake) => {
+      if (Object.prototype.hasOwnProperty.call(rawBody, camel)) return rawBody[camel];
+      if (Object.prototype.hasOwnProperty.call(rawBody, snake)) return rawBody[snake];
+      return existingMember[snake];
+    };
+
+    const name = getField('name', 'name');
+    const phone = getField('phone', 'phone');
+    const email = getField('email', 'email');
+    const gender = getField('gender', 'gender');
+    const height = getField('height', 'height');
+    const weight = getField('weight', 'weight');
+    const bmi = getField('bmi', 'bmi');
+    const plan = getField('plan', 'plan');
+    const duration = getField('duration', 'duration');
+    const joinDate = getField('joinDate', 'join_date');
+    const expiryDate = getField('expiryDate', 'expiry_date');
+    const status = getField('status', 'status');
+    const photo = getField('photo', 'photo');
+    const notes = getField('notes', 'notes');
+    const address = getField('address', 'address');
+    const username = getField('username', 'username');
+    const dob = getField('dob', 'dob');
+    const age = getField('age', 'age');
+    const employer = getField('employer', 'employer');
+    const occupation = getField('occupation', 'occupation');
+    const emergency_contact_name = getField('emergency_contact_name', 'emergency_contact_name');
+    const emergency_contact_relationship = getField('emergency_contact_relationship', 'emergency_contact_relationship');
+    const emergency_contact_address = getField('emergency_contact_address', 'emergency_contact_address');
+    const emergency_contact_phone_home = getField('emergency_contact_phone_home', 'emergency_contact_phone_home');
+    const emergency_contact_phone_work = getField('emergency_contact_phone_work', 'emergency_contact_phone_work');
+    const fitness_goal = getField('fitness_goal', 'fitness_goal');
+    const blood_group = getField('blood_group', 'blood_group');
+    const pt_form_completed = getField('pt_form_completed', 'pt_form_completed');
+    const pt_plan = getField('pt_plan', 'pt_plan');
+    const pt_duration = getField('pt_duration', 'pt_duration');
+    const pt_join_date = getField('pt_join_date', 'pt_join_date');
+    const pt_expiry_date = getField('pt_expiry_date', 'pt_expiry_date');
+    const pt_status = getField('pt_status', 'pt_status');
+    const fingerprintId = getField('fingerprintId', 'fingerprint_id');
+
     // ensure numeric values are correctly typed
     const numHeight = height != null && !isNaN(height) ? Number(height) : null;
     const numWeight = weight != null && !isNaN(weight) ? Number(weight) : null;
