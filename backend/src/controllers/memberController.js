@@ -855,13 +855,13 @@ async function updateMember(req, res) {
            ORDER BY createdAt DESC 
            LIMIT 1`,
           [
-            expiryDate || updatedMember.expiry_date,
-            joinDate || updatedMember.join_date,
-            numDuration || updatedMember.duration,
-            plan || updatedMember.plan,
-            name || updatedMember.name,
-            email || updatedMember.email,
-            phone || updatedMember.phone,
+            expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
+            joinDate === undefined ? updatedMember.join_date : joinDate,
+            duration === undefined ? updatedMember.duration : numDuration,
+            plan === undefined ? updatedMember.plan : plan,
+            name === undefined ? updatedMember.name : name,
+            email === undefined ? updatedMember.email : email,
+            phone === undefined ? updatedMember.phone : phone,
             updatedMember.u_id
           ]
         );

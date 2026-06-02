@@ -175,6 +175,25 @@ const MemberDetails = () => {
     }
   };
 
+  const handleDeleteNormalPlan = async () => {
+    if (!member) return;
+    if (!window.confirm(`Delete Normal Plan for ${member.name}? This will not affect the PT plan.`)) return;
+    try {
+      const payload = {
+        plan: null,
+        duration: null,
+        joinDate: null,
+        expiryDate: null
+      };
+      const res = await api.put(`/members/${id}`, payload);
+      setMember(res.data);
+      toast.success("Normal plan removed");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete Normal Plan");
+    }
+  };
+
   return (
     <div className="min-h-screen pb-12 text-white">
       {/* Header */}
@@ -339,6 +358,16 @@ const MemberDetails = () => {
                         </div>
                       )}
                     </div>
+                    {member.plan && (
+                      <div className="pt-4 border-t border-white/10">
+                        <button
+                          onClick={handleDeleteNormalPlan}
+                          className="w-full px-4 py-3 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all font-bold text-xs uppercase"
+                        >
+                          Delete Normal Plan
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
