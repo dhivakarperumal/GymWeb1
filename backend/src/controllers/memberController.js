@@ -930,6 +930,21 @@ async function updateMember(req, res) {
                )`,
               [updatedMember.u_id]
             );
+
+            const [latestRows] = await connection.query(
+              `SELECT id, planId, pt_planId, has_pt_plan FROM memberships WHERE userId = ? ORDER BY createdAt DESC LIMIT 1`,
+              [updatedMember.u_id]
+            );
+            if (latestRows.length > 0) {
+              const latest = latestRows[0];
+              const hasPt = latest.pt_planId || latest.has_pt_plan;
+              if (!latest.planId && !hasPt) {
+                await connection.query(
+                  `DELETE FROM memberships WHERE id = ?`,
+                  [latest.id]
+                );
+              }
+            }
           } catch (normalClearErr) {
             console.warn('updateMember: failed to clear normal plan fields in memberships', normalClearErr.message || normalClearErr);
           }
