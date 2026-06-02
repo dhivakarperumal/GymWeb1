@@ -44,6 +44,22 @@ const formatDuesEntry = (due) => {
   return `₹${amount} · ${dateLabel} · ${collectedBy} · ${paymentId}`;
 };
 
+// Calculate next payment date based on the initial payment date or membership creation date
+const calculateNextPaymentDate = (membership) => {
+  // Get the base date - either paymentDate or createdAt
+  const baseDate = membership.paymentDate 
+    ? new Date(membership.paymentDate)
+    : membership.createdAt
+      ? new Date(membership.createdAt)
+      : new Date();
+  
+  // Add 30 days to the base date
+  const nextDueDate = new Date(baseDate);
+  nextDueDate.setDate(nextDueDate.getDate() + 30);
+  
+  return nextDueDate;
+};
+
 const EMIList = () => {
   const { user, role, profileName } = useAuth();
   const [memberships, setMemberships] = useState([]);
@@ -553,8 +569,7 @@ const EMIList = () => {
                     const remainingDue = Math.max(0, Number(
                       (totalPrice - initialPayment - secondPayment).toFixed(2),
                     ));
-                    const dueDate = new Date();
-                    dueDate.setDate(dueDate.getDate() + 30);
+                    const dueDate = calculateNextPaymentDate(membership);
                     const paymentMethodLabel = membership.paymentId || "N/A";
 
                     const getPaymentStatusBadge = (status) => {
@@ -681,8 +696,7 @@ const EMIList = () => {
                 const initialPayment = parseDecimal(membership.pricePaid);
                 const secondPayment = parseDecimal(membership.secondPaymentPaid);
                 const balanceDue = Math.max(0, Number((totalPrice - initialPayment - secondPayment).toFixed(2)));
-                const dueDate = new Date();
-                dueDate.setDate(dueDate.getDate() + 30);
+                const dueDate = calculateNextPaymentDate(membership);
 
                 return (
                   <div 
@@ -1089,8 +1103,7 @@ const EMIList = () => {
                       total - parseDecimal(viewingDetails.pricePaid)
                     ).toFixed(2);
                   })()} · due ${(() => {
-                    const dueDate = new Date();
-                    dueDate.setDate(dueDate.getDate() + 30);
+                    const dueDate = calculateNextPaymentDate(viewingDetails);
                     return dueDate.toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
@@ -1135,8 +1148,7 @@ const EMIList = () => {
                     <p className="text-xs text-white/50 mt-2">
                       Due by{" "}
                       {(() => {
-                        const dueDate = new Date();
-                        dueDate.setDate(dueDate.getDate() + 30);
+                        const dueDate = calculateNextPaymentDate(viewingDetails);
                         return dueDate.toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",

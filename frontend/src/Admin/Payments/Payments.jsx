@@ -21,6 +21,22 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 const MEMBERSHIPS_API = `memberships`;
 const MEMBERS_API = `members`;
 
+// Helper function to calculate next payment date based on initial payment date
+const calculateNextPaymentDate = (plan) => {
+  // Get the base date - either paymentDate or createdAt
+  const baseDate = plan.paymentDate 
+    ? new Date(plan.paymentDate)
+    : plan.createdAt
+      ? new Date(plan.createdAt)
+      : new Date();
+  
+  // Add 30 days to the base date
+  const nextDueDate = new Date(baseDate);
+  nextDueDate.setDate(nextDueDate.getDate() + 30);
+  
+  return nextDueDate;
+};
+
 const Payments = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -940,6 +956,22 @@ const Payments = () => {
                       </p>
                     </div>
 
+                    {plan.paymentMode === "emi" || plan.paymentStatus === "Partial" ? (
+                      <div>
+                        <p className="text-gray-400">Next Payment Due</p>
+                        <p className="whitespace-nowrap text-blue-400 font-semibold">
+                          {(() => {
+                            const nextDate = calculateNextPaymentDate(plan);
+                            return nextDate.toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric"
+                            });
+                          })()}
+                        </p>
+                      </div>
+                    ) : null}
+
                     <div>
                       <p className="text-gray-400">Collected By</p>
                       <p className="font-semibold text-orange-400">
@@ -1009,6 +1041,7 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Normal Validity</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Validity</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Payment Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Next Payment Due</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Payment</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Status / Action</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Receipt</th>
@@ -1157,6 +1190,20 @@ const Payments = () => {
                             ? <span className="text-purple-300">{formatDate(plan.paymentDate)}</span>
                             : <span className="text-gray-600">--</span>
                           }
+                        </td>
+                        <td className="px-4 py-4 font-medium text-base whitespace-nowrap">
+                          {plan.paymentMode === "emi" || plan.paymentStatus === "Partial" ? (
+                            <span className="text-blue-400">
+                              {(() => {
+                                const nextDate = calculateNextPaymentDate(plan);
+                                return nextDate.toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric"
+                                });
+                              })()}
+                            </span>
+                          ) : <span className="text-gray-600">--</span>}
                         </td>
                         <td className="px-4 py-4 text-center">
                           {(() => {
