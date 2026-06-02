@@ -870,6 +870,10 @@ async function updateMember(req, res) {
         const wantsClearPt = (Object.prototype.hasOwnProperty.call(req.body, 'pt_plan') && req.body.pt_plan === null)
           || req.body.has_pt_plan === false
           || (Object.prototype.hasOwnProperty.call(req.body, 'pt_expiry_date') && req.body.pt_expiry_date === null);
+        const wantsClearNormal = (Object.prototype.hasOwnProperty.call(req.body, 'plan') && req.body.plan === null)
+          || (Object.prototype.hasOwnProperty.call(req.body, 'joinDate') && req.body.joinDate === null)
+          || (Object.prototype.hasOwnProperty.call(req.body, 'expiryDate') && req.body.expiryDate === null)
+          || (Object.prototype.hasOwnProperty.call(req.body, 'duration') && req.body.duration === null);
 
         if (wantsClearPt) {
           try {
@@ -899,6 +903,35 @@ async function updateMember(req, res) {
             );
           } catch (ptClearErr) {
             console.warn('updateMember: failed to clear PT fields in memberships', ptClearErr.message || ptClearErr);
+          }
+        }
+
+        if (wantsClearNormal) {
+          try {
+            await connection.query(
+              `UPDATE memberships SET
+                 planId = NULL,
+                 planName = NULL,
+                 price = NULL,
+                 pricePaid = NULL,
+                 secondPaymentPaid = NULL,
+                 duration = NULL,
+                 startDate = NULL,
+                 endDate = NULL,
+                 paymentMode = NULL,
+                 paymentDate = NULL,
+                 status = NULL,
+                 paymentStatus = NULL,
+                 discount = NULL,
+                 amount = NULL,
+                 collectedBy = NULL
+               WHERE id = (
+                 SELECT id FROM (SELECT id FROM memberships WHERE userId = ? ORDER BY createdAt DESC LIMIT 1) AS latest
+               )`,
+              [updatedMember.u_id]
+            );
+          } catch (normalClearErr) {
+            console.warn('updateMember: failed to clear normal plan fields in memberships', normalClearErr.message || normalClearErr);
           }
         }
       } catch (syncErr) {
