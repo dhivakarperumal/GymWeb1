@@ -182,18 +182,24 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-green-500/20 text-green-400",
       data: filteredMemberships,
-      headers: ["#", "Member", "Email", "Plan", "Amount", "Mode", "Status", "Start", "End"],
-      rows: filteredMemberships.map((p, i) => [
-        i + 1,
-        p.userName || p.username || "-",
-        p.userEmail || p.email || "-",
-        p.planName || "-",
-        p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
-        p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
-        p.status || "active",
-        p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
-        p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
-      ]),
+      headers: ["#", "Member", "Email", "Plan", "Amount", "Mode", "Workout", "Diet", "Status", "Start", "End"],
+      rows: filteredMemberships.map((p, i) => {
+        const hasWorkout = !!(p.workout_count || p.workoutCount || p.hasWorkout || p.workoutAssigned || p.workout);
+        const hasDiet = !!(p.diet_count || p.dietCount || p.hasDiet || p.dietAssigned || p.diet);
+        return [
+          i + 1,
+          p.userName || p.username || "-",
+          p.userEmail || p.email || "-",
+          p.planName || "-",
+          p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
+          p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
+          hasWorkout ? "Yes" : "No",
+          hasDiet ? "Yes" : "No",
+          p.status || "active",
+          p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
+          p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
+        ];
+      }),
     },
     {
       key: "emi",
@@ -367,7 +373,7 @@ const Reports = () => {
                   {paginatedRows.map((row, i) => (
                     <tr
                       key={i}
-                      className="border-b border-white/5 hover:bg-white/5 transition"
+                      className={`border-b border-white/5 transition ${i % 2 === 0 ? 'bg-white/5' : 'bg-transparent'} hover:bg-white/10`}
                     >
                       {row.map((cell, j) => (
                         <td key={j} className="px-4 py-3 whitespace-nowrap text-white/80">
