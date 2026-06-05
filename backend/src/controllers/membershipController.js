@@ -34,6 +34,7 @@ async function getAllMemberships(req, res) {
              u.role,
              gm.join_date as memberJoinDate,
              gm.expiry_date as memberExpiryDate,
+             gm.pt_form_completed,
              COALESCE(gp.trainer_included, m.has_pt_plan, 0) as has_pt_plan,
              gp.trainer_included,
              (SELECT COUNT(*) FROM workout_programs wp WHERE wp.user_id = u.id OR wp.member_email = m.userEmail OR wp.member_mobile = m.userPhone) AS workout_count,

@@ -245,10 +245,11 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-green-500/20 text-green-400",
       data: filteredMemberships,
-      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Amount", "Mode", "Workout", "Diet", "Status", "Start", "End"],
+      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Amount", "Mode", "Workout", "Diet", "PT Form", "Status", "Start", "End"],
       rows: filteredMemberships.map((p, i) => {
         const hasWorkout = !!(p.workout_count || p.workoutCount || p.hasWorkout || p.workoutAssigned || p.workout);
         const hasDiet = !!(p.diet_count || p.dietCount || p.hasDiet || p.dietAssigned || p.diet);
+        const ptFormCompleted = !!(p.pt_form_completed);
         return [
           i + 1,
           p.userName || p.username || "-",
@@ -259,6 +260,7 @@ const Reports = () => {
           p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
           hasWorkout ? "Yes" : "No",
           hasDiet ? "Yes" : "No",
+          ptFormCompleted ? "Yes" : "Pending",
           p.status || "active",
           p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
           p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
