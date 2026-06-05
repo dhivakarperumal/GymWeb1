@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Edit, X, Search, ChevronDown, CreditCard, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload, Phone } from "lucide-react";
+import { Eye, Edit, X, Trash2, Search, ChevronDown, CreditCard, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload, Phone } from "lucide-react";
 import api from "../../api";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
@@ -364,6 +364,29 @@ const EMIList = () => {
     }
   };
 
+  const handleDeleteMembership = async (id) => {
+    if (!id) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this EMI record? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/memberships/${id}`);
+      setMemberships((prev) => prev.filter((item) => item.id !== id));
+      if (selectedMembership?.id === id) {
+        setSelectedMembership(null);
+      }
+      if (viewingDetails?.id === id) {
+        setViewingDetails(null);
+      }
+      toast.success("EMI record deleted successfully");
+    } catch (err) {
+      console.error("Failed to delete EMI record:", err);
+      toast.error("Unable to delete EMI record");
+    }
+  };
+
   const Card = ({ title, value, color = "text-white" }) => (
     <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
       <p className="text-xs text-white/50">{title}</p>
@@ -705,6 +728,15 @@ const EMIList = () => {
                                 Pay
                               </button>
                             )}
+
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteMembership(membership.id); }}
+                              className="px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/20 text-red-300 hover:bg-red-500/30 transition text-xs font-semibold flex items-center justify-center gap-2"
+                              title="Delete EMI record"
+                            >
+                              <Trash2 size={16} />
+                          
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -792,7 +824,7 @@ const EMIList = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <button
                         onClick={(e) => { e.stopPropagation(); viewDetails(membership); }}
                         className="flex-1 py-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2"
@@ -802,11 +834,19 @@ const EMIList = () => {
                       {membership.paymentStatus !== "Paid" && (
                         <button
                           onClick={(e) => { e.stopPropagation(); selectMembership(membership); }}
-                          className="flex-2 py-2.5 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 text-xs"
+                          className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 text-xs"
                         >
                           <CreditCard size={14} /> Pay ₹{balanceDue.toFixed(0)}
                         </button>
                       )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteMembership(membership.id); }}
+                        className="flex-1 py-2.5 rounded-xl bg-red-500/10 text-red-300 border border-red-500/20 hover:bg-red-500/20 transition-all text-xs font-semibold flex items-center justify-center gap-2"
+                        title="Delete EMI record"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
                     </div>
                   </div>
                 );
@@ -1054,7 +1094,7 @@ const EMIList = () => {
                 <p className="text-[10px] text-white/50 text-center uppercase tracking-wide">
                   Processing collection as: <strong className="text-orange-400">{profileName || user?.username || "Admin"}</strong>
                 </p>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={handleUpdatePayment}
                     disabled={updating}
@@ -1219,12 +1259,20 @@ const EMIList = () => {
                 )}
               </div>
 
-              <button
-                onClick={() => setViewingDetails(null)}
-                className="w-full border border-white/20 hover:border-white/40 py-3 rounded-xl font-semibold text-white transition-all hover:bg-white/5"
-              >
-                Close
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setViewingDetails(null)}
+                  className="flex-1 w-full border border-white/20 hover:border-white/40 py-3 rounded-xl font-semibold text-white transition-all hover:bg-white/5"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => handleDeleteMembership(viewingDetails.id)}
+                  className="flex-1 w-full py-3 rounded-xl bg-red-500/10 text-red-300 border border-red-500/20 hover:bg-red-500/20 transition-all font-semibold"
+                >
+                  Delete Record
+                </button>
+              </div>
             </div>
           </div>
         </>
