@@ -20,6 +20,7 @@ const PTForm = () => {
   const navigate = useNavigate();
   const { role, profileName } = useAuth();
   const memberId = searchParams.get("member_id");
+  const isEditMode = searchParams.get("edit") === "true";
   const returnUrl = location.state?.returnUrl;
 
   useEffect(() => {
@@ -157,8 +158,10 @@ const PTForm = () => {
         };
 
         await api.post("/pt-forms", payload);
-        toast.success("PT Registration completed and stored successfully!");
-        if (returnUrl) {
+        toast.success(isEditMode ? "PT Form updated successfully!" : "PT Registration completed and stored successfully!");
+        if (isEditMode && targetMemberId) {
+          navigate(`/admin/member_details/${targetMemberId}`);
+        } else if (returnUrl) {
           navigate(returnUrl);
         } else if (role === 'trainer') {
           navigate('/trainer');
@@ -261,12 +264,21 @@ const PTForm = () => {
       {/* Header with Step Indicator */}
       <div className="max-w-6xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-orange-500">PT Registration Form</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-orange-500">{isEditMode ? 'Edit' : 'PT Registration'} Form</h1>
+            {isEditMode && <p className="text-white/60 text-xs uppercase tracking-wider mt-2">Editing existing form</p>}
+          </div>
           <button
-            onClick={() => navigate('/admin/payments')}
+            onClick={() => {
+              if (isEditMode && memberId) {
+                navigate(`/admin/member_details/${memberId}`);
+              } else {
+                navigate('/admin/payments');
+              }
+            }}
             className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition"
           >
-            Back to Payments
+            Back {isEditMode ? 'to Member' : 'to Payments'}
           </button>
         </div>
 

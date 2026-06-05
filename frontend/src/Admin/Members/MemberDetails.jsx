@@ -400,13 +400,30 @@ const MemberDetails = () => {
                     <p className="text-white/40 text-xs">{member.pt_form_completed ? 'Form completed' : 'Awaiting completion'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => navigate(member.pt_form_completed ? `/admin/pt-form/print/${id}` : `/admin/pt-form?member_id=${id}`)}
-                    className={`px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all ${member.pt_form_completed ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white'}`}
-                  >
-                    {member.pt_form_completed ? 'View Form' : 'Complete Now'}
-                  </button>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {member.pt_form_completed ? (
+                    <>
+                      <button
+                        onClick={() => navigate(`/admin/pt-form/print/${id}`)}
+                        className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white"
+                      >
+                        View Form
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/pt-form?member_id=${id}&edit=true`)}
+                        className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white"
+                      >
+                        Edit Form
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => navigate(`/admin/pt-form?member_id=${id}`)}
+                      className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white"
+                    >
+                      Complete Now
+                    </button>
+                  )}
 
                   {(member.pt_plan || member.has_pt_plan) && (
                     <button
