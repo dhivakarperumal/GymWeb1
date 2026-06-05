@@ -152,7 +152,7 @@ const Reports = () => {
 
   const getEnquiryTrainerName = (enquiry) => {
     const assignment = findAssignment(enquiry);
-    return enquiry.trainer_name || enquiry.trainerName || enquiry.trainer?.name || assignment?.trainerName || "-";
+    return assignment?.trainerName || enquiry.trainer_name || enquiry.trainerName || enquiry.trainer?.name || "-";
   };
 
   const isPTPlanMembership = (membership) => {
@@ -322,6 +322,14 @@ const Reports = () => {
 
   const currentTab = tabs.find(t => t.key === activeTab);
   const currentTabRows = currentTab ? currentTab.rows : [];
+
+  const getCellBadgeClasses = (cell) => {
+    const value = String(cell).trim().toLowerCase();
+    if (value === "yes") return "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+    if (value === "no") return "bg-red-500/20 text-red-300 border border-red-500/30";
+    return "text-white/80";
+  };
+
   const filteredTabRows = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return currentTabRows;
@@ -447,11 +455,21 @@ const Reports = () => {
                       key={i}
                       className={`border-b border-white/5 transition ${i % 2 === 0 ? 'bg-white/5' : 'bg-transparent'} hover:bg-white/10`}
                     >
-                      {row.map((cell, j) => (
-                        <td key={j} className="px-4 py-3 whitespace-nowrap text-white/80">
-                          {cell}
-                        </td>
-                      ))}
+                      {row.map((cell, j) => {
+                        const value = String(cell).trim().toLowerCase();
+                        const badgeClasses = getCellBadgeClasses(cell);
+                        return (
+                          <td key={j} className="px-4 py-3 whitespace-nowrap">
+                            {value === "yes" || value === "no" ? (
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeClasses}`}>
+                                {cell}
+                              </span>
+                            ) : (
+                              <span className={badgeClasses}>{cell}</span>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
