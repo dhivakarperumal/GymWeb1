@@ -162,13 +162,12 @@ const Reports = () => {
 
   const getMembershipTrainerName = (membership) => {
     const assignment = findAssignment(membership);
-    if (assignment?.trainerName) return assignment.trainerName;
-    return membership.pt_trainerName || membership.pt_trainer_name || membership.trainerName || membership.trainer_name || membership.trainer?.name || membership.trainer?.username || "-";
+    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "Unassigned";
   };
 
   const getEnquiryTrainerName = (enquiry) => {
     const assignment = findAssignment(enquiry);
-    return assignment?.trainerName || enquiry.trainer_name || enquiry.trainerName || enquiry.trainer?.name || "-";
+    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "Unassigned";
   };
 
   const isPTPlanMembership = (membership) => {

@@ -79,8 +79,55 @@ const EMIList = () => {
   const [trainerFilter, setTrainerFilter] = useState("all");
   const [isTrainerOpen, setIsTrainerOpen] = useState(false);
   const [trainers, setTrainers] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [assignmentMap, setAssignmentMap] = useState({});
   const [importErrors, setImportErrors] = useState([]);
   const [viewMode, setViewMode] = useState("table");
+
+  const buildAssignmentMap = (assignmentsArray) =>
+    assignmentsArray.reduce((acc, assignment) => {
+      const userId = String(assignment.userId || assignment.user_id || assignment.uid || "");
+      const planId = String(assignment.planId || assignment.plan_id || assignment.id || "");
+      if (!userId || !planId) return acc;
+      const key = `${userId}:${planId}`;
+      if (!acc[key]) acc[key] = assignment;
+      return acc;
+    }, {});
+
+  const getAssignmentForMembership = (membership) => {
+    const userId = String(membership.userId || membership.user_id || membership.uid || "");
+    const planId = String(membership.planId || membership.plan_id || membership.id || "");
+    const key = `${userId}:${planId}`;
+    const assignment = assignmentMap[key];
+    if (assignment) return assignment;
+
+    return (
+      assignments.find(
+        (assign) =>
+          String(assign.userId || assign.user_id || assign.uid || "") === userId &&
+          String(assign.planId || assign.plan_id || assign.id || "") === planId,
+      ) ||
+      assignments.find(
+        (assign) => String(assign.userId || assign.user_id || assign.uid || "") === userId,
+      ) ||
+      null
+    );
+  };
+
+  const getAssignedTrainerName = (membership) => {
+    const assignment = getAssignmentForMembership(membership);
+    return (
+      assignment?.trainerName ||
+      assignment?.trainer_name ||
+      assignment?.trainer ||
+      "Unassigned"
+    );
+  };
+
+  const getAssignedTrainerId = (membership) => {
+    const assignment = getAssignmentForMembership(membership);
+    return assignment?.trainerId || assignment?.trainer_id || "";
+  };
 
   useEffect(() => {
     const loadTrainers = async () => {
@@ -104,23 +151,29 @@ const EMIList = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        let membershipsQuery = "/memberships";
-        if (role === "trainer" && user?.id) {
-          membershipsQuery = `/memberships?trainerUserId=${user.id}`;
-        } else if (trainerFilter !== "all") {
-          membershipsQuery = `/memberships?trainerUserId=${trainerFilter}`;
-        }
+        const membershipsQuery = "/memberships";
+        const assignmentsQuery =
+          role === "trainer" && user?.id
+            ? `/assignments?trainerUserId=${user.id}`
+            : "/assignments";
 
-        const [membershipsRes, plansRes] = await Promise.all([
+        const [membershipsRes, plansRes, assignmentsRes] = await Promise.all([
           api.get(membershipsQuery),
           api.get("/plans"),
+          api.get(assignmentsQuery),
         ]);
+
+        const assignmentsRaw = Array.isArray(assignmentsRes.data)
+          ? assignmentsRes.data
+          : assignmentsRes.data?.data || assignmentsRes.data?.assignments || [];
+        setAssignments(assignmentsRaw);
+        setAssignmentMap(buildAssignmentMap(assignmentsRaw));
 
         const raw = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
         const normalized = raw.map((m) => {
           try {
-            if (m && typeof m.dues === 'string') {
-              m.dues = JSON.parse(m.dues || '[]');
+            if (m && typeof m.dues === "string") {
+              m.dues = JSON.parse(m.dues || "[]");
             }
           } catch (e) {
             m.dues = [];
@@ -154,7 +207,13 @@ const EMIList = () => {
     // Date Range Filter
     const matchesDate = filterByDateRange([m], 'createdAt', dateRange.type, dateRange.range).length > 0;
 
-    return matchesSearch && matchesStatus && matchesDate;
+    const assignedTrainerId = getAssignedTrainerId(m);
+    const matchesTrainer =
+      trainerFilter === "all" || String(assignedTrainerId) === String(trainerFilter);
+    const matchesTrainerRole =
+      role === "trainer" ? String(assignedTrainerId) === String(user?.id) : true;
+
+    return matchesSearch && matchesStatus && matchesDate && matchesTrainer && matchesTrainerRole;
   });
 
   const paginatedEMIs = filteredEMIs.slice(
@@ -188,6 +247,7 @@ const EMIList = () => {
         Member: m.userName || m.username || "N/A",
         Email: m.userEmail || m.email || "-",
         Plan: m.planName || "N/A",
+        Trainer: getAssignedTrainerName(m),
         Duration: `${duration} months`,
         "Initial Payment": `₹${initialPayment.toFixed(2)}`,
         "Second Payment": `₹${secondPayment.toFixed(2)}`,
@@ -195,7 +255,7 @@ const EMIList = () => {
         "Total Price": `₹${totalPrice.toFixed(2)}`,
         "Payment ID": m.paymentId || "-",
         "Created At": new Date(m.createdAt).toLocaleDateString(),
-        Status: m.status || "active"
+        Status: m.status || "active",
       };
     });
 
@@ -565,6 +625,7 @@ const EMIList = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Phone</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Trainer</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Dues</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Payment</th>
@@ -622,6 +683,9 @@ const EMIList = () => {
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-gray-300">{membership.planName}</div>
                         </td>
+                        <td className="px-4 py-4">
+                          <div className="text-base font-medium text-cyan-300">{getAssignedTrainerName(membership)}</div>
+                        </td>
                         <td className="px-4 py-4 align-top">
                           {membership.dues && Array.isArray(membership.dues) && membership.dues.length > 0 ? (
                             <div className="space-y-1 text-[11px] leading-snug">
@@ -656,7 +720,7 @@ const EMIList = () => {
                             ₹{secondPayment.toFixed(2)}
                           </div>
                           <div className="text-xs text-white/50">
-                            {membership.collectedBy ? `By: ${membership.collectedBy}` : "Second payment"}
+                            {secondPayment > 0 ? `By: ${getAssignedTrainerName(membership)}` : "Second payment"}
                           </div>
                         </td>
                         <td className="px-4 py-4">
@@ -793,10 +857,18 @@ const EMIList = () => {
                     </div>
 
                     <div className="space-y-4 mb-6">
-                      <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                        <div className="w-full">
-                          <p className="text-[10px] text-white/40 uppercase font-black tracking-wider text-center sm:text-left">Plan Details</p>
-                          <p className="text-sm font-semibold text-white text-center sm:text-left">{membership.planName}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                          <div className="w-full">
+                            <p className="text-[10px] text-white/40 uppercase font-black tracking-wider text-center sm:text-left">Plan Details</p>
+                            <p className="text-sm font-semibold text-white text-center sm:text-left">{membership.planName}</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                          <div className="w-full">
+                            <p className="text-[10px] text-white/40 uppercase font-black tracking-wider text-center sm:text-left">Assigned Trainer</p>
+                            <p className="text-sm font-semibold text-cyan-300 text-center sm:text-left">{getAssignedTrainerName(membership)}</p>
+                          </div>
                         </div>
                       </div>
 
@@ -808,8 +880,8 @@ const EMIList = () => {
                         <div className="bg-cyan-500/5 p-3 rounded-xl border border-cyan-500/10 text-center">
                           <p className="text-[10px] text-cyan-500/60 uppercase font-black tracking-wider mb-1">Second Paid</p>
                           <p className="text-base font-bold text-cyan-300">₹{secondPayment.toFixed(2)}</p>
-                          {membership.collectedBy && (
-                            <p className="text-[9px] text-white/40 mt-1 uppercase">By: {membership.collectedBy}</p>
+                          {secondPayment > 0 && (
+                            <p className="text-[9px] text-white/40 mt-1 uppercase">By: {getAssignedTrainerName(membership)}</p>
                           )}
                         </div>
                         <div className="bg-blue-500/5 p-3 rounded-xl border border-blue-500/10 text-center">
