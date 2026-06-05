@@ -69,6 +69,7 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("members");
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [preview, setPreview] = useState(null);
@@ -267,12 +268,19 @@ const Reports = () => {
 
   const currentTab = tabs.find(t => t.key === activeTab);
   const currentTabRows = currentTab ? currentTab.rows : [];
-  const totalPages = Math.max(1, Math.ceil(currentTabRows.length / rowsPerPage));
-  const paginatedRows = currentTabRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const filteredTabRows = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return currentTabRows;
+    return currentTabRows.filter((row) =>
+      row.some((cell) => String(cell).toLowerCase().includes(term))
+    );
+  }, [currentTabRows, searchTerm]);
+  const totalPages = Math.max(1, Math.ceil(filteredTabRows.length / rowsPerPage));
+  const paginatedRows = filteredTabRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, dateRange]);
+  }, [activeTab, dateRange, searchTerm]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -297,15 +305,24 @@ const Reports = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              placeholder="Search reports..."
+              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/50"
+            />
+          </div>
           <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
           <button
-            onClick={() => downloadPDF(currentTab.label, currentTab.headers, currentTab.rows)}
+            onClick={() => downloadPDF(currentTab.label, currentTab.headers, filteredTabRows)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition whitespace-nowrap"
           >
             <Download size={15} /> PDF
           </button>
           <button
-            onClick={() => downloadExcel(currentTab.label, currentTab.headers, currentTab.rows)}
+            onClick={() => downloadExcel(currentTab.label, currentTab.headers, filteredTabRows)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition whitespace-nowrap"
           >
             <Download size={15} /> Excel
@@ -395,12 +412,12 @@ const Reports = () => {
                   onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
                   className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-white outline-none"
                 >
-                  {[10, 20, 30, 50].map((size) => (
+                  {[10, 20, 30, 50,100,200,300,400,500].map((size) => (
                     <option key={size} value={size}>{size}</option>
                   ))}
                 </select>
                 <span>
-                  Showing {Math.min((currentPage - 1) * rowsPerPage + 1, currentTabRows.length)} - {Math.min(currentPage * rowsPerPage, currentTabRows.length)} of {currentTabRows.length}
+                  Showing {Math.min((currentPage - 1) * rowsPerPage + 1, filteredTabRows.length)} - {Math.min(currentPage * rowsPerPage, filteredTabRows.length)} of {filteredTabRows.length}
                 </span>
               </div>
               <div className="flex items-center gap-2 justify-center">
