@@ -166,6 +166,9 @@ const Reports = () => {
   };
 
   const getEnquiryTrainerName = (enquiry) => {
+    if (enquiry.trainer_name || enquiry.trainerName) {
+      return enquiry.trainer_name || enquiry.trainerName;
+    }
     const assignment = findAssignment(enquiry);
     return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "Unassigned";
   };
