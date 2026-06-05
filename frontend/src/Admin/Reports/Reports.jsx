@@ -322,7 +322,7 @@ const Reports = () => {
     },
     {
       key: "enquiries",
-      label: "Enquiries",
+      label: "Followup Enquiries",
       icon: MessageSquare,
       color: "bg-purple-500/20 text-purple-400",
       data: filteredEnquiries,
