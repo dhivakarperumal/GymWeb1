@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api';
 import dayjs from 'dayjs';
 import { Printer, ChevronLeft } from 'lucide-react';
