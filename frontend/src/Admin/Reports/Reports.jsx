@@ -80,16 +80,16 @@ const Reports = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [mRes, oRes, pRes, eRes] = await Promise.allSettled([
+        const [mRes, oRes, pRes, fRes] = await Promise.allSettled([
           api.get("/members"),
           api.get("/orders"),
           api.get("/memberships"),
-          api.get("/enquiries"),
+          api.get("/followups"),
         ]);
         if (mRes.status === "fulfilled") setMembers(Array.isArray(mRes.value.data) ? mRes.value.data : []);
         if (oRes.status === "fulfilled") setOrders(Array.isArray(oRes.value.data) ? oRes.value.data : []);
         if (pRes.status === "fulfilled") setMemberships(Array.isArray(pRes.value.data) ? pRes.value.data : []);
-        if (eRes.status === "fulfilled") setEnquiries(Array.isArray(eRes.value.data) ? eRes.value.data : []);
+        if (fRes.status === "fulfilled") setEnquiries(Array.isArray(fRes.value.data) ? fRes.value.data : []);
       } catch (err) {
         console.error("Reports fetch error:", err);
       } finally {
