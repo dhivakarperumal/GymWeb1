@@ -9,7 +9,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import DateRangeFilter from "../DateRangeFilter";
-import { filterByDateRange } from "../utils/dateUtils";
+import { filterByDateRange, getDateRangeBounds } from "../utils/dateUtils";
 
 /* ========================
    STAT CARD
@@ -120,9 +120,19 @@ const Reports = () => {
   const isEMIMembership = (membership) =>
     String(membership.paymentMode || membership.payment_mode || "").toLowerCase() === "emi";
 
+  const getMembershipStartDate = (membership) =>
+    membership.pt_startDate || membership.pt_start_date || membership.startDate || membership.start_date || null;
+
+  const getMembershipPlanName = (membership) =>
+    membership.pt_planName || membership.pt_plan_name || membership.planName || membership.plan || membership.plan_name || "";
+
+  const getMembershipTrainerName = (membership) =>
+    membership.pt_trainerName || membership.pt_trainer_name || membership.trainerName || membership.trainer_name || membership.trainer?.name || membership.trainer?.username || "-";
+
   const isPTPlanMembership = (membership) => {
-    const planName = String(membership.planName || membership.plan || membership.plan_name || "").toLowerCase();
-    return planName.includes("pt") || planName.includes("personal training");
+    const planName = String(getMembershipPlanName(membership)).toLowerCase();
+    const hasPT = membership.has_pt_plan || membership.hasPTPlan || membership.isPTPlanPurchase || Boolean(membership.pt_planName);
+    return hasPT || planName.includes("pt") || planName.includes("personal training");
   };
 
   const filteredEMIs = useMemo(() =>
@@ -130,10 +140,18 @@ const Reports = () => {
     [memberships, dateRange]
   );
 
-  const filteredPTPlans = useMemo(() =>
-    filterByDateRange(memberships.filter(isPTPlanMembership), 'startDate', dateRange.type, dateRange.range),
-    [memberships, dateRange]
-  );
+  const filteredPTPlans = useMemo(() => {
+    const ptPlans = memberships.filter(isPTPlanMembership);
+    if (dateRange.type === 'All Time') return ptPlans;
+
+    const { start, end } = getDateRangeBounds(dateRange.type, dateRange.range);
+    if (!start || !end) return ptPlans;
+
+    return ptPlans.filter((membership) => {
+      const date = dayjs(getMembershipStartDate(membership));
+      return date.isValid() && !date.isBefore(start) && !date.isAfter(end);
+    });
+  }, [memberships, dateRange]);
 
   const filteredEnquiries = useMemo(() =>
     filterByDateRange(enquiries, 'created_at', dateRange.type, dateRange.range),
@@ -150,7 +168,7 @@ const Reports = () => {
       icon: Users,
       color: "bg-blue-500/20 text-blue-400",
       data: filteredMembers,
-      headers: ["#", "Name", "Email", "Mobile Number", "Plan", "Status", "Join Date"],
+      headers: ["S No", "Name", "Email", "Mobile Number", "Plan", "Status", "Join Date"],
       rows: filteredMembers.map((m, i) => [
         i + 1,
         m.name || "N/A",
@@ -183,7 +201,7 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-green-500/20 text-green-400",
       data: filteredMemberships,
-      headers: ["#", "Member", "Email", "Plan", "Amount", "Mode", "Workout", "Diet", "Status", "Start", "End"],
+      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Amount", "Mode", "Workout", "Diet", "Status", "Start", "End"],
       rows: filteredMemberships.map((p, i) => {
         const hasWorkout = !!(p.workout_count || p.workoutCount || p.hasWorkout || p.workoutAssigned || p.workout);
         const hasDiet = !!(p.diet_count || p.dietCount || p.hasDiet || p.dietAssigned || p.diet);
@@ -192,6 +210,7 @@ const Reports = () => {
           p.userName || p.username || "-",
           p.userEmail || p.email || "-",
           p.planName || "-",
+          getMembershipTrainerName(p),
           p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
           p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
           hasWorkout ? "Yes" : "No",
@@ -208,7 +227,7 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-red-500/20 text-red-400",
       data: filteredEMIs,
-      headers: ["#", "Member", "Email", "Plan", "Total", "Paid", "Remaining", "Mode", "Status", "Start", "End"],
+      headers: ["S No", "Member", "Email", "Plan", "Total", "Paid", "Remaining", "Mode", "Status", "Start", "End"],
       rows: filteredEMIs.map((p, i) => {
         const totalAmount = p.price != null ? parseFloat(p.price) : null;
         const paidAmount = p.pricePaid != null ? parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0) : null;
@@ -234,17 +253,25 @@ const Reports = () => {
       icon: Users,
       color: "bg-indigo-500/20 text-indigo-400",
       data: filteredPTPlans,
-      headers: ["#", "Member", "Email", "Plan", "Amount", "Status", "Start", "End"],
-      rows: filteredPTPlans.map((p, i) => [
-        i + 1,
-        p.userName || p.username || "-",
-        p.userEmail || p.email || "-",
-        p.planName || p.plan || "-",
-        p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
-        p.status || "active",
-        p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
-        p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
-      ]),
+      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Amount", "Status", "Start", "End"],
+      rows: filteredPTPlans.map((p, i) => {
+        const startDate = p.pt_startDate || p.startDate || p.start_date;
+        const endDate = p.pt_endDate || p.endDate || p.end_date;
+        const paymentAmount = p.pt_pricePaid != null ? p.pt_pricePaid : p.pricePaid != null ? p.pricePaid : null;
+        const paymentMode = p.pt_paymentMode || p.paymentMode || p.payment_mode || "-";
+
+        return [
+          i + 1,
+          p.userName || p.username || "-",
+          p.userEmail || p.email || "-",
+          p.pt_planName || p.planName || p.plan || "-",
+          getMembershipTrainerName(p),
+          paymentAmount != null ? `₹${parseFloat(paymentAmount).toFixed(2)}` : "-",
+          p.pt_status || p.status || "active",
+          startDate ? dayjs(startDate).format("DD MMM YYYY") : "-",
+          endDate ? dayjs(endDate).format("DD MMM YYYY") : "-",
+        ];
+      }),
     },
     {
       key: "enquiries",
