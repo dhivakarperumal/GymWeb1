@@ -326,7 +326,7 @@ const Reports = () => {
       icon: MessageSquare,
       color: "bg-purple-500/20 text-purple-400",
       data: filteredEnquiries,
-      headers: ["S No", "Name", "Email", "Mobile Number", "Assigned Trainer", "Subject", "Status", "Date"],
+      headers: ["S No", "Name", "Email", "Mobile Number", "Assigned Trainer", "Subject", "Message", "Next Follow Up", "Status", "Date"],
       rows: filteredEnquiries.map((e, i) => [
         i + 1,
         e.name || "-",
@@ -334,6 +334,8 @@ const Reports = () => {
         e.phone || "-",
         getEnquiryTrainerName(e),
         e.subject || "-",
+        e.message || "-",
+        e.next_followup_date ? dayjs(e.next_followup_date).format("DD MMM YYYY") : "-",
         e.status || "pending",
         e.created_at ? dayjs(e.created_at).format("DD MMM YYYY") : "-",
       ]),
