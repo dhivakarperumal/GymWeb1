@@ -131,17 +131,33 @@ const Reports = () => {
 
   const findAssignment = (record) => {
     if (!assignments || assignments.length === 0) return null;
-    return assignments.find((a) =>
-      (record.userId && a.userId && String(record.userId) === String(a.userId)) ||
-      (record.user_id && a.userId && String(record.user_id) === String(a.userId)) ||
-      (record.userEmail && a.userEmail && String(record.userEmail).toLowerCase() === String(a.userEmail).toLowerCase()) ||
-      (record.email && a.userEmail && String(record.email).toLowerCase() === String(a.userEmail).toLowerCase()) ||
-      (record.userMobile && a.userMobile && String(record.userMobile) === String(a.userMobile)) ||
-      (record.phone && a.userMobile && String(record.phone) === String(a.userMobile)) ||
-      (record.username && a.username && String(record.username).toLowerCase() === String(a.username).toLowerCase()) ||
-      (record.userName && a.username && String(record.userName).toLowerCase() === String(a.username).toLowerCase()) ||
-      (record.name && a.username && String(record.name).toLowerCase() === String(a.username).toLowerCase())
-    );
+
+    const normalized = {
+      userId: record.userId || record.user_id,
+      userUuid: record.user_id_uuid || record.userUuid,
+      userEmail: (record.userEmail || record.userEmail === "" ? record.userEmail : record.email || record.user_email) || "",
+      userMobile: record.userMobile || record.user_mobile || record.phone || record.userPhone || "",
+      username: record.username || record.userName || record.userName || record.name || "",
+      planId: record.planId || record.plan_id || record.pt_planId || record.pt_plan_id || null,
+      planName: record.planName || record.plan_name || record.pt_planName || record.pt_plan_name || "",
+    };
+
+    return assignments.find((a) => {
+      const assignmentEmail = String(a.userEmail || "").toLowerCase();
+      const assignmentUsername = String(a.username || "").toLowerCase();
+      const recordEmail = String(normalized.userEmail || "").toLowerCase();
+      const recordUsername = String(normalized.username || "").toLowerCase();
+      const recordMobile = String(normalized.userMobile || "");
+
+      return (
+        (normalized.userId && a.userId && String(normalized.userId) === String(a.userId)) ||
+        (normalized.userUuid && a.userUuid && String(normalized.userUuid) === String(a.userUuid)) ||
+        (recordEmail && assignmentEmail && recordEmail === assignmentEmail) ||
+        (recordMobile && a.userMobile && recordMobile === String(a.userMobile)) ||
+        (recordUsername && assignmentUsername && recordUsername === assignmentUsername) ||
+        ((normalized.planId || normalized.planName) && (a.planId === normalized.planId || String(a.planName || "").toLowerCase() === String(normalized.planName || "").toLowerCase()))
+      );
+    });
   };
 
   const getMembershipTrainerName = (membership) => {
@@ -306,7 +322,7 @@ const Reports = () => {
       icon: MessageSquare,
       color: "bg-purple-500/20 text-purple-400",
       data: filteredEnquiries,
-      headers: ["#", "Name", "Email", "Mobile Number", "Assigned Trainer", "Subject", "Status", "Date"],
+      headers: ["S No", "Name", "Email", "Mobile Number", "Assigned Trainer", "Subject", "Status", "Date"],
       rows: filteredEnquiries.map((e, i) => [
         i + 1,
         e.name || "-",
