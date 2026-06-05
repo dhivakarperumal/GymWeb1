@@ -66,6 +66,7 @@ const Reports = () => {
   const [orders, setOrders] = useState([]);
   const [memberships, setMemberships] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
+  const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("members");
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
@@ -80,16 +81,18 @@ const Reports = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [mRes, oRes, pRes, fRes] = await Promise.allSettled([
+        const [mRes, oRes, pRes, fRes, aRes] = await Promise.allSettled([
           api.get("/members"),
           api.get("/orders"),
           api.get("/memberships"),
           api.get("/followups"),
+          api.get("/assignments"),
         ]);
         if (mRes.status === "fulfilled") setMembers(Array.isArray(mRes.value.data) ? mRes.value.data : []);
         if (oRes.status === "fulfilled") setOrders(Array.isArray(oRes.value.data) ? oRes.value.data : []);
         if (pRes.status === "fulfilled") setMemberships(Array.isArray(pRes.value.data) ? pRes.value.data : []);
         if (fRes.status === "fulfilled") setEnquiries(Array.isArray(fRes.value.data) ? fRes.value.data : []);
+        if (aRes.status === "fulfilled") setAssignments(Array.isArray(aRes.value.data) ? aRes.value.data : []);
       } catch (err) {
         console.error("Reports fetch error:", err);
       } finally {
@@ -126,8 +129,31 @@ const Reports = () => {
   const getMembershipPlanName = (membership) =>
     membership.pt_planName || membership.pt_plan_name || membership.planName || membership.plan || membership.plan_name || "";
 
-  const getMembershipTrainerName = (membership) =>
-    membership.pt_trainerName || membership.pt_trainer_name || membership.trainerName || membership.trainer_name || membership.trainer?.name || membership.trainer?.username || "-";
+  const findAssignment = (record) => {
+    if (!assignments || assignments.length === 0) return null;
+    return assignments.find((a) =>
+      (record.userId && a.userId && String(record.userId) === String(a.userId)) ||
+      (record.user_id && a.userId && String(record.user_id) === String(a.userId)) ||
+      (record.userEmail && a.userEmail && String(record.userEmail).toLowerCase() === String(a.userEmail).toLowerCase()) ||
+      (record.email && a.userEmail && String(record.email).toLowerCase() === String(a.userEmail).toLowerCase()) ||
+      (record.userMobile && a.userMobile && String(record.userMobile) === String(a.userMobile)) ||
+      (record.phone && a.userMobile && String(record.phone) === String(a.userMobile)) ||
+      (record.username && a.username && String(record.username).toLowerCase() === String(a.username).toLowerCase()) ||
+      (record.userName && a.username && String(record.userName).toLowerCase() === String(a.username).toLowerCase()) ||
+      (record.name && a.username && String(record.name).toLowerCase() === String(a.username).toLowerCase())
+    );
+  };
+
+  const getMembershipTrainerName = (membership) => {
+    const assignment = findAssignment(membership);
+    if (assignment?.trainerName) return assignment.trainerName;
+    return membership.pt_trainerName || membership.pt_trainer_name || membership.trainerName || membership.trainer_name || membership.trainer?.name || membership.trainer?.username || "-";
+  };
+
+  const getEnquiryTrainerName = (enquiry) => {
+    const assignment = findAssignment(enquiry);
+    return enquiry.trainer_name || enquiry.trainerName || enquiry.trainer?.name || assignment?.trainerName || "-";
+  };
 
   const isPTPlanMembership = (membership) => {
     const planName = String(getMembershipPlanName(membership)).toLowerCase();
@@ -227,7 +253,7 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-red-500/20 text-red-400",
       data: filteredEMIs,
-      headers: ["S No", "Member", "Email", "Plan", "Total", "Paid", "Remaining", "Mode", "Status", "Start", "End"],
+      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Total", "Paid", "Remaining", "Mode", "Status", "Start", "End"],
       rows: filteredEMIs.map((p, i) => {
         const totalAmount = p.price != null ? parseFloat(p.price) : null;
         const paidAmount = p.pricePaid != null ? parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0) : null;
@@ -237,6 +263,7 @@ const Reports = () => {
           p.userName || p.username || "-",
           p.userEmail || p.email || "-",
           p.planName || "-",
+          getMembershipTrainerName(p),
           totalAmount != null ? `₹${totalAmount.toFixed(2)}` : "-",
           paidAmount != null ? `₹${paidAmount.toFixed(2)}` : "-",
           typeof remaining === "number" ? `₹${remaining.toFixed(2)}` : "-",
@@ -285,7 +312,7 @@ const Reports = () => {
         e.name || "-",
         e.email || "-",
         e.phone || "-",
-        e.trainer_name || e.trainerName || e.trainer?.name || "-",
+        getEnquiryTrainerName(e),
         e.subject || "-",
         e.status || "pending",
         e.created_at ? dayjs(e.created_at).format("DD MMM YYYY") : "-",
