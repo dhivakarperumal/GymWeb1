@@ -69,6 +69,8 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("members");
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [preview, setPreview] = useState(null);
 
   /* ========================
@@ -111,6 +113,24 @@ const Reports = () => {
 
   const filteredMemberships = useMemo(() =>
     filterByDateRange(memberships, 'startDate', dateRange.type, dateRange.range),
+    [memberships, dateRange]
+  );
+
+  const isEMIMembership = (membership) =>
+    String(membership.paymentMode || membership.payment_mode || "").toLowerCase() === "emi";
+
+  const isPTPlanMembership = (membership) => {
+    const planName = String(membership.planName || membership.plan || membership.plan_name || "").toLowerCase();
+    return planName.includes("pt") || planName.includes("personal training");
+  };
+
+  const filteredEMIs = useMemo(() =>
+    filterByDateRange(memberships.filter(isEMIMembership), 'startDate', dateRange.type, dateRange.range),
+    [memberships, dateRange]
+  );
+
+  const filteredPTPlans = useMemo(() =>
+    filterByDateRange(memberships.filter(isPTPlanMembership), 'startDate', dateRange.type, dateRange.range),
     [memberships, dateRange]
   );
 
@@ -176,6 +196,50 @@ const Reports = () => {
       ]),
     },
     {
+      key: "emi",
+      label: "EMI Records",
+      icon: CreditCard,
+      color: "bg-red-500/20 text-red-400",
+      data: filteredEMIs,
+      headers: ["#", "Member", "Email", "Plan", "Total", "Paid", "Remaining", "Mode", "Status", "Start", "End"],
+      rows: filteredEMIs.map((p, i) => {
+        const totalAmount = p.price != null ? parseFloat(p.price) : null;
+        const paidAmount = p.pricePaid != null ? parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0) : null;
+        const remaining = totalAmount != null && paidAmount != null ? Math.max(0, totalAmount - paidAmount) : "-";
+        return [
+          i + 1,
+          p.userName || p.username || "-",
+          p.userEmail || p.email || "-",
+          p.planName || "-",
+          totalAmount != null ? `₹${totalAmount.toFixed(2)}` : "-",
+          paidAmount != null ? `₹${paidAmount.toFixed(2)}` : "-",
+          typeof remaining === "number" ? `₹${remaining.toFixed(2)}` : "-",
+          p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
+          p.status || "active",
+          p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
+          p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
+        ];
+      }),
+    },
+    {
+      key: "pt-plans",
+      label: "PT Plan Buys",
+      icon: Users,
+      color: "bg-indigo-500/20 text-indigo-400",
+      data: filteredPTPlans,
+      headers: ["#", "Member", "Email", "Plan", "Amount", "Status", "Start", "End"],
+      rows: filteredPTPlans.map((p, i) => [
+        i + 1,
+        p.userName || p.username || "-",
+        p.userEmail || p.email || "-",
+        p.planName || p.plan || "-",
+        p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
+        p.status || "active",
+        p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
+        p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
+      ]),
+    },
+    {
       key: "enquiries",
       label: "Enquiries",
       icon: MessageSquare,
@@ -195,6 +259,19 @@ const Reports = () => {
   ];
 
   const currentTab = tabs.find(t => t.key === activeTab);
+  const currentTabRows = currentTab ? currentTab.rows : [];
+  const totalPages = Math.max(1, Math.ceil(currentTabRows.length / rowsPerPage));
+  const paginatedRows = currentTabRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, dateRange]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   /* ========================
      UI
@@ -229,10 +306,12 @@ const Reports = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
         <Stat title="Total Members" value={filteredMembers.length} icon={Users} color="bg-blue-500/20 text-blue-400" />
         <Stat title="Total Orders" value={filteredOrders.length} icon={ShoppingCart} color="bg-orange-500/20 text-orange-400" />
         <Stat title="Plan Purchases" value={filteredMemberships.length} icon={CreditCard} color="bg-green-500/20 text-green-400" />
+        <Stat title="EMI Records" value={filteredEMIs.length} icon={CreditCard} color="bg-red-500/20 text-red-400" />
+        <Stat title="PT Plan Buys" value={filteredPTPlans.length} icon={Users} color="bg-indigo-500/20 text-indigo-400" />
         <Stat title="Enquiries" value={filteredEnquiries.length} icon={MessageSquare} color="bg-purple-500/20 text-purple-400" />
       </div>
 
@@ -272,33 +351,72 @@ const Reports = () => {
             <p className="text-sm mt-1">Data will appear here once added</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-white">
-              <thead className="bg-white/10 border-b border-white/10">
-                <tr>
-                  {currentTab.headers.map(h => (
-                    <th key={h} className="px-4 py-3 text-left font-semibold text-white/80 whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {currentTab.rows.map((row, i) => (
-                  <tr
-                    key={i}
-                    className="border-b border-white/5 hover:bg-white/5 transition"
-                  >
-                    {row.map((cell, j) => (
-                      <td key={j} className="px-4 py-3 whitespace-nowrap text-white/80">
-                        {cell}
-                      </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm text-white">
+                <thead className="bg-white/10 border-b border-white/10">
+                  <tr>
+                    {currentTab.headers.map(h => (
+                      <th key={h} className="px-4 py-3 text-left font-semibold text-white/80 whitespace-nowrap">
+                        {h}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginatedRows.map((row, i) => (
+                    <tr
+                      key={i}
+                      className="border-b border-white/5 hover:bg-white/5 transition"
+                    >
+                      {row.map((cell, j) => (
+                        <td key={j} className="px-4 py-3 whitespace-nowrap text-white/80">
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border-t border-white/10 bg-slate-950/40">
+              <div className="flex items-center gap-3 text-white/70 text-sm">
+                <span>Rows per page:</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                  className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-white outline-none"
+                >
+                  {[10, 20, 30, 50].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>
+                  Showing {Math.min((currentPage - 1) * rowsPerPage + 1, currentTabRows.length)} - {Math.min(currentPage * rowsPerPage, currentTabRows.length)} of {currentTabRows.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 justify-center">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
+                <span className="text-sm text-white/70">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
