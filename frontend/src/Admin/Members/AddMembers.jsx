@@ -13,6 +13,7 @@ const AddMember = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [plans, setPlans] = useState([]);
   const [originalPlan, setOriginalPlan] = useState(null);
+  const [pendingEMIs, setPendingEMIs] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -49,7 +50,15 @@ const AddMember = () => {
     const fetchPlans = async () => {
       try {
         const res = await api.get('/plans');
-        const activePlans = (res.data || []).filter((p) => p.active);
+        const activePlans = (res.data || []).filter((p) => {
+          if (!p.active) return false;
+          // Filter out PT Plans (trainer_included)
+          const isPT = p.trainerIncluded === true || 
+                       p.trainerIncluded === 1 || 
+                       p.trainer_included === true || 
+                       p.trainer_included === 1;
+          return !isPT;
+        });
         setPlans(activePlans);
       } catch (err) {
         console.error('Failed to load plans:', err);
@@ -70,6 +79,23 @@ const AddMember = () => {
           const data = res.data;
 
           setOriginalPlan(data.plan || null);
+
+          // Fetch memberships to check for pending EMIs
+          try {
+            const uId = data.u_id || data.user_id || id;
+            const membershipsRes = await api.get(`/memberships/user/${uId}`);
+            const memberships = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
+            const pending = memberships.filter(m => {
+              const pMode = (m.paymentMode || m.payment_mode || '').toLowerCase();
+              if (pMode !== 'emi') return false;
+              const pStatus = (m.paymentStatus || m.payment_status || '').toLowerCase();
+              return pStatus === 'pending' || pStatus === 'partial';
+            });
+            setPendingEMIs(pending);
+          } catch (err) {
+            console.error('Failed to load memberships for EMI check:', err);
+          }
+
           setForm({
             ...data,
             username: data.email ? data.email.split('@')[0] : '',
@@ -236,6 +262,12 @@ const AddMember = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (form.email && !emailRegex.test(form.email)) {
       toast.error("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
+    if (isEdit && originalPlan && form.plan && originalPlan !== form.plan && pendingEMIs.length > 0) {
+      alert("⚠️ This member has pending EMI! Please clear the EMI first before changing to a new plan.");
       setLoading(false);
       return;
     }

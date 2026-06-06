@@ -656,10 +656,10 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         const paid = parseDecimal(e.pricePaid) + parseDecimal(e.secondPaymentPaid);
         return sum + Math.max(0, total - paid);
       }, 0);
-      const confirmed = window.confirm(
-        `⚠️ This member has pending EMI!\n\nPlan: ${pendingNames}\nPending Amount: ₹${totalPending.toFixed(2)}\n\nDo you still want to assign a new plan?`
+      alert(
+        `⚠️ This member has pending EMI!\n\nPlan: ${pendingNames}\nPending Amount: ₹${totalPending.toFixed(2)}\n\nPlease clear the EMI first before buying a new plan.`
       );
-      if (!confirmed) return;
+      return;
     }
 
     setLoading(true);
