@@ -150,7 +150,7 @@ const MemberDetails = () => {
   };
 
   const handleToggleStatus = async () => {
-    const newStatus = member.status === 'active' ? 'inactive' : 'active';
+    const newStatus = displayStatus === 'active' ? 'inactive' : 'active';
     try {
       const res = await api.put(`/members/${id}`, { ...member, status: newStatus });
       setMember(res.data);
@@ -200,6 +200,17 @@ const MemberDetails = () => {
       toast.error("Failed to delete Normal Plan");
     }
   };
+
+  const isExpired =
+    member?.expiry_date &&
+    dayjs(member.expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") <= 0;
+
+  const displayStatus =
+    !member.plan || member.plan === "user"
+      ? "inactive"
+      : isExpired
+        ? "inactive"
+        : member.status;
 
   return (
     <div className="min-h-screen pb-12 text-white">
@@ -259,11 +270,13 @@ const MemberDetails = () => {
 
                 <button
                   onClick={handleToggleStatus}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl transition-all hover:scale-105 active:scale-95 ${member.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}
-                  title={`Click to set as ${member.status === 'active' ? 'Inactive' : 'Active'}`}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl transition-all hover:scale-105 active:scale-95 ${displayStatus === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}
+                  title={`Click to set as ${displayStatus === 'active' ? 'Inactive' : 'Active'}`}
                 >
-                  <div className={`w-2 h-2 rounded-full ${member.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`} />
-                  <span className="text-xs font-bold uppercase">{member.status || 'Active'}</span>
+                  <div className={`w-2 h-2 rounded-full ${displayStatus === 'active' ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`} />
+                  <span className="text-xs font-bold uppercase">
+                    {displayStatus === "active" ? "Active" : "Inactive"}
+                  </span>
                 </button>
               </div>
 
@@ -395,7 +408,7 @@ const MemberDetails = () => {
                       {member.pt_duration && (
                         <InfoRow icon={<Activity size={18} className="text-orange-500" />} label="Duration" value={`${member.pt_duration} Days`} />
                       )}
-                      
+
                       {(member.pt_plan || member.has_pt_plan) && (
                         <div className="pt-4 border-t border-white/10">
                           <button
