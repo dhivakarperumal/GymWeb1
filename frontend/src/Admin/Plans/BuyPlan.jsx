@@ -218,7 +218,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     return duration > 0 ? Number((total / duration).toFixed(2)) : 0;
   };
 
-  const isEMIAllowed = selectedPlan ? getSelectedPlanDuration() > 1 : false;
+  const isEMIAllowed = selectedPlan ? (!filterTrainerPlans && getSelectedPlanDuration() > 1) : false;
 
   useEffect(() => {
     if (!selectedPlan) return;
@@ -464,9 +464,15 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
 
             // Check for pending EMIs
             const pending = normalized.filter(m => {
-              if (m.paymentMode !== 'emi') return false;
-              const status = (m.paymentStatus || '').toLowerCase();
-              return status === 'pending' || status === 'partial';
+              if (filterTrainerPlans) {
+                if (m.pt_paymentMode !== 'emi') return false;
+                const status = (m.pt_paymentStatus || '').toLowerCase();
+                return status === 'pending' || status === 'partial';
+              } else {
+                if (m.paymentMode !== 'emi') return false;
+                const status = (m.paymentStatus || '').toLowerCase();
+                return status === 'pending' || status === 'partial';
+              }
             });
             setPendingEMIs(pending);
           })
@@ -650,10 +656,10 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
 
     // Check for pending EMI and warn
     if (pendingEMIs.length > 0) {
-      const pendingNames = pendingEMIs.map(e => e.planName || 'Unknown Plan').join(', ');
+      const pendingNames = pendingEMIs.map(e => filterTrainerPlans ? (e.pt_planName || 'Unknown PT Plan') : (e.planName || 'Unknown Plan')).join(', ');
       const totalPending = pendingEMIs.reduce((sum, e) => {
-        const total = parseDecimal(e.price);
-        const paid = parseDecimal(e.pricePaid) + parseDecimal(e.secondPaymentPaid);
+        const total = parseDecimal(filterTrainerPlans ? e.pt_price : e.price);
+        const paid = parseDecimal(filterTrainerPlans ? e.pt_pricePaid : e.pricePaid) + parseDecimal(filterTrainerPlans ? e.pt_secondPaymentPaid : e.secondPaymentPaid);
         return sum + Math.max(0, total - paid);
       }, 0);
       alert(
@@ -958,13 +964,36 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                               api.get(`/memberships/user/${uId}`)
                                 .then(res => {
                                   const data = Array.isArray(res.data) ? res.data : [];
-                                  setMemberHistory(data);
+                                  const normalized = data.map((m) => ({
+                                    ...m,
+                                    id: m.id ?? m._id,
+                                    planId: m.planId ?? m.plan_id,
+                                    planName: m.planName ?? m.plan_name,
+                                    pt_planId: m.pt_planId ?? m.pt_plan_id,
+                                    pt_planName: m.pt_planName ?? m.pt_plan_name,
+                                    pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
+                                    pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
+                                    pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
+                                    pt_startDate: m.pt_startDate ?? m.pt_start_date,
+                                    pt_endDate: m.pt_endDate ?? m.pt_end_date,
+                                    pt_paymentMode: m.pt_paymentMode ?? m.pt_payment_mode,
+                                    pt_paymentDate: m.pt_paymentDate ?? m.pt_payment_date,
+                                    pt_paymentStatus: m.pt_paymentStatus ?? m.pt_payment_status,
+                                    pt_status: m.pt_status ?? m.ptStatus,
+                                  }));
+                                  setMemberHistory(normalized);
 
                                   // Check for pending EMIs
-                                  const pending = data.filter(m => {
-                                    if (m.paymentMode !== 'emi') return false;
-                                    const status = (m.paymentStatus || '').toLowerCase();
-                                    return status === 'pending' || status === 'partial';
+                                  const pending = normalized.filter(m => {
+                                    if (filterTrainerPlans) {
+                                      if (m.pt_paymentMode !== 'emi') return false;
+                                      const status = (m.pt_paymentStatus || '').toLowerCase();
+                                      return status === 'pending' || status === 'partial';
+                                    } else {
+                                      if (m.paymentMode !== 'emi') return false;
+                                      const status = (m.paymentStatus || '').toLowerCase();
+                                      return status === 'pending' || status === 'partial';
+                                    }
                                   });
                                   setPendingEMIs(pending);
                                 })
@@ -1199,11 +1228,13 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
               onChange={(e) => setPaymentType(e.target.value)}
             >
               <option value="full">Full Payment</option>
-              <option value="emi" disabled={!isEMIAllowed}>
-                EMI
-              </option>
+              {!filterTrainerPlans && (
+                <option value="emi" disabled={!isEMIAllowed}>
+                  EMI
+                </option>
+              )}
             </select>
-            {selectedPlan && !isEMIAllowed && (
+            {selectedPlan && !filterTrainerPlans && !isEMIAllowed && (
               <p className="mt-2 text-xs text-red-400">
                 EMI is available only for plans longer than 1 month.
               </p>
