@@ -371,6 +371,38 @@ const MemberDetails = () => {
                   </div>
                 </div>
 
+                {(member.pt_plan || member.has_pt_plan) && (
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                      <h3 className="text-sm font-black text-white/20 uppercase tracking-widest">PT Plan</h3>
+                      {member.pt_status && (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${member.pt_status === 'Paid' || member.pt_status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                          {member.pt_status}
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <InfoRow icon={<CreditCard size={18} className="text-orange-500" />} label="Plan" value={member.pt_plan || 'No Active PT Plan'} />
+                      <InfoRow icon={<Calendar size={18} className="text-orange-500" />} label="Joined" value={member.pt_join_date ? dayjs(member.pt_join_date).format('MMM DD, YYYY') : 'N/A'} />
+                      <InfoRow icon={<Clock size={18} className="text-orange-500" />} label="Expiry" value={member.pt_expiry_date ? dayjs(member.pt_expiry_date).format('MMM DD, YYYY') : 'N/A'} />
+                      {member.pt_duration && (
+                        <InfoRow icon={<Activity size={18} className="text-orange-500" />} label="Duration" value={`${member.pt_duration} Days`} />
+                      )}
+                      
+                      {(member.pt_plan || member.has_pt_plan) && (
+                        <div className="pt-4 border-t border-white/10">
+                          <button
+                            onClick={handleDeletePtPlan}
+                            className="w-full px-4 py-3 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all font-bold text-xs uppercase"
+                          >
+                            Delete PT Plan
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
                   <h3 className="text-sm font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-4">Health Metrics</h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -422,16 +454,6 @@ const MemberDetails = () => {
                       className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white"
                     >
                       Complete Now
-                    </button>
-                  )}
-
-                  {(member.pt_plan || member.has_pt_plan) && (
-                    <button
-                      onClick={handleDeletePtPlan}
-                      className="px-4 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white"
-                      title="Delete PT Plan"
-                    >
-                      Delete PT Plan
                     </button>
                   )}
                 </div>
