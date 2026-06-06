@@ -403,7 +403,7 @@ const MemberDetails = () => {
                   </div>
                 )}
 
-                <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6 md:col-span-2">
                   <h3 className="text-sm font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-4">Health Metrics</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <MetricCard label="Height" value={member.height} unit="cm" />
@@ -515,33 +515,56 @@ const MemberDetails = () => {
                     <p className="text-white/40 text-xs font-bold uppercase mt-1">Nutritional Meal Plan</p>
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {Object.keys(dietPlan.days || {}).map((day) => (
-                      <button
-                        key={day}
-                        onClick={() => setActiveDietDay(day)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeDietDay === day ? 'bg-orange-500 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
-                      >
-                        {day}
-                      </button>
-                    ))}
+                    {Object.keys(dietPlan.days || {}).map((day) => {
+                      const displayDay = !isNaN(day) ? `Day ${parseInt(day) + 1}` : day;
+                      return (
+                        <button
+                          key={day}
+                          onClick={() => setActiveDietDay(day)}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeDietDay === day ? 'bg-orange-500 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+                        >
+                          {displayDay}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {activeDietDay && dietPlan.days[activeDietDay] ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Object.entries(dietPlan.days[activeDietDay]).map(([meal, data], i) => (
-                      <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-orange-500/40 transition-all">
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-orange-500 font-bold uppercase text-[10px]">{meal}</span>
-                          {data.time && <span className="text-[10px] text-white/30">{data.time}</span>}
-                        </div>
-                        <p className="text-white font-bold mb-3">{data.food || 'N/A'}</p>
-                        <div className="pt-3 border-t border-white/5 flex justify-between items-center">
-                          <span className="text-[10px] text-white/20 font-bold uppercase">Energy</span>
-                          <span className="text-emerald-500 font-bold text-xs">{data.calories || '-'} kcal</span>
-                        </div>
-                      </div>
-                    ))}
+                    {Object.entries(dietPlan.days[activeDietDay])
+                      .filter(([meal]) => meal !== 'notes')
+                      .map(([meal, data], i) => {
+                        const items = data.items || [];
+                        const totalCalories = items.reduce((sum, item) => sum + (parseInt(item.calories) || 0), 0);
+
+                        return (
+                          <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-orange-500/40 transition-all flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center justify-between mb-4">
+                                <span className="text-orange-500 font-bold uppercase text-[10px]">{meal}</span>
+                                {data.time && <span className="text-[10px] text-white/30">{data.time}</span>}
+                              </div>
+                              <div className="space-y-2 mb-4">
+                                {items.length > 0 ? (
+                                  items.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-start text-sm">
+                                      <span className="text-white font-bold pr-2">{item.food}</span>
+                                      <span className="text-white/40 text-xs shrink-0">{item.quantity}</span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-white/40 font-bold text-sm">N/A</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="pt-3 border-t border-white/5 flex justify-between items-center mt-auto">
+                              <span className="text-[10px] text-white/20 font-bold uppercase">Energy</span>
+                              <span className="text-emerald-500 font-bold text-xs">{totalCalories > 0 ? totalCalories : '-'} kcal</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
                 ) : (
                   <div className="py-10 text-center text-white/20 italic">Select a day to view nutrition info</div>
