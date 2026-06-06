@@ -843,10 +843,12 @@ async function updateMember(req, res) {
     if (updatedMember && updatedMember.u_id) {
       try {
         let planPrice = null;
+        let planId = null;
         const newPlanName = plan === undefined ? updatedMember.plan : plan;
         if (newPlanName) {
-          const [planRows] = await connection.query(`SELECT final_price, price FROM gym_plans WHERE name = ?`, [newPlanName]);
+          const [planRows] = await connection.query(`SELECT id, final_price, price FROM gym_plans WHERE name = ?`, [newPlanName]);
           if (planRows.length > 0) {
+            planId = planRows[0].id;
             planPrice = planRows[0].final_price || planRows[0].price;
           }
         }
@@ -857,6 +859,7 @@ async function updateMember(req, res) {
              SET endDate = ?, 
                  startDate = ?, 
                  duration = ?, 
+                 planId = ?,
                  planName = ?,
                  userName = ?,
                  userEmail = ?,
@@ -872,6 +875,7 @@ async function updateMember(req, res) {
               expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
               joinDate === undefined ? updatedMember.join_date : joinDate,
               duration === undefined ? updatedMember.duration : numDuration,
+              planId,
               newPlanName,
               name === undefined ? updatedMember.name : name,
               email === undefined ? updatedMember.email : email,
@@ -887,6 +891,7 @@ async function updateMember(req, res) {
              SET endDate = ?, 
                  startDate = ?, 
                  duration = ?, 
+                 planId = ?,
                  planName = ?,
                  userName = ?,
                  userEmail = ?,
@@ -898,6 +903,7 @@ async function updateMember(req, res) {
               expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
               joinDate === undefined ? updatedMember.join_date : joinDate,
               duration === undefined ? updatedMember.duration : numDuration,
+              planId,
               newPlanName,
               name === undefined ? updatedMember.name : name,
               email === undefined ? updatedMember.email : email,
