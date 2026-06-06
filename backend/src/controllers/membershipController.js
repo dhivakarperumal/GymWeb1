@@ -248,34 +248,60 @@ async function createMembership(req, res) {
 
     // Sync with gym_members table if a record exists for this user
     try {
-      const [userRows] = await db.query("SELECT email, mobile FROM users WHERE id = ?", [userId]);
+      const [userRows] = await db.query("SELECT email, mobile, user_id FROM users WHERE id = ?", [userId]);
       if (userRows.length > 0) {
         const u = userRows[0];
-        
-        if (isPTPlanPurchase) {
-          await db.query(
-            `UPDATE gym_members 
-             SET pt_plan = ?, 
-                 pt_duration = ?, 
-                 pt_join_date = ?, 
-                 pt_expiry_date = ?,
-                 pt_status = ?
-             WHERE (email = ? AND email IS NOT NULL AND email != '') 
-                OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
-            [pt_planName, pt_duration, pt_startDate, pt_endDate, pt_status || 'active', u.email, u.mobile]
-          );
-        } else {
-          await db.query(
-            `UPDATE gym_members 
-             SET plan = ?, 
-                 duration = ?, 
-                 join_date = ?, 
-                 expiry_date = ?,
-                 status = ?
-             WHERE (email = ? AND email IS NOT NULL AND email != '') 
-                OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
-            [planName, duration, startDate, endDate, status || 'active', u.email, u.mobile]
-          );
+        // Build a robust WHERE clause that tries multiple match strategies
+        const matchEmails = [u.email, userEmail].filter(e => e && e.trim() !== '');
+        const matchPhones = [u.mobile, userPhone].filter(p => p && p.trim() !== '');
+        const matchUuid = u.user_id;
+
+        let whereClauses = [];
+        let whereParams = [];
+        if (matchEmails.length > 0) {
+          whereClauses.push(`(email IN (${matchEmails.map(() => '?').join(',')}) AND email IS NOT NULL AND email != '')`);
+          whereParams.push(...matchEmails);
+        }
+        if (matchPhones.length > 0) {
+          whereClauses.push(`(phone IN (${matchPhones.map(() => '?').join(',')}) AND phone IS NOT NULL AND phone != '')`);
+          whereParams.push(...matchPhones);
+        }
+        if (matchUuid) {
+          whereClauses.push(`(user_id = ?)`);
+          whereParams.push(matchUuid);
+        }
+
+        if (whereClauses.length > 0) {
+          const whereStr = whereClauses.join(' OR ');
+          if (isPTPlanPurchase) {
+            const [syncResult] = await db.query(
+              `UPDATE gym_members 
+               SET pt_plan = ?, 
+                   pt_duration = ?, 
+                   pt_join_date = ?, 
+                   pt_expiry_date = ?,
+                   pt_status = ?
+               WHERE ${whereStr}`,
+              [pt_planName, pt_duration, pt_startDate, pt_endDate, pt_status || 'active', ...whereParams]
+            );
+            if (syncResult.affectedRows === 0) {
+              console.warn('createMembership: PT plan sync matched 0 gym_members rows for userId:', userId);
+            }
+          } else {
+            const [syncResult] = await db.query(
+              `UPDATE gym_members 
+               SET plan = ?, 
+                   duration = ?, 
+                   join_date = ?, 
+                   expiry_date = ?,
+                   status = ?
+               WHERE ${whereStr}`,
+              [planName, duration, startDate, endDate, status || 'active', ...whereParams]
+            );
+            if (syncResult.affectedRows === 0) {
+              console.warn('createMembership: plan sync matched 0 gym_members rows for userId:', userId);
+            }
+          }
         }
       }
     } catch (syncErr) {

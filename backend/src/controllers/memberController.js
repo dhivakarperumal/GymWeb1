@@ -45,9 +45,9 @@ async function getAllMembers(req, res) {
           gm.height,
           gm.weight,
           gm.bmi,
-          gm.plan,
-          gm.duration,
-          gm.status,
+          COALESCE(NULLIF(gm.plan, ''), m_pay.m_planName) AS plan,
+          COALESCE(gm.duration, m_pay.m_duration) AS duration,
+          COALESCE(NULLIF(gm.status, ''), m_pay.m_status, 'active') AS status,
           gm.pt_plan,
           gm.pt_status,
           gm.address,
@@ -69,8 +69,8 @@ async function getAllMembers(req, res) {
           u.role,
           (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
           (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
-          gm.join_date,
-          gm.expiry_date,
+          COALESCE(gm.join_date, m_pay.m_startDate) AS join_date,
+          COALESCE(gm.expiry_date, m_pay.m_endDate) AS expiry_date,
           gm.pt_join_date,
           gm.pt_expiry_date,
           gm.pt_duration,
@@ -86,11 +86,13 @@ async function getAllMembers(req, res) {
                           OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
         INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
         LEFT JOIN (
-          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan
+          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
+                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
             FROM memberships
+            WHERE (has_pt_plan = 0 OR has_pt_plan IS NULL)
             GROUP BY userId
           ) mm ON m.userId = mm.userId AND m.id = mm.max_id
         ) m_pay ON m_pay.userId = u.id
@@ -168,9 +170,9 @@ async function getAllMembers(req, res) {
           gm.height,
           gm.weight,
           gm.bmi,
-          gm.plan,
-          gm.duration,
-          gm.status,
+          COALESCE(NULLIF(gm.plan, ''), m_pay.m_planName) AS plan,
+          COALESCE(gm.duration, m_pay.m_duration) AS duration,
+          COALESCE(NULLIF(gm.status, ''), m_pay.m_status, 'active') AS status,
           gm.pt_plan,
           gm.pt_status,
           gm.address,
@@ -192,8 +194,8 @@ async function getAllMembers(req, res) {
           u.role,
           (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
           (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count,
-          gm.join_date,
-          gm.expiry_date,
+          COALESCE(gm.join_date, m_pay.m_startDate) AS join_date,
+          COALESCE(gm.expiry_date, m_pay.m_endDate) AS expiry_date,
           gm.pt_join_date,
           gm.pt_expiry_date,
           gm.pt_duration,
@@ -208,11 +210,13 @@ async function getAllMembers(req, res) {
         LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
                           OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
         LEFT JOIN (
-          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan
+          SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
+                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
             FROM memberships
+            WHERE (has_pt_plan = 0 OR has_pt_plan IS NULL)
             GROUP BY userId
           ) mm ON m.userId = mm.userId AND m.id = mm.max_id
         ) m_pay ON m_pay.userId = u.id
