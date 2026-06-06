@@ -64,7 +64,14 @@ const MemberDetails = () => {
 
         // Filter Workouts
         const myWorkouts = (Array.isArray(workoutRes.data) ? workoutRes.data : [])
-          .filter(w => w.member_email?.toLowerCase() === memberData.email?.toLowerCase());
+          .filter(w => w.member_email?.toLowerCase() === memberData.email?.toLowerCase())
+          .map(w => {
+            let daysData = w.days;
+            if (typeof daysData === "string") {
+              try { daysData = JSON.parse(daysData); } catch (e) { daysData = null; }
+            }
+            return { ...w, days: daysData };
+          });
         setWorkouts(myWorkouts);
 
         // Filter Diet Plans
@@ -483,10 +490,12 @@ const MemberDetails = () => {
                         <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5">
                           <p className="text-orange-500 font-bold uppercase text-xs mb-4 border-b border-white/5 pb-2">{day}</p>
                           <div className="space-y-3">
-                            {exercises.map((ex, j) => (
-                              <div key={j} className="flex items-center justify-between text-sm">
-                                <span className="text-white/80">{ex.name}</span>
-                                <span className="text-white/30 text-xs">{ex.time || ex.sets}</span>
+                            {Array.isArray(exercises) && exercises.map((ex, j) => (
+                              <div key={j} className="flex items-center justify-between text-sm gap-2 border-b border-white/5 pb-2 last:border-0">
+                                <span className="text-white/80 pr-2" title={ex.name}>{ex.name}</span>
+                                <span className="text-emerald-500/80 font-bold text-[10px] uppercase whitespace-nowrap bg-emerald-500/10 px-2 py-0.5 rounded">
+                                  {ex.time ? ex.time : `${ex.sets} Sets × ${ex.count}`}
+                                </span>
                               </div>
                             ))}
                           </div>
