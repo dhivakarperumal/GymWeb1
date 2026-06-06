@@ -842,29 +842,70 @@ async function updateMember(req, res) {
     // SYNC with memberships table (history/tracking)
     if (updatedMember && updatedMember.u_id) {
       try {
-        await connection.query(
-          `UPDATE memberships 
-           SET endDate = ?, 
-               startDate = ?, 
-               duration = ?, 
-               planName = ?,
-               userName = ?,
-               userEmail = ?,
-               userPhone = ?
-           WHERE userId = ? 
-           ORDER BY createdAt DESC 
-           LIMIT 1`,
-          [
-            expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
-            joinDate === undefined ? updatedMember.join_date : joinDate,
-            duration === undefined ? updatedMember.duration : numDuration,
-            plan === undefined ? updatedMember.plan : plan,
-            name === undefined ? updatedMember.name : name,
-            email === undefined ? updatedMember.email : email,
-            phone === undefined ? updatedMember.phone : phone,
-            updatedMember.u_id
-          ]
-        );
+        let planPrice = null;
+        const newPlanName = plan === undefined ? updatedMember.plan : plan;
+        if (newPlanName) {
+          const [planRows] = await connection.query(`SELECT final_price, price FROM gym_plans WHERE name = ?`, [newPlanName]);
+          if (planRows.length > 0) {
+            planPrice = planRows[0].final_price || planRows[0].price;
+          }
+        }
+
+        if (planPrice !== null) {
+          await connection.query(
+            `UPDATE memberships 
+             SET endDate = ?, 
+                 startDate = ?, 
+                 duration = ?, 
+                 planName = ?,
+                 userName = ?,
+                 userEmail = ?,
+                 userPhone = ?,
+                 price = ?,
+                 pricePaid = ?,
+                 paymentMode = 'cash',
+                 paymentStatus = 'Paid'
+             WHERE userId = ? 
+             ORDER BY createdAt DESC 
+             LIMIT 1`,
+            [
+              expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
+              joinDate === undefined ? updatedMember.join_date : joinDate,
+              duration === undefined ? updatedMember.duration : numDuration,
+              newPlanName,
+              name === undefined ? updatedMember.name : name,
+              email === undefined ? updatedMember.email : email,
+              phone === undefined ? updatedMember.phone : phone,
+              planPrice,
+              planPrice,
+              updatedMember.u_id
+            ]
+          );
+        } else {
+          await connection.query(
+            `UPDATE memberships 
+             SET endDate = ?, 
+                 startDate = ?, 
+                 duration = ?, 
+                 planName = ?,
+                 userName = ?,
+                 userEmail = ?,
+                 userPhone = ?
+             WHERE userId = ? 
+             ORDER BY createdAt DESC 
+             LIMIT 1`,
+            [
+              expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
+              joinDate === undefined ? updatedMember.join_date : joinDate,
+              duration === undefined ? updatedMember.duration : numDuration,
+              newPlanName,
+              name === undefined ? updatedMember.name : name,
+              email === undefined ? updatedMember.email : email,
+              phone === undefined ? updatedMember.phone : phone,
+              updatedMember.u_id
+            ]
+          );
+        }
         // If PT-plan related fields were intentionally cleared by the caller, also clear PT fields
         // in the latest membership record so the PT plan is removed from membership history/view.
         const wantsClearPt = (Object.prototype.hasOwnProperty.call(req.body, 'pt_plan') && req.body.pt_plan === null)
