@@ -50,20 +50,20 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     fetchMemberships();
   }, [user, preFetchedPlans]);
 
-const handleDelete = async (plan) => {
-  const confirmDelete = window.confirm("Delete this plan?");
-  if (!confirmDelete) return;
+  const handleDelete = async (plan) => {
+    const confirmDelete = window.confirm("Delete this plan?");
+    if (!confirmDelete) return;
 
-  try {
-    await api.delete(`/memberships/${plan.id}`);
+    try {
+      await api.delete(`/memberships/${plan.id}`);
 
-    setPlans((prev) => prev.filter((p) => p.id !== plan.id));
-  } catch (err) {
-  console.log(err.response?.data);
-  alert("Delete failed");
-}
-  
-};
+      setPlans((prev) => prev.filter((p) => p.id !== plan.id));
+    } catch (err) {
+      console.log(err.response?.data);
+      alert("Delete failed");
+    }
+
+  };
 
   return (
     <>
@@ -115,9 +115,9 @@ const handleDelete = async (plan) => {
                 >
                   <button
                     onClick={() => handleDelete(plan)}
-                    className={`absolute top-6 right-6 p-2 rounded-full transition ${isExpired
-                        ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white cursor-pointer"
-                        : "text-gray-700 cursor-not-allowed opacity-30"
+                    className={`absolute top-4 right-6 p-2 rounded-full transition ${isExpired
+                      ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white cursor-pointer"
+                      : "text-gray-700 cursor-not-allowed opacity-30"
                       }`}
                     title={isExpired ? "Remove expired plan" : "Active plans cannot be deleted"}
                   >
@@ -129,9 +129,9 @@ const handleDelete = async (plan) => {
                       {plan.planName}
                     </h3>
                     <span
-                      className={`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${isExpired
-                        ? "bg-gray-800 text-gray-400"
-                        : "bg-red-600 text-white animate-pulse"
+                      className={`absolute top-6 right-16 px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest ${isExpired
+                          ? "bg-gray-800 text-gray-400"
+                          : "bg-red-600 text-white animate-pulse"
                         }`}
                     >
                       {isExpired ? "EXPIRED" : plan.status}
@@ -170,26 +170,26 @@ const handleDelete = async (plan) => {
               <h3 className="text-2xl font-bold text-white">Supplements & Gear</h3>
               <p className="text-gray-400 text-sm">Boost your performance with our top-rated products</p>
             </div>
-            <button 
+            <button
               onClick={() => navigate("/products")}
               className="text-red-500 font-bold hover:underline text-sm"
             >
               View Shop
             </button>
           </div>
-          
+
           {/* We'll just show a couple of placeholders or fetch them if needed */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {featuredProducts.length > 0 ? (
               featuredProducts.map((prod) => (
-                <div 
-                  key={prod.id} 
+                <div
+                  key={prod.id}
                   onClick={() => navigate("/products")}
                   className="bg-gray-900/40 border border-white/5 p-4 rounded-xl text-center cursor-pointer hover:border-red-500/30 transition group"
                 >
                   <div className="w-full aspect-square bg-gray-800 rounded-lg mb-3 overflow-hidden">
-                    <img 
-                      src={prod.image || prod.images?.[0] || "https://via.placeholder.com/150"} 
+                    <img
+                      src={prod.image || prod.images?.[0] || "https://via.placeholder.com/150"}
                       className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
                       alt={prod.name}
                     />
