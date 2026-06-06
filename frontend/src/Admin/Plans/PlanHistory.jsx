@@ -145,11 +145,35 @@ const PlanHistory = () => {
     return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Cash</span>;
   };
 
+  const getActualStatus = (m) => {
+    const endDate = m.endDate || m.end_date;
+
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      if (new Date() > end) {
+        return "inactive";
+      }
+    }
+
+    return m.status || "active";
+  };
+
   const getStatusBadge = (status) => {
     if (status === "active") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-500/20 text-green-400 border border-green-500/20"><CheckCircle2 size={10} /> Active</span>;
     if (status === "inactive") return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/20"><XCircle size={10} /> Inactive</span>;
     return <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/20 text-gray-400 border border-gray-500/20"><Clock size={10} /> {status || "--"}</span>;
   };
+
+  console.table(
+  paginated.map((m) => ({
+    plan: m.planName,
+    startDate: m.startDate || m.start_date,
+    endDate: m.endDate || m.end_date,
+    status: m.status,
+  }))
+);
 
   return (
     <div className="min-h-screen p-4 md:p-8 text-white">
@@ -279,7 +303,7 @@ const PlanHistory = () => {
                 const total = parseDecimal(m.price);
                 const paid = parseDecimal(m.pricePaid) + parseDecimal(m.secondPaymentPaid);
                 const remaining = Math.max(0, total - paid);
-                
+
                 // Payment Status Badge
                 const getPaymentStatusBadge = (status) => {
                   if (status === "Paid") return <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Paid</span>;
@@ -306,7 +330,9 @@ const PlanHistory = () => {
                     <td className="px-5 py-4">{getPaymentStatusBadge(m.paymentStatus)}</td>
                     <td className="px-5 py-4 text-white/50 whitespace-nowrap">{formatDate(m.startDate)}</td>
                     <td className="px-5 py-4 text-white/50 whitespace-nowrap">{formatDate(m.endDate)}</td>
-                    <td className="px-5 py-4">{getStatusBadge(m.status)}</td>
+                    <td className="px-5 py-4">
+                      {getStatusBadge(getActualStatus(m))}
+                    </td>
                   </tr>
                 );
               })}
@@ -327,7 +353,7 @@ const PlanHistory = () => {
                     <p className="font-bold text-white">{m.userName || m.username || "--"}</p>
                     <p className="text-[10px] text-white/40">{m.userEmail || m.email || "--"}</p>
                   </div>
-                  {getStatusBadge(m.status)}
+                  {getStatusBadge(getActualStatus(m))}
                 </div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="px-2 py-1 bg-orange-500/10 text-orange-400 rounded-lg text-xs font-semibold border border-orange-500/20">{m.planName || "--"}</span>
@@ -371,11 +397,10 @@ const PlanHistory = () => {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`w-10 h-10 rounded-xl border text-xs font-bold transition-all ${
-                currentPage === page
+              className={`w-10 h-10 rounded-xl border text-xs font-bold transition-all ${currentPage === page
                   ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20"
                   : "bg-white/5 border-white/10 hover:bg-white/10"
-              }`}
+                }`}
             >
               {page}
             </button>
