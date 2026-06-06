@@ -279,7 +279,7 @@ const Account = () => {
       subject: memberFormData.subject || userEnquiry?.subject || null,
       message: memberFormData.message || userEnquiry?.message || null,
       location: memberFormData.location || userEnquiry?.location || null,
-        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob || null,
+      dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob || null,
       age: memberFormData.age || memberData?.age || null,
       address: memberFormData.address || memberData?.address || null,
       employer: memberFormData.employer || memberData?.employer || null,
@@ -321,7 +321,7 @@ const Account = () => {
       bmi: memberFormData.bmi || memberData?.bmi,
       plan: memberFormData.plan_name || memberData?.plan,
       duration: memberFormData.plan_duration || memberData?.duration,
-        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob,
+      dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob,
       age: memberFormData.age || memberData?.age,
       address: memberFormData.address || memberData?.address,
       employer: memberFormData.employer || memberData?.employer,
@@ -568,9 +568,8 @@ const Account = () => {
                   <h4 className="text-white font-bold text-sm mb-1">Account Status</h4>
                   <p className="text-gray-500 text-xs">Your account is currently {userInfo.status || "active"}</p>
                 </div>
-                <div className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                  userInfo.status === "inactive" ? "bg-gray-500/20 text-gray-500" : "bg-green-500/20 text-green-500"
-                }`}>
+                <div className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${userInfo.status === "inactive" ? "bg-gray-500/20 text-gray-500" : "bg-green-500/20 text-green-500"
+                  }`}>
                   {userInfo.status || "Active"}
                 </div>
               </div>
@@ -1014,6 +1013,32 @@ const Account = () => {
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300 mb-2">
+                              Next EMI Due
+                            </p>
+
+                            <div className="inline-flex px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
+                              <span className="text-lg font-bold text-blue-200">
+                                {(() => {
+                                  const dueDate = new Date(membership.createdAt);
+                                  dueDate.setDate(dueDate.getDate() + 30);
+
+                                  return dueDate.toLocaleDateString("en-IN", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  });
+                                })()}
+                              </span>
+                            </div>
+
+                            <p className="text-sm text-gray-300 mt-3">
+                              EMI Amount: <span className="font-semibold text-white">
+                                {formatCurrency(remainingAmount)}
+                              </span>
+                            </p>
+                          </div>
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
                             <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Status</p>
                             <p className="text-white font-semibold mt-2">{paymentStatus}</p>
@@ -1022,6 +1047,7 @@ const Account = () => {
                             <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Mode</p>
                             <p className="text-white font-semibold mt-2">{paymentMode}</p>
                           </div>
+
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
                             <p className="text-[10px] uppercase tracking-widest text-gray-500">Start Date</p>
                             <p className="text-white font-semibold mt-2">{formatDate(startDate)}</p>
@@ -1087,10 +1113,10 @@ const Account = () => {
         return <Workouts />;
 
       case "notifications":
-        return <UserNotifications 
-          userEmail={userInfo.email} 
-          userId={userInfo.id} 
-          memberId={userInfo.member_id} 
+        return <UserNotifications
+          userEmail={userInfo.email}
+          userId={userInfo.id}
+          memberId={userInfo.member_id}
         />;
 
       case "security":
