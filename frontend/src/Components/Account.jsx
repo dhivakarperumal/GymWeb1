@@ -939,15 +939,15 @@ const Account = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
-                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Plans</p>
+                      <p className="text-[10px] uppercase tracking-widest text-blue-300">Total Plans</p>
                       <p className="text-white font-semibold mt-2">{activePlans.length}</p>
                     </div>
                     <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
-                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Active Plans</p>
+                      <p className="text-[10px] uppercase tracking-widest text-blue-300">Active Plans</p>
                       <p className="text-white font-semibold mt-2">{activePlans.filter((membership) => membership.status === "active").length}</p>
                     </div>
                     <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
-                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Pending Dues</p>
+                      <p className="text-[10px] uppercase tracking-widest text-blue-300">Pending Dues</p>
                       <p className="text-white font-semibold mt-2">
                         {activePlans.reduce((sum, membership) => sum + getMembershipRemaining(membership), 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
@@ -994,20 +994,20 @@ const Account = () => {
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Amount</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Total Amount</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(totalAmount)}</p>
                           </div>
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Initial Paid</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Initial Paid</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "pricePaid", "price_paid") || 0)}</p>
                           </div>
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Second Paid</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Second Paid</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
                           </div>
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Remaining</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Remaining</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
                           </div>
                         </div>
@@ -1040,20 +1040,20 @@ const Account = () => {
                             </p>
                           </div>
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Status</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Status</p>
                             <p className="text-white font-semibold mt-2">{paymentStatus}</p>
                           </div>
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Mode</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Mode</p>
                             <p className="text-white font-semibold mt-2">{paymentMode}</p>
                           </div>
 
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Start Date</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Start Date</p>
                             <p className="text-white font-semibold mt-2">{formatDate(startDate)}</p>
                           </div>
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">End Date</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">End Date</p>
                             <p className="text-white font-semibold mt-2">{formatDate(endDate)}</p>
                           </div>
                         </div>
