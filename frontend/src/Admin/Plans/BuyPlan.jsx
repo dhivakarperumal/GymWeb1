@@ -6,7 +6,7 @@ import api from "../../api";
 import emailjs from "@emailjs/browser";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Search, X } from "lucide-react";
+import { Search, X, CreditCard, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
@@ -41,6 +41,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [showPlanDropdown, setShowPlanDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingEMIs, setPendingEMIs] = useState([]);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -74,6 +75,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       setPaymentType("full");
       setSelectedTrainer("");
       setSessionTime("");
+      setPendingEMIs([]);
       setForm({
         phone: "",
         email: "",
@@ -459,6 +461,14 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
               pt_status: m.pt_status ?? m.ptStatus,
             }));
             setMemberHistory(normalized);
+
+            // Check for pending EMIs
+            const pending = normalized.filter(m => {
+              if (m.paymentMode !== 'emi') return false;
+              const status = (m.paymentStatus || '').toLowerCase();
+              return status === 'pending' || status === 'partial';
+            });
+            setPendingEMIs(pending);
           })
           .catch(err =>
             console.error("History fetch error:", err)
@@ -636,6 +646,20 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     if (!selectedUser || !selectedPlan) {
       alert("Select member and plan");
       return;
+    }
+
+    // Check for pending EMI and warn
+    if (pendingEMIs.length > 0) {
+      const pendingNames = pendingEMIs.map(e => e.planName || 'Unknown Plan').join(', ');
+      const totalPending = pendingEMIs.reduce((sum, e) => {
+        const total = parseDecimal(e.price);
+        const paid = parseDecimal(e.pricePaid) + parseDecimal(e.secondPaymentPaid);
+        return sum + Math.max(0, total - paid);
+      }, 0);
+      const confirmed = window.confirm(
+        `⚠️ This member has pending EMI!\n\nPlan: ${pendingNames}\nPending Amount: ₹${totalPending.toFixed(2)}\n\nDo you still want to assign a new plan?`
+      );
+      if (!confirmed) return;
     }
 
     setLoading(true);
@@ -837,6 +861,35 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         <h1 className="text-3xl font-bold text-white">{pageTitle}</h1>
       </div>
 
+      {/* PENDING EMI WARNING BANNER */}
+      {pendingEMIs.length > 0 && selectedUser && (
+        <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-2xl p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="p-3 rounded-xl bg-red-500/20 shrink-0">
+            <CreditCard size={24} className="text-red-500" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-1">⚠️ Pending EMI Alert</h3>
+            <p className="text-white/70 text-sm">
+              <span className="font-bold text-white">{selectedUser.name || selectedUser.username}</span> has {pendingEMIs.length} pending EMI{pendingEMIs.length > 1 ? 's' : ''}.
+            </p>
+            <div className="mt-3 space-y-2">
+              {pendingEMIs.map((emi, idx) => {
+                const total = parseDecimal(emi.price);
+                const paid = parseDecimal(emi.pricePaid) + parseDecimal(emi.secondPaymentPaid);
+                const remaining = Math.max(0, total - paid);
+                return (
+                  <div key={idx} className="flex items-center gap-3 bg-red-500/10 rounded-xl px-4 py-2.5 border border-red-500/10">
+                    <span className="text-white/80 text-xs font-bold flex-1">{emi.planName || 'Unknown Plan'}</span>
+                    <span className="text-red-400 text-xs font-bold">Pending: ₹{remaining.toFixed(2)}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-white/40 text-xs mt-3">Please collect the pending EMI amount before assigning a new plan, or proceed at your own discretion.</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 gap-10">
 
         {/* LEFT FORM */}
@@ -899,15 +952,22 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                             setMemberSearch("");
                             setShowMemberDropdown(false);
 
-                            // FETCH HISTORY
+                            // FETCH HISTORY & CHECK PENDING EMI
                             if (user) {
                               const uId = user.u_id || user.user_id || user.id;
                               api.get(`/memberships/user/${uId}`)
-                                .then(res =>
-                                  setMemberHistory(
-                                    Array.isArray(res.data) ? res.data : []
-                                  )
-                                )
+                                .then(res => {
+                                  const data = Array.isArray(res.data) ? res.data : [];
+                                  setMemberHistory(data);
+
+                                  // Check for pending EMIs
+                                  const pending = data.filter(m => {
+                                    if (m.paymentMode !== 'emi') return false;
+                                    const status = (m.paymentStatus || '').toLowerCase();
+                                    return status === 'pending' || status === 'partial';
+                                  });
+                                  setPendingEMIs(pending);
+                                })
                                 .catch(err =>
                                   console.error("History fetch error:", err)
                                 );
