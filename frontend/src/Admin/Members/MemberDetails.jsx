@@ -131,7 +131,7 @@ const MemberDetails = () => {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-6 text-white">
         <p className="text-white/40 text-lg">Member not found</p>
-        <button onClick={() => navigate(returnUrl || "/admin/members")} className="flex items-center gap-2 px-6 py-2 bg-white/10 rounded-xl">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 px-6 py-2 bg-white/10 rounded-xl">
           <ChevronLeft size={20} /> Back to Directory
         </button>
       </div>
@@ -205,7 +205,7 @@ const MemberDetails = () => {
     <div className="min-h-screen pb-12 text-white">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <button onClick={() => navigate(returnUrl || "/admin/members")} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
           <ChevronLeft size={20} />
           <span className="font-bold uppercase tracking-wider text-xs">Back to Directory</span>
         </button>
