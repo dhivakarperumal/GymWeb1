@@ -56,7 +56,7 @@ const isUpdatePlanEnabled = (m) => {
 };
 
 const hasActiveOrPendingPlan = (m) => {
-  return !!(m.plan && m.plan !== 'user' && m.status === 'active');
+  return !!(m.plan && m.plan !== 'user' && (m.status === 'active' || m.status === 'pending'));
 };
 
 const canChangePlan = (m) => {
