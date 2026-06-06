@@ -154,8 +154,10 @@ const Payments = () => {
     if (!endDate) return false;
     const end = new Date(endDate);
     const today = new Date();
-    const days = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-    return days <= 7 && days > 0;
+    end.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    return diff <= 7 && diff >= 0;
   };
 
   const isToday = (date) => {
@@ -1146,7 +1148,7 @@ const Payments = () => {
                                       <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                                         isExpiringPlan(plan.endDate) ? "bg-yellow-500/20 text-yellow-400" : "bg-emerald-500/20 text-emerald-400"
                                       }`}>
-                                        {getRemainingDays(plan.endDate).replace(' days', 'D').replace(' day', 'D')} LEFT
+                                        {getRemainingDays(plan.endDate) === "Last Day" ? "LAST DAY" : `${getRemainingDays(plan.endDate).replace(' days', 'D').replace(' day', 'D')} LEFT`}
                                       </span>
                                     )
                                   ) : null}
@@ -1176,7 +1178,7 @@ const Payments = () => {
                                       <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                                         isExpiringPlan(plan.pt_endDate || plan.endDate) ? "bg-yellow-500/20 text-yellow-400" : "bg-purple-500/20 text-purple-400"
                                       }`}>
-                                        {getRemainingDays(plan.pt_endDate || plan.endDate).replace(' days', 'D').replace(' day', 'D')} LEFT
+                                        {getRemainingDays(plan.pt_endDate || plan.endDate) === "Last Day" ? "LAST DAY" : `${getRemainingDays(plan.pt_endDate || plan.endDate).replace(' days', 'D').replace(' day', 'D')} LEFT`}
                                       </span>
                                     )
                                   ) : null}
