@@ -205,7 +205,12 @@ const MemberDetails = () => {
     member?.expiry_date &&
     dayjs(member.expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") <= 0;
 
-  const displayStatus = isExpired ? "inactive" : member.status;
+  const displayStatus =
+    !member.plan || member.plan === "user"
+      ? "inactive"
+      : isExpired
+        ? "inactive"
+        : member.status;
 
   return (
     <div className="min-h-screen pb-12 text-white">
