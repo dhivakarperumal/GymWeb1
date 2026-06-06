@@ -279,7 +279,7 @@ const Account = () => {
       subject: memberFormData.subject || userEnquiry?.subject || null,
       message: memberFormData.message || userEnquiry?.message || null,
       location: memberFormData.location || userEnquiry?.location || null,
-        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob || null,
+      dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob || null,
       age: memberFormData.age || memberData?.age || null,
       address: memberFormData.address || memberData?.address || null,
       employer: memberFormData.employer || memberData?.employer || null,
@@ -321,7 +321,7 @@ const Account = () => {
       bmi: memberFormData.bmi || memberData?.bmi,
       plan: memberFormData.plan_name || memberData?.plan,
       duration: memberFormData.plan_duration || memberData?.duration,
-        dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob,
+      dob: memberFormData.dob ? dayjs(memberFormData.dob).format('DD-MM-YYYY') : memberData?.dob,
       age: memberFormData.age || memberData?.age,
       address: memberFormData.address || memberData?.address,
       employer: memberFormData.employer || memberData?.employer,
@@ -568,9 +568,8 @@ const Account = () => {
                   <h4 className="text-white font-bold text-sm mb-1">Account Status</h4>
                   <p className="text-gray-500 text-xs">Your account is currently {userInfo.status || "active"}</p>
                 </div>
-                <div className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                  userInfo.status === "inactive" ? "bg-gray-500/20 text-gray-500" : "bg-green-500/20 text-green-500"
-                }`}>
+                <div className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${userInfo.status === "inactive" ? "bg-gray-500/20 text-gray-500" : "bg-green-500/20 text-green-500"
+                  }`}>
                   {userInfo.status || "Active"}
                 </div>
               </div>
@@ -940,15 +939,15 @@ const Account = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
-                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Plans</p>
+                      <p className="text-[10px] uppercase tracking-widest text-blue-300">Total Plans</p>
                       <p className="text-white font-semibold mt-2">{activePlans.length}</p>
                     </div>
                     <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
-                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Active Plans</p>
+                      <p className="text-[10px] uppercase tracking-widest text-blue-300">Active Plans</p>
                       <p className="text-white font-semibold mt-2">{activePlans.filter((membership) => membership.status === "active").length}</p>
                     </div>
                     <div className="rounded-2xl bg-black/50 border border-white/10 px-4 py-3">
-                      <p className="text-[10px] uppercase tracking-widest text-gray-500">Pending Dues</p>
+                      <p className="text-[10px] uppercase tracking-widest text-blue-300">Pending Dues</p>
                       <p className="text-white font-semibold mt-2">
                         {activePlans.reduce((sum, membership) => sum + getMembershipRemaining(membership), 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
@@ -995,39 +994,66 @@ const Account = () => {
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Total Amount</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Total Amount</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(totalAmount)}</p>
                           </div>
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Initial Paid</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Initial Paid</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "pricePaid", "price_paid") || 0)}</p>
                           </div>
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Second Paid</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Second Paid</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
                           </div>
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Remaining</p>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Remaining</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
                           </div>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300 mb-2">
+                              Next EMI Due
+                            </p>
+
+                            <div className="inline-flex px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
+                              <span className="text-lg font-bold text-blue-200">
+                                {(() => {
+                                  const dueDate = new Date(membership.createdAt);
+                                  dueDate.setDate(dueDate.getDate() + 30);
+
+                                  return dueDate.toLocaleDateString("en-IN", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  });
+                                })()}
+                              </span>
+                            </div>
+
+                            <p className="text-sm text-gray-300 mt-3">
+                              EMI Amount: <span className="font-semibold text-white">
+                                {formatCurrency(remainingAmount)}
+                              </span>
+                            </p>
+                          </div>
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Status</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Status</p>
                             <p className="text-white font-semibold mt-2">{paymentStatus}</p>
                           </div>
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Payment Mode</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Mode</p>
                             <p className="text-white font-semibold mt-2">{paymentMode}</p>
                           </div>
+
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">Start Date</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Start Date</p>
                             <p className="text-white font-semibold mt-2">{formatDate(startDate)}</p>
                           </div>
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500">End Date</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-300">End Date</p>
                             <p className="text-white font-semibold mt-2">{formatDate(endDate)}</p>
                           </div>
                         </div>
@@ -1087,10 +1113,10 @@ const Account = () => {
         return <Workouts />;
 
       case "notifications":
-        return <UserNotifications 
-          userEmail={userInfo.email} 
-          userId={userInfo.id} 
-          memberId={userInfo.member_id} 
+        return <UserNotifications
+          userEmail={userInfo.email}
+          userId={userInfo.id}
+          memberId={userInfo.member_id}
         />;
 
       case "security":
