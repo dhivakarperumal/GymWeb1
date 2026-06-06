@@ -485,9 +485,10 @@ const Account = () => {
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
     { key: "plans", label: "My Plans", icon: CalendarCheck },
-    { key: "emi", label: "EMI Details", icon: CreditCard },
+    
     ...(hasActivePlan
       ? [
+        { key: "emi", label: "EMI Details", icon: CreditCard },
         { key: "diet", label: "Diet Chart", icon: Shield },
         { key: "workouts", label: "Workouts", icon: Key },
         { key: "ptform", label: "PT Form", icon: CalendarCheck },
