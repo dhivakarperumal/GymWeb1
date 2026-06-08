@@ -47,14 +47,14 @@ async function getAllMemberships(req, res) {
         (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
         (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
       LEFT JOIN gym_plans gp ON m.planId = gp.id
-      WHERE (m.status = 'active' OR m.status IS NULL OR m.status = '')
-    `;
+      `;
 
-    if (staffId) {
-      sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
-    }
+      if (staffId) {
+        sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
+      }
 
-    sql += ` ORDER BY m.createdAt DESC`;
+      sql += ` WHERE (m.status = 'active' OR m.status IS NULL OR m.status = '')
+        ORDER BY m.createdAt DESC`;
 
     const [rows] = await db.query(sql, staffId ? [staffId] : []);
     res.json(rows);

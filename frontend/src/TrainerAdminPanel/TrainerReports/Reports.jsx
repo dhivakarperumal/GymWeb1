@@ -189,7 +189,7 @@ const Reports = () => {
   );
 
   const filteredMemberships = useMemo(() =>
-    filterByDateRange(memberships.filter(m => m.status === 'active' || !m.status).filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
+    filterByDateRange(memberships.filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
     [memberships, dateRange, assignments, user]
   );
 
@@ -233,12 +233,12 @@ const Reports = () => {
   };
 
   const filteredEMIs = useMemo(() =>
-    filterByDateRange(memberships.filter(m => m.status === 'active' || !m.status).filter(isEMIMembership).filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
+    filterByDateRange(memberships.filter(isEMIMembership).filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
     [memberships, dateRange, assignments, user]
   );
 
   const filteredPTPlans = useMemo(() => {
-    const ptPlans = memberships.filter(m => m.status === 'active' || !m.status).filter(isPTPlanMembership).filter(isAssignedToCurrentTrainer);
+    const ptPlans = memberships.filter(isPTPlanMembership).filter(isAssignedToCurrentTrainer);
     if (dateRange.type === 'All Time') return ptPlans;
 
     const { start, end } = getDateRangeBounds(dateRange.type, dateRange.range);
@@ -515,7 +515,6 @@ const Reports = () => {
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <Stat title="Total Members" value={filteredMembers.length} icon={Users} color="bg-blue-500/20 text-blue-400" />
-        <Stat title="Total Orders" value={filteredOrders.length} icon={ShoppingCart} color="bg-orange-500/20 text-orange-400" />
         <Stat title="Plan Purchases" value={filteredMemberships.length} icon={CreditCard} color="bg-green-500/20 text-green-400" />
         <Stat title="EMI Records" value={filteredEMIs.length} icon={CreditCard} color="bg-red-500/20 text-red-400" />
         <Stat title="PT Plan Buys" value={filteredPTPlans.length} icon={Users} color="bg-indigo-500/20 text-indigo-400" />
