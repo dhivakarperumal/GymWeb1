@@ -1,4 +1,4 @@
-﻿/* Trainer Dashboard (simplified) */
+/* Trainer Dashboard (simplified) */
 import React, { useEffect, useState } from "react";
 import {
   FaUsers,
@@ -75,15 +75,11 @@ const TrainerDashboard = () => {
 
         console.log("📊 Assignments from server:", membersRaw.length);
 
-        /* show only ACTIVE members */
-        const activeMembers = membersRaw.filter(
-          (m) => !m.status || (m.status || "").toLowerCase() === "active"
-        );
-
-        /* remove duplicates -- use gymMemberId as primary key, fall back to userId */
+        /* show all assignments */
         const seen = new Set();
-        const uniqueMembers = activeMembers.filter((m) => {
-          const key = String(m.gymMemberId || m.gym_member_id || m.userId || m.user_id || m.id || "");
+        const uniqueMembers = membersRaw.filter((m) => {
+          // Deduplicate by assignment ID or combination of User+Plan so multiple plans show up
+          const key = String(m.id || `${m.userId}-${m.planId}`);
           if (!key || key === "undefined" || seen.has(key)) return false;
           seen.add(key);
           return true;
