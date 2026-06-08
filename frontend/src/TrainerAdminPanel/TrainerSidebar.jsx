@@ -99,6 +99,11 @@ const navItems = [
     label: "EMI",
     icon: CreditCard,
   },
+  {
+    path: "/trainer/reports",
+    label: "Reports",
+    icon: BarChart3,
+  },
 
   {
     path: "/trainer/overall-attendance",
