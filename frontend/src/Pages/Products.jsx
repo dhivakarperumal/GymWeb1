@@ -80,9 +80,15 @@ export default function Products() {
   };
 
   // Filter products based on category
-  const filteredProducts = categoryFilter
-    ? products.filter(p => p.category === categoryFilter)
-    : products;
+  const filteredProducts = products.filter((p) => {
+    const isActive = p.status?.toLowerCase() === "active";
+
+    if (!isActive) return false;
+
+    return categoryFilter
+      ? p.category === categoryFilter
+      : true;
+  });
 
   return (
     <div className="bg-black text-white min-h-screen flex flex-col">
@@ -95,10 +101,10 @@ export default function Products() {
       <PageContainer>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-6">
-             <div className="relative">
-                <div className="w-16 h-16 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
-                <div className="absolute inset-0 bg-red-500/10 blur-xl rounded-full animate-pulse" />
-             </div>
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
+              <div className="absolute inset-0 bg-red-500/10 blur-xl rounded-full animate-pulse" />
+            </div>
             <p className="text-white/40 text-xs uppercase tracking-[0.4em] animate-pulse">Scanning Inventory</p>
           </div>
         ) : (
