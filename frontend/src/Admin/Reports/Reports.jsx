@@ -120,6 +120,17 @@ const Reports = () => {
     [memberships, dateRange]
   );
 
+  const calculateNextPaymentDate = (membership) => {
+    const baseDate = membership.paymentDate
+      ? new Date(membership.paymentDate)
+      : membership.createdAt
+        ? new Date(membership.createdAt)
+        : new Date();
+    const nextDueDate = new Date(baseDate);
+    nextDueDate.setDate(nextDueDate.getDate() + 30);
+    return nextDueDate;
+  };
+
   const isEMIMembership = (membership) =>
     String(membership.paymentMode || membership.payment_mode || "").toLowerCase() === "emi";
 
@@ -294,11 +305,19 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-red-500/20 text-red-400",
       data: filteredEMIs,
-      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Total", "Paid", "Remaining", "Mode", "Status", "Start", "End"],
+      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Total", "Paid", "Remaining", "Next EMI Date", "Mode", "Status", "Start", "End"],
       rows: filteredEMIs.map((p, i) => {
         const totalAmount = p.price != null ? parseFloat(p.price) : null;
         const paidAmount = p.pricePaid != null ? parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0) : null;
         const remaining = totalAmount != null && paidAmount != null ? Math.max(0, totalAmount - paidAmount) : "-";
+        
+        let nextEmiDateStr = "-";
+        if (typeof remaining === "number" && remaining > 0) {
+          nextEmiDateStr = dayjs(calculateNextPaymentDate(p)).format("DD MMM YYYY");
+        } else if (typeof remaining === "number" && remaining <= 0) {
+          nextEmiDateStr = "Paid";
+        }
+
         return [
           i + 1,
           p.userName || p.username || "-",
@@ -308,6 +327,7 @@ const Reports = () => {
           totalAmount != null ? `₹${totalAmount.toFixed(2)}` : "-",
           paidAmount != null ? `₹${paidAmount.toFixed(2)}` : "-",
           typeof remaining === "number" ? `₹${remaining.toFixed(2)}` : "-",
+          nextEmiDateStr,
           p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
           p.status || "active",
           p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
