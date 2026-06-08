@@ -151,8 +151,8 @@ const Reports = () => {
   };
 
   const filteredMembers = useMemo(() =>
-    filterByDateRange(members, 'join_date', dateRange.type, dateRange.range).filter(isAssignedToCurrentTrainer),
-    [members, dateRange, assignments, user]
+    filterByDateRange(members, 'join_date', dateRange.type, dateRange.range),
+    [members, dateRange]
   );
 
   const filteredOrders = useMemo(() =>
@@ -161,8 +161,8 @@ const Reports = () => {
   );
 
   const filteredMemberships = useMemo(() =>
-    filterByDateRange(memberships, 'startDate', dateRange.type, dateRange.range).filter(isAssignedToCurrentTrainer),
-    [memberships, dateRange, assignments, user]
+    filterByDateRange(memberships, 'startDate', dateRange.type, dateRange.range),
+    [memberships, dateRange]
   );
 
   const calculateNextPaymentDate = (membership) => {
@@ -205,12 +205,12 @@ const Reports = () => {
   };
 
   const filteredEMIs = useMemo(() =>
-    filterByDateRange(memberships.filter(isEMIMembership), 'startDate', dateRange.type, dateRange.range).filter(isAssignedToCurrentTrainer),
-    [memberships, dateRange, assignments, user]
+    filterByDateRange(memberships.filter(isEMIMembership), 'startDate', dateRange.type, dateRange.range),
+    [memberships, dateRange]
   );
 
   const filteredPTPlans = useMemo(() => {
-    const ptPlans = memberships.filter(isPTPlanMembership).filter(isAssignedToCurrentTrainer);
+    const ptPlans = memberships.filter(isPTPlanMembership);
     if (dateRange.type === 'All Time') return ptPlans;
 
     const { start, end } = getDateRangeBounds(dateRange.type, dateRange.range);
@@ -220,11 +220,11 @@ const Reports = () => {
       const date = dayjs(getMembershipStartDate(membership));
       return date.isValid() && !date.isBefore(start) && !date.isAfter(end);
     });
-  }, [memberships, dateRange, assignments, user]);
+  }, [memberships, dateRange]);
 
   const filteredEnquiries = useMemo(() =>
-    filterByDateRange(enquiries, 'created_at', dateRange.type, dateRange.range).filter(isAssignedToCurrentTrainer),
-    [enquiries, dateRange, assignments, user]
+    filterByDateRange(enquiries, 'created_at', dateRange.type, dateRange.range),
+    [enquiries, dateRange]
   );
 
   const filteredExpiringMembers = useMemo(() => {
@@ -245,8 +245,8 @@ const Reports = () => {
           return expiryDate.isAfter(today.subtract(1, 'day')) && expiryDate.isBefore(next5Days.add(1, 'day'));
         });
     }
-    return base.filter(isAssignedToCurrentTrainer).sort((a, b) => dayjs(a.expiry_date).diff(dayjs(b.expiry_date)));
-  }, [members, dateRange, assignments, user]);
+    return base.sort((a, b) => dayjs(a.expiry_date).diff(dayjs(b.expiry_date)));
+  }, [members, dateRange]);
 
   /* ========================
      TABLE CONFIGS
