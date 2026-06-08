@@ -280,6 +280,7 @@ const router = createHashRouter([
       { path: "followupenquriy", element: <FollowupEnquiry /> },
       { path: "session-tracking", element: <SessionTracking /> },
       { path: "buyplanadmin", element: <BuyPlanadmin /> },
+      { path: "buy-pt-plan", element: <BuyPlanadmin filterTrainerPlans={true} pageTitle="Buy PT Plans" /> },
       { path: "payments", element: <Payments /> },
       { path: "members", element: <Members /> },
       { path: "member_details/:id", element: <MemberDetails /> },
