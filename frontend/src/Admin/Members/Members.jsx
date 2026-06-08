@@ -876,7 +876,7 @@ const Members = () => {
                         >
                           <Eye size={16} />
                         </button>
-                        {(() => {
+                        {!isTrainer && (() => {
                           const enabled = isUpdatePlanEnabled(m);
                           return (
                             <button
@@ -1020,7 +1020,7 @@ const Members = () => {
                       >
                         <Eye size={14} />
                       </button>
-                      {(() => {
+                      {!isTrainer && (() => {
                         const enabled = isUpdatePlanEnabled(m);
                         return (
                           <button
