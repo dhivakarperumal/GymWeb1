@@ -136,7 +136,11 @@ const FollowupEnquiryModal = ({ visible, onClose }) => {
       onClose();
     } catch (err) {
       console.error("Error submitting followup enquiry", err);
-      toast.error("Failed to submit. Please try again.");
+      if (err.response?.status === 409) {
+        toast.error(err.response.data?.error || `Mobile number ${formData.phone} already exists!`);
+      } else {
+        toast.error("Failed to submit. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

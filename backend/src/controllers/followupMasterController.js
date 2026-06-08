@@ -47,6 +47,17 @@ const followupMasterController = {
                 return res.status(400).json({ error: 'Name and phone are required' });
             }
 
+            // Check if phone number already exists
+            const [existing] = await pool.query(
+                'SELECT id, name FROM followups WHERE phone = ? LIMIT 1',
+                [phone]
+            );
+            if (existing.length > 0) {
+                return res.status(409).json({
+                    error: `Mobile number ${phone} already exists!`
+                });
+            }
+
             const [result] = await pool.query(
                 `INSERT INTO followups (
                     name, email, phone, subject, message, location,

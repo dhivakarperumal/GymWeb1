@@ -241,13 +241,25 @@ const FollowupEnquiry = () => {
       if (selectedEnquiry && selectedEnquiry.id) {
         await api.put(`/followups/${selectedEnquiry.id}`, formData);
       } else {
+        // Check for duplicate phone number before creating
+        const duplicateEntry = enquiries.find(
+          (e) => e.phone && e.phone === formData.phone
+        );
+        if (duplicateEntry) {
+          toast.error(`Mobile number ${formData.phone} already exists!`);
+          return;
+        }
         await api.post("/followups", formData);
       }
       fetchEnquiries();
       setShowForm(false);
       toast.success("Record saved successfully!");
     } catch (err) {
-      toast.error("Error saving record");
+      if (err.response?.status === 409) {
+        toast.error(err.response.data?.error || `Mobile number ${formData.phone} already exists!`);
+      } else {
+        toast.error("Error saving record");
+      }
     }
   };
 
