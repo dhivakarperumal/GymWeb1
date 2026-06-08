@@ -18,6 +18,62 @@ const makeImageUrl = (img) => {
     const base = import.meta.env.VITE_API_URL || "";
     return `${base.replace(/\/$/, "")}/${img.replace(/^\/+/, "")}`;
   };
+
+const getQuantityDiscountPercent = (qty) => {
+  if (qty >= 20 && qty <= 25) return 10;
+  if (qty >= 5 && qty <= 19) return 5;
+  return 0;
+};
+
+const getVariantKey = (item) => {
+  if (!item) return null;
+  if (item.weight) return item.weight;
+  if (item.size && item.gender) return `${item.size}-${item.gender}`;
+  return null;
+};
+
+const getPricingForItem = (product, item) => {
+  if (!product) return { mrp: 0, offerPrice: 0 };
+  const variantKey = getVariantKey(item);
+  const currentVariant = variantKey ? product.stock?.[variantKey] : null;
+  if (currentVariant) {
+    return {
+      mrp: currentVariant.mrp || product.mrp,
+      offerPrice:
+        currentVariant.offerPrice ??
+        currentVariant.offer_price ??
+        product.offer_price ??
+        product.offerPrice ??
+        0,
+    };
+  }
+  return {
+    mrp: product.mrp,
+    offerPrice: product.offer_price ?? product.offerPrice ?? 0,
+  };
+};
+
+const getBaseUnitPrice = (product, item) => {
+  const pricing = getPricingForItem(product, item);
+  return Number(pricing.offerPrice ?? pricing.mrp ?? 0) || 0;
+};
+
+const getDiscountLabel = (quantity) => {
+  const discountPercent = getQuantityDiscountPercent(quantity);
+  if (discountPercent) {
+    return `${discountPercent}% bulk discount applied`;
+  }
+  return "Buy 5-19 units to get 5% off, 20-25 units to get 10% off.";
+};
+
+const getItemDiscountAmount = (item) => {
+  const percent = getQuantityDiscountPercent(item.quantity);
+  if (!percent) return 0;
+  const unitPrice = Number(item.price) || 0;
+  const originalUnit = unitPrice / (1 - percent / 100);
+  return Number(((originalUnit - unitPrice) * item.quantity).toFixed(2));
+};
+
 export default function Cart() {
   const { user } = useAuth();
   const userId = user?.id;
@@ -66,8 +122,16 @@ export default function Cart() {
       alert(`Only ${stock} items available`);
       return;
     }
+
     try {
-      await api.put(`/cart/${item.id}`, { quantity: qty });
+      const res = await api.get(`/products/${item.productId}`);
+      const product = res.data;
+      const baseUnitPrice = getBaseUnitPrice(product, item);
+      const price = Number(
+        (baseUnitPrice * (1 - getQuantityDiscountPercent(qty) / 100)).toFixed(2)
+      );
+
+      await api.put(`/cart/${item.id}`, { quantity: qty, price });
       fetchCart();
     } catch (err) {
       console.error("updateQty error", err);
@@ -84,6 +148,10 @@ export default function Cart() {
   };
 
   const total = items.reduce((a, c) => a + c.price * c.quantity, 0);
+  const totalDiscount = items.reduce(
+    (sum, item) => sum + getItemDiscountAmount(item),
+    0
+  );
 
   const itemCount = items.length;
   const totalQty = items.reduce((a, c) => a + c.quantity, 0);
@@ -190,7 +258,12 @@ export default function Cart() {
                       {item.weight ? "-" : item.gender ?? item.variant?.split("-")[1] ?? "-"}
                     </td>
 
-                    <td className="p-4 font-bold">₹{item.price}</td>
+                    <td className="p-4 font-bold">
+                      ₹{item.price}
+                      <div className="text-xs text-green-300 mt-1">
+                        {getDiscountLabel(item.quantity)}
+                      </div>
+                    </td>
 
                     <td className="p-4">
                       <div className="flex items-center border border-red-500/40 rounded-lg w-fit">
@@ -258,6 +331,13 @@ export default function Cart() {
                 <span>Sub Total</span>
                 <span>₹{total}</span>
               </div>
+
+              {totalDiscount > 0 && (
+                <div className="flex justify-between text-green-300">
+                  <span>Bulk Discount</span>
+                  <span>-₹{totalDiscount.toFixed(2)}</span>
+                </div>
+              )}
 
               <div className="border-t border-red-500/40 pt-4 flex justify-between font-bold text-lg">
                 <span>Total</span>

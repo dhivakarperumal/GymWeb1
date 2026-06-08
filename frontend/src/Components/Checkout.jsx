@@ -64,7 +64,7 @@ export default function Checkout() {
   const [items, setItems] = useState([]);
   const [placing, setPlacing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
-  const [orderType, setOrderType] = useState("DELIVERY");
+  const [orderType, setOrderType] = useState("PICKUP");
   const [shipping, setShipping] = useState({
     name: "",
     email: "",
@@ -491,7 +491,7 @@ export default function Checkout() {
       }
     `}
               >
-                Shop
+                Gym 
                 {(fromMealPlan && hasFoodItems) || fromAllProducts ? <span className="block text-xs">(Required for meal plan items / all products)</span> : ""}
               </button>
             </div>

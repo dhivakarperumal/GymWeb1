@@ -191,8 +191,11 @@ export default function ProductDetails() {
   const remainingStock = Math.max(availableStock - cartQuantity, 0);
 
   const baseUnitPrice = Number(pricing?.offerPrice ?? pricing?.mrp ?? 0) || 0;
+  const effectiveCartQuantity = cartQuantity + quantity;
   const quantityDiscountPercent = getQuantityDiscountPercent(quantity);
+  const effectiveQuantityDiscountPercent = getQuantityDiscountPercent(effectiveCartQuantity);
   const discountedUnitPrice = Number((baseUnitPrice * (1 - quantityDiscountPercent / 100)).toFixed(2));
+  const effectiveDiscountedUnitPrice = Number((baseUnitPrice * (1 - effectiveQuantityDiscountPercent / 100)).toFixed(2));
   const discountedTotalPrice = Number((discountedUnitPrice * quantity).toFixed(2));
   const quantityDiscountLabel = quantityDiscountPercent
     ? `Bulk discount applied: ${quantityDiscountPercent}% off`
@@ -463,7 +466,7 @@ export default function ProductDetails() {
                     productId: product.id ?? product.product_id,
                     variant: variantKey,
                     quantity,
-                    price: discountedUnitPrice,
+                    price: effectiveDiscountedUnitPrice,
                     productName: product.name,
                     productImage: product.images?.[0] || "",
                   };

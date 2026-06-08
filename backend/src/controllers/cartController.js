@@ -128,12 +128,24 @@ async function addToCart(req, res) {
 async function updateCartItem(req, res) {
   try {
     const { id } = req.params;
-    const { quantity } = req.body;
-    if (!quantity) return res.status(400).json({ error: 'quantity required' });
-    const [result] = await db.query(
-      'UPDATE cart_items SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [quantity, id]
-    );
+    const { quantity, price } = req.body;
+    if (!quantity && quantity !== 0) return res.status(400).json({ error: 'quantity required' });
+
+    const fields = ['quantity = ?', 'updated_at = CURRENT_TIMESTAMP'];
+    const params = [quantity];
+
+    if (price !== undefined) {
+      const pr = Number(price);
+      if (!Number.isNaN(pr)) {
+        fields.unshift('price = ?');
+        params.unshift(pr);
+      }
+    }
+
+    const sql = `UPDATE cart_items SET ${fields.join(', ')} WHERE id = ?`;
+    params.push(id);
+
+    const [result] = await db.query(sql, params);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Item not found' });
     }
