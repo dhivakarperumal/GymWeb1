@@ -16,7 +16,9 @@ const ExpiryMembers = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState("card");
+  const [viewMode, setViewMode] = useState("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   const isTrainer = location.pathname.startsWith("/trainer");
   const basePath = isTrainer ? "/trainer" : "/admin";
@@ -59,6 +61,13 @@ const ExpiryMembers = () => {
       m.id?.toString().includes(search)
     );
   }, [members, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / itemsPerPage));
+  const paginatedMembers = filteredMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   if (loading) {
     return (
@@ -123,8 +132,9 @@ const ExpiryMembers = () => {
           <p className="text-white/40 font-bold uppercase tracking-widest text-sm">No members expiring soon</p>
         </div>
       ) : viewMode === "card" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMembers.map((m) => {
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedMembers.map((m) => {
             const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
             const isCritical = daysLeft <= 7;
 
@@ -168,7 +178,7 @@ const ExpiryMembers = () => {
                     <User size={14} /> Profile
                   </button>
                   <button 
-                    onClick={() => navigate(`${basePath}/addmembers/${m.id}`)}
+                    onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m } })}
                     className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-xs uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
                   >
                     Renew <ArrowRight size={14} />
@@ -178,11 +188,13 @@ const ExpiryMembers = () => {
             );
           })}
         </div>
+        </>
       ) : (
         <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-white/10 text-white/60 uppercase text-[10px] font-black tracking-widest">
               <tr>
+                <th className="px-6 py-4">S.No</th>
                 <th className="px-6 py-4">Member</th>
                 <th className="px-6 py-4">Plan Name</th>
                 <th className="px-6 py-4">Expiry Date</th>
@@ -191,11 +203,13 @@ const ExpiryMembers = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-gray-200">
-              {filteredMembers.map((m) => {
+              {paginatedMembers.map((m, idx) => {
+                const sNo = (currentPage - 1) * itemsPerPage + idx + 1;
                 const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
                 const isCritical = daysLeft <= 7;
                 return (
                   <tr key={m.id} className="hover:bg-white/[0.03] transition-colors group">
+                    <td className="px-6 py-4 text-white/50 font-medium">{sNo}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-500 flex items-center justify-center font-bold">
@@ -224,7 +238,7 @@ const ExpiryMembers = () => {
                           <User size={14} />
                         </button>
                         <button 
-                          onClick={() => navigate(`${basePath}/addmembers/${m.id}`)}
+                          onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m } })}
                           className="p-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
                           title="Renew Membership"
                         >
@@ -237,6 +251,29 @@ const ExpiryMembers = () => {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredMembers.length > 0 && (
+        <div className="flex items-center gap-2 justify-center mt-6 pb-6">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm font-medium"
+          >
+            Prev
+          </button>
+          <span className="text-sm font-medium text-white/60 px-4">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm font-medium"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
