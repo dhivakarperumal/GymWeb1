@@ -172,8 +172,10 @@ const Reports = () => {
     }
     const assignment = findAssignment(record);
     if (!assignment) return false;
-    return String(assignment.trainerId || assignment.trainer_id || assignment.trainerUserId) === String(user?.id) || 
-           String(assignment.trainerName || assignment.trainer_name || assignment.trainer).toLowerCase() === String(user?.username).toLowerCase();
+    
+    // The assignments array is fetched with ?trainerUserId=user.id, 
+    // so any assignment found here belongs to this trainer.
+    return true;
   };
 
   const filteredMembers = useMemo(() =>
