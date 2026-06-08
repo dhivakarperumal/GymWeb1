@@ -892,7 +892,7 @@ const FollowupEnquiry = () => {
                           >
                             Edit
                           </button>
-                          {enquiry.status === 'pending' && (
+                          {(enquiry.status === 'pending' || enquiry.status === 'followup') && (
                             <button
                               onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
                               className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
@@ -1024,7 +1024,7 @@ const FollowupEnquiry = () => {
                                 >
                                   <Eye size={14} />
                                 </button>
-                                {enquiry.status === 'pending' && (
+                                {(enquiry.status === 'pending' || enquiry.status === 'followup') && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleMoveToMembers(enquiry); }}
                                     className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-green-400 hover:border-green-400/50 transition-all"
