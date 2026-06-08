@@ -178,8 +178,11 @@ const FollowupEnquiry = () => {
       setLoading(true);
       const res = await api.get("/followups");
       const data = Array.isArray(res.data) ? res.data : [];
-      setEnquiries(data);
-      return data;
+      const uniqueData = Array.from(
+        new Map(data.map((item) => [item.id, item])).values()
+      );
+      setEnquiries(uniqueData);
+      return uniqueData;
     } catch (err) {
       setError("Failed to load follow-ups");
       return [];
@@ -345,6 +348,16 @@ const FollowupEnquiry = () => {
         let successCount = 0;
         let failCount = 0;
         const errors = [];
+        const seenEmails = new Set(
+          enquiries
+            .filter((e) => e.email)
+            .map((e) => e.email.toLowerCase())
+        );
+        const seenPhones = new Set(
+          enquiries
+            .filter((e) => e.phone)
+            .map((e) => e.phone)
+        );
 
         for (const row of jsonData) {
           if (!row || Object.keys(row).length === 0) continue;
@@ -352,7 +365,7 @@ const FollowupEnquiry = () => {
           // Broad mapping
           const name = (row["Lead Name"] || row["Full Name"] || row.Name || row["Customer Name"] || row.name || "Unknown").toString().trim();
           const email = (row["Email Address"] || row.Email || row.email || "").toString().trim();
-          const rawPhone = row.Phone || row.Mobile || row["Mobile Number"] || row["Mobile Number"] || row.phone || row.mobile || "";
+          const rawPhone = row.Phone || row.Mobile || row["Mobile Number"] || row.phone || row.mobile || "";
           const phone = rawPhone.toString().replace(/\D/g, '').slice(-10);
 
           if (name === "Unknown" || !phone || phone.length < 10) {
@@ -364,11 +377,8 @@ const FollowupEnquiry = () => {
             continue;
           }
 
-          // Check for duplicates
-          const isDuplicate = enquiries.some(e =>
-            (email && e.email?.toLowerCase() === email.toLowerCase()) ||
-            (phone && e.phone === phone)
-          );
+          const lowerEmail = email.toLowerCase();
+          const isDuplicate = (email && seenEmails.has(lowerEmail)) || (phone && seenPhones.has(phone));
 
           if (isDuplicate) {
             errors.push({ name: name, reason: "Duplicate lead" });
@@ -394,6 +404,8 @@ const FollowupEnquiry = () => {
           try {
             await api.post("/followups", payload);
             successCount++;
+            if (email) seenEmails.add(lowerEmail);
+            if (phone) seenPhones.add(phone);
           } catch (err) {
             const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message;
             errors.push({ name: name, reason: errorMsg });
