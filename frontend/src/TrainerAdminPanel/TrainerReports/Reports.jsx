@@ -189,7 +189,7 @@ const Reports = () => {
   );
 
   const filteredMemberships = useMemo(() =>
-    filterByDateRange(memberships.filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
+    filterByDateRange(memberships, 'startDate', dateRange.type, dateRange.range),
     [memberships, dateRange, assignments, user]
   );
 
@@ -233,12 +233,12 @@ const Reports = () => {
   };
 
   const filteredEMIs = useMemo(() =>
-    filterByDateRange(memberships.filter(isEMIMembership).filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
+    filterByDateRange(memberships.filter(isEMIMembership), 'startDate', dateRange.type, dateRange.range),
     [memberships, dateRange, assignments, user]
   );
 
   const filteredPTPlans = useMemo(() => {
-    const ptPlans = memberships.filter(isPTPlanMembership).filter(isAssignedToCurrentTrainer);
+    const ptPlans = memberships.filter(isPTPlanMembership);
     if (dateRange.type === 'All Time') return ptPlans;
 
     const { start, end } = getDateRangeBounds(dateRange.type, dateRange.range);

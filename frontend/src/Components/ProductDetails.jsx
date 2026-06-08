@@ -18,6 +18,20 @@ const makeImageUrl = (img) => {
   return `${base.replace(/\/$/, "")}/${img.replace(/^\/+/, "")}`;
 };
 
+const getQuantityDiscountPercent = (qty) => {
+  if (qty >= 20 && qty <= 25) return 10;
+  if (qty >= 5 && qty <= 19) return 5;
+  return 0;
+};
+
+const formatMoney = (value) => {
+  const amount = Number(value) || 0;
+  return amount.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+  });
+};
+
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -176,6 +190,18 @@ export default function ProductDetails() {
   const availableStock = currentVariant?.qty ?? 0;
   const remainingStock = Math.max(availableStock - cartQuantity, 0);
 
+  const baseUnitPrice = Number(pricing?.offerPrice ?? pricing?.mrp ?? 0) || 0;
+  const quantityDiscountPercent = getQuantityDiscountPercent(quantity);
+  const discountedUnitPrice = Number((baseUnitPrice * (1 - quantityDiscountPercent / 100)).toFixed(2));
+  const discountedTotalPrice = Number((discountedUnitPrice * quantity).toFixed(2));
+  const quantityDiscountLabel = quantityDiscountPercent
+    ? `Bulk discount applied: ${quantityDiscountPercent}% off`
+    : quantity < 5
+    ? "Buy 5-19 units to get 5% off, 20-25 units gets 10% off."
+    : quantity < 20
+    ? "Buy 20-25 units to get 10% off."
+    : "Quantity discount only applies for 5-25 units.";
+
   return (
     <div className="bg-black text-white">
       <PageHeader
@@ -266,19 +292,44 @@ export default function ProductDetails() {
             </div>
 
             {/* PRICE */}
-            <div className="flex items-center gap-4 mb-4 bg-[#0e1016] p-3 rounded-2xl border border-red-500/30 shadow">
+            <div className="flex flex-col gap-3 mb-4 bg-[#0e1016] p-4 rounded-2xl border border-red-500/30 shadow">
               {pricing ? (
                 <>
-                  <span className="text-3xl font-bold">
-                    ₹{pricing.offerPrice}
-                  </span>
-                  <span className="line-through text-white/40">
-                    ₹{pricing.mrp}
-                  </span>
-                  {pricing.offer > 0 && (
-                    <span className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-400">
-                      {pricing.offer}% OFF
-                    </span>
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <span className="text-3xl font-bold">
+                        ₹{formatMoney(discountedUnitPrice)}
+                      </span>
+                      <div className="text-sm text-white/50">
+                        per unit
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="line-through text-white/40">
+                        ₹{formatMoney(baseUnitPrice)}
+                      </span>
+                      {pricing.offer > 0 && (
+                        <span className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-400">
+                          {pricing.offer}% OFF
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-sm text-white/60">
+                    {quantityDiscountPercent > 0 ? (
+                      <span className="text-green-400 font-semibold">
+                        {quantityDiscountLabel}
+                      </span>
+                    ) : (
+                      quantityDiscountLabel
+                    )}
+                  </div>
+
+                  {quantityDiscountPercent > 0 && (
+                    <div className="text-sm text-white/70">
+                      Total for {quantity} unit{quantity === 1 ? "" : "s"}: ₹{formatMoney(discountedTotalPrice)}
+                    </div>
                   )}
                 </>
               ) : (
@@ -405,16 +456,14 @@ export default function ProductDetails() {
                     navigate('/login');
                     return;
                   }
-                  const variantKey = getVariantKey();
 
+                  const variantKey = getVariantKey();
                   const payload = {
                     userId,
                     productId: product.id ?? product.product_id,
                     variant: variantKey,
                     quantity,
-                    price: Number(
-                      pricing?.offerPrice ?? pricing?.mrp ?? 0
-                    ) || 0,
+                    price: discountedUnitPrice,
                     productName: product.name,
                     productImage: product.images?.[0] || "",
                   };
@@ -447,7 +496,7 @@ export default function ProductDetails() {
                         productId: product.id,
                         name: product.name,
                         image: product.images?.[0],
-                        price: pricing?.offerPrice,
+                        price: discountedUnitPrice,
                         quantity,
                         variant: getVariantKey(),
                         size: selectedSize || null,
