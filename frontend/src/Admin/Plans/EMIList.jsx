@@ -132,7 +132,7 @@ const EMIList = () => {
   useEffect(() => {
     const loadTrainers = async () => {
       try {
-        const res = await api.get("/users");
+        const res = await api.get("/staff");
         const trainerUsers = Array.isArray(res.data)
           ? res.data.filter((u) => String(u.role).toLowerCase() === "trainer")
           : [];
@@ -211,7 +211,7 @@ const EMIList = () => {
     const matchesTrainer =
       trainerFilter === "all" || String(assignedTrainerId) === String(trainerFilter);
     const matchesTrainerRole =
-      role === "trainer" ? String(assignedTrainerId) === String(user?.id) : true;
+      role === "trainer" ? !!getAssignmentForMembership(m) : true;
 
     return matchesSearch && matchesStatus && matchesDate && matchesTrainer && matchesTrainerRole;
   });
