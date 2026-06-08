@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   Users, ShoppingCart, CreditCard, MessageSquare,
-  Download, Eye, X, TrendingUp, FileText,
+  Download, Eye, X, TrendingUp, FileText, Clock
 } from "lucide-react";
 import api from "../../api";
 import dayjs from "dayjs";
@@ -202,6 +202,27 @@ const Reports = () => {
     [enquiries, dateRange]
   );
 
+  const filteredExpiringMembers = useMemo(() => {
+    let base = members.filter(m => !!m.expiry_date);
+    if (dateRange.type !== 'All Time') {
+      const { start, end } = getDateRangeBounds(dateRange.type, dateRange.range);
+      if (start && end) {
+        base = base.filter(m => {
+          const date = dayjs(m.expiry_date);
+          return date.isValid() && !date.isBefore(start) && !date.isAfter(end);
+        });
+      }
+    } else {
+        const today = dayjs();
+        const next5Days = today.add(5, "day");
+        base = base.filter(m => {
+          const expiryDate = dayjs(m.expiry_date);
+          return expiryDate.isAfter(today.subtract(1, 'day')) && expiryDate.isBefore(next5Days.add(1, 'day'));
+        });
+    }
+    return base.sort((a, b) => dayjs(a.expiry_date).diff(dayjs(b.expiry_date)));
+  }, [members, dateRange]);
+
   /* ========================
      TABLE CONFIGS
   ======================== */
@@ -340,6 +361,27 @@ const Reports = () => {
         e.created_at ? dayjs(e.created_at).format("DD MMM YYYY") : "-",
       ]),
     },
+    {
+      key: "expiring_members",
+      label: "Plan Expiry",
+      icon: Clock,
+      color: "bg-yellow-500/20 text-yellow-400",
+      data: filteredExpiringMembers,
+      headers: ["S No", "Name", "Email", "Mobile Number", "Plan", "Expiry Date", "Days Left", "Status"],
+      rows: filteredExpiringMembers.map((m, i) => {
+        const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
+        return [
+          i + 1,
+          m.name || "N/A",
+          m.email || m.user_email || "-",
+          m.phone || "-",
+          m.plan || "N/A",
+          m.expiry_date ? dayjs(m.expiry_date).format("DD MMM YYYY") : "-",
+          daysLeft > 0 ? `${daysLeft} Days` : 'Expired',
+          daysLeft > 0 ? 'Active' : 'Inactive'
+        ];
+      }),
+    },
   ];
 
   const currentTab = tabs.find(t => t.key === activeTab);
@@ -347,8 +389,8 @@ const Reports = () => {
 
   const getCellBadgeClasses = (cell) => {
     const value = String(cell).trim().toLowerCase();
-    if (value === "yes") return "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-    if (value === "no") return "bg-red-500/20 text-red-300 border border-red-500/30";
+    if (value === "yes" || value === "active") return "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+    if (value === "no" || value === "inactive" || value === "expired") return "bg-red-500/20 text-red-300 border border-red-500/30";
     return "text-white/80";
   };
 
@@ -414,13 +456,14 @@ const Reports = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <Stat title="Total Members" value={filteredMembers.length} icon={Users} color="bg-blue-500/20 text-blue-400" />
         <Stat title="Total Orders" value={filteredOrders.length} icon={ShoppingCart} color="bg-orange-500/20 text-orange-400" />
         <Stat title="Plan Purchases" value={filteredMemberships.length} icon={CreditCard} color="bg-green-500/20 text-green-400" />
         <Stat title="EMI Records" value={filteredEMIs.length} icon={CreditCard} color="bg-red-500/20 text-red-400" />
         <Stat title="PT Plan Buys" value={filteredPTPlans.length} icon={Users} color="bg-indigo-500/20 text-indigo-400" />
         <Stat title="Enquiries" value={filteredEnquiries.length} icon={MessageSquare} color="bg-purple-500/20 text-purple-400" />
+        <Stat title="Plan Expiry" value={filteredExpiringMembers.length} icon={Clock} color="bg-yellow-500/20 text-yellow-400" />
       </div>
 
       {/* TABS */}
@@ -482,7 +525,7 @@ const Reports = () => {
                         const badgeClasses = getCellBadgeClasses(cell);
                         return (
                           <td key={j} className="px-4 py-3 whitespace-nowrap">
-                            {value === "yes" || value === "no" ? (
+                            {value === "yes" || value === "no" || value === "active" || value === "inactive" || value === "expired" ? (
                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeClasses}`}>
                                 {cell}
                               </span>
