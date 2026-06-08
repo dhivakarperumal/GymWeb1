@@ -70,6 +70,25 @@ const Payments = () => {
       }
 
       try {
+        // For trainer panel, also fetch assignments to know which members belong to this trainer
+        let assignedUserIds = new Set();
+        if (isTrainerPanel && user?.id) {
+          try {
+            const assignRes = await api.get(`/assignments?trainerUserId=${user.id}`);
+            const assignData = Array.isArray(assignRes.data)
+              ? assignRes.data
+              : assignRes.data?.data || assignRes.data?.assignments || [];
+            assignData.forEach((a) => {
+              const uid = String(a.userId || a.user_id || a.uid || "");
+              const gmId = String(a.gymMemberId || a.gym_member_id || "");
+              if (uid && uid !== "undefined" && uid !== "null") assignedUserIds.add(uid);
+              if (gmId && gmId !== "undefined" && gmId !== "null") assignedUserIds.add(gmId);
+            });
+          } catch (err) {
+            console.warn("Could not fetch assignments for trainer:", err);
+          }
+        }
+
         const res = await api.get(MEMBERSHIPS_API);
         const membershipsData = res.data;
 
@@ -85,15 +104,11 @@ const Payments = () => {
         const loggedInTrainerName = (profileName || user?.username || user?.name || "").toLowerCase().trim();
 
         membershipsData.forEach((m) => {
-          // If on trainer panel, filter for trainer collected only
+          // If on trainer panel, filter strictly by assigned members only
           if (isTrainerPanel) {
-            const referredByLower = (m.referredBy || "").toLowerCase().trim();
-            if (
-              !referredByLower || 
-              (referredByLower !== loggedInTrainerName && 
-               !referredByLower.includes(loggedInTrainerName) && 
-               !loggedInTrainerName.includes(referredByLower))
-            ) {
+            const memberUserId = String(m.userId || "");
+
+            if (!assignedUserIds.has(memberUserId)) {
               return;
             }
           }
@@ -858,9 +873,10 @@ const Payments = () => {
 
         {/* ================= GRID VIEW ================= */}
         {viewType === "card" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {paginatedPlans.map(({ member, plan }, index) => {
-              const totalAmount =
+          paginatedPlans.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {paginatedPlans.map(({ member, plan }, index) => {
+                const totalAmount =
                 plan.price || plan.totalPrice || plan.planPrice || plan.pricePaid;
 
               return (
@@ -1013,6 +1029,15 @@ const Payments = () => {
               );
             })}
           </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 bg-white/5 border border-white/10 rounded-2xl">
+              <div className="p-4 bg-white/5 rounded-full mb-4">
+                <Search size={32} className="text-gray-400" />
+              </div>
+              <p className="text-lg font-medium text-gray-300">No payments found</p>
+              <p className="text-sm text-gray-500 mt-1">Try adjusting your filters or search query</p>
+            </div>
+          )
         )}
 
         {viewType === "table" && (
@@ -1050,8 +1075,9 @@ const Payments = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedPlans.map(({ member, plan }, index) => {
-                    const totalAmount =
+                  {paginatedPlans.length > 0 ? (
+                    paginatedPlans.map(({ member, plan }, index) => {
+                      const totalAmount =
                       plan.price || plan.totalPrice || plan.planPrice || plan.pricePaid;
                     const paidTotal = Number(plan.pricePaid || 0) + Number(plan.secondPaymentPaid || 0);
                     const remainingAmount = Math.max(0, Number(totalAmount) - paidTotal);
@@ -1249,7 +1275,20 @@ const Payments = () => {
                         </td>
                       </tr>
                     );
-                  })}
+                  })
+                  ) : (
+                    <tr>
+                      <td colSpan="18" className="px-4 py-16 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="p-3 bg-white/5 rounded-full mb-3">
+                            <Search size={24} className="text-gray-400" />
+                          </div>
+                          <p className="text-base font-medium text-gray-300">No payments found</p>
+                          <p className="text-sm text-gray-500 mt-1">Try adjusting your filters or search query</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

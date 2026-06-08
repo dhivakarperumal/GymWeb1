@@ -610,8 +610,12 @@ const EMIList = () => {
           <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
         </div>
       ) : filteredEMIs.length === 0 ? (
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-white/60">
-          No records matching your criteria.
+        <div className="flex flex-col items-center justify-center py-20 bg-white/5 border border-white/10 rounded-2xl">
+          <div className="p-4 bg-white/5 rounded-full mb-4">
+            <Search size={32} className="text-gray-400" />
+          </div>
+          <p className="text-lg font-medium text-gray-300">No EMI records found</p>
+          <p className="text-sm text-gray-500 mt-1">Try adjusting your filters or search query</p>
         </div>
       ) : (
         <>

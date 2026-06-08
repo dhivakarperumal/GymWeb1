@@ -121,22 +121,48 @@ const Reports = () => {
       planName: record.planName || record.plan_name || record.pt_planName || record.pt_plan_name || "",
     };
 
-    return assignments.find((a) => {
+    // First try to find an exact match on User AND Plan
+    let match = assignments.find((a) => {
       const assignmentEmail = String(a.userEmail || "").toLowerCase();
       const assignmentUsername = String(a.username || "").toLowerCase();
       const recordEmail = String(normalized.userEmail || "").toLowerCase();
       const recordUsername = String(normalized.username || "").toLowerCase();
       const recordMobile = String(normalized.userMobile || "");
 
-      return (
+      const userMatches = 
         (normalized.userId && a.userId && String(normalized.userId) === String(a.userId)) ||
         (normalized.userUuid && a.userUuid && String(normalized.userUuid) === String(a.userUuid)) ||
         (recordEmail && assignmentEmail && recordEmail === assignmentEmail) ||
         (recordMobile && a.userMobile && recordMobile === String(a.userMobile)) ||
-        (recordUsername && assignmentUsername && recordUsername === assignmentUsername) ||
-        ((normalized.planId || normalized.planName) && (a.planId === normalized.planId || String(a.planName || "").toLowerCase() === String(normalized.planName || "").toLowerCase()))
-      );
+        (recordUsername && assignmentUsername && recordUsername === assignmentUsername);
+
+      const planMatches = 
+        (normalized.planId && a.planId && String(normalized.planId) === String(a.planId)) ||
+        (normalized.planName && a.planName && String(normalized.planName).toLowerCase() === String(a.planName).toLowerCase());
+
+      return userMatches && planMatches;
     });
+
+    // If no exact match, try matching just the User
+    if (!match) {
+      match = assignments.find((a) => {
+        const assignmentEmail = String(a.userEmail || "").toLowerCase();
+        const assignmentUsername = String(a.username || "").toLowerCase();
+        const recordEmail = String(normalized.userEmail || "").toLowerCase();
+        const recordUsername = String(normalized.username || "").toLowerCase();
+        const recordMobile = String(normalized.userMobile || "");
+
+        return (
+          (normalized.userId && a.userId && String(normalized.userId) === String(a.userId)) ||
+          (normalized.userUuid && a.userUuid && String(normalized.userUuid) === String(a.userUuid)) ||
+          (recordEmail && assignmentEmail && recordEmail === assignmentEmail) ||
+          (recordMobile && a.userMobile && recordMobile === String(a.userMobile)) ||
+          (recordUsername && assignmentUsername && recordUsername === assignmentUsername)
+        );
+      });
+    }
+
+    return match;
   };
 
   const isAssignedToCurrentTrainer = (record) => {
@@ -161,8 +187,8 @@ const Reports = () => {
   );
 
   const filteredMemberships = useMemo(() =>
-    filterByDateRange(memberships, 'startDate', dateRange.type, dateRange.range),
-    [memberships, dateRange]
+    filterByDateRange(memberships.filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
+    [memberships, dateRange, assignments, user]
   );
 
   const calculateNextPaymentDate = (membership) => {
@@ -205,12 +231,12 @@ const Reports = () => {
   };
 
   const filteredEMIs = useMemo(() =>
-    filterByDateRange(memberships.filter(isEMIMembership), 'startDate', dateRange.type, dateRange.range),
-    [memberships, dateRange]
+    filterByDateRange(memberships.filter(isEMIMembership).filter(isAssignedToCurrentTrainer), 'startDate', dateRange.type, dateRange.range),
+    [memberships, dateRange, assignments, user]
   );
 
   const filteredPTPlans = useMemo(() => {
-    const ptPlans = memberships.filter(isPTPlanMembership);
+    const ptPlans = memberships.filter(isPTPlanMembership).filter(isAssignedToCurrentTrainer);
     if (dateRange.type === 'All Time') return ptPlans;
 
     const { start, end } = getDateRangeBounds(dateRange.type, dateRange.range);
@@ -220,12 +246,17 @@ const Reports = () => {
       const date = dayjs(getMembershipStartDate(membership));
       return date.isValid() && !date.isBefore(start) && !date.isAfter(end);
     });
-  }, [memberships, dateRange]);
+  }, [memberships, dateRange, assignments, user]);
 
-  const filteredEnquiries = useMemo(() =>
-    filterByDateRange(enquiries, 'created_at', dateRange.type, dateRange.range),
-    [enquiries, dateRange]
-  );
+  const filteredEnquiries = useMemo(() => {
+    const isEnquiryAssignedToTrainer = (enquiry) => {
+      const isUpdatedByMe = enquiry.updated_by === user?.username;
+      const isAssignedByName = enquiry.trainer_name && (enquiry.trainer_name === user?.name || enquiry.trainer_name === user?.username);
+      const isAssignedById = enquiry.trainer_id && Number(enquiry.trainer_id) === Number(user?.id);
+      return isUpdatedByMe || isAssignedByName || isAssignedById;
+    };
+    return filterByDateRange(enquiries.filter(isEnquiryAssignedToTrainer), 'created_at', dateRange.type, dateRange.range);
+  }, [enquiries, dateRange, user]);
 
   const filteredExpiringMembers = useMemo(() => {
     let base = members.filter(m => !!m.expiry_date);
