@@ -47,6 +47,7 @@ async function getAllMemberships(req, res) {
         (m.userEmail = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR
         (m.userPhone = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
       LEFT JOIN gym_plans gp ON m.planId = gp.id
+      WHERE m.status = 'active'
     `;
 
     if (staffId) {
