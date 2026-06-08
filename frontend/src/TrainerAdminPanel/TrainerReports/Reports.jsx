@@ -252,9 +252,15 @@ const Reports = () => {
 
   const filteredEnquiries = useMemo(() => {
     const isEnquiryAssignedToTrainer = (enquiry) => {
-      const isUpdatedByMe = enquiry.updated_by === user?.username;
-      const isAssignedByName = enquiry.trainer_name && (enquiry.trainer_name === user?.name || enquiry.trainer_name === user?.username);
-      const isAssignedById = enquiry.trainer_id && Number(enquiry.trainer_id) === Number(user?.id);
+      const isUpdatedByMe = String(enquiry.updated_by).toLowerCase() === String(user?.username).toLowerCase();
+      const isAssignedByName = enquiry.trainer_name && (
+        String(enquiry.trainer_name).toLowerCase() === String(user?.name).toLowerCase() || 
+        String(enquiry.trainer_name).toLowerCase() === String(user?.username).toLowerCase()
+      );
+      const isAssignedById = enquiry.trainer_id && (
+        Number(enquiry.trainer_id) === Number(user?.id) ||
+        assignments.some(a => Number(a.trainerId || a.trainer_id) === Number(enquiry.trainer_id))
+      );
       return isUpdatedByMe || isAssignedByName || isAssignedById;
     };
     return filterByDateRange(enquiries.filter(isEnquiryAssignedToTrainer), 'created_at', dateRange.type, dateRange.range);
