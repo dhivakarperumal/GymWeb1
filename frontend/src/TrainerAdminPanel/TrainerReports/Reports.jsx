@@ -184,8 +184,8 @@ const Reports = () => {
   );
 
   const filteredOrders = useMemo(() =>
-    filterByDateRange(orders, 'created_at', dateRange.type, dateRange.range).filter(isAssignedToCurrentTrainer),
-    [orders, dateRange, assignments, user]
+    filterByDateRange(orders, 'created_at', dateRange.type, dateRange.range),
+    [orders, dateRange]
   );
 
   const filteredMemberships = useMemo(() =>
@@ -300,22 +300,6 @@ const Reports = () => {
         m.plan || m.role || "Member",
         m.status || "Active",
         m.join_date ? dayjs(m.join_date).format("DD MMM YYYY") : "-",
-      ]),
-    },
-    {
-      key: "orders",
-      label: "Orders",
-      icon: ShoppingCart,
-      color: "bg-orange-500/20 text-orange-400",
-      data: filteredOrders,
-      headers: ["#", "Order ID", "Customer", "Total", "Status", "Date"],
-      rows: filteredOrders.map((o, i) => [
-        i + 1,
-        o.id || o.order_id || "-",
-        o.name || o.user_name || o.customer_name || "-",
-        `₹${parseFloat(o.total || o.total_amount || 0).toFixed(2)}`,
-        o.status || "-",
-        o.created_at ? dayjs(o.created_at).format("DD MMM YYYY") : "-",
       ]),
     },
     {
