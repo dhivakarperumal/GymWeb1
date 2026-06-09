@@ -92,24 +92,27 @@ const PTForm = () => {
           }
 
           try {
-            const enquiryRes = await api.get('/enquiries', {
-              params: { email: data.email }
-            });
-            const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
-            const enquiry = enquiries[0];
-            if (enquiry) {
-              const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
-                ? JSON.parse(enquiry.consent_data)
-                : enquiry.consent_data || {};
-              setFormData(prev => ({
-                ...prev,
-                participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
-                consent_agree: consentData.agree || prev.consent_agree,
-                consent_signature: consentData.signature || prev.consent_signature,
-                consent_date: consentData.date || prev.consent_date,
-                guardian_signature: consentData.guardian_signature || prev.guardian_signature,
-                witness: consentData.witness || prev.witness,
-              }));
+            if (data.email || data.phone) {
+              const enquiryRes = await api.get('/followups');
+              const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
+              const enquiry = enquiries.find(e => 
+                (data.email && e.email === data.email) || 
+                (data.phone && e.phone === data.phone)
+              );
+              if (enquiry) {
+                const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
+                  ? JSON.parse(enquiry.consent_data)
+                  : enquiry.consent_data || {};
+                setFormData(prev => ({
+                  ...prev,
+                  participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
+                  consent_agree: consentData.agree || prev.consent_agree,
+                  consent_signature: consentData.signature || prev.consent_signature,
+                  consent_date: consentData.date || prev.consent_date,
+                  guardian_signature: consentData.guardian_signature || prev.guardian_signature,
+                  witness: consentData.witness || prev.witness,
+                }));
+              }
             }
           } catch (enqErr) {
             console.log('No linked enquiry found for this member');
@@ -228,24 +231,27 @@ const PTForm = () => {
       }
 
       try {
-        const enquiryRes = await api.get('/enquiries', {
-          params: { email: memberPrefill.email }
-        });
-        const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
-        const enquiry = enquiries[0];
-        if (enquiry) {
-          const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
-            ? JSON.parse(enquiry.consent_data)
-            : enquiry.consent_data || {};
-          setFormData(prev => ({
-            ...prev,
-            participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
-            consent_agree: consentData.agree || prev.consent_agree,
-            consent_signature: consentData.signature || prev.consent_signature,
-            consent_date: consentData.date || prev.consent_date,
-            guardian_signature: consentData.guardian_signature || prev.guardian_signature,
-            witness: consentData.witness || prev.witness,
-          }));
+        if (memberPrefill.email || memberPrefill.phone) {
+          const enquiryRes = await api.get('/followups');
+          const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
+          const enquiry = enquiries.find(e => 
+            (memberPrefill.email && e.email === memberPrefill.email) || 
+            (memberPrefill.phone && e.phone === memberPrefill.phone)
+          );
+          if (enquiry) {
+            const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
+              ? JSON.parse(enquiry.consent_data)
+              : enquiry.consent_data || {};
+            setFormData(prev => ({
+              ...prev,
+              participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
+              consent_agree: consentData.agree || prev.consent_agree,
+              consent_signature: consentData.signature || prev.consent_signature,
+              consent_date: consentData.date || prev.consent_date,
+              guardian_signature: consentData.guardian_signature || prev.guardian_signature,
+              witness: consentData.witness || prev.witness,
+            }));
+          }
         }
       } catch (enqErr) {
         console.log('No linked enquiry found for selected member');
