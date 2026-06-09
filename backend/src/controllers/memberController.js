@@ -1083,8 +1083,8 @@ async function deleteMember(req, res) {
   const isNum = !isNaN(idNum);
 
   const selectQuery = isNum ?
-    `SELECT email, phone, user_id FROM gym_members WHERE id = ?` :
-    `SELECT email, phone, user_id FROM gym_members WHERE member_id = ?`;
+    `SELECT id, email, phone, user_id FROM gym_members WHERE id = ?` :
+    `SELECT id, email, phone, user_id FROM gym_members WHERE member_id = ?`;
   const deleteQuery = isNum ?
     `DELETE FROM gym_members WHERE id = ?` :
     `DELETE FROM gym_members WHERE member_id = ?`;
@@ -1102,12 +1102,15 @@ async function deleteMember(req, res) {
     }
 
     const member = rows[0];
+    const internalMemberId = member.id;
+
     const [deleteResult] = await connection.query(deleteQuery, params);
     if (deleteResult.affectedRows === 0) {
       await connection.rollback();
       return res.status(404).json({ error: 'Member not found' });
     }
 
+    let internalUserId = null;
     if (member.user_id || member.email || member.phone) {
       const userQuery = member.user_id
         ? `SELECT id, role FROM users WHERE user_id = ? LIMIT 1`
@@ -1117,10 +1120,25 @@ async function deleteMember(req, res) {
 
       if (userRows.length > 0) {
         const user = userRows[0];
+        internalUserId = user.id;
         if (user.role === 'user' || user.role === 'member') {
           await connection.query('DELETE FROM users WHERE id = ?', [user.id]);
         }
       }
+    }
+
+    if (internalUserId) {
+      try { await connection.query('DELETE FROM memberships WHERE userId = ?', [internalUserId]); } catch (e) {}
+      try { await connection.query('DELETE FROM trainer_assignments WHERE userId = ?', [internalUserId]); } catch (e) {}
+      try { await connection.query('DELETE FROM pt_forms WHERE user_id = ?', [internalUserId]); } catch (e) {}
+    }
+    
+    if (internalMemberId) {
+      try { await connection.query('DELETE FROM trainer_assignments WHERE gymMemberId = ?', [internalMemberId]); } catch (e) {}
+      try { await connection.query('DELETE FROM diet_plans WHERE member_id = ?', [internalMemberId]); } catch (e) {}
+      try { await connection.query('DELETE FROM workout_programs WHERE member_id = ?', [internalMemberId]); } catch (e) {}
+      try { await connection.query('DELETE FROM pt_forms WHERE member_id = ?', [internalMemberId]); } catch (e) {}
+      try { await connection.query('DELETE FROM attendance WHERE member_id = ?', [internalMemberId]); } catch (e) {}
     }
 
     await connection.commit();
