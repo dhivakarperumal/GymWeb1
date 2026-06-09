@@ -10,6 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
+import SessionTracker from "../Admin/PTForm/SessionTracker";
 import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
 import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users, CreditCard } from "lucide-react";
@@ -61,6 +62,7 @@ const Account = () => {
     plan_name: "",
     plan_duration: "",
   });
+  const [ptFormData, setPtFormData] = useState(null);
   const [savingMember, setSavingMember] = useState(false);
   const [memberEditMode, setMemberEditMode] = useState(false);
   const [plans, setPlans] = useState([]);
@@ -154,6 +156,36 @@ const Account = () => {
     fetchMemberData();
     fetchUserMemberships();
   }, [userId]);
+
+  useEffect(() => {
+    if (!memberData?.id) {
+      setPtFormData(null);
+      return;
+    }
+
+    const fetchPtForm = async () => {
+      try {
+        const res = await api.get(`/pt-forms/${memberData.id}`);
+        const ptData = res.data || {};
+        const formData = typeof ptData.form_data === 'string' ? JSON.parse(ptData.form_data || '{}') : ptData.form_data || {};
+        setPtFormData({
+          member_id: memberData.id,
+          u_id: userId,
+          trainer_name_assigned: memberFormData.trainer_name_assigned || "",
+          ...formData,
+        });
+      } catch (err) {
+        setPtFormData({
+          member_id: memberData.id,
+          u_id: userId,
+          trainer_name_assigned: memberFormData.trainer_name_assigned || "",
+          ...memberFormData,
+        });
+      }
+    };
+
+    fetchPtForm();
+  }, [memberData?.id, userId, memberFormData]);
 
   useEffect(() => {
     if (!user?.email && !user?.mobile) return;
@@ -402,6 +434,26 @@ const Account = () => {
     }
   };
 
+  const saveSessionTracker = async (updatedData) => {
+    if (!memberData?.id) {
+      toast.error('Unable to save session tracker: member record not linked.');
+      return;
+    }
+
+    try {
+      await api.post('/pt-forms', {
+        member_id: memberData.id,
+        user_id: userId,
+        formData: updatedData,
+      });
+      setPtFormData(updatedData);
+      toast.success('Session tracker saved successfully.');
+    } catch (err) {
+      console.error('Failed to save session tracker', err);
+      toast.error('Failed to save session tracker.');
+    }
+  };
+
   const renderMemberDetailRow = (label, value) => {
     const displayValue = value === undefined || value === null || value === "" ? "-" : value;
     return (
@@ -492,6 +544,7 @@ const Account = () => {
         { key: "diet", label: "Diet Chart", icon: Shield },
         { key: "workouts", label: "Workouts", icon: Key },
         { key: "ptform", label: "PT Form", icon: CalendarCheck },
+        { key: "sessionTracker", label: "Session Tracker", icon: CalendarCheck },
       ]
       : []),
     { key: "orders", label: "My Orders", icon: CalendarCheck },
@@ -1109,6 +1162,24 @@ const Account = () => {
 
       case "ptform":
         return <PTFormUser />;
+
+      case "sessionTracker":
+        return (
+          <div className="w-full py-4 px-2 sm:px-4" data-aos="fade-up">
+            {!memberData?.id ? (
+              <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-100">
+                Session tracker is available once your account is linked to a gym member record.
+              </div>
+            ) : (
+              <SessionTracker
+                formData={ptFormData || { member_id: memberData.id, u_id: userId, trainer_name_assigned: memberFormData.trainer_name_assigned || "" }}
+                standalone
+                userMode={true}
+                onSaved={saveSessionTracker}
+              />
+            )}
+          </div>
+        );
 
       case "workouts":
         return <Workouts />;
