@@ -4,13 +4,35 @@ import { useAuth } from "../../src/PrivateRouter/AuthContext";
 import api from "../../src/api";
 import { Trash2 } from "lucide-react";
 
-const MemberSBuyPlans = ({ preFetchedPlans }) => {
+const MemberSBuyPlans = ({ preFetchedPlans, memberData }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [plans, setPlans] = useState(preFetchedPlans || []);
   const [loading, setLoading] = useState(!preFetchedPlans);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+
+  const mergePtPlan = (memberships, member) => {
+    if (!member || !member.pt_status) return memberships;
+    const ptActive = String(member.pt_status).toLowerCase() === 'active';
+    if (!ptActive) return memberships;
+
+    const ptPlan = {
+      id: `pt-${member.member_id}`,
+      planName: member.pt_plan || 'PT Plan',
+      price: member.pt_price || 0,
+      duration: member.pt_duration || null,
+      startDate: member.pt_join_date || null,
+      endDate: member.pt_expiry_date || null,
+      status: member.pt_status || 'ACTIVE',
+      isPtPlan: true,
+    };
+
+    const exists = memberships.some(
+      (p) => String(p.id) === String(ptPlan.id) || (String(p.planName || '').toLowerCase() === String(ptPlan.planName || '').toLowerCase())
+    );
+    return exists ? memberships : [ptPlan, ...memberships];
+  };
 
   /* ================= FETCH DATA ================= */
 
@@ -30,7 +52,7 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     if (!user?.id) return;
 
     if (shouldUsePreFetchedPlans) {
-      setPlans(preFetchedPlans);
+      setPlans(mergePtPlan(preFetchedPlans, memberData));
       setLoading(false);
       return;
     }
@@ -38,7 +60,9 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     const fetchMemberships = async () => {
       try {
         const res = await api.get(`/memberships/user/${user.id}`);
-        setPlans(Array.isArray(res.data) ? res.data : []);
+        let memberships = Array.isArray(res.data) ? res.data : [];
+        memberships = mergePtPlan(memberships, memberData);
+        setPlans(memberships);
       } catch (err) {
         console.error("Failed to fetch memberships", err);
         setPlans([]);
@@ -48,7 +72,7 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     };
 
     fetchMemberships();
-  }, [user, preFetchedPlans]);
+  }, [user, preFetchedPlans, memberData]);
 
   const handleDelete = async (plan) => {
     const confirmDelete = window.confirm("Delete this plan?");
@@ -134,7 +158,7 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
                           : "bg-red-600 text-white animate-pulse"
                         }`}
                     >
-                      {isExpired ? "EXPIRED" : plan.status}
+                      {isExpired ? "EXPIRED" : (plan.status || '').toString().toUpperCase()}
                     </span>
                   </div>
 

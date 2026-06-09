@@ -68,6 +68,10 @@ const Account = () => {
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
 
+  const isActivePtPlan = (member) => {
+    return Boolean(member?.pt_status && String(member.pt_status).toLowerCase() === 'active');
+  };
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -145,17 +149,20 @@ const Account = () => {
         const res = await api.get(`/memberships/user/${userId}`);
         const memberships = Array.isArray(res.data) ? res.data : [];
         setPlans(memberships);
-        setHasActivePlan(memberships.some((m) => m.status === 'active'));
       } catch (err) {
         console.error('Failed to fetch user memberships', err);
         setPlans([]);
-        setHasActivePlan(false);
       }
     };
 
     fetchMemberData();
     fetchUserMemberships();
   }, [userId]);
+
+  useEffect(() => {
+    const hasMembershipActive = Array.isArray(plans) && plans.some((m) => String(m.status || '').toLowerCase() === 'active');
+    setHasActivePlan(hasMembershipActive || isActivePtPlan(memberData));
+  }, [plans, memberData]);
 
   useEffect(() => {
     if (!memberData?.id) {
@@ -1049,7 +1056,7 @@ const Account = () => {
         return <UserOrders />;
 
       case "plans":
-        return <MemberSBuyPlans preFetchedPlans={plans} />
+        return <MemberSBuyPlans preFetchedPlans={plans} memberData={memberData} />
 
       case "emi": {
         const activePlans = plans || [];
