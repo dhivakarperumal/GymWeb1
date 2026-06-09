@@ -69,7 +69,11 @@ const Account = () => {
   const [hasActivePlan, setHasActivePlan] = useState(false);
 
   const isActivePtPlan = (member) => {
-    return Boolean(member?.pt_status && String(member.pt_status).toLowerCase() === 'active');
+    if (!member) return false;
+    const hasPlan = Boolean(member.pt_plan);
+    const hasDates = Boolean(member.pt_join_date && member.pt_expiry_date);
+    const isActive = String(member.pt_status || '').toLowerCase() === 'active';
+    return isActive && hasPlan && hasDates;
   };
 
   const [oldPassword, setOldPassword] = useState("");
