@@ -168,12 +168,12 @@ const Account = () => {
         const res = await api.get(`/pt-forms/${memberData.id}`);
         const ptData = res.data || {};
         const formData = typeof ptData.form_data === 'string' ? JSON.parse(ptData.form_data || '{}') : ptData.form_data || {};
-        setPtFormData({
+        setPtFormData(normalizeSessionForm({
           member_id: memberData.id,
           u_id: userId,
           trainer_name_assigned: memberFormData.trainer_name_assigned || "",
           ...formData,
-        });
+        }));
       } catch (err) {
         setPtFormData({
           member_id: memberData.id,
@@ -440,18 +440,91 @@ const Account = () => {
       return;
     }
 
+    const normalizeSessionForm = (rawData) => {
+      const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || "";
+      const sessions = Array.isArray(rawData.sessions)
+        ? rawData.sessions.map((session, index) => ({
+            session_no: index + 1,
+            date: session.date || "",
+            workout: session.workout || "",
+            status: session.status || "Pending",
+            client_sign: session.client_sign || "",
+            trainer_sign: session.trainer_sign || trainerSign,
+          }))
+        : Array.from({ length: 25 }, (_, index) => ({
+            session_no: index + 1,
+            date: "",
+            workout: "",
+            status: "Pending",
+            client_sign: "",
+            trainer_sign: trainerSign,
+          }));
+
+      return {
+        ...rawData,
+        member_id: memberData.id,
+        u_id: userId,
+        trainer_name_assigned: trainerSign,
+        sessions,
+      };
+    };
+
     try {
       await api.post('/pt-forms', {
         member_id: memberData.id,
         user_id: userId,
-        formData: updatedData,
+        formData: normalizeSessionForm(updatedData),
+        completed: true,
       });
-      setPtFormData(updatedData);
+      setPtFormData(normalizeSessionForm(updatedData));
       toast.success('Session tracker saved successfully.');
     } catch (err) {
       console.error('Failed to save session tracker', err);
       toast.error('Failed to save session tracker.');
     }
+  };
+
+  const normalizeSession = (session, trainerSign) => {
+    const rawStatus = String(session?.status || '').trim();
+    const status = rawStatus.length
+      ? rawStatus.toLowerCase() === 'completed'
+        ? 'Completed'
+        : rawStatus
+      : 'Pending';
+
+    return {
+      session_no: Number(session?.session_no) || 0,
+      date: session?.date || '',
+      workout: session?.workout || '',
+      status,
+      client_sign: session?.client_sign || '',
+      trainer_sign: session?.trainer_sign || trainerSign,
+    };
+  };
+
+  const normalizeSessionForm = (rawData) => {
+    const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || '';
+    const sessions = Array.isArray(rawData.sessions)
+      ? rawData.sessions.map((session, index) => ({
+          ...normalizeSession(session, trainerSign),
+          session_no: index + 1,
+        }))
+      : Array.from({ length: 25 }, (_, index) => ({
+          session_no: index + 1,
+          date: '',
+          workout: '',
+          status: 'Pending',
+          client_sign: '',
+          trainer_sign: trainerSign,
+        }));
+
+    return {
+      ...rawData,
+      member_id: memberData.id,
+      u_id: userId,
+      trainer_name_assigned: trainerSign,
+      sessions,
+    };
   };
 
   const renderMemberDetailRow = (label, value) => {
