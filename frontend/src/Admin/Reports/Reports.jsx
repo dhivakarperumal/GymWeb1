@@ -387,7 +387,7 @@ const Reports = () => {
       icon: Clock,
       color: "bg-yellow-500/20 text-yellow-400",
       data: filteredExpiringMembers,
-      headers: ["S No", "Name", "Email", "Mobile Number", "Plan", "Expiry Date", "Days Left", "Status"],
+      headers: ["S No", "Name", "Email", "Mobile Number", "Assigned Trainer", "Plan", "Expiry Date", "Days Left", "Status"],
       rows: filteredExpiringMembers.map((m, i) => {
         const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
         return [
@@ -395,6 +395,7 @@ const Reports = () => {
           m.name || "N/A",
           m.email || m.user_email || "-",
           m.phone || "-",
+          getMembershipTrainerName(m),
           m.plan || "N/A",
           m.expiry_date ? dayjs(m.expiry_date).format("DD MMM YYYY") : "-",
           daysLeft > 0 ? `${daysLeft} Days` : 'Expired',
