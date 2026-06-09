@@ -4,13 +4,37 @@ import { useAuth } from "../../src/PrivateRouter/AuthContext";
 import api from "../../src/api";
 import { Trash2 } from "lucide-react";
 
-const MemberSBuyPlans = ({ preFetchedPlans }) => {
+const MemberSBuyPlans = ({ preFetchedPlans, memberData }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [plans, setPlans] = useState(preFetchedPlans || []);
   const [loading, setLoading] = useState(!preFetchedPlans);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+
+  const mergePtPlan = (memberships, member) => {
+    if (!member || !member.pt_status) return memberships;
+    const ptActive = String(member.pt_status).toLowerCase() === 'active';
+    const hasPlanName = Boolean(member.pt_plan);
+    const hasValidDates = Boolean(member.pt_join_date && member.pt_expiry_date);
+    if (!ptActive || !hasPlanName || !hasValidDates) return memberships;
+
+    const ptPlan = {
+      id: `pt-${member.member_id}`,
+      planName: member.pt_plan,
+      price: Number(member.pt_price ?? member.pt_pricePaid ?? member.pt_price_paid ?? 0),
+      duration: member.pt_duration || null,
+      startDate: member.pt_join_date || null,
+      endDate: member.pt_expiry_date || null,
+      status: member.pt_status || 'ACTIVE',
+      isPtPlan: true,
+    };
+
+    const exists = memberships.some(
+      (p) => String(p.id) === String(ptPlan.id) || (String(p.planName || '').toLowerCase() === String(ptPlan.planName || '').toLowerCase())
+    );
+    return exists ? memberships : [ptPlan, ...memberships];
+  };
 
   /* ================= FETCH DATA ================= */
 
@@ -30,7 +54,7 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     if (!user?.id) return;
 
     if (shouldUsePreFetchedPlans) {
-      setPlans(preFetchedPlans);
+      setPlans(mergePtPlan(preFetchedPlans, memberData));
       setLoading(false);
       return;
     }
@@ -38,7 +62,9 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     const fetchMemberships = async () => {
       try {
         const res = await api.get(`/memberships/user/${user.id}`);
-        setPlans(Array.isArray(res.data) ? res.data : []);
+        let memberships = Array.isArray(res.data) ? res.data : [];
+        memberships = mergePtPlan(memberships, memberData);
+        setPlans(memberships);
       } catch (err) {
         console.error("Failed to fetch memberships", err);
         setPlans([]);
@@ -48,7 +74,14 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
     };
 
     fetchMemberships();
-  }, [user, preFetchedPlans]);
+  }, [user, preFetchedPlans, memberData]);
+
+  const formatPlanDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
+  };
 
   const handleDelete = async (plan) => {
     const confirmDelete = window.confirm("Delete this plan?");
@@ -103,10 +136,11 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
         ) : (
           <div className="grid md:grid-cols-2 gap-8 px-4">
             {plans.map((plan) => {
-              const price = Number(plan.price || plan.pricePaid || 0);
-              const start = new Date(plan.startDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
-              const end = new Date(plan.endDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
-              const isExpired = new Date(plan.endDate) < new Date();
+              const price = Number(plan.price || plan.pricePaid || plan.pt_price || plan.pt_pricePaid || 0);
+              const start = formatPlanDate(plan.startDate);
+              const end = formatPlanDate(plan.endDate);
+              const endDate = plan.endDate ? new Date(plan.endDate) : null;
+              const isExpired = endDate instanceof Date && !Number.isNaN(endDate.getTime()) && endDate < new Date();
 
               return (
                 <div
@@ -134,7 +168,7 @@ const MemberSBuyPlans = ({ preFetchedPlans }) => {
                           : "bg-red-600 text-white animate-pulse"
                         }`}
                     >
-                      {isExpired ? "EXPIRED" : plan.status}
+                      {isExpired ? "EXPIRED" : (plan.status || '').toString().toUpperCase()}
                     </span>
                   </div>
 
