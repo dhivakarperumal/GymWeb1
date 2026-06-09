@@ -3,7 +3,7 @@ import DietChart from "../WorkoutsDiet/DietChart";
 import Workouts from "../WorkoutsDiet/Workouts";
 import UserOrders from "./UserOrders";
 import UserAddresses from "./UserAddresses";
-import UserNotifications from "./UserNotifications"; // Added
+import UserNotifications from "./UserNotifications"; 
 import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
