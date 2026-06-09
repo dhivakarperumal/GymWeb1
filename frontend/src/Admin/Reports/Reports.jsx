@@ -165,15 +165,14 @@ const Reports = () => {
         (normalized.userUuid && a.userUuid && String(normalized.userUuid) === String(a.userUuid)) ||
         (recordEmail && assignmentEmail && recordEmail === assignmentEmail) ||
         (recordMobile && a.userMobile && recordMobile === String(a.userMobile)) ||
-        (recordUsername && assignmentUsername && recordUsername === assignmentUsername) ||
-        ((normalized.planId || normalized.planName) && (a.planId === normalized.planId || String(a.planName || "").toLowerCase() === String(normalized.planName || "").toLowerCase()))
+        (recordUsername && assignmentUsername && recordUsername === assignmentUsername)
       );
     });
   };
 
   const getMembershipTrainerName = (membership) => {
     const assignment = findAssignment(membership);
-    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "Unassigned";
+    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "-";
   };
 
   const getEnquiryTrainerName = (enquiry) => {
@@ -181,7 +180,7 @@ const Reports = () => {
       return enquiry.trainer_name || enquiry.trainerName;
     }
     const assignment = findAssignment(enquiry);
-    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "Unassigned";
+    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "-";
   };
 
   const isPTPlanMembership = (membership) => {

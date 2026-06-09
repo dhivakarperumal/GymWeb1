@@ -215,7 +215,7 @@ const Reports = () => {
 
   const getMembershipTrainerName = (membership) => {
     const assignment = findAssignment(membership);
-    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "Unassigned";
+    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "-";
   };
 
   const getEnquiryTrainerName = (enquiry) => {
@@ -223,7 +223,7 @@ const Reports = () => {
       return enquiry.trainer_name || enquiry.trainerName;
     }
     const assignment = findAssignment(enquiry);
-    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "Unassigned";
+    return assignment?.trainerName || assignment?.trainer_name || assignment?.trainer || "-";
   };
 
   const isPTPlanMembership = (membership) => {
