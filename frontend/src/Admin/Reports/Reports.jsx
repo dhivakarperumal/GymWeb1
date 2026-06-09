@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   Users, ShoppingCart, CreditCard, MessageSquare,
-  Download, Eye, X, TrendingUp, FileText, Clock
+  Download, Eye, X, TrendingUp, FileText, Clock,
+  ChevronDown, User
 } from "lucide-react";
 import api from "../../api";
 import dayjs from "dayjs";
@@ -74,6 +75,9 @@ const Reports = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [preview, setPreview] = useState(null);
+  const [trainers, setTrainers] = useState([]);
+  const [trainerFilter, setTrainerFilter] = useState('all');
+  const [isTrainerFilterOpen, setIsTrainerFilterOpen] = useState(false);
 
   /* ========================
      FETCH DATA
@@ -81,18 +85,20 @@ const Reports = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [mRes, oRes, pRes, fRes, aRes] = await Promise.allSettled([
+        const [mRes, oRes, pRes, fRes, aRes, sRes] = await Promise.allSettled([
           api.get("/members"),
           api.get("/orders"),
           api.get("/memberships"),
           api.get("/followups"),
           api.get("/assignments"),
+          api.get("/staff"),
         ]);
         if (mRes.status === "fulfilled") setMembers(Array.isArray(mRes.value.data) ? mRes.value.data : []);
         if (oRes.status === "fulfilled") setOrders(Array.isArray(oRes.value.data) ? oRes.value.data : []);
         if (pRes.status === "fulfilled") setMemberships(Array.isArray(pRes.value.data) ? pRes.value.data : []);
         if (fRes.status === "fulfilled") setEnquiries(Array.isArray(fRes.value.data) ? fRes.value.data : []);
         if (aRes.status === "fulfilled") setAssignments(Array.isArray(aRes.value.data) ? aRes.value.data : []);
+        if (sRes.status === "fulfilled") setTrainers(Array.isArray(sRes.value.data) ? sRes.value.data : []);
       } catch (err) {
         console.error("Reports fetch error:", err);
       } finally {
@@ -414,19 +420,56 @@ const Reports = () => {
     return "text-white/80";
   };
 
+  // Find the "Assigned Trainer" column index for the active tab
+  const trainerColIndex = useMemo(() => {
+    if (!currentTab) return -1;
+    return currentTab.headers.indexOf("Assigned Trainer");
+  }, [currentTab]);
+
   const filteredTabRows = useMemo(() => {
+    let rows = currentTabRows;
+
+    // Apply trainer filter
+    if (trainerFilter !== 'all' && trainerColIndex >= 0) {
+      rows = rows.filter((row) => {
+        const cellValue = String(row[trainerColIndex] || "").toLowerCase();
+        return cellValue === trainerFilter.toLowerCase();
+      });
+    }
+
+    // Apply search filter
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return currentTabRows;
-    return currentTabRows.filter((row) =>
-      row.some((cell) => String(cell).toLowerCase().includes(term))
-    );
-  }, [currentTabRows, searchTerm]);
+    if (term) {
+      rows = rows.filter((row) =>
+        row.some((cell) => String(cell).toLowerCase().includes(term))
+      );
+    }
+    return rows;
+  }, [currentTabRows, searchTerm, trainerFilter, trainerColIndex]);
   const totalPages = Math.max(1, Math.ceil(filteredTabRows.length / rowsPerPage));
   const paginatedRows = filteredTabRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
+  // Build unique trainer names from all assignments + enquiry trainer_name fields
+  const uniqueTrainerNames = useMemo(() => {
+    const names = new Set();
+    assignments.forEach(a => {
+      const name = a.trainerName || a.trainer_name || a.trainer;
+      if (name) names.add(name);
+    });
+    enquiries.forEach(e => {
+      const name = e.trainer_name || e.trainerName;
+      if (name) names.add(name);
+    });
+    trainers.forEach(t => {
+      const name = t.name || t.username;
+      if (name) names.add(name);
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [assignments, enquiries, trainers]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, dateRange, searchTerm]);
+  }, [activeTab, dateRange, searchTerm, trainerFilter]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -450,7 +493,7 @@ const Reports = () => {
             <p className="text-white/50 text-sm">Download and view gym data reports</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
             <div className="hidden md:flex items-center gap-3">
             <input
               type="text"
@@ -461,6 +504,58 @@ const Reports = () => {
             />
           </div>
           <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+
+          {/* Trainer Filter Dropdown */}
+          <div className="relative inline-block text-left">
+            <button
+              onClick={() => setIsTrainerFilterOpen(!isTrainerFilterOpen)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition whitespace-nowrap ${
+                trainerFilter !== 'all'
+                  ? 'bg-orange-500/20 border-orange-500/40 text-orange-400'
+                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+              }`}
+            >
+              <Users size={15} />
+              <span className="truncate max-w-[120px]">
+                {trainerFilter === 'all' ? 'All Trainers' : trainerFilter}
+              </span>
+              <ChevronDown className={`w-3 h-3 transition-transform ${isTrainerFilterOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isTrainerFilterOpen && (
+              <>
+                <div className="fixed inset-0 z-[90]" onClick={() => setIsTrainerFilterOpen(false)} />
+                <div className="absolute right-0 mt-2 w-56 max-h-72 overflow-y-auto rounded-2xl bg-[#0f172a] border border-white/10 shadow-2xl z-[100] p-2 custom-scrollbar">
+                  <button
+                    onClick={() => { setTrainerFilter('all'); setCurrentPage(1); setIsTrainerFilterOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                      trainerFilter === 'all'
+                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <Users size={14} />
+                    All Trainers
+                  </button>
+                  {uniqueTrainerNames.map((name) => (
+                    <button
+                      key={name}
+                      onClick={() => { setTrainerFilter(name); setCurrentPage(1); setIsTrainerFilterOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        trainerFilter === name
+                          ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                          : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <User size={14} />
+                      <span className="truncate">{name}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <button
             onClick={() => downloadPDF(currentTab.label, currentTab.headers, filteredTabRows)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition whitespace-nowrap"
