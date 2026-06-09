@@ -12,28 +12,72 @@ const MemberSBuyPlans = ({ preFetchedPlans, memberData }) => {
   const [loading, setLoading] = useState(!preFetchedPlans);
   const [featuredProducts, setFeaturedProducts] = useState([]);
 
-  const mergePtPlan = (memberships, member) => {
-    if (!member || !member.pt_status) return memberships;
-    const ptActive = String(member.pt_status).toLowerCase() === 'active';
-    const hasPlanName = Boolean(member.pt_plan);
-    const hasValidDates = Boolean(member.pt_join_date && member.pt_expiry_date);
-    if (!ptActive || !hasPlanName || !hasValidDates) return memberships;
+  // Split membership rows that contain both a normal plan and a PT plan into separate cards.
+  // Also merge standalone PT plans from memberData if not already present.
+  const expandAndMergePlans = (memberships, member) => {
+    const expanded = [];
 
-    const ptPlan = {
-      id: `pt-${member.member_id}`,
-      planName: member.pt_plan,
-      price: Number(member.pt_price ?? member.pt_pricePaid ?? member.pt_price_paid ?? 0),
-      duration: member.pt_duration || null,
-      startDate: member.pt_join_date || null,
-      endDate: member.pt_expiry_date || null,
-      status: member.pt_status || 'ACTIVE',
-      isPtPlan: true,
-    };
+    memberships.forEach((m) => {
+      // Check if this membership row has a PT plan embedded
+      const hasPt = m.has_pt_plan || m.pt_planId || m.pt_planName;
+      const hasNormal = m.planId || m.planName;
 
-    const exists = memberships.some(
-      (p) => String(p.id) === String(ptPlan.id) || (String(p.planName || '').toLowerCase() === String(ptPlan.planName || '').toLowerCase())
-    );
-    return exists ? memberships : [ptPlan, ...memberships];
+      if (hasNormal) {
+        expanded.push(m); // normal plan card as-is
+      }
+
+      if (hasPt && m.pt_planName) {
+        // Create a separate card for the PT plan using pt_ fields
+        expanded.push({
+          id: `pt-ms-${m.id}`,
+          planName: m.pt_planName,
+          price: Number(m.pt_price ?? 0),
+          pricePaid: Number(m.pt_pricePaid ?? 0),
+          duration: m.pt_duration || null,
+          startDate: m.pt_startDate || null,
+          endDate: m.pt_endDate || null,
+          status: m.pt_status || 'active',
+          paymentMode: m.pt_paymentMode || null,
+          paymentStatus: m.pt_paymentStatus || null,
+          trainerId: m.pt_trainerId || null,
+          trainerName: m.pt_trainerName || null,
+          isPtPlan: true,
+        });
+      }
+
+      // If the row has neither normal nor PT plan name, still show it
+      if (!hasNormal && !hasPt) {
+        expanded.push(m);
+      }
+    });
+
+    // Also merge a PT plan from gym_members if it exists and isn't already covered
+    if (member && member.pt_status) {
+      const ptActive = String(member.pt_status).toLowerCase() === 'active';
+      const hasPlanName = Boolean(member.pt_plan);
+      const hasValidDates = Boolean(member.pt_join_date && member.pt_expiry_date);
+      if (ptActive && hasPlanName && hasValidDates) {
+        const exists = expanded.some(
+          (p) => p.isPtPlan && (
+            String(p.planName || '').toLowerCase() === String(member.pt_plan || '').toLowerCase()
+          )
+        );
+        if (!exists) {
+          expanded.push({
+            id: `pt-${member.member_id}`,
+            planName: member.pt_plan,
+            price: Number(member.pt_price ?? member.pt_pricePaid ?? 0),
+            duration: member.pt_duration || null,
+            startDate: member.pt_join_date || null,
+            endDate: member.pt_expiry_date || null,
+            status: member.pt_status || 'ACTIVE',
+            isPtPlan: true,
+          });
+        }
+      }
+    }
+
+    return expanded;
   };
 
   /* ================= FETCH DATA ================= */
@@ -54,7 +98,7 @@ const MemberSBuyPlans = ({ preFetchedPlans, memberData }) => {
     if (!user?.id) return;
 
     if (shouldUsePreFetchedPlans) {
-      setPlans(mergePtPlan(preFetchedPlans, memberData));
+      setPlans(expandAndMergePlans(preFetchedPlans, memberData));
       setLoading(false);
       return;
     }
@@ -63,7 +107,7 @@ const MemberSBuyPlans = ({ preFetchedPlans, memberData }) => {
       try {
         const res = await api.get(`/memberships/user/${user.id}`);
         let memberships = Array.isArray(res.data) ? res.data : [];
-        memberships = mergePtPlan(memberships, memberData);
+        memberships = expandAndMergePlans(memberships, memberData);
         setPlans(memberships);
       } catch (err) {
         console.error("Failed to fetch memberships", err);
