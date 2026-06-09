@@ -517,11 +517,14 @@ const FollowupEnquiry = () => {
     const matchesStatus = statusFilter === 'all' || ((enquiry.status || "").toString().toLowerCase() === statusFilter.toString().toLowerCase());
     const isAdmin = role && role.toLowerCase().includes('admin');
 
-    // Trainers see leads they updated OR leads assigned to them (by ID or Name)
-    const matchesAccess = isAdmin ||
-      (enquiry.updated_by === user?.username) ||
+    // Trainers see leads assigned to them (by ID or Name).
+    // If no trainer is explicitly assigned, fall back to showing leads they last updated.
+    const hasAssignedTrainer = !!(enquiry.trainer_id || enquiry.trainer_name);
+    const isAssignedToMe =
       (enquiry.trainer_name && (enquiry.trainer_name === user?.name || enquiry.trainer_name === user?.username)) ||
       (enquiry.trainer_id && currentStaff && Number(enquiry.trainer_id) === Number(currentStaff.id));
+    const matchesAccess = isAdmin ||
+      (hasAssignedTrainer ? isAssignedToMe : (enquiry.updated_by === user?.username));
 
     let matchesStaff = true;
     if (isAdmin && staffFilter !== 'all') {
