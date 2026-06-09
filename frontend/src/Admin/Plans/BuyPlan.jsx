@@ -410,7 +410,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         // Filter trainer-role staff client-side to avoid query param dependency
         const normalized = Array.isArray(data)
           ? data
-              .filter((t) => !t.role || t.role.toLowerCase() === "trainer")
+              .filter((t) => (!t.role || t.role.toLowerCase() === "trainer") && String(t.status).toLowerCase() === "active")
               .map((t) => ({ id: t.id, name: t.name || t.username || "Trainer" }))
           : [];
         setTrainers(normalized);

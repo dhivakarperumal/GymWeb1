@@ -98,7 +98,10 @@ const Reports = () => {
         if (pRes.status === "fulfilled") setMemberships(Array.isArray(pRes.value.data) ? pRes.value.data : []);
         if (fRes.status === "fulfilled") setEnquiries(Array.isArray(fRes.value.data) ? fRes.value.data : []);
         if (aRes.status === "fulfilled") setAssignments(Array.isArray(aRes.value.data) ? aRes.value.data : []);
-        if (sRes.status === "fulfilled") setTrainers(Array.isArray(sRes.value.data) ? sRes.value.data : []);
+        if (sRes.status === "fulfilled") {
+          const staffData = Array.isArray(sRes.value.data) ? sRes.value.data : [];
+          setTrainers(staffData.filter(s => String(s.role).toLowerCase() === "trainer" && String(s.status).toLowerCase() === "active"));
+        }
       } catch (err) {
         console.error("Reports fetch error:", err);
       } finally {
@@ -195,10 +198,31 @@ const Reports = () => {
     return hasPT || planName.includes("pt") || planName.includes("personal training");
   };
 
-  const filteredEMIs = useMemo(() =>
-    filterByDateRange(memberships.filter(isEMIMembership), 'startDate', dateRange.type, dateRange.range),
-    [memberships, dateRange]
-  );
+  const filteredEMIs = useMemo(() => {
+    const emiMemberships = memberships.filter(isEMIMembership);
+    if (dateRange.type === 'All Time') return emiMemberships;
+
+    const { start, end } = getDateRangeBounds(dateRange.type, dateRange.range);
+    if (!start || !end) return emiMemberships;
+
+    return emiMemberships.filter((membership) => {
+      // Calculate remaining to know if it's already paid
+      const totalAmount = membership.price != null ? parseFloat(membership.price) : null;
+      const paidAmount = membership.pricePaid != null ? parseFloat(membership.pricePaid) + (membership.secondPaymentPaid ? parseFloat(membership.secondPaymentPaid) : 0) : null;
+      const remaining = totalAmount != null && paidAmount != null ? Math.max(0, totalAmount - paidAmount) : null;
+
+      // If fully paid, it shouldn't show up in a specific date filter for "Next EMI Date"
+      // or maybe it should? The user wants "Next EMI Date based filter add give proeprly"
+      // Let's filter by the Next EMI Date. If there's no Next EMI Date (because it's paid), skip.
+      if (typeof remaining === "number" && remaining <= 0) {
+         return false; // Paid, no next EMI date
+      }
+
+      const nextDate = calculateNextPaymentDate(membership);
+      const date = dayjs(nextDate);
+      return date.isValid() && !date.isBefore(start, 'day') && !date.isAfter(end, 'day');
+    });
+  }, [memberships, dateRange]);
 
   const filteredPTPlans = useMemo(() => {
     const ptPlans = memberships.filter(isPTPlanMembership);
@@ -449,23 +473,15 @@ const Reports = () => {
   const totalPages = Math.max(1, Math.ceil(filteredTabRows.length / rowsPerPage));
   const paginatedRows = filteredTabRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-  // Build unique trainer names from all assignments + enquiry trainer_name fields
+  // Build unique trainer names from trainers list only
   const uniqueTrainerNames = useMemo(() => {
     const names = new Set();
-    assignments.forEach(a => {
-      const name = a.trainerName || a.trainer_name || a.trainer;
-      if (name) names.add(name);
-    });
-    enquiries.forEach(e => {
-      const name = e.trainer_name || e.trainerName;
-      if (name) names.add(name);
-    });
     trainers.forEach(t => {
       const name = t.name || t.username;
       if (name) names.add(name);
     });
     return Array.from(names).sort((a, b) => a.localeCompare(b));
-  }, [assignments, enquiries, trainers]);
+  }, [trainers]);
 
   useEffect(() => {
     setCurrentPage(1);

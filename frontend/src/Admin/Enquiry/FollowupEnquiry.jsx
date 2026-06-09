@@ -135,7 +135,7 @@ const FollowupEnquiry = () => {
     try {
       const res = await api.get("/staff");
       // filter only those who might handle enquiries, or show all staff who have logged something
-      setTrainers(Array.isArray(res.data) ? res.data : []);
+      setTrainers(Array.isArray(res.data) ? res.data.filter(s => String(s.role).toLowerCase() === "trainer" && String(s.status).toLowerCase() === "active") : []);
     } catch (err) {
       console.error("Error fetching staff", err);
     }

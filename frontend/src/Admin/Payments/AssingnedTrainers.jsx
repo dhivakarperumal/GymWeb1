@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../api"; // backend HTTP client
 import cache from "../../cache";
 import { X, Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
@@ -90,7 +90,7 @@ const AssingnedTrainers = () => {
       }
       try {
         const res = await api.get("/staff", { params: { role: "trainer" } });
-        const trainers = Array.isArray(res.data) ? res.data : [];
+        const trainers = Array.isArray(res.data) ? res.data.filter(t => String(t.status).toLowerCase() === "active") : [];
         const normalized = trainers.map((t) => ({
           id: t.id.toString(),
           name: t.name || t.username || "Trainer",

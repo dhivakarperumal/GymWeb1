@@ -83,7 +83,7 @@ const Enquiry = () => {
   const fetchTrainers = async () => {
     try {
       const res = await api.get("/staff");
-      setTrainers(Array.isArray(res.data) ? res.data : []);
+      setTrainers(Array.isArray(res.data) ? res.data.filter(s => String(s.role).toLowerCase() === "trainer" && String(s.status).toLowerCase() === "active") : []);
     } catch (err) {
       console.error("Error fetching trainers:", err);
     }

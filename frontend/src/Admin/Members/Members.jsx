@@ -154,7 +154,7 @@ const Members = () => {
     try {
       const res = await api.get("/users");
       const trainers = Array.isArray(res.data)
-        ? res.data.filter((u) => String(u.role).toLowerCase() === "trainer")
+        ? res.data.filter((u) => String(u.role).toLowerCase() === "trainer" && String(u.status).toLowerCase() === "active")
         : [];
       setTrainerOptions(trainers);
     } catch (err) {
