@@ -284,6 +284,7 @@ const PTFormUser = () => {
           isLastStep={true}
           readOnly={false}
           userMode={true}
+          hideFooter
           onSaved={(updated) => setFormData(updated)}
         />
       )}

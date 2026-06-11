@@ -16,6 +16,7 @@ const SessionTracker = ({
   standalone = false,
   disabled = false,
   buttonLabel = null,
+  hideFooter = false,
 }) => {
   const { user, profileName } = useAuth();
   const currentLoginName = profileName || "";
@@ -240,23 +241,25 @@ const SessionTracker = ({
             <p className="text-center text-white/20 text-[10px] uppercase tracking-[0.3em] font-bold mb-6">
               DAP Fitness Studio - Official Session Records
             </p>
-            <div className="flex gap-4">
-              {!userMode && (
+            {!hideFooter && (
+              <div className="flex gap-4">
+                {!userMode && (
+                  <button
+                    type="button"
+                    onClick={onPrevious}
+                    className="flex-1 px-6 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs"
+                  >
+                    Previous
+                  </button>
+                )}
                 <button
-                  type="button"
-                  onClick={onPrevious}
-                  className="flex-1 px-6 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold transition-all uppercase tracking-widest text-xs"
+                  type="submit"
+                  className="flex-1 px-6 py-4 rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs bg-orange-600 hover:bg-orange-700 text-white"
                 >
-                  Previous
+                  {isLastStep ? "Complete Registration" : "Next Step"}
                 </button>
-              )}
-              <button
-                type="submit"
-                className="flex-1 px-6 py-4 rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs bg-orange-600 hover:bg-orange-700 text-white"
-              >
-                {isLastStep ? "Complete Registration" : "Next Step"}
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         </form>
       </div >
