@@ -209,6 +209,16 @@ const PTFormUser = () => {
     await savePtForm(updatedData);
   };
 
+  const handleFitnessSubmit = async (data) => {
+    const updatedData = { ...formData, ...data };
+    await savePtForm(updatedData);
+  };
+
+  const handleFlexibilitySubmit = async (data) => {
+    const updatedData = { ...formData, ...data };
+    await savePtForm(updatedData);
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading PT form data...</div>;
   }
@@ -249,7 +259,7 @@ const PTFormUser = () => {
         <EnquiryFormPage
           data={formData}
           onSubmit={handleEnquirySubmit}
-          readOnly={hasEnquiry}
+          readOnly={false}
         />
       )}
 
@@ -264,14 +274,18 @@ const PTFormUser = () => {
       {activeTab === 'fitness' && (
         <FitnessScreening
           formData={formData}
-          readOnly
+          readOnly={false}
+          onNext={handleFitnessSubmit}
+          saveOnly={true}
         />
       )}
 
       {activeTab === 'flexibility' && (
         <FlexibilityAndMeasurements
           formData={formData}
-          readOnly
+          readOnly={false}
+          onNext={handleFlexibilitySubmit}
+          saveOnly={true}
         />
       )}
 
@@ -284,6 +298,7 @@ const PTFormUser = () => {
           isLastStep={true}
           readOnly={false}
           userMode={true}
+          hideFooter
           onSaved={(updated) => setFormData(updated)}
         />
       )}

@@ -7,6 +7,7 @@ const FitnessScreening = ({
   isFirstStep,
   isLastStep,
   readOnly = false,
+  saveOnly = false,
 }) => {
   const [localFormData, setLocalFormData] = useState({
     fs_height: initialFormData?.fs_height || "",
@@ -282,26 +283,28 @@ const FitnessScreening = ({
             </div>
           </div>
 
-          {/* Navigation Buttons */}
+          {/* Navigation / Save Button */}
           {!readOnly && (
             <div className="flex gap-3 pt-6">
-              <button
-                type="button"
-                onClick={onPrevious}
-                disabled={isFirstStep}
-                className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${isFirstStep
-                  ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-700 hover:bg-gray-600 text-white"
-                  }`}
-              >
-                Previous
-              </button>
+              {!saveOnly && (
+                <button
+                  type="button"
+                  onClick={onPrevious}
+                  disabled={isFirstStep}
+                  className={`flex-1 px-4 py-3 rounded-lg font-bold transition-all ${isFirstStep
+                    ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-700 hover:bg-gray-600 text-white"
+                    }`}
+                >
+                  Previous
+                </button>
+              )}
 
               <button
                 type="submit"
                 className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
               >
-                {isLastStep ? "Complete Registration" : "Next Step"}
+                {saveOnly ? "Save Fitness Screening" : (isLastStep ? "Complete Registration" : "Next Step")}
               </button>
             </div>
           )}

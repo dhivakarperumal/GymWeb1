@@ -1259,6 +1259,7 @@ const Account = () => {
                 formData={ptFormData || { member_id: memberData.id, u_id: userId, trainer_name_assigned: memberFormData.trainer_name_assigned || "" }}
                 standalone
                 userMode={true}
+                hideFooter
                 onSaved={saveSessionTracker}
               />
             )}
