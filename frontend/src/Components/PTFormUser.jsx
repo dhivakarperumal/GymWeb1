@@ -276,6 +276,7 @@ const PTFormUser = () => {
           formData={formData}
           readOnly={false}
           onNext={handleFitnessSubmit}
+          saveOnly={true}
         />
       )}
 
@@ -284,6 +285,7 @@ const PTFormUser = () => {
           formData={formData}
           readOnly={false}
           onNext={handleFlexibilitySubmit}
+          saveOnly={true}
         />
       )}
 
