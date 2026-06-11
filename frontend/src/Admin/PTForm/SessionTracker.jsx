@@ -97,25 +97,25 @@ const SessionTracker = ({
       return;
     }
 
-    // if (!userMode) {
-    //   onNext(localFormData);
-    //   return;
-    // }
+    if (!userMode) {
+      onNext(localFormData);
+      return;
+    }
 
-    // try {
-    //   const payload = {
-    //     member_id: initialFormData.member_id,
-    //     user_id: initialFormData.u_id,
-    //     formData: { ...initialFormData, sessions: localFormData.sessions },
-    //     completed: true,
-    //   };
-    //   await api.post(`/pt-forms`, payload);
-    //   toast.success("Sessions approved successfully!");
-    //   onSaved({ ...initialFormData, sessions: localFormData.sessions });
-    // } catch (error) {
-    //   console.error("Error updating sessions:", error);
-    //   toast.error("Failed to approve sessions.");
-    // }
+    try {
+      const payload = {
+        member_id: initialFormData.member_id,
+        user_id: initialFormData.u_id,
+        formData: { ...initialFormData, sessions: localFormData.sessions },
+        completed: true,
+      };
+      await api.post(`/pt-forms`, payload);
+      toast.success("Sessions approved successfully!");
+      onSaved({ ...initialFormData, sessions: localFormData.sessions });
+    } catch (error) {
+      console.error("Error updating sessions:", error);
+      toast.error("Failed to approve sessions.");
+    }
   };
 
   return (
@@ -250,7 +250,12 @@ const SessionTracker = ({
                   Previous
                 </button>
               )}
-              
+              <button
+                type="submit"
+                className="flex-1 px-6 py-4 rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                {isLastStep ? "Complete Registration" : "Next Step"}
+              </button>
             </div>
           </div>
         </form>
