@@ -12,7 +12,7 @@ const SessionTracker = ({
   readOnly = false,
   userMode = false,
   allowStatusEdit = false,
-  onSaved = () => {},
+  onSaved = () => { },
   standalone = false,
   disabled = false,
   buttonLabel = null,
@@ -21,24 +21,24 @@ const SessionTracker = ({
   const currentLoginName = profileName || "";
 
   const [localFormData, setLocalFormData] = useState({
-    sessions: (initialFormData?.sessions && initialFormData.sessions.length > 0) 
-      ? initialFormData.sessions 
+    sessions: (initialFormData?.sessions && initialFormData.sessions.length > 0)
+      ? initialFormData.sessions
       : Array(25).fill(null).map((_, i) => ({
-      session_no: i + 1,
-      date: "",
-      workout: "",
-      status: "Pending",
-      client_sign: "",
-      trainer_sign: initialFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
-    }))
+        session_no: i + 1,
+        date: "",
+        workout: "",
+        status: "Pending",
+        client_sign: "",
+        trainer_sign: initialFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
+      }))
   });
 
   useEffect(() => {
     if (!initialFormData) return;
 
     setLocalFormData(prev => {
-      const currentSessions = (initialFormData.sessions && initialFormData.sessions.length > 0) 
-        ? initialFormData.sessions 
+      const currentSessions = (initialFormData.sessions && initialFormData.sessions.length > 0)
+        ? initialFormData.sessions
         : prev.sessions;
 
       // If we are using sessions (either new ones or existing ones), 
@@ -62,7 +62,7 @@ const SessionTracker = ({
 
     const newSessions = [...localFormData.sessions];
     const updatedSession = { ...newSessions[index], [field]: value };
-    
+
     // Auto-fill Client Sign if status becomes Completed
     if (field === "status") {
       if (value === "Completed") {
@@ -97,25 +97,25 @@ const SessionTracker = ({
       return;
     }
 
-    if (!userMode) {
-      onNext(localFormData);
-      return;
-    }
+    // if (!userMode) {
+    //   onNext(localFormData);
+    //   return;
+    // }
 
-    try {
-      const payload = {
-        member_id: initialFormData.member_id,
-        user_id: initialFormData.u_id,
-        formData: { ...initialFormData, sessions: localFormData.sessions },
-        completed: true,
-      };
-      await api.post(`/pt-forms`, payload);
-      toast.success("Sessions approved successfully!");
-      onSaved({ ...initialFormData, sessions: localFormData.sessions });
-    } catch (error) {
-      console.error("Error updating sessions:", error);
-      toast.error("Failed to approve sessions.");
-    }
+    // try {
+    //   const payload = {
+    //     member_id: initialFormData.member_id,
+    //     user_id: initialFormData.u_id,
+    //     formData: { ...initialFormData, sessions: localFormData.sessions },
+    //     completed: true,
+    //   };
+    //   await api.post(`/pt-forms`, payload);
+    //   toast.success("Sessions approved successfully!");
+    //   onSaved({ ...initialFormData, sessions: localFormData.sessions });
+    // } catch (error) {
+    //   console.error("Error updating sessions:", error);
+    //   toast.error("Failed to approve sessions.");
+    // }
   };
 
   return (
@@ -166,22 +166,50 @@ const SessionTracker = ({
                       />
                     </td>
                     <td className="p-4 border-r border-white/5 text-center">
-                       <button
-                         type="button"
-                         onClick={() => {
-                           if (canApproveSession(session)) {
-                             handleSessionChange(index, "status", "Completed");
-                           }
-                         }}
-                         className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border shadow-sm ${
-                           session.status === "Completed" 
-                           ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white" 
-                           : "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500 hover:text-white"
-                         }`}
-                         disabled={!canApproveSession(session)}
-                       >
-                         {session.status || "Pending"}
-                       </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (canApproveSession(session)) {
+
+                            const updatedSessions = [...localFormData.sessions];
+                            updatedSessions[index] = {
+                              ...updatedSessions[index],
+                              status: "Completed",
+                              client_sign:
+                                user?.username || user?.name || "",
+                            };
+
+                            setLocalFormData((prev) => ({
+                              ...prev,
+                              sessions: updatedSessions,
+                            }));
+
+                            try {
+                              await api.post(`/pt-forms`, {
+                                member_id: initialFormData.member_id,
+                                user_id: initialFormData.u_id,
+                                formData: {
+                                  ...initialFormData,
+                                  sessions: updatedSessions,
+                                },
+                                completed: true,
+                              });
+
+                              toast.success("Session completed");
+                            } catch (error) {
+                              console.error(error);
+                              toast.error("Failed to save session");
+                            }
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border shadow-sm ${session.status === "Completed"
+                            ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white"
+                            : "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500 hover:text-white"
+                          }`}
+                        disabled={!canApproveSession(session)}
+                      >
+                        {session.status || "Pending"}
+                      </button>
                     </td>
                     <td className="p-0 border-r border-white/5">
                       <input
@@ -222,24 +250,12 @@ const SessionTracker = ({
                   Previous
                 </button>
               )}
-              <button
-                type="submit"
-                disabled={disabled}
-                className={`flex-[2] px-6 py-4 rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs ${disabled ? 'bg-orange-500/50 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700'}`}
-              >
-                {userMode
-                  ? "Approve Sessions"
-                  : standalone
-                  ? buttonLabel || "Save Session Tracker"
-                  : isLastStep
-                  ? "Complete Registration"
-                  : "Next Step"}
-              </button>
+              
             </div>
           </div>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
