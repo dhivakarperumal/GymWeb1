@@ -197,6 +197,13 @@ const SessionTracker = ({
                               });
 
                               toast.success("Session completed");
+                              if (typeof onSaved === 'function') {
+                                try {
+                                  onSaved({ ...initialFormData, sessions: updatedSessions });
+                                } catch (err) {
+                                  console.warn('onSaved callback failed', err);
+                                }
+                              }
                             } catch (error) {
                               console.error(error);
                               toast.error("Failed to save session");
