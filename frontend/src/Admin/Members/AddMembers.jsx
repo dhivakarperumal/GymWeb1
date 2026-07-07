@@ -359,8 +359,8 @@ const AddMember = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70 ml-1">Date of Birth <span className="text-red-500">*</span></label>
-              <input type="date" name="dob" value={form.dob} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" required />
+              <label className="text-sm font-medium text-white/70 ml-1">Date of Birth</label>
+              <input type="date" name="dob" value={form.dob} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
             </div>
 
             <div className="space-y-1">
