@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
-import dayjs from 'dayjs';
+import { normalizeDateForDateInput } from '../../utils/dateUtils';
 import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
 import HealthHistory2 from './HealthHistory2';
@@ -40,7 +40,7 @@ const PTForm = () => {
             height: data.height || "",
             weight: data.weight || "",
             bmi: data.bmi || "",
-            dob: data.dob ? dayjs(data.dob).format('YYYY-MM-DD') : "",
+            dob: normalizeDateForDateInput(data.dob),
             age: data.age || "",
             address: data.address || "",
             employer: data.employer || "",
@@ -79,6 +79,7 @@ const PTForm = () => {
               setFormData(prev => ({
                 ...prev,
                 ...savedData,
+                dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
                 trainer_name_assigned: trainerName || savedData.trainer_name_assigned || (role === 'trainer' ? (profileName || "") : "")
               }));
             } else {
@@ -201,7 +202,7 @@ const PTForm = () => {
         height: data.height || "",
         weight: data.weight || "",
         bmi: data.bmi || "",
-        dob: data.dob ? dayjs(data.dob).format('YYYY-MM-DD') : "",
+        dob: normalizeDateForDateInput(data.dob),
         age: data.age || "",
         address: data.address || "",
         employer: data.employer || "",
@@ -224,7 +225,11 @@ const PTForm = () => {
           const savedData = typeof ptRes.data.form_data === 'string'
             ? JSON.parse(ptRes.data.form_data)
             : ptRes.data.form_data;
-          setFormData(prev => ({ ...prev, ...savedData }));
+          setFormData(prev => ({
+            ...prev,
+            ...savedData,
+            dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
+          }));
         }
       } catch (err) {
         console.log('No saved PT form for selected member');

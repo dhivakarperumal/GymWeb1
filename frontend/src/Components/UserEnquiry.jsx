@@ -278,7 +278,7 @@ const UserEnquiry = () => {
     try {
       const payload = {
         ...formData,
-        dob: formData.dob ? dayjs(formData.dob).format('DD-MM-YYYY') : "",
+        dob: formData.dob ? dayjs(formData.dob).format('YYYY-MM-DD') : "",
         consent_data: {
           participant_name: formData.participant_name,
           agree: formData.consent_agree,
@@ -299,7 +299,7 @@ const UserEnquiry = () => {
           height: formData.height || null,
           weight: formData.weight || null,
           bmi: formData.bmi || null,
-          dob: formData.dob ? dayjs(formData.dob).format('DD-MM-YYYY') : null,
+          dob: formData.dob ? dayjs(formData.dob).format('YYYY-MM-DD') : null,
           age: formData.age || null,
           address: formData.address || null,
           employer: formData.employer || null,

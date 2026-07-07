@@ -3,7 +3,7 @@ import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X } from
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
-import dayjs from "dayjs";
+import { normalizeDateForDateInput } from "../../utils/dateUtils";
 
 const Enquiry = ({ onNext, onPrevious, formData: initialFormData, isFirstStep, isLastStep, isModal = false }) => {
   const [enquiries, setEnquiries] = useState([]);
@@ -97,7 +97,7 @@ const Enquiry = ({ onNext, onPrevious, formData: initialFormData, isFirstStep, i
       height: enquiry.height || "",
       weight: enquiry.weight || "",
       bmi: enquiry.bmi || "",
-      dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : "",
+      dob: enquiry.dob ? normalizeDateForDateInput(enquiry.dob) : "",
       age: enquiry.age || "",
       address: enquiry.address || "",
       employer: enquiry.employer || "",
@@ -145,7 +145,7 @@ const Enquiry = ({ onNext, onPrevious, formData: initialFormData, isFirstStep, i
         height: enquiry.height || null,
         weight: enquiry.weight || null,
         bmi: enquiry.bmi || null,
-        dob: enquiry.dob ? dayjs(enquiry.dob).format('YYYY-MM-DD') : null,
+        dob: enquiry.dob ? normalizeDateForDateInput(enquiry.dob) : null,
         age: enquiry.age || null,
         employer: enquiry.employer || null,
         occupation: enquiry.occupation || null,

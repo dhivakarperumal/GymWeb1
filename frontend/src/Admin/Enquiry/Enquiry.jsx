@@ -123,7 +123,7 @@ const Enquiry = () => {
     try {
       const payload = {
         ...formData,
-        dob: formData.dob ? dayjs(formData.dob).format('DD-MM-YYYY') : ""
+        dob: formData.dob ? dayjs(formData.dob).format('YYYY-MM-DD') : ""
       };
 
       if (selectedEnquiry) {

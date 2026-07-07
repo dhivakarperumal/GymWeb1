@@ -5,6 +5,7 @@ import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
+import { normalizeDateForDateInput } from "../../utils/dateUtils";
 
 const Enquiry = ({
   onNext,
@@ -59,6 +60,7 @@ const Enquiry = ({
       setLocalFormData(prev => ({
         ...prev,
         ...initialFormData,
+        dob: initialFormData.dob ? normalizeDateForDateInput(initialFormData.dob) : prev.dob,
         participant_name: initialFormData.participant_name || consentData.participant_name || prev.participant_name,
         consent_agree: initialFormData.consent_agree || consentData.agree || prev.consent_agree,
       }));
@@ -128,7 +130,7 @@ const Enquiry = ({
       height: member.height || "",
       weight: member.weight || "",
       bmi: member.bmi || "",
-      dob: member.dob ? dayjs(member.dob).format('YYYY-MM-DD') : "",
+      dob: normalizeDateForDateInput(member.dob),
       age: member.age || "",
       address: member.address || "",
       employer: member.employer || "",
