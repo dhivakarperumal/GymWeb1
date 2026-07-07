@@ -100,9 +100,12 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         // only gym members converted from enquiry should appear
         if (m.source === "users") return false;
 
-        // For PT Buy Plan, show all members (allow renewing or buying new PT plan)
+        // For PT Buy Plan, only show active members without PT plan
         if (filterTrainerPlans) {
-          // No restrictions, allow selecting any member to buy/renew PT plan
+          // Only show active members
+          if (m.status !== "active") return false;
+          // Skip if already has PT plan
+          if (m.has_pt_plan === 1 || m.has_pt_plan === true) return false;
         } else {
           // For regular Buy Plan, show active/pending members without existing plans
           const status = (m.status || "").toLowerCase();
