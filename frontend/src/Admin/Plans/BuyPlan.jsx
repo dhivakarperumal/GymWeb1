@@ -8,6 +8,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Search, X, CreditCard, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import dayjs from "dayjs";
 const MEMBERS_API = "/members";
 const PLANS_API = "/plans";
 const MEMBERSHIP_API = "/memberships";
@@ -1536,32 +1537,76 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
               </h2>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {memberHistory.length === 0 ? (
-                  <p className="text-gray-500 text-sm italic p-4 bg-white/5 rounded-xl border border-white/5">No previous plan history found.</p>
+                  <div className="flex flex-col items-center justify-center p-8 bg-white/5 rounded-xl border border-white/5 text-center">
+                    <div className="text-4xl mb-3">📋</div>
+                    <h3 className="text-white font-semibold mb-1">No Membership History Found</h3>
+                    <p className="text-gray-500 text-sm">
+                      This member has not purchased any PT plan yet.
+                    </p>
+                  </div>
                 ) : (
-                  memberHistory.map((h, i) => (
-                    <div key={h.id || i} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="font-bold text-white">{h.planName}</p>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${h.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                          {h.status || 'Past'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-400">
-                        <div>
-                          <p>Original Price: <span className="text-white/60 font-semibold">₹{h.amount || h.price}</span></p>
-                          {h.discount > 0 && (
-                            <p>Discount: <span className="text-red-400 font-semibold">-₹{h.discount}</span></p>
-                          )}
-                          <p>Final Price: <span className="text-emerald-400 font-semibold">₹{h.price}</span></p>
-                          <p>Paid: ₹{h.pricePaid}</p>
+                  memberHistory.map((h, i) => {
+                    const isPT = filterTrainerPlans;
+                    const planName = isPT ? (h.pt_planName || h.planName) : h.planName;
+                    const status = isPT ? (h.pt_status || h.status) : h.status;
+                    const price = isPT ? (h.pt_price || h.price) : h.price;
+                    const pricePaid = isPT ? (h.pt_pricePaid || h.pricePaid) : h.pricePaid;
+                    const amount = isPT ? (h.pt_amount || h.amount || price) : (h.amount || price);
+                    const discount = isPT ? (h.pt_discount || h.discount) : h.discount;
+                    
+                    const startDate = isPT ? (h.pt_startDate || h.startDate) : h.startDate;
+                    const endDate = isPT ? (h.pt_endDate || h.endDate) : h.endDate;
+                    const purchaseDate = isPT ? (h.pt_paymentDate || h.createdAt) : (h.paymentDate || h.createdAt);
+                    const updatedDate = h.updatedAt || h.createdAt;
+
+                    const formatDateTime = (dateString) => {
+                      if (!dateString || dateString === '0' || dateString === 0) return "--";
+                      const dateObj = dayjs(dateString);
+                      if (!dateObj.isValid()) return "--";
+                      if (dateObj.year() === 1970) return "--";
+                      return dateObj.format('DD MMM YYYY, hh:mm A');
+                    };
+
+                    return (
+                      <div key={h.id || i} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <p className="font-bold text-lg text-white mb-1">{planName || 'Unknown Plan'}</p>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                              {status || 'Past'}
+                            </span>
+                          </div>
+                          <div className="text-right text-xs">
+                            <p className="text-gray-400">Original Price: <span className="text-white/60 font-semibold line-through">₹{amount}</span></p>
+                            {discount > 0 && (
+                              <p className="text-gray-400">Discount: <span className="text-red-400 font-semibold">-₹{discount}</span></p>
+                            )}
+                            <p className="text-gray-400">Final Price: <span className="text-emerald-400 font-semibold">₹{price}</span></p>
+                            <p className="text-gray-400">Paid: <span className="text-white font-semibold">₹{pricePaid}</span></p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p>{new Date(h.startDate).toLocaleDateString()} -</p>
-                          <p>{new Date(h.endDate).toLocaleDateString()}</p>
+                        
+                        <div className="bg-black/20 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs">
+                          <div className="flex justify-between border-b border-white/5 pb-1">
+                            <span className="text-gray-500">Purchase Date</span>
+                            <span className="text-gray-300 font-medium">{formatDateTime(purchaseDate)}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-white/5 pb-1">
+                            <span className="text-gray-500">Last Updated</span>
+                            <span className="text-gray-300 font-medium">{formatDateTime(updatedDate)}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-white/5 pb-1 sm:border-0 sm:pb-0">
+                            <span className="text-gray-500">Start Date</span>
+                            <span className="text-gray-300 font-medium">{formatDateTime(startDate)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Expiry Date</span>
+                            <span className="text-gray-300 font-medium">{formatDateTime(endDate)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
