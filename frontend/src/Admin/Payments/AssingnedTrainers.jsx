@@ -462,6 +462,11 @@ const AssingnedTrainers = () => {
                             <p className="text-xs text-gray-400">
                               {assign.planName} • {assign.planDuration}
                             </p>
+                            { (assign.createdAt || assign.updatedAt) && (
+                              <p className="text-[11px] text-gray-300 mt-1">
+                                Assigned: {new Date(assign.createdAt || assign.updatedAt).toLocaleString()} {assign.assignedBy ? `by ${assign.assignedBy}` : ''}
+                              </p>
+                            ) }
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-bold text-cyan-300">₹ {assign.planPrice}</p>
@@ -532,6 +537,9 @@ const AssingnedTrainers = () => {
                                 title="Click to Reassign"
                               >
                                 <Dumbbell size={12} /> {a.trainerName}
+                                { (a.createdAt || a.updatedAt) && (
+                                  <span className="text-[11px] text-gray-400 ml-2">• {new Date(a.createdAt || a.updatedAt).toLocaleDateString()}</span>
+                                ) }
                               </div>
                             ))
                         ) : (

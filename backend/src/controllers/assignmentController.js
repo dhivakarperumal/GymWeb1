@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { getAuditFields } = require('../utils/audit');
 
 function normalizeAssignment(row) {
   return {
@@ -23,6 +24,8 @@ function normalizeAssignment(row) {
     status: row.status,
     ptFormCompleted: row.pt_form_completed || 0,
     updatedAt: row.updated_at,
+    createdAt: row.created_at,
+    assignedBy: row.created_by_name || row.created_by || null,
   };
 }
 
@@ -118,6 +121,8 @@ async function upsertAssignments(req, res) {
         const finalUuid = a.userUuid || (userUuidResult[0] ? userUuidResult[0].user_id : null);
 
         // simple upsert using unique(user_id, plan_id)
+        const audit = getAuditFields({ forCreate: true }) || {};
+
         const params = [
           a.userId,
           finalUuid,
@@ -134,12 +139,16 @@ async function upsertAssignments(req, res) {
           a.trainerSource || 'unknown',
           a.sessionTime || null,
           a.status || 'active',
+          audit.created_by || null,
+          audit.created_by_name || null,
+          audit.updated_by || null,
+          audit.updated_by_name || null,
         ];
 
         const sql = `
           INSERT INTO trainer_assignments
-          (user_id, user_id_uuid, username, user_email, plan_id, plan_name, plan_duration, plan_start_date, plan_end_date, plan_price, trainer_id, trainer_name, trainer_source, session_time, status)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+          (user_id, user_id_uuid, username, user_email, plan_id, plan_name, plan_duration, plan_start_date, plan_end_date, plan_price, trainer_id, trainer_name, trainer_source, session_time, status, created_by, created_by_name, updated_by, updated_by_name)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
           ON DUPLICATE KEY UPDATE
             user_id_uuid=VALUES(user_id_uuid),
             username=VALUES(username),
@@ -154,6 +163,8 @@ async function upsertAssignments(req, res) {
             trainer_source=VALUES(trainer_source),
             session_time=VALUES(session_time),
             status=VALUES(status),
+            updated_by=VALUES(updated_by),
+            updated_by_name=VALUES(updated_by_name),
             updated_at=CURRENT_TIMESTAMP
         `;
 
