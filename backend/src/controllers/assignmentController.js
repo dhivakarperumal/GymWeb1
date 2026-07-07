@@ -163,6 +163,9 @@ async function upsertAssignments(req, res) {
             trainer_source=VALUES(trainer_source),
             session_time=VALUES(session_time),
             status=VALUES(status),
+            -- preserve original creator if present, otherwise set from incoming values
+            created_by=COALESCE(created_by, VALUES(created_by)),
+            created_by_name=COALESCE(created_by_name, VALUES(created_by_name)),
             updated_by=VALUES(updated_by),
             updated_by_name=VALUES(updated_by_name),
             updated_at=CURRENT_TIMESTAMP
