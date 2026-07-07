@@ -1587,14 +1587,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                         </div>
                         
                         <div className="bg-black/20 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs">
-                          <div className="flex justify-between border-b border-white/5 pb-1">
-                            <span className="text-gray-500">Purchase Date</span>
-                            <span className="text-gray-300 font-medium">{formatDateTime(purchaseDate)}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-white/5 pb-1">
-                            <span className="text-gray-500">Last Updated</span>
-                            <span className="text-gray-300 font-medium">{formatDateTime(updatedDate)}</span>
-                          </div>
+
                           <div className="flex justify-between border-b border-white/5 pb-1 sm:border-0 sm:pb-0">
                             <span className="text-gray-500">Start Date</span>
                             <span className="text-gray-300 font-medium">{formatDateTime(startDate)}</span>
