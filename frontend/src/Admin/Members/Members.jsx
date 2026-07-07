@@ -785,17 +785,20 @@ const Members = () => {
                       </span>
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
-                      {m.pt_plan ? (
-                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
-                          ✓ {m.pt_plan}
-                        </span>
-                      ) : m.has_pt_plan ? (
-                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
-                          ✓ PT Plan
-                        </span>
-                      ) : (
-                        <span className="text-white/30 text-xs">-</span>
-                      )}
+                      {(() => {
+                        const ptPlan = m.pt_plan && m.pt_plan !== "null" && m.pt_plan.trim() !== "" ? m.pt_plan : null;
+                        if (ptPlan) return (
+                          <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
+                            ✓ {ptPlan}
+                          </span>
+                        );
+                        if (m.has_pt_plan) return (
+                          <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
+                            ✓ PT Plan
+                          </span>
+                        );
+                        return <span className="text-white/30 text-xs">-</span>;
+                      })()}
                     </td>
                     <td className="px-4 py-5 text-white/70 text-xs font-medium whitespace-nowrap">
                       <div className="flex flex-col gap-2">
@@ -1115,15 +1118,20 @@ const Members = () => {
                       <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
                         {m.plan || m.role || "Member"}
                       </span>
-                      {m.pt_plan ? (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
-                          ✓ {m.pt_plan}
-                        </span>
-                      ) : m.has_pt_plan ? (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
-                          ✓ PT Plan
-                        </span>
-                      ) : null}
+                      {(() => {
+                        const ptPlan = m.pt_plan && m.pt_plan !== "null" && m.pt_plan.trim() !== "" ? m.pt_plan : null;
+                        if (ptPlan) return (
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
+                            ✓ {ptPlan}
+                          </span>
+                        );
+                        if (m.has_pt_plan) return (
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
+                            ✓ PT Plan
+                          </span>
+                        );
+                        return null;
+                      })()}
                       {m.price && (
                         <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
                           ₹{m.price}
