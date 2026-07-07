@@ -1,5 +1,6 @@
 require("dotenv").config();
 const mysql = require("mysql2/promise");
+const { injectAuditIntoSql } = require('../utils/audit');
 
 const config = {
   host: process.env.DB_HOST || '127.0.0.1',
@@ -28,6 +29,62 @@ if (!config.host || !config.user || !config.database) {
 }
 
 const pool = mysql.createPool(config);
+
+async function ensureAuditColumns() {
+  const connection = await pool.getConnection();
+  try {
+    const [tables] = await connection._rawQuery('SHOW TABLES');
+    const tableNames = tables.map((row) => Object.values(row)[0]);
+
+    for (const tableName of tableNames) {
+      const [columns] = await connection._rawQuery(`SHOW COLUMNS FROM \`${tableName}\``);
+      const existingColumns = new Set(columns.map((column) => column.Field));
+
+      const addColumn = async (columnName, definition) => {
+        if (!existingColumns.has(columnName)) {
+          await connection._rawQuery(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${definition}`);
+          existingColumns.add(columnName);
+        }
+      };
+
+      await addColumn('created_by', 'CHAR(36) NULL');
+      await addColumn('created_by_name', 'VARCHAR(255) NULL');
+      await addColumn('updated_by', 'CHAR(36) NULL');
+      await addColumn('updated_by_name', 'VARCHAR(255) NULL');
+      await addColumn('created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await addColumn('updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+    }
+  } finally {
+    connection.release();
+  }
+}
+
+function wrapQuery(queryFn) {
+  return async function wrappedQuery(sql, values) {
+    const { sql: auditedSql, values: auditedValues } = injectAuditIntoSql(sql, values);
+    return queryFn(auditedSql, auditedValues);
+  };
+}
+
+pool.query = wrapQuery(pool.query.bind(pool));
+
+async function patchConnection(connection) {
+  const rawQuery = connection.query.bind(connection);
+  connection._rawQuery = rawQuery;
+  connection.query = wrapQuery(rawQuery);
+  return connection;
+}
+
+const originalGetConnection = pool.getConnection.bind(pool);
+pool.getConnection = async function patchedGetConnection(...args) {
+  const connection = await originalGetConnection(...args);
+  return patchConnection(connection);
+};
+
+auditInitPromise = ensureAuditColumns().catch((err) => {
+  console.warn('⚠️ Could not ensure audit columns:', err.message);
+  return null;
+});
 
 // Proper way to set session variables for every connection in a pool
 pool.on('connection', (connection) => {

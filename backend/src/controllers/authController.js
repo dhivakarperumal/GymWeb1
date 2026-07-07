@@ -97,7 +97,13 @@ async function login(req, res) {
     }
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role, email: user.email },
+      {
+        userId: user.id,
+        user_id: user.user_id,
+        username: user.username,
+        role: user.role,
+        email: user.email,
+      },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '7d' }
     );
@@ -151,7 +157,13 @@ async function googleLogin(req, res) {
     }
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role, email: user.email },
+      {
+        userId: user.id,
+        user_id: user.user_id,
+        username: user.username,
+        role: user.role,
+        email: user.email,
+      },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '7d' }
     );

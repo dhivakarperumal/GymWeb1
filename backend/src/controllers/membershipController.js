@@ -417,6 +417,12 @@ async function updateMembership(req, res) {
     const updates = [];
     const values = [];
 
+    // Verify membership exists first
+    const [existing] = await db.query('SELECT id FROM memberships WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, message: "Membership not found" });
+    }
+
     // If planId is being updated, automatically calculate has_pt_plan
     if (req.body.planId !== undefined) {
       try {
@@ -457,9 +463,7 @@ async function updateMembership(req, res) {
       try {
         const [resUpdate] = await db.query(`UPDATE memberships SET ${updates.join(", ")} WHERE id = ?`, values);
         result = resUpdate;
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ success: false, message: "Membership not found" });
-        }
+        // We already checked if it exists, so if affectedRows is 0 it just means no values changed
       } catch (updateErr) {
         // If the update failed due to missing columns, try to add them then retry.
         if (updateErr && updateErr.code === 'ER_BAD_FIELD_ERROR' && updateErr.sqlMessage && updateErr.sqlMessage.includes('Unknown column')) {

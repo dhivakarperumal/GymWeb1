@@ -1,6 +1,15 @@
 import { Link } from "react-router-dom";
 import { FiArrowRight } from "react-icons/fi";
 
+const FALLBACK_IMAGE = "/images/logo-dark.png";
+
+const resolveImage = (src) => {
+  if (!src) return FALLBACK_IMAGE;
+  if (src.startsWith("http") || src.startsWith("data:")) return src;
+  if (src.startsWith("/")) return src;
+  return `/uploads/${src.replace(/^\/+/, "")}`;
+};
+
 export default function FacilityCard({ item, index = 0 }) {
   return (
     <div
@@ -23,8 +32,11 @@ export default function FacilityCard({ item, index = 0 }) {
       {/* IMAGE */}
       <div className="relative h-56 shrink-0 overflow-hidden">
         <img
-          src={item.heroImage}
+          src={resolveImage(item.heroImage)}
           alt={item.title}
+          onError={(e) => {
+            e.target.src = FALLBACK_IMAGE;
+          }}
           className="
             h-full w-full object-cover
             transition-transform duration-700

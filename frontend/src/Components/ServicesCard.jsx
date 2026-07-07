@@ -1,5 +1,14 @@
 import { useNavigate } from "react-router-dom";
 
+const FALLBACK_IMAGE = "/images/logo-dark.png";
+
+const resolveImage = (src) => {
+  if (!src) return FALLBACK_IMAGE;
+  if (src.startsWith("http") || src.startsWith("data:")) return src;
+  if (src.startsWith("/")) return src;
+  return `/uploads/${src.replace(/^\/+/, "")}`;
+};
+
 export default function ServiceCard({ item, index = 0 }) {
   const navigate = useNavigate();
 
@@ -17,22 +26,10 @@ export default function ServiceCard({ item, index = 0 }) {
       <div className="relative h-[380px] rounded-3xl overflow-hidden bg-[#0b0c10]/90 backdrop-blur-xl">
         {/* Image */}
         <img
-          src={
-            (() => {
-              const img = item.heroImage || "";
-              if (!img) return "";
-              if (img.startsWith("http") || img.startsWith("data:")) return img;
-              const maybeBase64 = /^[A-Za-z0-9+/=]+$/.test(img);
-              if (maybeBase64 && img.length > 50) {
-                return `data:image/webp;base64,${img}`;
-              }
-              const base = import.meta.env.VITE_API_URL || "";
-              return `${base.replace(/\/$/, "")}/${img.replace(/^\/+/, "")}`;
-            })()
-          }
+          src={resolveImage(item.heroImage)}
           alt={item.title}
           onError={(e) => {
-            e.target.src = "https://via.placeholder.com/380x380?text=No+Image";
+            e.target.src = FALLBACK_IMAGE;
           }}
           className="
             absolute inset-0 w-full h-full object-cover

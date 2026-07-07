@@ -848,10 +848,9 @@ async function updateMember(req, res) {
 
     const [result] = await connection.query(updateQuery, updateParams);
 
-    if (result.affectedRows === 0) {
-      await connection.rollback();
-      return res.status(404).json({ error: 'Member not found' });
-    }
+    // We already checked if the member exists at the start of the function.
+    // If affectedRows is 0 here, it just means no values were changed in this UPDATE.
+
 
     // Fetch the updated member to get user ID and sync memberships table
     let sql;

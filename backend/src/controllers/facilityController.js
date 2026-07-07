@@ -55,6 +55,28 @@ async function getFacilityById(req, res) {
   }
 }
 
+const normalizeJsonField = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const normalizeImageValue = (value) => {
+  if (!value || typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.length > 5_000_000 ? null : trimmed;
+};
+
 async function createFacility(req, res) {
   console.log('=== CREATE FACILITY REQUEST ===');
   console.log('Raw body keys:', Object.keys(req.body));
@@ -86,10 +108,17 @@ async function createFacility(req, res) {
     const facilitySlug = slug || title.toLowerCase().replace(/\s+/g, "-");
     console.log('Generated slug:', facilitySlug);
 
-    const equipmentsJson = JSON.stringify(Array.isArray(equipments) ? equipments : []);
-    const workoutsJson = JSON.stringify(Array.isArray(workouts) ? workouts : []);
-    const facilitiesJson = JSON.stringify(Array.isArray(facilities) ? facilities : []);
-    const galleryJson = JSON.stringify(Array.isArray(gallery) ? gallery : []);
+    const normalizedEquipments = normalizeJsonField(equipments);
+    const normalizedWorkouts = normalizeJsonField(workouts);
+    const normalizedFacilities = normalizeJsonField(facilities);
+    const normalizedGallery = normalizeJsonField(gallery);
+
+    const heroImageValue = normalizeImageValue(heroImage);
+    const galleryImages = normalizeJsonField(gallery).filter((item) => typeof item === 'string' && item.trim());
+    const equipmentsJson = JSON.stringify(normalizedEquipments);
+    const workoutsJson = JSON.stringify(normalizedWorkouts);
+    const facilitiesJson = JSON.stringify(normalizedFacilities);
+    const galleryJson = JSON.stringify(galleryImages);
 
     console.log('About to execute INSERT with:', {
       title, facilitySlug, shortDesc, 
@@ -109,7 +138,7 @@ async function createFacility(req, res) {
         facilitySlug, 
         shortDesc, 
         description || null, 
-        heroImage || null,
+        heroImageValue,
         equipmentsJson,
         workoutsJson,
         facilitiesJson,
@@ -128,6 +157,15 @@ async function createFacility(req, res) {
     console.error('Stack:', err.stack);
     console.error('Code:', err.code);
     console.error('Detail:', err.detail);
+
+    if (err.code === 'ECONNRESET' || err.message?.includes('ECONNRESET')) {
+      return res.status(500).json({
+        message: "The request payload was too large or the connection was reset while saving the facility.",
+        error: err.message,
+        code: err.code
+      });
+    }
+
     res.status(500).json({ 
       message: "Server error", 
       error: err.message,
