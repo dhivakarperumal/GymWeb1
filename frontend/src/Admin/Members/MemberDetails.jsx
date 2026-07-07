@@ -24,6 +24,7 @@ const MemberDetails = () => {
   const [dietPlan, setDietPlan] = useState(null);
   const [trainer, setTrainer] = useState(null);
   const [activeDietDay, setActiveDietDay] = useState(null);
+  const [userMemberships, setUserMemberships] = useState([]);
 
   useEffect(() => {
     fetchMemberData();
@@ -47,9 +48,9 @@ const MemberDetails = () => {
           api.get(`/memberships/user/${userId}`).catch(() => ({ data: [] }))
         ]);
 
-        // Get latest membership price if available
-        const userMemberships = Array.isArray(membershipRes.data) ? membershipRes.data : [];
-        const activeMembership = userMemberships.find(m => m.status === 'active') || userMemberships[0];
+        const allMemberships = Array.isArray(membershipRes.data) ? membershipRes.data : [];
+        const activeMembership = allMemberships.find(m => m.status === 'active') || allMemberships[0];
+        setUserMemberships(allMemberships);
 
         const enhancedMember = {
           ...memberData,
@@ -201,14 +202,40 @@ const MemberDetails = () => {
     }
   };
 
+  // A member is considered ACTIVE if:
+  // 1. They have any active membership record (plan or PT plan purchased)
+  // 2. OR their gym_members record has an active plan that hasn't expired
+  const hasActiveMembership = userMemberships.some(m => {
+    if (m.status !== 'active') return false;
+    // Check normal plan expiry
+    const endDate = m.endDate || m.end_date;
+    if (endDate) {
+      const daysLeft = dayjs(endDate).startOf('day').diff(dayjs().startOf('day'), 'day');
+      if (daysLeft < 0) return false;
+    }
+    return true;
+  });
+
+  const hasPTMembership = userMemberships.some(m => {
+    if (!m.pt_planName && !m.pt_planId) return false;
+    const ptStatus = m.pt_status || m.status;
+    if (ptStatus !== 'active') return false;
+    const ptEnd = m.pt_endDate;
+    if (ptEnd) {
+      const daysLeft = dayjs(ptEnd).startOf('day').diff(dayjs().startOf('day'), 'day');
+      if (daysLeft < 0) return false;
+    }
+    return true;
+  });
+
   const isExpired =
     member?.expiry_date &&
-    dayjs(member.expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") <= 0;
+    dayjs(member.expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") < 0;
 
   const displayStatus =
-    !member.plan || member.plan === "user"
-      ? "inactive"
-      : isExpired
+    hasActiveMembership || hasPTMembership
+      ? "active"
+      : (!member.plan || member.plan === "user" || isExpired)
         ? "inactive"
         : member.status;
 
