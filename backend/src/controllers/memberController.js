@@ -699,6 +699,18 @@ async function updateMember(req, res) {
       return res.status(404).json({ error: 'Member not found' });
     }
     const existingMember = existingRows[0];
+
+    // Fetch linked user BEFORE updating gym_members (so old email/phone still matches)
+    let linkedUserId = null;
+    try {
+      const [userLookup] = await connection.query(
+        `SELECT id FROM users WHERE email = ? OR mobile = ? LIMIT 1`,
+        [existingMember.email || '', existingMember.phone || '']
+      );
+      if (userLookup.length > 0) linkedUserId = userLookup[0].id;
+    } catch (e) {
+      console.warn('updateMember: could not pre-fetch linked user', e.message);
+    }
     const rawBody = req.body || {};
     const getField = (camel, snake) => {
       if (Object.prototype.hasOwnProperty.call(rawBody, camel)) return rawBody[camel];
@@ -747,22 +759,32 @@ async function updateMember(req, res) {
     const numBmi = bmi != null && !isNaN(bmi) ? Number(bmi) : null;
     const numDuration = duration != null && !isNaN(duration) ? Number(duration) : null;
 
-    // Check for duplicate phone if phone is being updated
-    if (phone) {
+    // Check for duplicate phone in gym_members AND users
+    if (phone && phone !== existingMember.phone) {
       let dupQuery;
       let dupParams;
       if (isNum) {
-        dupQuery = `SELECT * FROM gym_members WHERE phone = ? AND id != ?`;
+        dupQuery = `SELECT id FROM gym_members WHERE phone = ? AND id != ?`;
         dupParams = [phone, idNum];
       } else {
-        dupQuery = `SELECT * FROM gym_members WHERE phone = ? AND member_id != ?`;
+        dupQuery = `SELECT id FROM gym_members WHERE phone = ? AND member_id != ?`;
         dupParams = [phone, id];
       }
-
       const [existing] = await connection.query(dupQuery, dupParams);
       if (existing.length > 0) {
         await connection.rollback();
-        return res.status(400).json({ message: "Phone already exists" });
+        return res.status(400).json({ message: "Mobile number already in use by another member" });
+      }
+      // Also check in users table (excluding the linked user)
+      if (linkedUserId) {
+        const [existingInUsers] = await connection.query(
+          `SELECT id FROM users WHERE mobile = ? AND id != ?`,
+          [phone, linkedUserId]
+        );
+        if (existingInUsers.length > 0) {
+          await connection.rollback();
+          return res.status(400).json({ message: "Mobile number already registered in user accounts" });
+        }
       }
     }
 
@@ -1027,10 +1049,12 @@ async function updateMember(req, res) {
       }
     }
 
-    // sync user info (email / mobile / username)
+    // sync user info (email / mobile / username / password)
     try {
+      const bcrypt = require('bcryptjs');
       const userFields = [];
       const userParams = [];
+
       if (email !== undefined) {
         userFields.push('email = ?');
         userParams.push(email);
@@ -1043,21 +1067,45 @@ async function updateMember(req, res) {
         userFields.push('username = ?');
         userParams.push(username);
       }
+
+      // Password logic:
+      // Frontend always sends password (mobile number as default, or explicit new password)
+      // Always update password_hash to keep it in sync with the mobile number
+      const newPassword = rawBody.password;
+
+      // Use explicit password if provided; otherwise always use current phone (mobile = default password)
+      const passwordToHash = (newPassword && newPassword.trim()) ? newPassword.trim() : phone;
+
+      if (passwordToHash) {
+        try {
+          const hashed = await bcrypt.hash(passwordToHash, 10);
+          userFields.push('password_hash = ?');
+          userParams.push(hashed);
+        } catch (bcryptErr) {
+          console.warn('updateMember: failed to hash password', bcryptErr.message);
+        }
+      }
+
       if (userFields.length > 0) {
-        const whereClause = [];
-        const whereParams = [];
-        // identify user by old email or mobile
-        if (email) {
-          whereClause.push('email = ?');
-          whereParams.push(email);
-        }
-        if (phone) {
-          whereClause.push('mobile = ?');
-          whereParams.push(phone);
-        }
-        if (whereClause.length) {
-          const updateSql = `UPDATE users SET ${userFields.join(', ')} WHERE ${whereClause.join(' OR ')}`;
-          await connection.query(updateSql, [...userParams, ...whereParams]);
+        // Always update updated_at
+        userFields.push('updated_at = CURRENT_TIMESTAMP');
+
+        if (linkedUserId) {
+          // Use the pre-fetched user ID (guaranteed correct even when phone/email changed)
+          const updateSql = `UPDATE users SET ${userFields.join(', ')} WHERE id = ?`;
+          await connection.query(updateSql, [...userParams, linkedUserId]);
+        } else {
+          // Fallback: try to find user by old email or old mobile
+          const oldEmail = existingMember.email;
+          const oldPhone = existingMember.phone;
+          const whereClause = [];
+          const whereParams = [];
+          if (oldEmail) { whereClause.push('email = ?'); whereParams.push(oldEmail); }
+          if (oldPhone) { whereClause.push('mobile = ?'); whereParams.push(oldPhone); }
+          if (whereClause.length) {
+            const updateSql = `UPDATE users SET ${userFields.join(', ')} WHERE ${whereClause.join(' OR ')}`;
+            await connection.query(updateSql, [...userParams, ...whereParams]);
+          }
         }
       }
     } catch (userErr) {

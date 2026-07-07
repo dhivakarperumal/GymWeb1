@@ -282,8 +282,12 @@ const AddMember = () => {
         bmi: form.bmi ? Number(form.bmi) : null,
         age: form.age ? Number(form.age) : null,
         duration: form.duration ? Number(form.duration) : null,
-        // send password only when creating
-        password: !isEdit ? form.password : undefined,
+        // In edit mode:
+        //   - If admin typed a new password → send it
+        //   - Otherwise → send the current phone so backend keeps password = mobile
+        password: !isEdit
+          ? form.password
+          : (form.password?.trim() ? form.password.trim() : form.phone),
       };
 
       console.log('Submitting payload:', payload);
@@ -364,29 +368,35 @@ const AddMember = () => {
               <input type="number" name="age" value={form.age} onChange={handleChange} placeholder="e.g. 25" className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500" />
             </div>
 
-            {!isEdit && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-white/70 ml-1">Password (Same as Mobile Number)</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={form.password}
-                    readOnly
-                    disabled
-                    placeholder="Password"
-                    className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-white placeholder-gray-500 pr-10" 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </button>
-                </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">
+                {isEdit ? 'Password (Default = Mobile Number)' : 'Password (Same as Mobile Number)'}
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={form.password || (isEdit ? form.phone : '')}
+                  onChange={isEdit ? handleChange : undefined}
+                  readOnly={!isEdit}
+                  disabled={!isEdit}
+                  placeholder={isEdit ? "Leave blank — defaults to mobile number" : "Password"}
+                  className={`w-full rounded-lg border px-4 py-3 text-white placeholder-gray-500 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 ${isEdit ? 'bg-white/5 border-white/10' : 'bg-white/10 border-white/20'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
-            )}
+              {isEdit && (
+                <p className="text-xs text-orange-400/70 ml-1">
+                  🔑 Default password = Mobile Number. Change mobile to auto-update password.
+                </p>
+              )}
+            </div>
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-white/70 ml-1">Gender</label>
