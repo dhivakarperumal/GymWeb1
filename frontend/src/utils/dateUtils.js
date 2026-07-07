@@ -20,11 +20,7 @@ export const normalizeDateForDateInput = (value) => {
     'DD.MM.YYYY',
     'MM-DD-YYYY',
     'MM/DD/YYYY',
-    'MM.DD.YYYY',
-    'YYYY-MM-DDTHH:mm:ss.SSS[Z]',
-    'YYYY-MM-DDTHH:mm:ss',
-    'YYYY-MM-DD HH:mm:ss',
-    'YYYY-MM-DDTHH:mm:ss.SSS'
+    'MM.DD.YYYY'
   ], true);
 
   if (parsed.isValid()) {
