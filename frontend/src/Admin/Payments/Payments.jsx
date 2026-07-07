@@ -147,6 +147,11 @@ const Payments = () => {
             pt_planName: m.pt_planName || "",
             pt_startDate: m.pt_startDate || null,
             pt_endDate: m.pt_endDate || null,
+            pt_price: m.pt_price || 0,
+            pt_pricePaid: m.pt_pricePaid || 0,
+            pt_secondPaymentPaid: m.pt_secondPaymentPaid || 0,
+            pt_amount: m.pt_amount || 0,
+            pt_discount: m.pt_discount || 0,
           });
         });
 
@@ -920,22 +925,22 @@ const Payments = () => {
 
                     <div>
                       <p className="text-gray-400">Original Price</p>
-                      <p>₹ {plan.amount || plan.price || 0}</p>
+                      <p>₹ {(Number(plan.amount) || Number(plan.price) || 0) + (Number(plan.pt_amount) || Number(plan.pt_price) || 0)}</p>
                     </div>
 
                     <div>
                       <p className="text-gray-400">Discount</p>
-                      <p className="text-red-400">₹ {plan.discount || 0}</p>
+                      <p className="text-red-400">₹ {(Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0)}</p>
                     </div>
 
                     <div>
                       <p className="text-gray-400">Final Price</p>
-                      <p>₹ {plan.price || 0}</p>
+                      <p>₹ {(Number(plan.price) || 0) + (Number(plan.pt_price) || 0)}</p>
                     </div>
 
                     <div>
                       <p className="text-gray-400">Amount Paid</p>
-                      <p className="text-green-400 font-semibold">₹ {plan.pricePaid}</p>
+                      <p className="text-green-400 font-semibold">₹ {(Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0)}</p>
                     </div>
 
                     <div>
@@ -1059,7 +1064,8 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Original Price</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan Price</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">PT Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
@@ -1077,9 +1083,8 @@ const Payments = () => {
                 <tbody>
                   {paginatedPlans.length > 0 ? (
                     paginatedPlans.map(({ member, plan }, index) => {
-                      const totalAmount =
-                      plan.price || plan.totalPrice || plan.planPrice || plan.pricePaid;
-                    const paidTotal = Number(plan.pricePaid || 0) + Number(plan.secondPaymentPaid || 0);
+                      const totalAmount = (Number(plan.price) || 0) + (Number(plan.pt_price) || 0);
+                    const paidTotal = (Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0) + (Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0);
                     const remainingAmount = Math.max(0, Number(totalAmount) - paidTotal);
 
                     return (
@@ -1129,27 +1134,32 @@ const Payments = () => {
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-white/60">
-                            ₹{plan.amount || plan.price || 0}
+                            ₹{Number(plan.amount) || Number(plan.price) || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-base font-medium text-purple-400">
+                            ₹{Number(plan.pt_amount) || Number(plan.pt_price) || 0}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-red-400">
-                            ₹{plan.discount || 0}
+                            ₹{(Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0)}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-orange-400">
-                            ₹{totalAmount}
+                            ₹{(Number(plan.price) || 0) + (Number(plan.pt_price) || 0)}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-green-400">
-                            ₹{plan.pricePaid}
+                            ₹{(Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0)}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-cyan-300">
-                            ₹{plan.secondPaymentPaid || 0}
+                            ₹{(Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0)}
                           </span>
                         </td>
                        
