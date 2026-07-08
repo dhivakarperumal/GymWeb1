@@ -79,7 +79,7 @@ async function getAllMembers(req, res) {
           m_pay.price,
           m_pay.pricePaid,
           m_pay.secondPaymentPaid,
-          COALESCE(m_pay.has_pt_plan, 0) as has_pt_plan,
+          IF((SELECT COUNT(*) FROM memberships pt_m WHERE pt_m.userId = u.id AND pt_m.has_pt_plan = 1 AND (pt_m.status = 'active' OR pt_m.pt_status = 'active')) > 0, 1, 0) as has_pt_plan,
           'members' as source
         FROM gym_members gm
         INNER JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
@@ -144,7 +144,7 @@ async function getAllMembers(req, res) {
           m_pay.price,
           m_pay.pricePaid,
           m_pay.secondPaymentPaid,
-          COALESCE(m_pay.has_pt_plan, 0) as has_pt_plan,
+          IF((SELECT COUNT(*) FROM memberships pt_m WHERE pt_m.userId = u.id AND pt_m.has_pt_plan = 1 AND (pt_m.status = 'active' OR pt_m.pt_status = 'active')) > 0, 1, 0) as has_pt_plan,
           'users' as source
         FROM users u
         INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
@@ -215,7 +215,7 @@ async function getAllMembers(req, res) {
           m_pay.price,
           m_pay.pricePaid,
           m_pay.secondPaymentPaid,
-          COALESCE(m_pay.has_pt_plan, 0) as has_pt_plan,
+          IF((SELECT COUNT(*) FROM memberships pt_m WHERE pt_m.userId = u.id AND pt_m.has_pt_plan = 1 AND (pt_m.status = 'active' OR pt_m.pt_status = 'active')) > 0, 1, 0) as has_pt_plan,
           'members' as source
         FROM gym_members gm
         LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
@@ -279,7 +279,7 @@ async function getAllMembers(req, res) {
           m_pay.price,
           m_pay.pricePaid,
           m_pay.secondPaymentPaid,
-          COALESCE(m_pay.has_pt_plan, 0) as has_pt_plan,
+          IF((SELECT COUNT(*) FROM memberships pt_m WHERE pt_m.userId = u.id AND pt_m.has_pt_plan = 1 AND (pt_m.status = 'active' OR pt_m.pt_status = 'active')) > 0, 1, 0) as has_pt_plan,
           'users' as source
         FROM users u
         LEFT JOIN (
