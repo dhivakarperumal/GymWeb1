@@ -201,16 +201,29 @@ const MemberDetails = () => {
     }
   };
 
-  const isExpired =
+  const isNormalExpired =
     member?.expiry_date &&
     dayjs(member.expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") <= 0;
+    
+  const isNormalActive = member?.plan && member.plan !== "user" && !isNormalExpired;
 
-  const displayStatus =
-    !member.plan || member.plan === "user"
-      ? "inactive"
-      : isExpired
-        ? "inactive"
-        : member.status;
+  const isPtExpired =
+    member?.pt_expiry_date &&
+    dayjs(member.pt_expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") <= 0;
+    
+  const isPtActive = member?.pt_plan && member.pt_plan !== "user" && !isPtExpired;
+
+  const displayStatus = (isNormalActive || isPtActive) && member?.status !== 'inactive' ? "active" : "inactive";
+
+  const statusText = displayStatus === 'inactive' 
+    ? "Inactive" 
+    : (isNormalActive && isPtActive) 
+      ? "Normal & PT Plan Active" 
+      : isNormalActive 
+        ? "Normal Plan Active" 
+        : isPtActive 
+          ? "PT Plan Active" 
+          : "Active";
 
   return (
     <div className="min-h-screen pb-12 text-white">
@@ -275,7 +288,7 @@ const MemberDetails = () => {
                 >
                   <div className={`w-2 h-2 rounded-full ${displayStatus === 'active' ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`} />
                   <span className="text-xs font-bold uppercase">
-                    {displayStatus === "active" ? "Active" : "Inactive"}
+                    {statusText}
                   </span>
                 </button>
               </div>
