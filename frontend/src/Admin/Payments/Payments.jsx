@@ -1067,7 +1067,7 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">PT Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Total Amount</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Remaining Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
                     
@@ -1149,7 +1149,7 @@ const Payments = () => {
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-orange-400">
-                            ₹{(Number(plan.price) || 0) + (Number(plan.pt_price) || 0)}
+                            ₹{remainingAmount}
                           </span>
                         </td>
                         <td className="px-4 py-4">
