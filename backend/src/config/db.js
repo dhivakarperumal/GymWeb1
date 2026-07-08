@@ -65,4 +65,44 @@ pool.on('error', (err) => {
   }
 });
 
+const als = require("./context");
+
+const originalGetConnection = pool.getConnection;
+
+pool.getConnection = async function() {
+  const conn = await originalGetConnection.call(this);
+  
+  const store = als.getStore();
+  const user = store ? store.get('user') : null;
+  
+  if (user) {
+    await conn.query('SET @web_user_id = ?, @web_username = ?', [
+      user.user_id || user.userId, 
+      user.username || user.email
+    ]);
+  } else {
+    await conn.query('SET @web_user_id = NULL, @web_username = NULL');
+  }
+  
+  return conn;
+};
+
+pool.query = async function(...args) {
+  const conn = await this.getConnection();
+  try {
+    return await conn.query(...args);
+  } finally {
+    conn.release();
+  }
+};
+
+pool.execute = async function(...args) {
+  const conn = await this.getConnection();
+  try {
+    return await conn.execute(...args);
+  } finally {
+    conn.release();
+  }
+};
+
 module.exports = pool;

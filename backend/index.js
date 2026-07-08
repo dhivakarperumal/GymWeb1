@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const als = require("./src/config/context");
 
 // optionally run migrations on start, helps when launching dev server
 (async () => {
@@ -77,6 +79,24 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+
+// Global Context Middleware for tracking created_by / updated_by
+app.use((req, res, next) => {
+  let user = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      user = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey');
+    } catch (err) {
+      // Ignore token errors here, just proceed without user context
+    }
+  }
+  
+  als.run(new Map([['user', user]]), () => {
+    next();
+  });
+});
 
 // DB routes
 app.use("/api/auth", authRoutes);
