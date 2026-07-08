@@ -1143,6 +1143,7 @@ async function deleteMember(req, res) {
     connection = await db.getConnection();
     await connection.beginTransaction();
 
+    // ── Step 1: Fetch gym_member record first ─────────────────────────────────
     const [rows] = await connection.query(selectQuery, params);
     if (rows.length === 0) {
       await connection.rollback();
@@ -1152,55 +1153,96 @@ async function deleteMember(req, res) {
     const member = rows[0];
     const internalMemberId = member.id;
 
-    const [deleteResult] = await connection.query(deleteQuery, params);
-    if (deleteResult.affectedRows === 0) {
-      await connection.rollback();
-      return res.status(404).json({ error: 'Member not found' });
-    }
-
+    // ── Step 2: Find the linked user (users table) ───────────────────────────
     let internalUserId = null;
     if (member.user_id || member.email || member.phone) {
       const userQuery = member.user_id
         ? `SELECT id, role FROM users WHERE user_id = ? LIMIT 1`
-        : `SELECT id, role FROM users WHERE (email = ? AND email IS NOT NULL AND email != '') OR (mobile = ? AND mobile IS NOT NULL AND mobile != '') LIMIT 1`;
-      const userParams = member.user_id ? [member.user_id] : [member.email, member.phone];
+        : `SELECT id, role FROM users WHERE (email = ? AND email != '') OR (mobile = ? AND mobile != '') LIMIT 1`;
+      const userParams = member.user_id
+        ? [member.user_id]
+        : [member.email || '', member.phone || ''];
       const [userRows] = await connection.query(userQuery, userParams);
-
       if (userRows.length > 0) {
-        const user = userRows[0];
-        internalUserId = user.id;
-        if (user.role === 'user' || user.role === 'member') {
-          await connection.query('DELETE FROM users WHERE id = ?', [user.id]);
-        }
+        internalUserId = userRows[0].id;
+        userRole = userRows[0].role;
       }
     }
 
+    const del = async (table, col, val) => {
+      if (val == null) return;
+      try {
+        await connection.query(`DELETE FROM \`${table}\` WHERE \`${col}\` = ?`, [val]);
+      } catch (e) {
+        console.warn(`deleteMember: could not delete from ${table}:`, e.message);
+      }
+    };
+
+    // ── Step 3: Delete all related data keyed by userId (users.id) ───────────
     if (internalUserId) {
-      try { await connection.query('DELETE FROM memberships WHERE userId = ?', [internalUserId]); } catch (e) {}
-      try { await connection.query('DELETE FROM trainer_assignments WHERE userId = ?', [internalUserId]); } catch (e) {}
-      try { await connection.query('DELETE FROM pt_forms WHERE user_id = ?', [internalUserId]); } catch (e) {}
+      await del('memberships',          'userId',           internalUserId);
+      await del('trainer_assignments',  'userId',           internalUserId);
+      await del('pt_forms',             'user_id',          internalUserId);
+      await del('orders',               'userId',           internalUserId);
+      await del('cart_items',           'user_id',          internalUserId);
+      await del('message_history',      'user_id',          internalUserId);
+      await del('reviews',              'user_id',          internalUserId);
+      await del('user_addresses',       'user_id',          internalUserId);
     }
-    
+
+    // ── Step 4: Delete all related data keyed by gym_members.id ─────────────
     if (internalMemberId) {
-      try { await connection.query('DELETE FROM trainer_assignments WHERE gymMemberId = ?', [internalMemberId]); } catch (e) {}
-      try { await connection.query('DELETE FROM diet_plans WHERE member_id = ?', [internalMemberId]); } catch (e) {}
-      try { await connection.query('DELETE FROM workout_programs WHERE member_id = ?', [internalMemberId]); } catch (e) {}
-      try { await connection.query('DELETE FROM pt_forms WHERE member_id = ?', [internalMemberId]); } catch (e) {}
-      try { await connection.query('DELETE FROM attendance WHERE member_id = ?', [internalMemberId]); } catch (e) {}
+      await del('trainer_assignments',  'gymMemberId',      internalMemberId);
+      await del('diet_plans',           'member_id',        internalMemberId);
+      await del('workout_programs',     'member_id',        internalMemberId);
+      await del('pt_forms',             'member_id',        internalMemberId);
+      await del('attendance',           'member_id',        internalMemberId);
+      await del('trainer_sessions',     'member_id',        internalMemberId);
+    }
+
+    // ── Step 5: Delete linked enquiries + their followups/interactions ────────
+    if (member.email || member.phone) {
+      // Fetch enquiry IDs for this member's email or phone
+      const [enqRows] = await connection.query(
+        `SELECT id FROM enquiries WHERE (email = ? AND email != '') OR (phone = ? AND phone != '')`,
+        [member.email || '', member.phone || '']
+      );
+      for (const enq of enqRows) {
+        // First delete followup_interactions for each followup of this enquiry
+        const [followupRows] = await connection.query(
+          `SELECT id FROM followups WHERE enquiry_id = ?`, [enq.id]
+        ).catch(() => [[]]);
+        for (const fu of followupRows) {
+          await del('followup_interactions', 'followup_id', fu.id);
+        }
+        await del('followups',         'enquiry_id',  enq.id);
+        await del('enquiries',         'id',          enq.id);
+      }
+    }
+
+    // ── Step 6: Delete gym_members record ────────────────────────────────────
+    const gymDeleteQuery = isNum
+      ? `DELETE FROM gym_members WHERE id = ?`
+      : `DELETE FROM gym_members WHERE member_id = ?`;
+    const [deleteResult] = await connection.query(gymDeleteQuery, params);
+    if (deleteResult.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Member delete failed' });
+    }
+
+    // ── Step 7: Delete user account (only regular members/users) ─────────────
+    if (internalUserId && (userRole === 'user' || userRole === 'member')) {
+      await del('users', 'id', internalUserId);
     }
 
     await connection.commit();
-    res.json({ success: true, message: 'Member deleted successfully' });
+    res.json({ success: true, message: 'Member and all related data deleted successfully' });
   } catch (err) {
-    if (connection) {
-      await connection.rollback();
-    }
+    if (connection) await connection.rollback();
     console.error('deleteMember error', err);
-    res.status(500).json({ error: 'Delete failed' });
+    res.status(500).json({ error: 'Delete failed', details: err.message });
   } finally {
-    if (connection) {
-      connection.release();
-    }
+    if (connection) connection.release();
   }
 }
 
