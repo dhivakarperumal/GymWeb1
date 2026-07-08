@@ -25,6 +25,13 @@ async function getAllWorkouts(req, res) {
              COALESCE(wp.user_id_uuid, u.user_id) AS user_id_uuid
       FROM workout_programs wp
       LEFT JOIN users u ON u.id = wp.user_id
+      WHERE (
+        wp.member_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM gym_members gm
+          WHERE gm.id = wp.member_id
+        )
+      )
     `;
     const params = [];
     const conditions = [];
@@ -37,7 +44,7 @@ async function getAllWorkouts(req, res) {
         conditions.push('wp.user_id IN (SELECT ta.user_id FROM trainer_assignments ta WHERE ta.trainer_id = ?)');
         params.push(resolvedStaffId);
       } else {
-        // Fallback: if can't resolve staff id, just show plans created by this trainer
+        // Fallback: still only show plans whose member still exists AND is assigned to this trainer
         conditions.push('wp.trainer_id = ?');
         params.push(trainerId);
       }
@@ -59,7 +66,7 @@ async function getAllWorkouts(req, res) {
     }
 
     if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
+      sql += ' AND ' + conditions.join(' AND ');
     }
     sql += ' ORDER BY wp.created_at DESC';
 

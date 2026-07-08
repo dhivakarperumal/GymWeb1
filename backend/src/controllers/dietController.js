@@ -24,6 +24,13 @@ async function getAllDiets(req, res) {
              COALESCE(dp.user_id_uuid, u.user_id) AS user_id_uuid
       FROM diet_plans dp
       LEFT JOIN users u ON u.id = dp.user_id
+      WHERE (
+        dp.member_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM gym_members gm
+          WHERE gm.id = dp.member_id
+        )
+      )
     `;
     const params = [];
     const conditions = [];
@@ -36,7 +43,7 @@ async function getAllDiets(req, res) {
         conditions.push('dp.user_id IN (SELECT ta.user_id FROM trainer_assignments ta WHERE ta.trainer_id = ?)');
         params.push(resolvedStaffId);
       } else {
-        // Fallback: if can't resolve staff id, just show plans created by this trainer
+        // Fallback: still only show plans whose member still exists AND is assigned to this trainer
         conditions.push('dp.trainer_id = ?');
         params.push(trainerId);
       }
@@ -58,7 +65,7 @@ async function getAllDiets(req, res) {
     }
 
     if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
+      sql += ' AND ' + conditions.join(' AND ');
     }
     sql += ' ORDER BY dp.created_at DESC';
 
