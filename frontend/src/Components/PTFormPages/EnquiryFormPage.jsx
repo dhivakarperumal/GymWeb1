@@ -165,14 +165,73 @@ const EnquiryFormPage = ({ data, onSubmit, readOnly }) => {
               />
             </div>
           </div>
+          <div className="space-y-4 p-6 rounded-2xl bg-slate-950/80 border border-white/10">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white uppercase tracking-widest">Informed Consent</h3>
+                <p className="text-white/60 text-sm">Please complete the consent form before moving to the next step.</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-white/80 leading-7">
+                I <strong>{form.participant_name || '__________'}</strong> give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-1">Participant Name</label>
+                  <input
+                    type="text"
+                    name="participant_name"
+                    value={form.participant_name || ''}
+                    onChange={handleChange}
+                    placeholder="Full Name"
+                    required
+                    readOnly={readOnly}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-center gap-3 mt-4">
+                <input
+                  type="checkbox"
+                  name="consent_agree"
+                  checked={form.consent_agree || false}
+                  onChange={(e) => setForm(prev => ({ ...prev, consent_agree: e.target.checked }))}
+                  className="w-5 h-5 text-orange-500 bg-slate-800 border border-white/10 rounded"
+                  required
+                  disabled={readOnly}
+                />
+                <span className="text-white">I have read and agree to the informed consent above.</span>
+              </label>
+
+              <div className="text-sm text-red-400">
+                {form.consent_agree ? '' : 'You must check the box to proceed.'}
+              </div>
+            </div>
+          </div>
 
           {!readOnly && (
-            <button
-              type="submit"
-              className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
-            >
-              Submit Enquiry
-            </button>
+            <div className="flex gap-3 pt-6">
+              <button
+                type="button"
+                disabled
+                className="flex-1 px-4 py-3 rounded-lg font-bold transition-all bg-gray-600/50 text-gray-400 cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              <button
+                type="submit"
+                className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
+              >
+                Save & Next Step
+              </button>
+            </div>
           )}
         </form>
       </div>

@@ -22,6 +22,7 @@ const AddMember = () => {
     email: "",
     password: "",
     gender: "",
+    blood_group: "",
     dob: "",
     age: "",
     height: "",
@@ -405,6 +406,21 @@ const AddMember = () => {
                 <option className="text-black">Male</option>
                 <option className="text-black">Female</option>
                 <option className="text-black">Other</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-white/70 ml-1">Blood Group</label>
+              <select name="blood_group" value={form.blood_group || ""} onChange={handleChange} className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <option value="">Select Blood Group</option>
+                <option value="A+" className="text-black">A+</option>
+                <option value="A-" className="text-black">A-</option>
+                <option value="B+" className="text-black">B+</option>
+                <option value="B-" className="text-black">B-</option>
+                <option value="O+" className="text-black">O+</option>
+                <option value="O-" className="text-black">O-</option>
+                <option value="AB+" className="text-black">AB+</option>
+                <option value="AB-" className="text-black">AB-</option>
               </select>
             </div>
 

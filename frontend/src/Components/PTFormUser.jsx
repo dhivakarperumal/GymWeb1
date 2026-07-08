@@ -197,6 +197,7 @@ const PTFormUser = () => {
         }
       }
       toast.success('Personal details saved successfully.');
+      setActiveTab('health1');
     } catch (err) {
       console.error('Submit failed', err);
       toast.error(err.response?.data?.error || 'Failed to save personal details.');
@@ -206,21 +207,25 @@ const PTFormUser = () => {
   const handleHealthHistorySubmit = async (data) => {
     const updatedData = { ...formData, ...data };
     await savePtForm(updatedData);
+    setActiveTab('health2');
   };
 
   const handleHealthHistory2Submit = async (data) => {
     const updatedData = { ...formData, ...data };
     await savePtForm(updatedData);
+    setActiveTab('fitness');
   };
 
   const handleFitnessSubmit = async (data) => {
     const updatedData = { ...formData, ...data };
     await savePtForm(updatedData);
+    setActiveTab('flexibility');
   };
 
   const handleFlexibilitySubmit = async (data) => {
     const updatedData = { ...formData, ...data };
     await savePtForm(updatedData);
+    setActiveTab('sessions');
   };
 
   if (loading) {
@@ -268,11 +273,19 @@ const PTFormUser = () => {
       )}
 
       {activeTab === 'health1' && (
-        <HealthHistoryPage data={formData} onSubmit={handleHealthHistorySubmit} />
+        <HealthHistoryPage
+          data={formData}
+          onSubmit={handleHealthHistorySubmit}
+          onPrevious={() => setActiveTab('enquiry')}
+        />
       )}
 
       {activeTab === 'health2' && (
-        <HealthHistory2Page data={formData} onSubmit={handleHealthHistory2Submit} />
+        <HealthHistory2Page
+          data={formData}
+          onSubmit={handleHealthHistory2Submit}
+          onPrevious={() => setActiveTab('health1')}
+        />
       )}
 
       {activeTab === 'fitness' && (
@@ -280,7 +293,8 @@ const PTFormUser = () => {
           formData={formData}
           readOnly={false}
           onNext={handleFitnessSubmit}
-          saveOnly={true}
+          onPrevious={() => setActiveTab('health2')}
+          saveOnly={false}
         />
       )}
 
@@ -289,7 +303,8 @@ const PTFormUser = () => {
           formData={formData}
           readOnly={false}
           onNext={handleFlexibilitySubmit}
-          saveOnly={true}
+          onPrevious={() => setActiveTab('fitness')}
+          saveOnly={false}
         />
       )}
 

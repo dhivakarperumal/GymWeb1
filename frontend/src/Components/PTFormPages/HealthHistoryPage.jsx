@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const HealthHistoryPage = ({ data, onSubmit }) => {
+const HealthHistoryPage = ({ data, onSubmit, onPrevious }) => {
   const [form, setForm] = useState({
     medications: '',
     med1: '',
@@ -176,9 +176,21 @@ const HealthHistoryPage = ({ data, onSubmit }) => {
             </div>
           </div>
 
-          <button type="submit" className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold">
-            Save Health History
-          </button>
+          <div className="flex gap-3 pt-6">
+            <button
+              type="button"
+              onClick={onPrevious}
+              className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition-all"
+            >
+              Previous
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-600/20 transition-all"
+            >
+              Save & Next Step
+            </button>
+          </div>
         </form>
       </div>
     </div>
