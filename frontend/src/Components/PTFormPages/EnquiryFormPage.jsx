@@ -27,10 +27,18 @@ const EnquiryFormPage = ({ data, onSubmit, readOnly }) => {
 
   useEffect(() => {
     if (data) {
+      let formattedDob = data.dob || '';
+      if (formattedDob) {
+        const parsed = dayjs(formattedDob);
+        if (parsed.isValid()) {
+          formattedDob = parsed.format('YYYY-MM-DD');
+        }
+      }
+
       setForm((prev) => ({
         ...prev,
         ...data,
-        dob: data.dob || '',
+        dob: formattedDob,
         age: data.age || '',
       }));
     }

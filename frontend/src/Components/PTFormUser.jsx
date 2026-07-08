@@ -180,22 +180,26 @@ const PTFormUser = () => {
     setFormData(updatedData);
 
     try {
-      if (!hasEnquiry) {
-        await api.post('/enquiries', data);
-        setHasEnquiry(true);
-      }
-
       if (member?.id) {
+        // Update gym_members table
+        await api.put(`/members/${member.id}`, { ...member, ...data });
+
+        // Update pt_forms table
         await api.post('/pt-forms', {
           member_id: member.id,
           user_id: user.id,
           formData: updatedData,
         });
+      } else {
+        if (!hasEnquiry) {
+          await api.post('/enquiries', data);
+          setHasEnquiry(true);
+        }
       }
-      toast.success('Enquiry saved successfully.');
+      toast.success('Personal details saved successfully.');
     } catch (err) {
-      console.error('Enquiry submit failed', err);
-      toast.error(err.response?.data?.error || 'Failed to save enquiry.');
+      console.error('Submit failed', err);
+      toast.error(err.response?.data?.error || 'Failed to save personal details.');
     }
   };
 
