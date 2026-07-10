@@ -179,6 +179,26 @@ async function createMembership(req, res) {
       }
     }
 
+    // --- NEW LOGIC: Ensure only one active plan per member ---
+    // If an active plan exists, update the old record to Completed/Paid before inserting the new one.
+    if (resolvedUserId) {
+      try {
+        const [activePlans] = await db.query(
+          "SELECT id FROM memberships WHERE userId = ? AND status = 'active'",
+          [resolvedUserId]
+        );
+        if (activePlans && activePlans.length > 0) {
+          await db.query(
+            "UPDATE memberships SET status = 'Completed', paymentStatus = 'Paid', updatedAt = CURRENT_TIMESTAMP WHERE userId = ? AND status = 'active'",
+            [resolvedUserId]
+          );
+          console.log(`Updated ${activePlans.length} active plan(s) to Completed/Paid for userId ${resolvedUserId}`);
+        }
+      } catch (err) {
+        console.error("Error updating previous active plans:", err);
+      }
+    }
+
     const query = `
       INSERT INTO memberships
       (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan, pt_planId, pt_planName, pt_price, pt_pricePaid, pt_duration, pt_startDate, pt_endDate, pt_paymentMode, pt_paymentDate, pt_paymentStatus, pt_status, pt_trainerId, pt_trainerName, pt_discount, pt_amount)
