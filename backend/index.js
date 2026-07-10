@@ -59,10 +59,10 @@ app.use(
       try {
         const url = new URL(origin);
         const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-        if (isLocalhost) return callback(null, true);
+        if (isLocalhost) return callback(null, origin);
       } catch (err) {}
       const allowed = ["https://dapfitt.com"];
-      if (allowed.includes(origin)) return callback(null, true);
+      if (allowed.includes(origin)) return callback(null, origin);
       callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],

@@ -1,6 +1,38 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('./db');
+const { applyTriggers } = require('./applyTriggers');
+
+async function ensureAuditColumns() {
+  const [tables] = await db.query(`
+    SELECT TABLE_NAME
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE'
+  `);
+
+  for (const row of tables) {
+    const tableName = row.TABLE_NAME;
+    const [columns] = await db.query(`
+      SELECT COLUMN_NAME
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+    `, [tableName]);
+
+    const colNames = new Set(columns.map((c) => c.COLUMN_NAME));
+    const missingColumns = [];
+
+    if (!colNames.has('created_by')) missingColumns.push('created_by VARCHAR(255) NULL');
+    if (!colNames.has('created_by_name')) missingColumns.push('created_by_name VARCHAR(255) NULL');
+    if (!colNames.has('updated_by')) missingColumns.push('updated_by VARCHAR(255) NULL');
+    if (!colNames.has('updated_by_name')) missingColumns.push('updated_by_name VARCHAR(255) NULL');
+
+    if (missingColumns.length > 0) {
+      const alterSql = `ALTER TABLE \`${tableName}\` ADD COLUMN ${missingColumns.join(', ADD COLUMN ')}`;
+      await db.query(alterSql);
+      console.log(`✅ Added audit columns to table: ${tableName}`);
+    }
+  }
+}
 
 async function runMigrations() {
   // Ensure database exists
@@ -78,9 +110,15 @@ async function runMigrations() {
       }
     }
   }
+
+  console.log('Ensuring audit columns exist on tables...');
+  await ensureAuditColumns();
+
+  console.log('Ensuring audit triggers are active...');
+  await applyTriggers();
 }
 
-module.exports = { runMigrations };
+module.exports = { runMigrations, ensureAuditColumns };
 
 if (require.main === module) {
   runMigrations()
