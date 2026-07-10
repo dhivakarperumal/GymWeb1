@@ -1181,9 +1181,9 @@ async function deleteMember(req, res) {
     // ── Step 3: Delete all related data keyed by userId (users.id) ───────────
     if (internalUserId) {
       await del('memberships',          'userId',           internalUserId);
-      await del('trainer_assignments',  'userId',           internalUserId);
+      await del('trainer_assignments',  'user_id',          internalUserId);
       await del('pt_forms',             'user_id',          internalUserId);
-      await del('orders',               'userId',           internalUserId);
+      await del('orders',               'user_id',          internalUserId);
       await del('cart_items',           'user_id',          internalUserId);
       await del('message_history',      'user_id',          internalUserId);
       await del('reviews',              'user_id',          internalUserId);
@@ -1192,7 +1192,6 @@ async function deleteMember(req, res) {
 
     // ── Step 4: Delete all related data keyed by gym_members.id ─────────────
     if (internalMemberId) {
-      await del('trainer_assignments',  'gymMemberId',      internalMemberId);
       await del('diet_plans',           'member_id',        internalMemberId);
       await del('workout_programs',     'member_id',        internalMemberId);
       await del('pt_forms',             'member_id',        internalMemberId);
