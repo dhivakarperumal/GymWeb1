@@ -42,8 +42,8 @@ const SessionTracking = () => {
     email: item.userEmail || item.user_email || item.email || "",
     phone: item.userMobile || item.user_mobile || item.phone || "",
     planName: item.planName || item.plan_name || "",
-    planStartDate: item.planStartDate || item.plan_start_date || "",
-    planEndDate: item.planEndDate || item.plan_end_date || "",
+    planStartDate: item.planStartDate || item.plan_start_date || item.ptJoinDate || item.joinDate || "",
+    planEndDate: item.planEndDate || item.plan_end_date || item.ptExpiryDate || item.expiryDate || "",
   });
 
   const fetchAssignedMembers = async () => {

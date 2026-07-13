@@ -22,12 +22,35 @@ const SessionTracker = ({
   const { user, profileName } = useAuth();
   const currentLoginName = profileName || "";
 
+  const parseDate = (d) => {
+    if (!d) return null;
+    const str = String(d);
+    
+    // Handle DD-MM-YYYY
+    if (str.includes("-") && str.split("-")[0].length === 2) {
+      const parts = str.split("-");
+      if (parts.length === 3) {
+        return dayjs(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      }
+    }
+    
+    // Handle DD/MM/YYYY
+    if (str.includes("/") && str.split("/")[0].length === 2) {
+      const parts = str.split("/");
+      if (parts.length === 3) {
+        return dayjs(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      }
+    }
+    
+    return dayjs(d);
+  };
+
   let numRows = 25; // default
   if (initialFormData?.pt_join_date && initialFormData?.pt_expiry_date) {
-    const diff = dayjs(initialFormData.pt_expiry_date).startOf('day').diff(dayjs(initialFormData.pt_join_date).startOf('day'), 'day');
+    const diff = parseDate(initialFormData.pt_expiry_date).startOf('day').diff(parseDate(initialFormData.pt_join_date).startOf('day'), 'day');
     if (diff > 0) numRows = diff;
   } else if (initialFormData?.join_date && initialFormData?.expiry_date) {
-    const diff = dayjs(initialFormData.expiry_date).startOf('day').diff(dayjs(initialFormData.join_date).startOf('day'), 'day');
+    const diff = parseDate(initialFormData.expiry_date).startOf('day').diff(parseDate(initialFormData.join_date).startOf('day'), 'day');
     if (diff > 0) numRows = diff;
   }
 
