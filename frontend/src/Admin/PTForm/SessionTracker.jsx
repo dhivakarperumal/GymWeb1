@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
+import dayjs from "dayjs";
 
 const SessionTracker = ({
   onNext,
@@ -21,10 +22,19 @@ const SessionTracker = ({
   const { user, profileName } = useAuth();
   const currentLoginName = profileName || "";
 
+  let numRows = 25; // default
+  if (initialFormData?.pt_join_date && initialFormData?.pt_expiry_date) {
+    const diff = dayjs(initialFormData.pt_expiry_date).startOf('day').diff(dayjs(initialFormData.pt_join_date).startOf('day'), 'day');
+    if (diff > 0) numRows = diff;
+  } else if (initialFormData?.join_date && initialFormData?.expiry_date) {
+    const diff = dayjs(initialFormData.expiry_date).startOf('day').diff(dayjs(initialFormData.join_date).startOf('day'), 'day');
+    if (diff > 0) numRows = diff;
+  }
+
   const [localFormData, setLocalFormData] = useState({
     sessions: (initialFormData?.sessions && initialFormData.sessions.length > 0)
       ? initialFormData.sessions
-      : Array(25).fill(null).map((_, i) => ({
+      : Array(numRows).fill(null).map((_, i) => ({
         session_no: i + 1,
         date: "",
         workout: "",

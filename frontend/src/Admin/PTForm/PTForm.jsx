@@ -52,7 +52,11 @@ const PTForm = () => {
             emergency_contact_phone_work: data.emergency_contact_phone_work || "",
             fitness_goal: data.fitness_goal || "",
             blood_group: data.blood_group || "",
-            gender: data.gender || ""
+            gender: data.gender || "",
+            pt_join_date: data.pt_join_date || "",
+            pt_expiry_date: data.pt_expiry_date || "",
+            join_date: data.join_date || "",
+            expiry_date: data.expiry_date || ""
           });
 
           // Also try to fetch existing PT Form data if any
@@ -213,7 +217,11 @@ const PTForm = () => {
         emergency_contact_phone_work: data.emergency_contact_phone_work || "",
         fitness_goal: data.fitness_goal || "",
         blood_group: data.blood_group || "",
-        gender: data.gender || ""
+        gender: data.gender || "",
+        pt_join_date: data.pt_join_date || "",
+        pt_expiry_date: data.pt_expiry_date || "",
+        join_date: data.join_date || "",
+        expiry_date: data.expiry_date || ""
       };
 
       setFormData(memberPrefill);
