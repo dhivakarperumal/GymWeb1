@@ -42,6 +42,8 @@ const SessionTracking = () => {
     email: item.userEmail || item.user_email || item.email || "",
     phone: item.userMobile || item.user_mobile || item.phone || "",
     planName: item.planName || item.plan_name || "",
+    planStartDate: item.planStartDate || item.plan_start_date || item.ptJoinDate || item.joinDate || "",
+    planEndDate: item.planEndDate || item.plan_end_date || item.ptExpiryDate || item.expiryDate || "",
   });
 
   const fetchAssignedMembers = async () => {
@@ -81,7 +83,7 @@ const SessionTracking = () => {
       trainer_name_assigned: trainerName || savedData.trainer_name_assigned || "",
     };
 
-    const sessions = Array.isArray(savedData.sessions)
+    const sessions = Array.isArray(savedData.sessions) && savedData.sessions.length > 0
       ? savedData.sessions.map((session, index) => ({
           session_no: index + 1,
           date: session.date || "",
@@ -90,9 +92,16 @@ const SessionTracking = () => {
           client_sign: session.client_sign || "",
           trainer_sign: session.trainer_sign || trainerName,
         }))
-      : makeEmptySessions();
+      : undefined;
 
-    return { ...baseData, sessions };
+    return { 
+      ...baseData, 
+      sessions,
+      pt_join_date: member?.planStartDate,
+      pt_expiry_date: member?.planEndDate,
+      join_date: member?.planStartDate,
+      expiry_date: member?.planEndDate,
+    };
   };
 
   const fetchPtForm = async (memberId, member) => {

@@ -453,7 +453,7 @@ const Account = () => {
 
     const normalizeSessionForm = (rawData) => {
       const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || "";
-      const sessions = Array.isArray(rawData.sessions)
+      const sessions = Array.isArray(rawData.sessions) && rawData.sessions.length > 0
         ? rawData.sessions.map((session, index) => ({
             session_no: index + 1,
             date: session.date || "",
@@ -462,20 +462,17 @@ const Account = () => {
             client_sign: session.client_sign || "",
             trainer_sign: session.trainer_sign || trainerSign,
           }))
-        : Array.from({ length: 25 }, (_, index) => ({
-            session_no: index + 1,
-            date: "",
-            workout: "",
-            status: "Pending",
-            client_sign: "",
-            trainer_sign: trainerSign,
-          }));
+        : undefined;
 
       return {
         ...rawData,
         member_id: memberData.id,
         u_id: userId,
         trainer_name_assigned: trainerSign,
+        pt_join_date: memberData.pt_join_date,
+        pt_expiry_date: memberData.pt_expiry_date,
+        join_date: memberData.join_date,
+        expiry_date: memberData.expiry_date,
         sessions,
       };
     };
@@ -515,25 +512,22 @@ const Account = () => {
 
   const normalizeSessionForm = (rawData) => {
     const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || '';
-    const sessions = Array.isArray(rawData.sessions)
+    const sessions = Array.isArray(rawData.sessions) && rawData.sessions.length > 0
       ? rawData.sessions.map((session, index) => ({
           ...normalizeSession(session, trainerSign),
           session_no: index + 1,
         }))
-      : Array.from({ length: 25 }, (_, index) => ({
-          session_no: index + 1,
-          date: '',
-          workout: '',
-          status: 'Pending',
-          client_sign: '',
-          trainer_sign: trainerSign,
-        }));
+      : undefined;
 
     return {
       ...rawData,
       member_id: memberData.id,
       u_id: userId,
       trainer_name_assigned: trainerSign,
+      pt_join_date: memberData?.pt_join_date,
+      pt_expiry_date: memberData?.pt_expiry_date,
+      join_date: memberData?.join_date,
+      expiry_date: memberData?.expiry_date,
       sessions,
     };
   };

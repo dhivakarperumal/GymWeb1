@@ -22,6 +22,10 @@ function normalizeAssignment(row) {
     sessionTime: row.session_time || null,
     status: row.status,
     ptFormCompleted: row.pt_form_completed || 0,
+    ptJoinDate: row.m_pt_join_date || null,
+    ptExpiryDate: row.m_pt_expiry_date || null,
+    joinDate: row.m_join_date || null,
+    expiryDate: row.m_expiry_date || null,
     updatedAt: row.updated_at,
   };
 }
@@ -93,6 +97,10 @@ async function getAllAssignments(req, res) {
              m.phone as member_mobile,
              m.weight as member_weight,
              m.pt_form_completed as pt_form_completed,
+             m.pt_join_date as m_pt_join_date,
+             m.pt_expiry_date as m_pt_expiry_date,
+             m.join_date as m_join_date,
+             m.expiry_date as m_expiry_date,
              s.name as current_trainer_name,
              s.role as trainer_source
       FROM trainer_assignments a
