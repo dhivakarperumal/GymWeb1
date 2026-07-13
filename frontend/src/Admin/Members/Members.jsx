@@ -894,13 +894,23 @@ const Members = () => {
                             </button>
                           );
                         })()}
-                        <button
-                          onClick={() => navigate(`${basePath}/buy-pt-plan`, { state: { member: m, returnUrl: location.pathname + location.search } })}
-                          className="p-2 rounded-lg bg-gradient-to-br from-purple-500/90 to-fuchsia-500/90 hover:from-purple-500 hover:to-fuchsia-500 text-white transition shadow-lg shadow-purple-500/20"
-                          title="PT Plan Update"
-                        >
-                          <Award size={16} />
-                        </button>
+                        {(() => {
+                          const hasPTPlan = Boolean(m.pt_plan) || Boolean(m.plan?.toLowerCase().includes("pt")) || Boolean(m.has_pt_plan);
+                          return (
+                            <button
+                              onClick={() => !hasPTPlan && navigate(`${basePath}/buy-pt-plan`, { state: { member: m, returnUrl: location.pathname + location.search } })}
+                              disabled={hasPTPlan}
+                              className={`p-2 rounded-lg text-white transition ${
+                                hasPTPlan
+                                  ? "bg-gray-500/50 cursor-not-allowed opacity-50"
+                                  : "bg-gradient-to-br from-purple-500/90 to-fuchsia-500/90 hover:from-purple-500 hover:to-fuchsia-500 shadow-lg shadow-purple-500/20"
+                              }`}
+                              title={hasPTPlan ? "Already has PT Plan" : "PT Plan Buy"}
+                            >
+                              <Award size={16} />
+                            </button>
+                          );
+                        })()}
 
                         {/* Ellipsis toggle */}
                         <button
