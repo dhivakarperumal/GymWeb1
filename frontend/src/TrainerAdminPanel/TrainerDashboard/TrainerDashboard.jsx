@@ -68,12 +68,13 @@ const TrainerDashboard = () => {
         setLoading(true);
 
         /* FETCH ASSIGNMENTS -- server filters by this trainer's user ID */
-        const memberRes = await api.get(`/assignments?trainerUserId=${trainerId}`);
+        const trainerEmail = user?.email || "";
+        const memberRes = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}`);
         const membersRaw = Array.isArray(memberRes.data)
           ? memberRes.data
           : memberRes.data?.data || memberRes.data?.assignments || [];
 
-        console.log("📊 Assignments from server:", membersRaw.length);
+        console.log("📊 Assignments from server:", membersRaw.length, "trainerUserId:", trainerId, "email:", trainerEmail);
 
         /* show all assignments */
         const seen = new Set();

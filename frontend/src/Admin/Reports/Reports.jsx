@@ -274,15 +274,24 @@ const Reports = () => {
       color: "bg-blue-500/20 text-blue-400",
       data: filteredMembers,
       headers: ["S No", "Name", "Email", "Mobile Number", "Plan", "Status", "Join Date"],
-      rows: filteredMembers.map((m, i) => [
-        i + 1,
-        m.name || "N/A",
-        m.email || m.user_email || "-",
-        m.phone || "-",
-        m.plan || m.role || "Member",
-        m.status || "Active",
-        m.join_date ? dayjs(m.join_date).format("DD MMM YYYY") : "-",
-      ]),
+      rows: filteredMembers.map((m, i) => {
+        let actualStatus = (m.status || "active").toLowerCase();
+        // Only override to Expired if the expiry_date has actually passed
+        if (m.expiry_date && dayjs(m.expiry_date).startOf('day').isBefore(dayjs().startOf('day'))) {
+          actualStatus = "expired";
+        }
+        actualStatus = actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1);
+
+        return [
+          i + 1,
+          m.name || "N/A",
+          m.email || m.user_email || "-",
+          m.phone || "-",
+          m.plan && m.plan.toLowerCase() !== 'user' ? m.plan : (m.plan || "-"),
+          actualStatus,
+          m.join_date ? dayjs(m.join_date).format("DD MMM YYYY") : "-",
+        ];
+      }),
     },
     {
       key: "orders",
@@ -427,8 +436,8 @@ const Reports = () => {
           getMembershipTrainerName(m),
           m.plan || "N/A",
           m.expiry_date ? dayjs(m.expiry_date).format("DD MMM YYYY") : "-",
-          daysLeft > 0 ? `${daysLeft} Days` : 'Expired',
-          daysLeft > 0 ? 'Active' : 'Inactive'
+          daysLeft >= 0 ? (daysLeft === 0 ? 'Today' : `${daysLeft} Days`) : 'Expired',
+          daysLeft >= 0 ? 'Active' : 'Expired'
         ];
       }),
     },

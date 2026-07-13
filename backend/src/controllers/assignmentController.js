@@ -28,7 +28,7 @@ function normalizeAssignment(row) {
 
 async function getAllAssignments(req, res) {
   try {
-    const { trainerUserId } = req.query;
+    const { trainerUserId, trainerEmail } = req.query;
 
     let staffId = null;
 
@@ -39,27 +39,47 @@ async function getAllAssignments(req, res) {
         [trainerUserId]
       );
 
-      if (userRows.length === 0) {
-        // User not found — return nothing
-        return res.json([]);
-      }
+      const u = userRows[0] || null;
+      // Use the email from the users table, or fall back to the email passed directly
+      const resolvedEmail = (u?.email || trainerEmail || '').trim().toLowerCase();
+      const resolvedUsername = (u?.username || '').trim().toLowerCase();
 
-      const u = userRows[0];
-      console.log('[assignments] resolving trainer user:', u.id, u.email, u.username);
+      console.log('[assignments] resolving trainer user:', trainerUserId, resolvedEmail, resolvedUsername);
 
-      // Find matching staff record by email or username
-      const [staffRows] = await db.query(
-        'SELECT id, name FROM staff WHERE email = ? OR username = ? LIMIT 1',
-        [u.email, u.username]
-      );
+      if (resolvedEmail || resolvedUsername) {
+        // Try matching staff by email first, then username
+        const [staffRows] = await db.query(
+          `SELECT id, name FROM staff WHERE 
+            (? != '' AND LOWER(email) = ?) OR 
+            (? != '' AND LOWER(username) = ?) 
+          LIMIT 1`,
+          [resolvedEmail, resolvedEmail, resolvedUsername, resolvedUsername]
+        );
 
-      console.log('[assignments] staff match:', staffRows.length, staffRows[0]);
+        console.log('[assignments] staff match:', staffRows.length, staffRows[0]);
 
-      if (staffRows.length > 0) {
-        staffId = staffRows[0].id;
+        if (staffRows.length > 0) {
+          staffId = staffRows[0].id;
+        } else {
+          // Also try matching by trainerEmail directly if users table had no match
+          if (trainerEmail) {
+            const emailLower = trainerEmail.trim().toLowerCase();
+            const [staffByEmailRows] = await db.query(
+              'SELECT id, name FROM staff WHERE LOWER(email) = ? LIMIT 1',
+              [emailLower]
+            );
+            if (staffByEmailRows.length > 0) {
+              staffId = staffByEmailRows[0].id;
+              console.log('[assignments] staff matched by trainerEmail param:', staffId);
+            }
+          }
+          if (!staffId) {
+            console.warn('[assignments] Could not resolve staff for user', trainerUserId, '- returning empty');
+            return res.json([]);
+          }
+        }
       } else {
-        // staffId couldn't be resolved — return empty to avoid leaking all assignments
-        console.warn('[assignments] Could not resolve staff for user', u.id, '- returning empty');
+        console.warn('[assignments] No email/username to resolve staff for user', trainerUserId);
         return res.json([]);
       }
     }

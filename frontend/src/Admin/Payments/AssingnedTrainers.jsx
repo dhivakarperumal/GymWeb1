@@ -36,6 +36,8 @@ const AssingnedTrainers = () => {
       } else {
         setLoading(true);
       }
+      // Always invalidate cache so deduplication fix applies
+      delete cache.adminAssignmentsMembers;
 
       try {
         const res = await api.get("/memberships");
@@ -43,16 +45,20 @@ const AssingnedTrainers = () => {
 
         const usersMap = {};
         membershipsData.forEach((m) => {
-          const uid = m.userId?.toString?.() || m.email?.toLowerCase() || m.userEmail?.toLowerCase() || m.username?.toLowerCase() || m.userName?.toLowerCase() || `m_${m.id}`;
+          // Deduplicate primarily by email (lowercased) so same person with two memberships merges into one card
+          const email = (m.email || m.userEmail || "").toLowerCase().trim();
+          const uid = email || m.userId?.toString?.() || m.username?.toLowerCase() || m.userName?.toLowerCase() || `m_${m.id}`;
           if (!usersMap[uid]) {
             usersMap[uid] = {
               uid,
+              userId: m.userId || m.user_id || null,   // real numeric user ID for backend (users.id)
               membershipId: m.id,
               username: m.username || m.userName || "No Name",
-              email: m.email || m.userEmail || "",
-              userEmail: m.userEmail || m.email || "",
-              workoutCount: 0,
-              dietCount: 0,
+              email: (m.email || m.userEmail || "").trim(),
+              userEmail: (m.userEmail || m.email || "").trim(),
+              userMobile: m.userPhone || m.userMobile || m.mobile || m.phone || "",
+              workoutCount: m.workout_count || 0,
+              dietCount: m.diet_count || 0,
               plans: [],
               source: "memberships",
             };
@@ -117,17 +123,32 @@ const AssingnedTrainers = () => {
       if (cache.adminAssignments) {
         setAssignments(cache.adminAssignments);
       }
+      // Always invalidate cache so the dual email+userId indexing applies fresh
+      delete cache.adminAssignments;
       try {
         const res = await api.get("/assignments");
         const assignData = {};
+
         (Array.isArray(res.data) ? res.data : []).forEach((a) => {
+          // Index by numeric userId
           const userId = a.userId?.toString();
-          if (!assignData[userId]) assignData[userId] = [];
-          assignData[userId].push(a);
+          if (userId) {
+            if (!assignData[userId]) assignData[userId] = [];
+            assignData[userId].push(a);
+          }
+          // ALSO index by email (lowercased) — m.uid is now email after dedup fix
+          const emailKey = (a.userEmail || "").toLowerCase().trim();
+          if (emailKey) {
+            if (!assignData[emailKey]) assignData[emailKey] = [];
+            // avoid duplicate push if same key
+            if (!assignData[emailKey].some(x => x.id === a.id)) {
+              assignData[emailKey].push(a);
+            }
+          }
         });
 
         const dedupedAssignments = Object.fromEntries(
-          Object.entries(assignData).map(([userId, list]) => {
+          Object.entries(assignData).map(([key, list]) => {
             const uniqueList = list.filter((assign, index, self) =>
               index === self.findIndex((item) =>
                 (item.trainerId || '') === (assign.trainerId || '') &&
@@ -135,7 +156,7 @@ const AssingnedTrainers = () => {
                 (item.planId || '') === (assign.planId || '')
               )
             );
-            return [userId, uniqueList];
+            return [key, uniqueList];
           })
         );
 
@@ -150,6 +171,13 @@ const AssingnedTrainers = () => {
   }, []);
 
   /* ================= HANDLE INCOMING STATE ================= */
+  const processedState = useRef(false);
+
+  const getAssigned = (m) => {
+    if (!m) return [];
+    return assignments[m.uid] || (m.userId && assignments[m.userId]) || [];
+  };
+
   useEffect(() => {
     // If we have already processed this state, do nothing.
     if (processedStateRef.current) return;
@@ -170,15 +198,18 @@ const AssingnedTrainers = () => {
 
       if (member) {
         setSelectedUsers([member.uid]);
-        setIsReassignMode(assignments[member.uid]?.length > 0);
+        setIsReassignMode(getAssigned(member).length > 0);
         setModalSearch(member.email || member.username || "");
+        setShowAssignModal(true);
+        processedState.current = true;
+        
+        // We also replace the history state natively as an extra precaution so browser refresh doesn't trigger it again
+        window.history.replaceState({}, document.title);
       } else {
         toast.error("This member doesn't have an active plan or cannot be found.", { id: 'assign-err' });
       }
       
       processedStateRef.current = true;
-      // We also replace the history state natively as an extra precaution so browser refresh doesn't trigger it again
-      window.history.replaceState({}, document.title);
     }
   }, [location.state, members, assignments, showAssignModal, loading]);
 
@@ -206,11 +237,14 @@ const AssingnedTrainers = () => {
     try {
       const payload = [];
       for (const member of members.filter((m) => selectedUsers.includes(m.uid))) {
+        // Use the real backend userId if available, otherwise fall back to email
+        const backendUserId = member.userId || member.uid;
         for (const plan of member.plans) {
           payload.push({
-            userId: member.uid,
+            userId: backendUserId,
             username: member.username || "No Name",
             userEmail: member.email || "",
+            userMobile: member.userMobile || "",
             planId: plan.id,
             planName: plan.planName,
             planDuration: plan.duration,
@@ -285,10 +319,11 @@ const AssingnedTrainers = () => {
 
     // Filter type
     let matchesType = true;
+    const memberAssignments = getAssigned(m);
     if (filterType === "assigned") {
-      matchesType = assignments[m.uid] && assignments[m.uid].length > 0;
+      matchesType = memberAssignments.length > 0;
     } else if (filterType === "unassigned") {
-      matchesType = !assignments[m.uid] || assignments[m.uid].length === 0;
+      matchesType = memberAssignments.length === 0;
     }
 
     if (!matchesType) return false;
@@ -467,21 +502,21 @@ const AssingnedTrainers = () => {
                     </div>
 
                     <button
-                      onClick={() => handleQuickAssign(m.uid, assignments[m.uid]?.length > 0)}
-                      className={`ml-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg ${assignments[m.uid]?.length > 0
+                      onClick={() => handleQuickAssign(m.uid, getAssigned(m).length > 0)}
+                      className={`ml-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg ${getAssigned(m).length > 0
                           ? "bg-blue-600 text-white shadow-blue-500/25 border border-blue-400/50"
                           : "bg-emerald-600 text-white shadow-emerald-500/25 border border-emerald-400/50"
                         }`}
                     >
-                      {assignments[m.uid]?.length > 0 ? "Reassign" : "Assign"}
+                      {getAssigned(m).length > 0 ? "Reassign" : "Assign"}
                     </button>
                   </div>
                 </div>
 
                 {/* ASSIGNED TRAINERS */}
-                {assignments[m.uid] && assignments[m.uid].length > 0 ? (
+                {getAssigned(m).length > 0 ? (
                   <div className="space-y-3">
-                    {assignments[m.uid].map((assign) => (
+                    {getAssigned(m).map((assign) => (
                       <div
                         key={assign.id}
                         onClick={() => handleQuickAssign(m.uid, true)}
@@ -489,7 +524,7 @@ const AssingnedTrainers = () => {
                         title="Click to Reassign"
                       >
                         <div className="flex items-center gap-3 pb-3 border-b border-white/10">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0">
+                          <div className="w-10-h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0">
                             <Dumbbell size={18} className="text-white" />
                           </div>
                           <div className="flex-1">
@@ -539,7 +574,7 @@ const AssingnedTrainers = () => {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {paginatedData.map((m, index) => {
-                  const assigned = assignments[m.uid] || [];
+                  const assigned = getAssigned(m);
                   return (
                     <tr key={m.uid} className="hover:bg-white/5 transition">
                       <td className="px-4 py-4 text-gray-400 text-base font-medium">
@@ -735,20 +770,32 @@ const AssingnedTrainers = () => {
 
               <div className="max-h-56 overflow-y-auto space-y-2 pr-1 bg-black/20 rounded-xl p-3 border border-white/10">
                 {members
-                  .filter((m) => (m.plans?.length || 0) > 0 && (isReassignMode ? (assignments[m.uid] && assignments[m.uid].length > 0) : (!assignments[m.uid] || assignments[m.uid].length === 0)))
+                  .filter((m) => {
+                    const hasPlan = (m.plans?.length || 0) > 0;
+                    const isAssigned = getAssigned(m).length > 0;
+                    return hasPlan && (isReassignMode ? isAssigned : !isAssigned);
+                  })
                   .filter((m) =>
-                    m.username?.toLowerCase().includes(modalSearch.toLowerCase()) ||
-                    m.email?.toLowerCase().includes(modalSearch.toLowerCase())
+                    modalSearch
+                      ? m.username?.toLowerCase().includes(modalSearch.toLowerCase()) ||
+                      m.email?.toLowerCase().includes(modalSearch.toLowerCase())
+                      : true
                   ).length === 0 ? (
                   <p className="text-gray-400 text-sm text-center py-4">
                     {modalSearch ? "No matching members found" : (isReassignMode ? "No assigned members found" : "No unassigned members with plans found")}
                   </p>
                 ) : (
                   members
-                    .filter((m) => (m.plans?.length || 0) > 0 && (isReassignMode ? (assignments[m.uid] && assignments[m.uid].length > 0) : (!assignments[m.uid] || assignments[m.uid].length === 0)))
+                    .filter((m) => {
+                      const hasPlan = (m.plans?.length || 0) > 0;
+                      const isAssigned = getAssigned(m).length > 0;
+                      return hasPlan && (isReassignMode ? isAssigned : !isAssigned);
+                    })
                     .filter((m) =>
-                      m.username?.toLowerCase().includes(modalSearch.toLowerCase()) ||
-                      m.email?.toLowerCase().includes(modalSearch.toLowerCase())
+                      modalSearch
+                        ? m.username?.toLowerCase().includes(modalSearch.toLowerCase()) ||
+                        m.email?.toLowerCase().includes(modalSearch.toLowerCase())
+                        : true
                     )
                     .map((m) => (
                       <label
