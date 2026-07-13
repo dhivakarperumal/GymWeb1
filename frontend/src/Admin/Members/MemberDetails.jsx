@@ -321,7 +321,7 @@ const MemberDetails = () => {
                 ) : (
                   <div className="text-center py-4">
                     <p className="text-white/20 text-xs font-bold uppercase">No trainer assigned</p>
-                    <button onClick={() => navigate("/admin/buyplanadmin")} className="text-orange-500 text-[10px] font-black uppercase mt-2 hover:underline">Assign Now</button>
+                    <button onClick={() => navigate("/admin/assignedtrainers", { state: { assignMemberId: (member.u_id || member.user_id || member.id)?.toString(), assignMemberEmail: member.email || member.user_email } })} className="text-orange-500 text-[10px] font-black uppercase mt-2 hover:underline">Assign Now</button>
                   </div>
                 )}
               </div>

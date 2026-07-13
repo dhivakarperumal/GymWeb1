@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../../api"; // backend HTTP client
 import cache from "../../cache";
 import { X, Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import { toast } from "react-hot-toast";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const AssingnedTrainers = () => {
   const [members, setMembers] = useState([]);
@@ -23,6 +24,9 @@ const AssingnedTrainers = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });
   const [modalSearch, setModalSearch] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const processedStateRef = useRef(false);
 
   /* ================= FETCH MEMBERSHIPS ================= */
   useEffect(() => {
@@ -145,7 +149,38 @@ const AssingnedTrainers = () => {
     fetchAssignments();
   }, []);
 
+  /* ================= HANDLE INCOMING STATE ================= */
+  useEffect(() => {
+    // If we have already processed this state, do nothing.
+    if (processedStateRef.current) return;
 
+    if (location.state?.assignMemberId && !showAssignModal) {
+      setShowAssignModal(true);
+    }
+
+    if (location.state?.assignMemberId && members.length > 0 && !loading) {
+      const assignMemberId = location.state.assignMemberId.toString();
+      const assignMemberEmail = location.state.assignMemberEmail;
+      
+      const member = members.find(m => {
+        const mUidStr = m.uid?.toString();
+        const mMembershipIdStr = m.membershipId?.toString();
+        return mUidStr === assignMemberId || mUidStr === `m_${assignMemberId}` || mMembershipIdStr === assignMemberId || (m.email && m.email === assignMemberEmail);
+      });
+
+      if (member) {
+        setSelectedUsers([member.uid]);
+        setIsReassignMode(assignments[member.uid]?.length > 0);
+        setModalSearch(member.email || member.username || "");
+      } else {
+        toast.error("This member doesn't have an active plan or cannot be found.", { id: 'assign-err' });
+      }
+      
+      processedStateRef.current = true;
+      // We also replace the history state natively as an extra precaution so browser refresh doesn't trigger it again
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, members, assignments, showAssignModal, loading]);
 
   /* ================= ASSIGN / REASSIGN TRAINER ================= */
   const assignTrainer = async () => {
