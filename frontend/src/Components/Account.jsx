@@ -3,7 +3,7 @@ import DietChart from "../WorkoutsDiet/DietChart";
 import Workouts from "../WorkoutsDiet/Workouts";
 import UserOrders from "./UserOrders";
 import UserAddresses from "./UserAddresses";
-import UserNotifications from "./UserNotifications"; 
+import UserNotifications from "./UserNotifications";
 import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -67,6 +67,7 @@ const Account = () => {
   const [memberEditMode, setMemberEditMode] = useState(false);
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
+  
 
   const isActivePtPlan = (member) => {
     if (!member) return false;
@@ -84,6 +85,7 @@ const Account = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const hasActivePtMembership = isActivePtPlan(memberData);
 
   /* ================= FETCH USER INFO ================= */
   useEffect(() => {
@@ -455,13 +457,13 @@ const Account = () => {
       const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || "";
       const sessions = Array.isArray(rawData.sessions) && rawData.sessions.length > 0
         ? rawData.sessions.map((session, index) => ({
-            session_no: index + 1,
-            date: session.date || "",
-            workout: session.workout || "",
-            status: session.status || "Pending",
-            client_sign: session.client_sign || "",
-            trainer_sign: session.trainer_sign || trainerSign,
-          }))
+          session_no: index + 1,
+          date: session.date || "",
+          workout: session.workout || "",
+          status: session.status || "Pending",
+          client_sign: session.client_sign || "",
+          trainer_sign: session.trainer_sign || trainerSign,
+        }))
         : undefined;
 
       return {
@@ -514,9 +516,9 @@ const Account = () => {
     const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || '';
     const sessions = Array.isArray(rawData.sessions) && rawData.sessions.length > 0
       ? rawData.sessions.map((session, index) => ({
-          ...normalizeSession(session, trainerSign),
-          session_no: index + 1,
-        }))
+        ...normalizeSession(session, trainerSign),
+        session_no: index + 1,
+      }))
       : undefined;
 
     return {
@@ -615,16 +617,22 @@ const Account = () => {
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
     { key: "plans", label: "My Plans", icon: CalendarCheck },
-    
+
     ...(hasActivePlan
       ? [
         { key: "emi", label: "EMI Details", icon: CreditCard },
         { key: "diet", label: "Diet Chart", icon: Shield },
         { key: "workouts", label: "Workouts", icon: Key },
+      ]
+      : []),
+
+    ...(hasActivePtMembership
+      ? [
         { key: "ptform", label: "PT Form", icon: CalendarCheck },
         { key: "sessionTracker", label: "Session Tracker", icon: CalendarCheck },
       ]
       : []),
+
     { key: "orders", label: "My Orders", icon: CalendarCheck },
     { key: "address", label: "Address", icon: Home },
     { key: "notifications", label: "Notifications", icon: CalendarCheck },
