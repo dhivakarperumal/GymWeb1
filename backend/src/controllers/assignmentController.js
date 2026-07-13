@@ -24,6 +24,7 @@ function normalizeAssignment(row) {
     ptFormCompleted: row.pt_form_completed || 0,
     ptJoinDate: row.m_pt_join_date || null,
     ptExpiryDate: row.m_pt_expiry_date || null,
+    hasPtPlan: row.has_pt_plan,
     // joinDate: row.m_join_date || null,
     // expiryDate: row.m_expiry_date || null,
     updatedAt: row.updated_at,
@@ -99,6 +100,7 @@ async function getAllAssignments(req, res) {
              m.pt_form_completed as pt_form_completed,
              m.pt_join_date as m_pt_join_date,
              m.pt_expiry_date as m_pt_expiry_date,
+             IF((SELECT COUNT(*) FROM memberships pt_m WHERE pt_m.userId = a.user_id AND pt_m.has_pt_plan = 1) > 0, 1, 0) as has_pt_plan,
              s.name as current_trainer_name,
              s.role as trainer_source
       FROM trainer_assignments a

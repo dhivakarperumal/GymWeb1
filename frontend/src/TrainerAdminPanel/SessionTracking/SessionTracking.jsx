@@ -44,6 +44,7 @@ const SessionTracking = () => {
     planName: item.planName || item.plan_name || "",
     planStartDate: item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
     planEndDate: item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || "",
+    hasPtPlan: item.hasPtPlan || item.has_pt_plan || 0,
   });
 
   const fetchAssignedMembers = async () => {
@@ -53,7 +54,7 @@ const SessionTracking = () => {
       const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
       const members = data
         .map(normalizeMember)
-        .filter((m) => m.id)
+        .filter((m) => m.id && m.hasPtPlan)
         .filter((m, index, arr) => arr.findIndex((u) => u.id === m.id) === index);
       setAssignedMembers(members);
     } catch (err) {

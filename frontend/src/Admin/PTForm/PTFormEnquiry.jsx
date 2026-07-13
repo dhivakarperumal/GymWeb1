@@ -100,8 +100,9 @@ const Enquiry = ({
           email: a.userEmail,
           phone: a.userMobile,
           plan: a.planName,
-          pt_form_completed: a.ptFormCompleted
-        })).filter(m => m.id); // ensure we have a valid gymMemberId
+          pt_form_completed: a.ptFormCompleted,
+          has_pt_plan: a.hasPtPlan
+        })).filter(m => m.id && m.has_pt_plan); // ensure we have a valid gymMemberId and pt plan
       } else {
         const response = await api.get('/members');
         data = Array.isArray(response.data) ? response.data : [];
