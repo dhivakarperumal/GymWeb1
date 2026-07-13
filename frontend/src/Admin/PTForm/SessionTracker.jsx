@@ -31,40 +31,65 @@ const SessionTracker = ({
     if (diff > 0) numRows = diff;
   }
 
-  const [localFormData, setLocalFormData] = useState({
-    sessions: (initialFormData?.sessions && initialFormData.sessions.length > 0)
-      ? initialFormData.sessions
-      : Array(numRows).fill(null).map((_, i) => ({
+  const [localFormData, setLocalFormData] = useState(() => {
+    const existingSessions = initialFormData?.sessions && Array.isArray(initialFormData.sessions) 
+      ? initialFormData.sessions 
+      : [];
+      
+    // Create exactly `numRows` sessions
+    const updatedSessions = Array(numRows).fill(null).map((_, i) => {
+      // Use existing session if available
+      if (i < existingSessions.length) {
+        return existingSessions[i];
+      }
+      // Otherwise pad with new empty session
+      return {
         session_no: i + 1,
         date: "",
         workout: "",
         status: "Pending",
         client_sign: "",
         trainer_sign: initialFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
-      }))
+      };
+    });
+
+    return {
+      sessions: updatedSessions
+    };
   });
 
   useEffect(() => {
     if (!initialFormData) return;
 
     setLocalFormData(prev => {
-      const currentSessions = (initialFormData.sessions && initialFormData.sessions.length > 0)
+      const existingSessions = (initialFormData.sessions && Array.isArray(initialFormData.sessions) && initialFormData.sessions.length > 0)
         ? initialFormData.sessions
         : prev.sessions;
 
-      // If we are using sessions (either new ones or existing ones), 
-      // ensure the trainer_sign is filled if it's currently empty/default
-      const updatedSessions = currentSessions.map(s => ({
-        ...s,
-        trainer_sign: s.trainer_sign || initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName)
-      }));
+      // Create exactly `numRows` sessions
+      const resizedSessions = Array(numRows).fill(null).map((_, i) => {
+        if (i < existingSessions.length) {
+          return {
+            ...existingSessions[i],
+            trainer_sign: existingSessions[i].trainer_sign || initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName)
+          };
+        }
+        return {
+          session_no: i + 1,
+          date: "",
+          workout: "",
+          status: "Pending",
+          client_sign: "",
+          trainer_sign: initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName),
+        };
+      });
 
       return {
         ...prev,
-        sessions: updatedSessions
+        sessions: resizedSessions
       };
     });
-  }, [initialFormData?.sessions, initialFormData?.trainer_name_assigned, currentLoginName]);
+  }, [initialFormData, currentLoginName, userMode, numRows]);
 
   const handleSessionChange = (index, field, value) => {
     if (userMode && ['date', 'workout', 'trainer_sign', 'client_sign'].includes(field)) {
