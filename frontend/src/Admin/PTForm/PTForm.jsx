@@ -328,30 +328,41 @@ const PTForm = () => {
         </div>
 
         {/* Step Progress Bar */}
-        <div className="flex items-center space-x-4 mb-8">
+        <div className="flex items-center space-x-2 mb-8 overflow-x-auto pb-2">
           {steps.map((step, index) => (
             <React.Fragment key={step.id}>
-              <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(step.id)}
+                className="flex items-center gap-2 group shrink-0 focus:outline-none"
+                title={`Go to ${step.name}`}
+              >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                    currentStep >= step.id
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-600 text-gray-400'
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 ${
+                    currentStep === step.id
+                      ? 'bg-orange-500 text-white ring-2 ring-orange-400 ring-offset-2 ring-offset-black scale-110'
+                      : currentStep > step.id
+                      ? 'bg-orange-500/70 text-white group-hover:bg-orange-500'
+                      : 'bg-gray-600 text-gray-400 group-hover:bg-gray-500'
                   }`}
                 >
                   {step.id}
                 </div>
                 <span
-                  className={`ml-2 text-sm ${
-                    currentStep >= step.id ? 'text-orange-400' : 'text-gray-400'
+                  className={`text-sm font-medium transition-colors duration-200 ${
+                    currentStep === step.id
+                      ? 'text-orange-400'
+                      : currentStep > step.id
+                      ? 'text-orange-400/70 group-hover:text-orange-400'
+                      : 'text-gray-400 group-hover:text-gray-300'
                   }`}
                 >
                   {step.name}
                 </span>
-              </div>
+              </button>
               {index < steps.length - 1 && (
                 <div
-                  className={`flex-1 h-1 ${
+                  className={`flex-1 h-1 min-w-[16px] rounded-full transition-all duration-300 ${
                     currentStep > step.id ? 'bg-orange-500' : 'bg-gray-600'
                   }`}
                 />
