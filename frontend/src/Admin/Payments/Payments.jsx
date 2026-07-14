@@ -48,6 +48,7 @@ const Payments = () => {
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [paymentTab, setPaymentTab] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -226,6 +227,23 @@ const Payments = () => {
   const getSerialNumber = (index) =>
     (currentPage - 1) * itemsPerPage + index + 1;
 
+  const isEmiPlan = (plan) =>
+    String(plan?.paymentMode || "").trim().toLowerCase() === "emi";
+
+  const isFullPayment = (plan) => {
+    const totalPrice = (Number(plan.amount) || Number(plan.price) || 0) + (Number(plan.pt_amount) || Number(plan.pt_price) || 0);
+    const totalDiscount = (Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0);
+    const finalPrice = totalPrice - totalDiscount;
+    const initialPaid = Number(plan.pricePaid) || 0;
+    return initialPaid >= finalPrice && finalPrice > 0;
+  };
+
+  const matchesPaymentTab = (plan) => {
+    if (paymentTab === "emi") return isEmiPlan(plan);
+    if (paymentTab === "full") return isFullPayment(plan) && !isEmiPlan(plan);
+    return true;
+  };
+
   /* ================= MARK STATUS ================= */
   const handleStatusChange = async (memberId, planId, newStatus) => {
     if (!window.confirm(`Mark this plan as ${newStatus}?`)) return;
@@ -289,13 +307,16 @@ const Payments = () => {
       day: "2-digit", month: "short", year: "numeric",
     });
 
-    const totalAmount   = Number(plan.price || 0);
-    const pricePaid     = Number(plan.pricePaid || 0);
-    const secondPayment = Number(plan.secondPaymentPaid || 0);
+    const planPrice     = Number(plan.amount) || Number(plan.price) || 0;
+    const ptPrice       = Number(plan.pt_amount) || Number(plan.pt_price) || 0;
+    const discount      = (Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0);
+    const originalPrice = planPrice + ptPrice;
+    const totalAmount   = planPrice + ptPrice - discount;
+
+    const pricePaid     = (Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0);
+    const secondPayment = (Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0);
     const totalPaid     = pricePaid + secondPayment;
     const balance       = Math.max(0, totalAmount - totalPaid);
-    const discount      = Number(plan.discount || 0);
-    const originalPrice = Number(plan.amount || plan.price || 0);
 
     const paymentModeLabel = (plan.paymentMode || "cash").toUpperCase();
     const paymentStatusColor =
@@ -458,7 +479,7 @@ const Payments = () => {
       if (dateFilter === "custom" && !isInCustomRange(plan.createdAt))
         passDate = false;
 
-      if (passDate) {
+      if (passDate && matchesPaymentTab(plan)) {
         allInitialPlans.push(plan);
       }
     });
@@ -483,6 +504,9 @@ const Payments = () => {
           plan.planName?.toLowerCase().includes(q);
 
         if (!match) return false;
+
+        // Payment Tab Filter
+        if (!matchesPaymentTab(plan)) return false;
 
         // Status Filter
         if (filterType === "active" && plan.status !== "active") return false;
@@ -527,7 +551,7 @@ const Payments = () => {
     setCurrentPage(1);
     setSelectedRows([]);
     setSelectAll(false);
-  }, [search, filterType, dateFilter, customStart, customEnd]);
+  }, [search, filterType, paymentTab, dateFilter, customStart, customEnd]);
 
   useEffect(() => {
     setSelectAll(allPlans.length > 0 && selectedRows.length === allPlans.length);
@@ -814,6 +838,27 @@ const Payments = () => {
               </div>
             )}
 
+            {/* Payment Type Filters */}
+            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
+              {[
+                { key: "all", label: "All" },
+                { key: "full", label: "Full Payment" },
+                { key: "emi", label: "EMI" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setPaymentTab(tab.key)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
+                    paymentTab === tab.key
+                      ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
             {/* Status Filters */}
             <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
               {["all", "active", "inactive", "expiry"].map((type) => (
@@ -1067,11 +1112,10 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">PT Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold text-blue-400">Total Payable</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold text-green-400">Total Paid</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold text-orange-400">Remaining</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>
+                    {paymentTab === "emi" && <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>}
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold text-orange-400">Remaining Amount</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold text-blue-400">Total Payable</th>
                     
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Normal Validity</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Validity</th>
@@ -1085,9 +1129,12 @@ const Payments = () => {
                 <tbody>
                   {paginatedPlans.length > 0 ? (
                     paginatedPlans.map(({ member, plan }, index) => {
-                      const totalAmount = (Number(plan.price) || 0) + (Number(plan.pt_price) || 0);
+                      const planPrice = Number(plan.amount) || Number(plan.price) || 0;
+                      const ptPrice = Number(plan.pt_amount) || Number(plan.pt_price) || 0;
+                      const totalDiscount = (Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0);
+                      const totalAmount = planPrice + ptPrice - totalDiscount;
                       const paidTotal = (Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0) + (Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0);
-                      const remainingAmount = Math.max(0, Number(totalAmount) - paidTotal);
+                      const remainingAmount = Math.max(0, totalAmount - paidTotal);
 
                     return (
                       <tr
@@ -1149,14 +1196,14 @@ const Payments = () => {
                             ₹{(Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0)}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          <span className="text-base font-bold text-blue-400">
-                            ₹{totalAmount}
+                        {paymentTab === "emi" && <td className="px-4 py-4">
+                          <span className="text-base font-medium text-white/80">
+                            ₹{(Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0)}
                           </span>
-                        </td>
+                        </td>}
                         <td className="px-4 py-4">
-                          <span className="text-base font-bold text-green-400">
-                            ₹{paidTotal}
+                          <span className="text-base font-medium text-cyan-300">
+                            ₹{(Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0)}
                           </span>
                         </td>
                         <td className="px-4 py-4">
@@ -1165,13 +1212,8 @@ const Payments = () => {
                           </span>
                         </td>
                         <td className="px-4 py-4">
-                          <span className="text-base font-medium text-white/80">
-                            ₹{(Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className="text-base font-medium text-cyan-300">
-                            ₹{(Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0)}
+                          <span className="text-base font-bold text-blue-400">
+                            ₹{totalAmount}
                           </span>
                         </td>
                        
