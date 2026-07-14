@@ -3,6 +3,7 @@ import { useAuth } from '../PrivateRouter/AuthContext';
 import api from '../api';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
+import { AlertTriangle, X } from 'lucide-react';
 import EnquiryFormPage from './PTFormPages/EnquiryFormPage';
 import HealthHistoryPage from './PTFormPages/HealthHistoryPage';
 import HealthHistory2Page from './PTFormPages/HealthHistory2Page';
@@ -18,6 +19,7 @@ const PTFormUser = () => {
   const [loading, setLoading] = useState(true);
   const [hasEnquiry, setHasEnquiry] = useState(false);
   const [isPtExpired, setIsPtExpired] = useState(false);
+  const [ptExpiredAlert, setPtExpiredAlert] = useState(false);
 
   useEffect(() => {
     fetchUserFormData();
@@ -146,8 +148,9 @@ const PTFormUser = () => {
 
               toast('Your PT plan has expired. Health & fitness data has been cleared for a fresh session.', {
                 icon: '⚠️',
-                duration: 5000,
+                duration: 4000,
               });
+              setPtExpiredAlert(true);
             } else {
               // PT plan active — merge all saved data as before
               initialForm = { ...initialForm, ...savedData };
@@ -250,28 +253,52 @@ const PTFormUser = () => {
   return (
     <div className="space-y-6 w-full max-w-full overflow-hidden">
       <h2 className="text-xl font-bold text-red-500">PT Forms</h2>
+
+      {/* No member linked warning */}
       {!member?.id && (
-        <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-100">
+        <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-100 text-sm">
           Your account is not yet linked to a gym member record. Enquiry can still be recorded, but health history data requires a linked member.
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4 overflow-x-auto -mx-2 px-2">
+      {/* PT Plan Expired Alert Banner */}
+      {ptExpiredAlert && (
+        <div className="flex items-start gap-3 px-5 py-4 rounded-2xl border border-orange-500/40 bg-orange-500/10">
+          <AlertTriangle className="text-orange-400 mt-0.5 shrink-0" size={20} />
+          <div className="flex-1 min-w-0">
+            <p className="text-orange-300 font-semibold text-sm">PT Plan Expired</p>
+            <p className="text-orange-200/80 text-xs mt-0.5 leading-relaxed">
+              Your PT plan has expired. All previous health &amp; fitness form data has been cleared.
+              Only your personal details have been retained. Please fill in the form again for your new session.
+            </p>
+          </div>
+          <button
+            onClick={() => setPtExpiredAlert(false)}
+            className="text-orange-400/60 hover:text-orange-300 transition shrink-0 mt-0.5"
+            title="Dismiss"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Tab Bar */}
+      <div className="flex flex-wrap gap-1 border-b border-white/10 pb-0 overflow-x-auto -mx-2 px-2">
         {[
-          { key: 'enquiry', label: 'Enquiry Form' },
-          { key: 'health1', label: 'Health History' },
-          { key: 'health2', label: 'Health History 2' },
-          { key: 'fitness', label: 'Fitness Screening' },
+          { key: 'enquiry',     label: 'Enquiry Form' },
+          { key: 'health1',     label: 'Health History' },
+          { key: 'health2',     label: 'Health History 2' },
+          { key: 'fitness',     label: 'Fitness Screening' },
           { key: 'flexibility', label: 'Flexibility & Measurements' },
-          { key: 'sessions', label: 'Session Tracker' },
+          { key: 'sessions',    label: 'Session Tracker' },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`min-w-[140px] sm:min-w-[160px] flex-shrink-0 py-2 px-3 sm:px-4 rounded-md text-sm transition ${
+            className={`shrink-0 py-2.5 px-4 text-sm font-medium border-b-2 transition-all duration-150 ${
               activeTab === tab.key
-                ? 'border-b-2 border-red-500 text-red-500'
-                : 'text-gray-400 hover:text-white'
+                ? 'border-red-500 text-red-500'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
             }`}
           >
             {tab.label}
