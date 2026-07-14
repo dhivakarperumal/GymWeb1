@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import api from '../api';
 import toast from 'react-hot-toast';
+import dayjs from 'dayjs';
 import EnquiryFormPage from './PTFormPages/EnquiryFormPage';
 import HealthHistoryPage from './PTFormPages/HealthHistoryPage';
 import HealthHistory2Page from './PTFormPages/HealthHistory2Page';
@@ -16,6 +17,7 @@ const PTFormUser = () => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [hasEnquiry, setHasEnquiry] = useState(false);
+  const [isPtExpired, setIsPtExpired] = useState(false);
 
   useEffect(() => {
     fetchUserFormData();
@@ -32,6 +34,7 @@ const PTFormUser = () => {
     return value;
   };
 
+  // Only Tab 1 (Enquiry/Personal Details) fields
   const buildInitialForm = (userData, memberData) => ({
     name: memberData?.name || userData.username || '',
     email: userData.email || '',
@@ -53,38 +56,6 @@ const PTFormUser = () => {
     height: memberData?.height || '',
     weight: memberData?.weight || '',
     bmi: memberData?.bmi || '',
-    medications: memberData?.medications || '',
-    med1: memberData?.med1 || '',
-    dose1: memberData?.dose1 || '',
-    reason1: memberData?.reason1 || '',
-    med2: memberData?.med2 || '',
-    dose2: memberData?.dose2 || '',
-    reason2: memberData?.reason2 || '',
-    med3: memberData?.med3 || '',
-    dose3: memberData?.dose3 || '',
-    reason3: memberData?.reason3 || '',
-    allergies: memberData?.allergies || '',
-    surgeries1: memberData?.surgeries1 || '',
-    surgeries2: memberData?.surgeries2 || '',
-    surgeries3: memberData?.surgeries3 || '',
-    exercise_program: memberData?.exercise_program || '',
-    sport1: memberData?.sport1 || '',
-    sport2: memberData?.sport2 || '',
-    sport3: memberData?.sport3 || '',
-    sport4: memberData?.sport4 || '',
-    sport5: memberData?.sport5 || '',
-    sport6: memberData?.sport6 || '',
-    smoking: memberData?.smoking || '',
-    alcohol: memberData?.alcohol || '',
-    food_preference: memberData?.food_preference || '',
-    supplements: memberData?.supplements || '',
-    bp: memberData?.bp || '',
-    sugar: memberData?.sugar || '',
-    cholesterol: memberData?.cholesterol || '',
-    thyroid: memberData?.thyroid || '',
-    uric: memberData?.uric || '',
-    serum3d: memberData?.serum3d || '',
-    ...memberData,
   });
 
   const fetchUserFormData = async () => {
@@ -114,6 +85,12 @@ const PTFormUser = () => {
       const userEnquiry = enquiries.find((entry) => entry.email === user.email);
       setHasEnquiry(!!userEnquiry);
 
+      // Check if PT plan is expired
+      const ptExpired =
+        memberData?.pt_expiry_date &&
+        dayjs(memberData.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+      setIsPtExpired(!!ptExpired);
+
       // Fetch Trainer Assignment
       let trainerName = "";
       try {
@@ -130,16 +107,53 @@ const PTFormUser = () => {
         console.error("Failed to fetch assignment in PTFormUser", err);
       }
 
+      // Build Tab 1 only base form
       let initialForm = buildInitialForm(user, memberData);
       initialForm.trainer_name_assigned = trainerName;
+
       if (memberData?.id) {
         try {
           const ptRes = await api.get(`/pt-forms/${memberData.id}`);
           if (ptRes.data && ptRes.data.form_data) {
             const savedData = safeParse(ptRes.data.form_data);
-            initialForm = { ...initialForm, ...savedData };
-            if (!hasEnquiry) {
-              setHasEnquiry(!!savedData.name || !!savedData.email);
+
+            if (ptExpired) {
+              // PT plan expired — only merge Tab 1 fields from saved data, discard everything else
+              const tab1Fields = [
+                'name', 'email', 'phone', 'dob', 'age', 'blood_group', 'gender',
+                'address', 'employer', 'occupation',
+                'emergency_contact_name', 'emergency_contact_relationship',
+                'emergency_contact_address', 'emergency_contact_phone_home',
+                'emergency_contact_phone_work', 'fitness_goal', 'message',
+                'height', 'weight', 'bmi', 'trainer_name_assigned',
+                'participant_name', 'consent_agree', 'consent_signature',
+                'consent_date', 'guardian_signature', 'witness',
+              ];
+              const tab1Only = {};
+              tab1Fields.forEach(key => {
+                if (savedData[key] !== undefined && savedData[key] !== null && savedData[key] !== '') {
+                  tab1Only[key] = savedData[key];
+                }
+              });
+              initialForm = { ...initialForm, ...tab1Only };
+
+              // Reset backend PT form (clear form_data + pt_form_completed flag)
+              try {
+                await api.delete(`/pt-forms/${memberData.id}/reset`);
+              } catch (resetErr) {
+                console.log('Could not reset PT form on backend', resetErr);
+              }
+
+              toast('Your PT plan has expired. Health & fitness data has been cleared for a fresh session.', {
+                icon: '⚠️',
+                duration: 5000,
+              });
+            } else {
+              // PT plan active — merge all saved data as before
+              initialForm = { ...initialForm, ...savedData };
+              if (!hasEnquiry) {
+                setHasEnquiry(!!savedData.name || !!savedData.email);
+              }
             }
           }
         } catch (error) {
@@ -154,6 +168,7 @@ const PTFormUser = () => {
       setLoading(false);
     }
   };
+
 
   const savePtForm = async (updatedData) => {
     if (!member?.id) {

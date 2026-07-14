@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import { normalizeDateForDateInput } from '../../utils/dateUtils';
+import dayjs from 'dayjs';
 import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
 import HealthHistory2 from './HealthHistory2';
@@ -59,6 +60,11 @@ const PTForm = () => {
             expiry_date: data.expiry_date || ""
           });
 
+          // Check if PT plan is expired
+          const isPtExpired =
+            data.pt_expiry_date &&
+            dayjs(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+
           // Also try to fetch existing PT Form data if any
           try {
             const [ptRes, assignRes] = await Promise.all([
@@ -75,7 +81,27 @@ const PTForm = () => {
               if (myAssign) trainerName = myAssign.trainerName;
             }
 
-            if (ptRes.data && ptRes.data.form_data) {
+            if (isPtExpired) {
+              // PT plan expired — only keep Tab 1 (Enquiry) fields, reset all other tabs
+              // Also clear pt_form_completed so it's treated as a fresh registration
+              setFormData(prev => ({
+                ...prev,
+                trainer_name_assigned: trainerName || (role === 'trainer' ? (profileName || "") : ""),
+                pt_form_completed: false,
+              }));
+
+              // Reset PT form data on the backend (clears saved form_data + pt_form_completed flag)
+              try {
+                await api.delete(`/pt-forms/${memberId}/reset`);
+              } catch (resetErr) {
+                console.log('Could not reset PT form on backend', resetErr);
+              }
+
+              toast('PT plan has expired. Form data from previous session has been cleared. Only member details are retained.', {
+                icon: '⚠️',
+                duration: 5000,
+              });
+            } else if (ptRes.data && ptRes.data.form_data) {
               const savedData = typeof ptRes.data.form_data === 'string'
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;

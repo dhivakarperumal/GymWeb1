@@ -105,4 +105,37 @@ async function getPTForm(req, res) {
   }
 }
 
-module.exports = { savePTForm, getPTForm };
+async function resetPTForm(req, res) {
+  const { member_id } = req.params;
+  if (!member_id) {
+    return res.status(400).json({ error: 'Member ID is required' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Clear the saved form data from pt_forms table
+    await connection.query(
+      'UPDATE pt_forms SET form_data = NULL WHERE member_id = ?',
+      [member_id]
+    );
+
+    // Reset pt_form_completed flag in gym_members
+    await connection.query(
+      'UPDATE gym_members SET pt_form_completed = 0, pt_form_completed_at = NULL WHERE id = ? OR member_id = ?',
+      [member_id, member_id]
+    );
+
+    await connection.commit();
+    res.json({ success: true, message: 'PT Form reset successfully' });
+  } catch (err) {
+    await connection.rollback();
+    console.error('resetPTForm error:', err);
+    res.status(500).json({ error: 'Failed to reset PT Form' });
+  } finally {
+    connection.release();
+  }
+}
+
+module.exports = { savePTForm, getPTForm, resetPTForm };
