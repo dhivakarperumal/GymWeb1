@@ -79,6 +79,15 @@ const TrainerDashboard = () => {
         /* show all assignments */
         const seen = new Set();
         const uniqueMembers = membersRaw.filter((m) => {
+          // Check if plan is expired
+          const endDate = m.planEndDate || m.ptExpiryDate || m.pt_expiry_date || m.endDate;
+          if (endDate) {
+            const end = new Date(endDate);
+            if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
+              return false; // exclude expired plans
+            }
+          }
+
           // Deduplicate by assignment ID or combination of User+Plan so multiple plans show up
           const key = String(m.id || `${m.userId}-${m.planId}`);
           if (!key || key === "undefined" || seen.has(key)) return false;
