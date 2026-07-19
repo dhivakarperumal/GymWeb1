@@ -455,42 +455,44 @@ const MemberDetails = () => {
                 </div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-2xl ${member.pt_form_completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-500'}`}>
-                    <Activity size={24} />
+              {((member.pt_plan || member.has_pt_plan) && !isPtExpired) ? (
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-2xl ${member.pt_form_completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-500'}`}>
+                      <Activity size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold text-sm">PT Registration Form</h4>
+                      <p className="text-white/40 text-xs">{member.pt_form_completed ? 'Form completed' : 'Awaiting completion'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-white font-bold text-sm">PT Registration Form</h4>
-                    <p className="text-white/40 text-xs">{member.pt_form_completed ? 'Form completed' : 'Awaiting completion'}</p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {member.pt_form_completed ? (
+                      <>
+                        <button
+                          onClick={() => navigate(`/admin/pt-form/print/${id}`)}
+                          className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white"
+                        >
+                          View Form
+                        </button>
+                        <button
+                          onClick={() => navigate(`/admin/pt-form?member_id=${id}&edit=true`)}
+                          className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white"
+                        >
+                          Edit Form
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/admin/pt-form?member_id=${id}`)}
+                        className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white"
+                      >
+                        Complete Now
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  {member.pt_form_completed ? (
-                    <>
-                      <button
-                        onClick={() => navigate(`/admin/pt-form/print/${id}`)}
-                        className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white"
-                      >
-                        View Form
-                      </button>
-                      <button
-                        onClick={() => navigate(`/admin/pt-form?member_id=${id}&edit=true`)}
-                        className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white"
-                      >
-                        Edit Form
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => navigate(`/admin/pt-form?member_id=${id}`)}
-                      className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white"
-                    >
-                      Complete Now
-                    </button>
-                  )}
-                </div>
-              </div>
+              ) : null}
             </div>
           </div>
         )}
