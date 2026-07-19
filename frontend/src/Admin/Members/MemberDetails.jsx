@@ -455,7 +455,7 @@ const MemberDetails = () => {
                 </div>
               </div>
 
-              {(member.pt_plan || member.has_pt_plan) && (
+              {((member.pt_plan || member.has_pt_plan) && !isPtExpired) ? (
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-2xl ${member.pt_form_completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-500'}`}>
@@ -492,8 +492,7 @@ const MemberDetails = () => {
                     )}
                   </div>
                 </div>
-              )}
-
+              ) : null}
             </div>
           </div>
         )}

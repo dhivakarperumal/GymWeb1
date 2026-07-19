@@ -87,21 +87,7 @@ const PTForm = () => {
               if (myAssign) trainerName = myAssign.trainerName;
             }
 
-            if (isPtExpired) {
-              // PT plan expired — only keep Tab 1 (Enquiry) fields, reset all other tabs
-              setFormData(prev => ({
-                ...prev,
-                trainer_name_assigned: trainerName || (role === 'trainer' ? (profileName || "") : ""),
-                pt_form_completed: false,
-              }));
-
-              // Reset PT form data on the backend
-              try {
-                await api.delete(`/pt-forms/${memberId}/reset`);
-              } catch (resetErr) {
-                console.log('Could not reset PT form on backend', resetErr);
-              }
-            } else if (ptRes.data && ptRes.data.form_data) {
+            if (ptRes.data && ptRes.data.form_data && (isEditMode || data.pt_form_completed)) {
               const savedData = typeof ptRes.data.form_data === 'string'
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;
@@ -253,7 +239,7 @@ const PTForm = () => {
 
       try {
         const ptRes = await api.get(`/pt-forms/${memberId}`);
-        if (ptRes.data && ptRes.data.form_data) {
+        if (ptRes.data && ptRes.data.form_data && (isEditMode || data.pt_form_completed)) {
           const savedData = typeof ptRes.data.form_data === 'string'
             ? JSON.parse(ptRes.data.form_data)
             : ptRes.data.form_data;

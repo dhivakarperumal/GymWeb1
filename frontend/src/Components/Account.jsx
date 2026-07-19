@@ -74,7 +74,16 @@ const Account = () => {
     const hasPlan = Boolean(member.pt_plan);
     const hasDates = Boolean(member.pt_join_date && member.pt_expiry_date);
     const isActive = String(member.pt_status || '').toLowerCase() === 'active';
-    return isActive && hasPlan && hasDates;
+    
+    let isNotExpired = true;
+    if (member.pt_expiry_date) {
+      const endDate = new Date(member.pt_expiry_date);
+      if (endDate instanceof Date && !Number.isNaN(endDate.getTime()) && endDate < new Date()) {
+        isNotExpired = false;
+      }
+    }
+    
+    return isActive && hasPlan && hasDates && isNotExpired;
   };
 
   const [oldPassword, setOldPassword] = useState("");

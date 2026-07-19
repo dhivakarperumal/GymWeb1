@@ -180,7 +180,23 @@ const Members = () => {
 
       const res = await api.get(query);
       const data = Array.isArray(res.data) ? res.data : [];
-      const onlyGymMembers = data.filter((m) => m.source !== "users");
+      let onlyGymMembers = data.filter((m) => m.source !== "users");
+      
+      onlyGymMembers = onlyGymMembers.map(m => {
+        let isPtExpired = false;
+        const endDate = m.pt_expiry_date || m.ptExpiryDate || m.pt_endDate;
+        if (endDate) {
+          const end = new Date(endDate);
+          if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
+            isPtExpired = true;
+          }
+        }
+        if (isPtExpired) {
+          return { ...m, pt_plan: "", has_pt_plan: 0, pt_status: "Expired" };
+        }
+        return m;
+      });
+
       setMembers(onlyGymMembers);
       if (role !== "trainer" && selectedTrainer === "all") {
         cache.adminMembers = onlyGymMembers;

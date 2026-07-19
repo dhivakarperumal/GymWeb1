@@ -35,17 +35,29 @@ const SessionTracking = () => {
     fetchPtForm(selectedMemberId, member);
   }, [selectedMemberId, assignedMembers]);
 
-  const normalizeMember = (item) => ({
-    id: item.gymMemberId || item.id || item.gm_id || item.member_id || "",
-    userId: item.userId || item.user_id || "",
-    name: item.username || item.name || item.user_name || item.full_name || "Member",
-    email: item.userEmail || item.user_email || item.email || "",
-    phone: item.userMobile || item.user_mobile || item.phone || "",
-    planName: item.planName || item.plan_name || "",
-    planStartDate: item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
-    planEndDate: item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || "",
-    hasPtPlan: item.hasPtPlan || item.has_pt_plan || 0,
-  });
+  const normalizeMember = (item) => {
+    const endDate = item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || "";
+    let isExpired = false;
+    if (endDate) {
+      const end = new Date(endDate);
+      if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
+        isExpired = true;
+      }
+    }
+    
+    return {
+      id: item.gymMemberId || item.id || item.gm_id || item.member_id || "",
+      userId: item.userId || item.user_id || "",
+      name: item.username || item.name || item.user_name || item.full_name || "Member",
+      email: item.userEmail || item.user_email || item.email || "",
+      phone: item.userMobile || item.user_mobile || item.phone || "",
+      planName: item.planName || item.plan_name || "",
+      planStartDate: item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
+      planEndDate: endDate,
+      hasPtPlan: isExpired ? 0 : (item.hasPtPlan || item.has_pt_plan || 0),
+      ptFormCompleted: item.ptFormCompleted || item.pt_form_completed || 0,
+    };
+  };
 
   const fetchAssignedMembers = async () => {
     setLoading(true);
@@ -107,7 +119,10 @@ const SessionTracking = () => {
     setLoading(true);
     try {
       const res = await api.get(`/pt-forms/${memberId}`);
-      const rawFormData = res.data?.form_data;
+      let rawFormData = null;
+      if (member?.ptFormCompleted) {
+         rawFormData = res.data?.form_data;
+      }
       const savedData = rawFormData && typeof rawFormData === "string"
         ? JSON.parse(rawFormData)
         : rawFormData || {};

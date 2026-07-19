@@ -281,7 +281,8 @@ async function createMembership(req, res) {
                    pt_duration = ?, 
                    pt_join_date = ?, 
                    pt_expiry_date = ?,
-                   pt_status = ?
+                   pt_status = ?,
+                   pt_form_completed = 0
                WHERE ${whereStr}`,
               [pt_planName, pt_duration, pt_startDate, pt_endDate, pt_status || 'active', ...whereParams]
             );
