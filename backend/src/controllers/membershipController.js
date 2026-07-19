@@ -288,6 +288,15 @@ async function createMembership(req, res) {
             );
             if (syncResult.affectedRows === 0) {
               console.warn('createMembership: PT plan sync matched 0 gym_members rows for userId:', userId);
+            } else {
+              try {
+                await db.query(
+                  `UPDATE pt_forms SET form_data = NULL WHERE member_id IN (SELECT id FROM gym_members WHERE ${whereStr})`,
+                  [...whereParams]
+                );
+              } catch (ptClearErr) {
+                console.error('Failed to clear old PT form data', ptClearErr);
+              }
             }
           } else {
             const [syncResult] = await db.query(
