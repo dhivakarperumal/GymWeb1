@@ -414,8 +414,8 @@ const TrainerDashboard = () => {
                                   <FaEye size={12} />
                                 </button>
                                 <button
-                                  onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
-                                  className="p-1.5 text-orange-400 hover:bg-orange-400/20 rounded-lg transition-all"
+                                  onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}&edit=true`)}
+                                  className="p-2 text-orange-400 hover:bg-orange-400/20 rounded-xl transition-all"
                                   title="Edit PT Form"
                                 >
                                   <FaPencilAlt size={12} />
@@ -584,7 +584,7 @@ const TrainerDashboard = () => {
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => navigate(`/trainer/pt-form?member_id=${ptViewMember.gymMemberId}`)}
+                  onClick={() => navigate(`/trainer/pt-form?member_id=${ptViewMember.gymMemberId}&edit=true`)}
                   className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-xl text-sm font-bold hover:bg-orange-500 hover:text-white transition-all"
                 >
                   <FaPencilAlt size={14} /> Edit Form

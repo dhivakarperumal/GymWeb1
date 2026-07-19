@@ -55,6 +55,7 @@ const SessionTracking = () => {
       planStartDate: item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
       planEndDate: endDate,
       hasPtPlan: isExpired ? 0 : (item.hasPtPlan || item.has_pt_plan || 0),
+      ptFormCompleted: item.ptFormCompleted || item.pt_form_completed || 0,
     };
   };
 
@@ -118,7 +119,10 @@ const SessionTracking = () => {
     setLoading(true);
     try {
       const res = await api.get(`/pt-forms/${memberId}`);
-      const rawFormData = res.data?.form_data;
+      let rawFormData = null;
+      if (member?.ptFormCompleted) {
+         rawFormData = res.data?.form_data;
+      }
       const savedData = rawFormData && typeof rawFormData === "string"
         ? JSON.parse(rawFormData)
         : rawFormData || {};

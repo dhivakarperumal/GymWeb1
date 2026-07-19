@@ -75,7 +75,7 @@ const PTForm = () => {
               if (myAssign) trainerName = myAssign.trainerName;
             }
 
-            if (ptRes.data && ptRes.data.form_data) {
+            if (ptRes.data && ptRes.data.form_data && (isEditMode || data.pt_form_completed)) {
               const savedData = typeof ptRes.data.form_data === 'string'
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;
@@ -229,7 +229,7 @@ const PTForm = () => {
 
       try {
         const ptRes = await api.get(`/pt-forms/${memberId}`);
-        if (ptRes.data && ptRes.data.form_data) {
+        if (ptRes.data && ptRes.data.form_data && (isEditMode || data.pt_form_completed)) {
           const savedData = typeof ptRes.data.form_data === 'string'
             ? JSON.parse(ptRes.data.form_data)
             : ptRes.data.form_data;
