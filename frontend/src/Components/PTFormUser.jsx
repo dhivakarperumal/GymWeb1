@@ -116,7 +116,7 @@ const PTFormUser = () => {
       if (memberData?.id) {
         try {
           const ptRes = await api.get(`/pt-forms/${memberData.id}`);
-          if (ptRes.data && ptRes.data.form_data) {
+          if (ptRes.data && ptRes.data.form_data && memberData.pt_form_completed) {
             const savedData = safeParse(ptRes.data.form_data);
 
             if (ptExpired) {

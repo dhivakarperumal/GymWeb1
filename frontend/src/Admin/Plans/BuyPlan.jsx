@@ -104,8 +104,18 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         if (filterTrainerPlans) {
           // Only show active members
           if (m.status !== "active") return false;
-          // Skip if already has PT plan
-          if (m.has_pt_plan === 1 || m.has_pt_plan === true) return false;
+          
+          // Skip if already has ACTIVE PT plan
+          let isPtExpired = false;
+          const endDate = m.pt_expiry_date || m.ptExpiryDate || m.pt_endDate;
+          if (endDate) {
+            const end = new Date(endDate);
+            if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
+              isPtExpired = true;
+            }
+          }
+          const hasActivePt = (m.has_pt_plan === 1 || m.has_pt_plan === true) && !isPtExpired;
+          if (hasActivePt) return false;
         } else {
           // For regular Buy Plan, show active/pending members without existing plans
           const status = (m.status || "").toLowerCase();
