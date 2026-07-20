@@ -626,10 +626,8 @@ const EMIList = () => {
                 <thead className="bg-white/10 text-white">
                   <tr>
                     <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Member</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Phone</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Trainer</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Member Info</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan Details</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Dues</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Total Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Initial Payment</th>
@@ -680,15 +678,14 @@ const EMIList = () => {
                           <div className="font-medium text-base text-white group-hover:text-orange-400 transition-colors">
                             {membership.userName || membership.username || "Unknown"}
                           </div>
-                        </td>
-                        <td className="px-4 py-4 text-base font-medium text-gray-300">
-                          {membership.mobile || membership.phone || "N/A"}
+                          <div className="text-xs text-white/50 mt-1 flex items-center gap-1">
+                            <Phone size={12} className="text-orange-500" />
+                            {membership.mobile || membership.phone || "N/A"}
+                          </div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="text-base font-medium text-gray-300">{membership.planName}</div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="text-base font-medium text-cyan-300">{getAssignedTrainerName(membership)}</div>
+                          <div className="text-xs font-medium text-cyan-300 mt-1">By: {getAssignedTrainerName(membership)}</div>
                         </td>
                         <td className="px-4 py-4 align-top">
                           {membership.dues && Array.isArray(membership.dues) && membership.dues.length > 0 ? (
