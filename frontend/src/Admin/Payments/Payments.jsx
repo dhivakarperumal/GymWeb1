@@ -1105,7 +1105,7 @@ const Payments = () => {
                       />
                     </th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Name</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Member Info</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
@@ -1156,8 +1156,13 @@ const Payments = () => {
                           <div className="text-base font-medium text-white group-hover:text-orange-400 transition-colors">
                             {member.username}
                           </div>
-                          <div className="text-[11px] text-gray-400 mt-1">
-                            {member.email}
+                          <div className="text-xs text-white/50 mt-1 flex flex-col gap-0.5">
+                            <div>
+                              {plan.phone || "N/A"}
+                            </div>
+                            <div className="text-[11px] text-gray-500">
+                              {member.email || "N/A"}
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
