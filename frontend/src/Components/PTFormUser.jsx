@@ -120,36 +120,12 @@ const PTFormUser = () => {
             const savedData = safeParse(ptRes.data.form_data);
 
             if (ptExpired) {
-              // PT plan expired — only merge Tab 1 fields from saved data, discard everything else
-              const tab1Fields = [
-                'name', 'email', 'phone', 'dob', 'age', 'blood_group', 'gender',
-                'address', 'employer', 'occupation',
-                'emergency_contact_name', 'emergency_contact_relationship',
-                'emergency_contact_address', 'emergency_contact_phone_home',
-                'emergency_contact_phone_work', 'fitness_goal', 'message',
-                'height', 'weight', 'bmi', 'trainer_name_assigned',
-                'participant_name', 'consent_agree', 'consent_signature',
-                'consent_date', 'guardian_signature', 'witness',
-              ];
-              const tab1Only = {};
-              tab1Fields.forEach(key => {
-                if (savedData[key] !== undefined && savedData[key] !== null && savedData[key] !== '') {
-                  tab1Only[key] = savedData[key];
-                }
-              });
-              initialForm = { ...initialForm, ...tab1Only };
-
-              // Reset backend PT form (clear form_data + pt_form_completed flag)
-              try {
-                await api.delete(`/pt-forms/${memberData.id}/reset`);
-              } catch (resetErr) {
-                console.log('Could not reset PT form on backend', resetErr);
-              }
-
-              toast('Your PT plan has expired. Health & fitness data has been cleared for a fresh session.', {
-                icon: '⚠️',
-                duration: 4000,
-              });
+              // PT plan expired — retain ALL saved data but reset sessions only
+              initialForm = {
+                ...initialForm,
+                ...savedData,
+                sessions: [],  // reset session tracker only
+              };
               setPtExpiredAlert(true);
             } else {
               // PT plan active — merge all saved data as before
@@ -268,8 +244,8 @@ const PTFormUser = () => {
           <div className="flex-1 min-w-0">
             <p className="text-orange-300 font-semibold text-sm">PT Plan Expired</p>
             <p className="text-orange-200/80 text-xs mt-0.5 leading-relaxed">
-              Your PT plan has expired. All previous health &amp; fitness form data has been cleared.
-              Only your personal details have been retained. Please fill in the form again for your new session.
+              Your PT plan has expired. The Session Tracker has been reset for your new session.
+              All your other health & fitness details have been retained.
             </p>
           </div>
           <button

@@ -77,13 +77,12 @@ const Account = () => {
     
     let isNotExpired = true;
     if (member.pt_expiry_date) {
-      const endDate = new Date(member.pt_expiry_date);
-      if (endDate instanceof Date && !Number.isNaN(endDate.getTime()) && endDate < new Date()) {
-        isNotExpired = false;
-      }
+      const isExpired = dayjs(member.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+      // We will keep the isExpired check here in case we need it, but we won't hide the tabs.
+      // The user wants the PT tabs to be visible even if the plan is expired.
     }
     
-    return isActive && hasPlan && hasDates && isNotExpired;
+    return isActive && hasPlan && hasDates;
   };
 
   const [oldPassword, setOldPassword] = useState("");
@@ -187,14 +186,25 @@ const Account = () => {
 
     const fetchPtForm = async () => {
       try {
+        const isExpired = memberData?.pt_expiry_date && dayjs(memberData.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+        
         const res = await api.get(`/pt-forms/${memberData.id}`);
         const ptData = res.data || {};
         const formData = typeof ptData.form_data === 'string' ? JSON.parse(ptData.form_data || '{}') : ptData.form_data || {};
+        
+        let finalFormData = { ...formData };
+        if (isExpired) {
+          finalFormData = {
+            ...formData,
+            sessions: []
+          };
+        }
+
         setPtFormData(normalizeSessionForm({
           member_id: memberData.id,
           u_id: userId,
           trainer_name_assigned: memberFormData.trainer_name_assigned || "",
-          ...formData,
+          ...finalFormData,
         }));
       } catch (err) {
         setPtFormData({

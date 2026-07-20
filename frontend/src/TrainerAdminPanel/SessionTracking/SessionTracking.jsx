@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import SessionTracker from "../../Admin/PTForm/SessionTracker";
+import dayjs from "dayjs";
 
 const SessionTracking = () => {
   const { user } = useAuth();
@@ -96,7 +97,9 @@ const SessionTracking = () => {
       trainer_name_assigned: trainerName || savedData.trainer_name_assigned || "",
     };
 
-    const sessions = Array.isArray(savedData.sessions) && savedData.sessions.length > 0
+    const isExpired = member?.planEndDate && dayjs(member.planEndDate).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+
+    const sessions = !isExpired && Array.isArray(savedData.sessions) && savedData.sessions.length > 0
       ? savedData.sessions.map((session, index) => ({
           session_no: index + 1,
           date: session.date || "",

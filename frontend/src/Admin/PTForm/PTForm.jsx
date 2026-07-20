@@ -92,12 +92,23 @@ const PTForm = () => {
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;
 
-              setFormData(prev => ({
-                ...prev,
-                ...savedData,
-                dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
-                trainer_name_assigned: trainerName || savedData.trainer_name_assigned || (role === 'trainer' ? (profileName || "") : "")
-              }));
+              if (isPtExpired) {
+                // If expired, retain all form data but reset the session tracker
+                setFormData(prev => ({
+                  ...prev,
+                  ...savedData,
+                  dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
+                  trainer_name_assigned: trainerName || savedData.trainer_name_assigned || (role === 'trainer' ? (profileName || "") : ""),
+                  sessions: []
+                }));
+              } else {
+                setFormData(prev => ({
+                  ...prev,
+                  ...savedData,
+                  dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
+                  trainer_name_assigned: trainerName || savedData.trainer_name_assigned || (role === 'trainer' ? (profileName || "") : "")
+                }));
+              }
             } else {
               setFormData(prev => ({
                 ...prev,
@@ -235,6 +246,16 @@ const PTForm = () => {
         expiry_date: data.expiry_date || ""
       };
 
+      const isPtExpired =
+        data.pt_expiry_date &&
+        dayjs(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+
+      if (isPtExpired) {
+        setPtExpiredAlert(true);
+      } else {
+        setPtExpiredAlert(false);
+      }
+
       setFormData(memberPrefill);
 
       try {
@@ -243,12 +264,23 @@ const PTForm = () => {
           const savedData = typeof ptRes.data.form_data === 'string'
             ? JSON.parse(ptRes.data.form_data)
             : ptRes.data.form_data;
-          setFormData(prev => ({
-            ...prev,
-            ...savedData,
-            dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
-          }));
+          
+          if (isPtExpired) {
+            setFormData(prev => ({
+              ...prev,
+              ...savedData,
+              dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
+              sessions: []
+            }));
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              ...savedData,
+              dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
+            }));
+          }
         }
+
       } catch (err) {
         console.log('No saved PT form for selected member');
       }
@@ -325,8 +357,8 @@ const PTForm = () => {
             <div className="flex-1 min-w-0">
               <p className="text-orange-300 font-semibold text-sm">PT Plan Expired</p>
               <p className="text-orange-200/80 text-xs mt-0.5 leading-relaxed">
-                This member's PT plan has expired. All previous health &amp; fitness form data has been
-                cleared. Only personal details (Tab 1) have been retained for the new session.
+                This member's PT plan has expired. The Session Tracker has been reset for the new session,
+                but previous health & fitness details have been retained.
               </p>
             </div>
             <button
