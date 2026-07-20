@@ -64,7 +64,14 @@ const MemberDetails = () => {
 
         // Filter Workouts
         const myWorkouts = (Array.isArray(workoutRes.data) ? workoutRes.data : [])
-          .filter(w => w.member_email?.toLowerCase() === memberData.email?.toLowerCase())
+          .filter(w => {
+            const idsToMatch = [String(memberData.id), String(memberData.u_id), String(memberData.user_id)].filter(Boolean).filter(id => id !== 'undefined' && id !== 'null');
+            const byId = w.member_id && idsToMatch.includes(String(w.member_id));
+            const byUserId = w.user_id && idsToMatch.includes(String(w.user_id));
+            const byUuid = w.user_id_uuid && idsToMatch.includes(String(w.user_id_uuid));
+            const byEmail = w.member_email && memberData.email && w.member_email.toLowerCase() === memberData.email.toLowerCase();
+            return byId || byUserId || byUuid || byEmail;
+          })
           .map(w => {
             let daysData = w.days;
             if (typeof daysData === "string") {
@@ -76,7 +83,14 @@ const MemberDetails = () => {
 
         // Filter Diet Plans
         const myDiets = (Array.isArray(dietRes.data) ? dietRes.data : [])
-          .filter(d => d.member_email?.toLowerCase() === memberData.email?.toLowerCase())
+          .filter(d => {
+            const idsToMatch = [String(memberData.id), String(memberData.u_id), String(memberData.user_id)].filter(Boolean).filter(id => id !== 'undefined' && id !== 'null');
+            const byId = d.member_id && idsToMatch.includes(String(d.member_id));
+            const byUserId = d.user_id && idsToMatch.includes(String(d.user_id));
+            const byUuid = d.user_id_uuid && idsToMatch.includes(String(d.user_id_uuid));
+            const byEmail = d.member_email && memberData.email && d.member_email.toLowerCase() === memberData.email.toLowerCase();
+            return byId || byUserId || byUuid || byEmail;
+          })
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
         if (myDiets.length > 0) {
@@ -250,8 +264,8 @@ const MemberDetails = () => {
       <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit mb-8">
         {[
           { id: 'overview', label: 'Overview', icon: <Info size={16} /> },
-          { id: 'workout', label: 'Workout Plan', icon: <Dumbbell size={16} /> },
-          { id: 'diet', label: 'Diet Chart', icon: <Utensils size={16} /> },
+          ...(workouts.length > 0 ? [{ id: 'workout', label: 'Workout Plan', icon: <Dumbbell size={16} /> }] : []),
+          ...(dietPlan ? [{ id: 'diet', label: 'Diet Chart', icon: <Utensils size={16} /> }] : []),
         ].map((tab) => (
           <button
             key={tab.id}
