@@ -628,7 +628,7 @@ const EMIList = () => {
                     <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Member Info</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan Details</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold min-w-[200px]">Dues</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold min-w-[80px]">Dues</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold min-w-[160px]">Payment Summary</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Dates</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
