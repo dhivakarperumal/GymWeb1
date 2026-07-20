@@ -422,11 +422,17 @@ const MemberDetails = () => {
                   <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
                       <h3 className="text-sm font-black text-white/20 uppercase tracking-widest">PT Plan</h3>
-                      {member.pt_status && (
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${member.pt_status === 'Paid' || member.pt_status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                          {member.pt_status}
-                        </span>
-                      )}
+                      {(() => {
+                        const isExpired = member.pt_expiry_date && dayjs(member.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+                        const displayStatus = isExpired ? 'EXPIRED' : (member.pt_status || '');
+                        const isActiveStyle = displayStatus.toLowerCase() === 'paid' || displayStatus.toLowerCase() === 'active';
+                        
+                        return displayStatus ? (
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${isActiveStyle ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                            {displayStatus}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="space-y-4">
                       <InfoRow icon={<CreditCard size={18} className="text-orange-500" />} label="Plan" value={member.pt_plan || 'No Active PT Plan'} />
