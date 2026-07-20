@@ -628,15 +628,10 @@ const EMIList = () => {
                     <th className="px-4 py-4 text-center text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Member Info</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan Details</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Dues</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Total Price</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Initial Payment</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Remaining Due</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Created</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Next Payment</th>
-
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Payment</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold min-w-[200px]">Dues</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold min-w-[160px]">Payment Summary</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Dates</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Actions</th>
                   </tr>
                 </thead>
@@ -706,68 +701,31 @@ const EMIList = () => {
                           )}
                         </td>
                         <td className="px-4 py-4">
-                          <div className="text-base font-medium text-emerald-400">
-                            ₹{totalPrice.toFixed(2)}
+                          <div className="bg-white/5 border border-white/10 rounded-lg p-2 min-w-[150px]">
+                            <div className="flex justify-between items-center text-[11px] mb-1">
+                              <span className="text-white/50">Total:</span>
+                              <span className="text-emerald-400 font-medium">₹{totalPrice.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[11px] mb-1">
+                              <span className="text-white/50">Paid:</span>
+                              <span className="text-green-400 font-medium">₹{(initialPayment + secondPayment).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs border-t border-white/10 pt-1 mt-1">
+                              <span className="text-white/80">Due:</span>
+                              <span className="text-blue-400 font-bold">₹{remainingDue.toFixed(2)}</span>
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <div className="text-base font-medium text-green-400">
-                            ₹{initialPayment.toFixed(2)}
+                          <div className="text-[11px] text-white/50 mb-1">
+                            Added: {new Date(membership.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                           </div>
-                          <div className="text-xs text-white/50">Paid today</div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="text-base font-medium text-cyan-300">
-                            ₹{secondPayment.toFixed(2)}
-                          </div>
-                          <div className="text-xs text-white/50">
-                            {secondPayment > 0 ? `By: ${getAssignedTrainerName(membership)}` : "Second payment"}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="text-base font-medium text-blue-400">
-                            {remainingDue <= 0 ? "₹0.00" : `₹${remainingDue.toFixed(2)}`}
-                          </div>
-                          <div className="text-xs text-white/50">
-                            {remainingDue <= 0
-                              ? "Completed"
-                              : `Due ${dueDate.toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                              })}`}
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4 text-base font-medium text-gray-300">
-                          {new Date(membership.createdAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </td>
-                        <td className="px-4 py-4">
                           {remainingDue > 0 ? (
-                            <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg px-3 py-2 text-center">
-                              <div className="text-base font-bold text-blue-300">
-                                {dueDate.toLocaleDateString("en-IN", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric"
-                                })}
-                              </div>
-                              <div className="text-xs text-blue-400/70 mt-1">
-                                {(() => {
-                                  const today = new Date();
-                                  const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-                                  if (daysLeft < 0) return `Overdue by ${Math.abs(daysLeft)} days`;
-                                  if (daysLeft === 0) return "Due today";
-                                  if (daysLeft === 1) return "Due tomorrow";
-                                  return `${daysLeft} days left`;
-                                })()}
-                              </div>
+                            <div className="text-xs font-bold text-blue-300">
+                              Next: {dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                             </div>
                           ) : (
-                            <div className="text-xs text-white/50 text-center py-2">Paid</div>
+                            <div className="text-xs text-emerald-400 font-bold">Completed</div>
                           )}
                         </td>
                         <td className="px-4 py-4">
@@ -775,6 +733,17 @@ const EMIList = () => {
                         </td>
                         <td className="px-4 py-4 text-center">
                           <div className="flex justify-center items-center gap-3">
+                            {membership.paymentStatus !== "Paid" && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); selectMembership(membership); }}
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 font-bold text-xs whitespace-nowrap"
+                                title="Process Remaining Payment"
+                              >
+                                <CreditCard size={14} />
+                                Pay
+                              </button>
+                            )} 
+
                             <button
                               onClick={(e) => { e.stopPropagation(); viewDetails(membership); }}
                               className="p-2 rounded-lg bg-blue-500/20 border border-blue-500/20 text-blue-300 hover:bg-blue-500/40 transition"
@@ -782,17 +751,7 @@ const EMIList = () => {
                             >
                               <Eye size={18} />
                             </button>
-
-                            {membership.paymentStatus !== "Paid" && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); selectMembership(membership); }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 font-bold text-xs whitespace-nowrap"
-                                title="Process Remaining Payment"
-                              >
-                                <CreditCard size={14} />
-                                Pay
-                              </button>
-                            )}
+                            
 
                             <button
                               onClick={(e) => { e.stopPropagation(); handleDeleteMembership(membership.id); }}
@@ -800,8 +759,9 @@ const EMIList = () => {
                               title="Delete EMI record"
                             >
                               <Trash2 size={16} />
-                          
                             </button>
+
+                            
                           </div>
                         </td>
                       </tr>
