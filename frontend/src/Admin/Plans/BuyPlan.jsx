@@ -845,8 +845,6 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         } else {
           await api.post("/memberships", membershipData);
         }
-      } else if (activeOrPendingMembership) {
-        await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
       } else {
         await api.post("/memberships", membershipData);
       }

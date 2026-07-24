@@ -196,10 +196,13 @@ const MemberDetails = () => {
         pt_price: null,
         pt_pricePaid: null,
         pt_secondPaymentPaid: null,
+        pt_payment_status: null,
+        pt_payment_mode: null,
+        pt_payment_date: null,
         pt_form_completed: false
       };
-      const res = await api.put(`/members/${id}`, payload);
-      setMember(res.data);
+      await api.put(`/members/${id}`, payload);
+      await fetchMemberData();
       toast.success("PT Plan removed");
     } catch (err) {
       console.error(err);
@@ -214,12 +217,18 @@ const MemberDetails = () => {
       const payload = {
         plan: null,
         duration: null,
-        joinDate: null,
-        expiryDate: null,
-        status: null
+        join_date: null,
+        expiry_date: null,
+        status: null,
+        amount: null,
+        discount: null,
+        price: null,
+        pricePaid: null,
+        secondPaymentPaid: null,
+        payment_status: null
       };
-      const res = await api.put(`/members/${id}`, payload);
-      setMember(res.data);
+      await api.put(`/members/${id}`, payload);
+      await fetchMemberData();
       toast.success("Normal plan removed");
     } catch (err) {
       console.error(err);
