@@ -1084,7 +1084,7 @@ const Payments = () => {
                     >
                       <FaPrint />
                     </button>
-                    {plan.status === "active" ? (
+                    {/* {plan.status === "active" ? (
                       <button
                         onClick={() =>
                           handleStatusChange(member.uid, plan.id, "inactive")
@@ -1102,7 +1102,7 @@ const Payments = () => {
                       >
                         Mark Active
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               );
