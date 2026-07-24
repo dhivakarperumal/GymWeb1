@@ -841,9 +841,8 @@ async function updateMember(req, res) {
         }
         // If PT-plan related fields were intentionally cleared by the caller, also clear PT fields
         // in the latest membership record so the PT plan is removed from membership history/view.
-        const wantsClearPt = (Object.prototype.hasOwnProperty.call(req.body, 'pt_plan') && req.body.pt_plan === null)
-          || req.body.has_pt_plan === false
-          || (Object.prototype.hasOwnProperty.call(req.body, 'pt_expiry_date') && req.body.pt_expiry_date === null);
+        const wantsClearPt = req.body.has_pt_plan === false
+          || (Object.prototype.hasOwnProperty.call(req.body, 'pt_status') && req.body.pt_status === 'inactive');
         const wantsClearNormal = (Object.prototype.hasOwnProperty.call(req.body, 'plan') && req.body.plan === null)
           || (Object.prototype.hasOwnProperty.call(req.body, 'joinDate') && req.body.joinDate === null)
           || (Object.prototype.hasOwnProperty.call(req.body, 'expiryDate') && req.body.expiryDate === null)
@@ -851,7 +850,6 @@ async function updateMember(req, res) {
 
         if (wantsClearPt) {
           try {
-            // Update only the most recent membership for this user
             await connection.query(
               `UPDATE memberships SET 
                  has_pt_plan = 0,
@@ -865,7 +863,7 @@ async function updateMember(req, res) {
                  pt_paymentMode = NULL,
                  pt_paymentDate = NULL,
                  pt_paymentStatus = NULL,
-                 pt_status = NULL,
+                 pt_status = 'inactive',
                  pt_trainerId = NULL,
                  pt_trainerName = NULL,
                  pt_discount = NULL,
@@ -875,6 +873,19 @@ async function updateMember(req, res) {
                )`,
               [updatedMember.u_id]
             );
+
+            const [ptTableCheck] = await connection.query("SHOW TABLES LIKE 'pt_plans'");
+            if (ptTableCheck.length > 0) {
+              const [ptColumnCheck] = await connection.query("SHOW COLUMNS FROM pt_plans LIKE 'userId'");
+              if (ptColumnCheck.length > 0) {
+                await connection.query(
+                  `UPDATE pt_plans
+                   SET status = 'inactive'
+                   WHERE userId = ?`,
+                  [updatedMember.u_id]
+                );
+              }
+            }
           } catch (ptClearErr) {
             console.warn('updateMember: failed to clear PT fields in memberships', ptClearErr.message || ptClearErr);
           }

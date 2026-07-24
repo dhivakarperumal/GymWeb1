@@ -189,7 +189,7 @@ const MemberDetails = () => {
         pt_join_date: null,
         pt_expiry_date: null,
         pt_duration: null,
-        pt_status: null,
+        pt_status: 'inactive',
         has_pt_plan: false
       };
       const res = await api.put(`/members/${id}`, payload);

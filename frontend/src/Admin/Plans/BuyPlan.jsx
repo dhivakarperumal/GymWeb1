@@ -827,10 +827,24 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         membershipId: activeOrPendingMembership?.id,
       });
 
-      // If member already has an active/pending membership, update it
-      // For PT plans, always create a NEW record so sessions reset
+      // Keep PT plan purchases on the same membership row when one already exists
+      // so we do not create duplicate membership history rows for the same user.
       if (filterTrainerPlans) {
-        await api.post("/memberships", membershipData);
+        if (activeOrPendingMembership) {
+          await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
+        } else if (memberHistory && memberHistory.length > 0) {
+          const latestExistingMembership = memberHistory
+            .filter((h) => h && h.userId === finalUserId)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+
+          if (latestExistingMembership?.id) {
+            await api.put(`/memberships/${latestExistingMembership.id}`, membershipData);
+          } else {
+            await api.post("/memberships", membershipData);
+          }
+        } else {
+          await api.post("/memberships", membershipData);
+        }
       } else if (activeOrPendingMembership) {
         await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
       } else {
