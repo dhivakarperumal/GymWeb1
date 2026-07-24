@@ -18,6 +18,8 @@ function normalizeAssignment(row) {
     planPrice: row.plan_price,
     trainerId: row.trainer_id,
     trainerName: row.current_trainer_name || row.trainer_name,
+    trainerEmail: row.trainer_email || "",
+    trainerPhone: row.trainer_mobile || "",
     trainerSource: row.trainer_source,
     sessionTime: row.session_time || null,
     status: row.status,
@@ -102,6 +104,8 @@ async function getAllAssignments(req, res) {
              m.pt_expiry_date as m_pt_expiry_date,
              IF((SELECT COUNT(*) FROM memberships pt_m WHERE pt_m.userId = a.user_id AND pt_m.has_pt_plan = 1) > 0, 1, 0) as has_pt_plan,
              s.name as current_trainer_name,
+             s.email as trainer_email,
+             s.phone as trainer_mobile,
              s.role as trainer_source
       FROM trainer_assignments a
       LEFT JOIN users u ON u.id = a.user_id

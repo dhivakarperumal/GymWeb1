@@ -67,6 +67,7 @@ const Account = () => {
   const [memberEditMode, setMemberEditMode] = useState(false);
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
+  const [assignedTrainer, setAssignedTrainer] = useState(null);
   
 
   const isActivePtPlan = (member) => {
@@ -169,14 +170,64 @@ const Account = () => {
       }
     };
 
+    const fetchAssignedTrainer = async () => {
+      try {
+        const res = await api.get("/assignments");
+        const all = Array.isArray(res.data) ? res.data : res.data?.data || [];
+        const mine = all.find(a =>
+          String(a.userId) === String(userId) ||
+          String(a.gymMemberId) === String(memberData?.id)
+        );
+        if (mine) {
+          setAssignedTrainer({
+            name: mine.trainerName || mine.trainer_name || "",
+            email: mine.trainerEmail || mine.trainer_email || "",
+            phone: mine.trainerPhone || mine.trainer_phone || "",
+            specialization: mine.specialization || "",
+          });
+        } else {
+          setAssignedTrainer(null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch trainer assignment", err);
+      }
+    };
+
     fetchMemberData();
     fetchUserMemberships();
+    fetchAssignedTrainer();
   }, [userId]);
 
   useEffect(() => {
     const hasMembershipActive = Array.isArray(plans) && plans.some((m) => String(m.status || '').toLowerCase() === 'active');
     setHasActivePlan(hasMembershipActive || isActivePtPlan(memberData));
   }, [plans, memberData]);
+
+  // Re-fetch trainer when memberData loads so gymMemberId match works
+  useEffect(() => {
+    if (!memberData?.id) return;
+    const fetchTrainer = async () => {
+      try {
+        const res = await api.get("/assignments");
+        const all = Array.isArray(res.data) ? res.data : res.data?.data || [];
+        const mine = all.find(a =>
+          String(a.userId) === String(userId) ||
+          String(a.gymMemberId) === String(memberData.id)
+        );
+        if (mine) {
+          setAssignedTrainer({
+            name: mine.trainerName || mine.trainer_name || "",
+            email: mine.trainerEmail || mine.trainer_email || "",
+            phone: mine.trainerPhone || mine.trainer_phone || "",
+            specialization: mine.specialization || "",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch trainer assignment by memberId", err);
+      }
+    };
+    fetchTrainer();
+  }, [memberData?.id]);
 
   useEffect(() => {
     if (!memberData?.id) {
@@ -720,6 +771,53 @@ const Account = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Assigned Trainer Card */}
+              {assignedTrainer?.name && (
+                <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-r from-red-950/40 to-black border border-red-500/20 rounded-xl sm:rounded-2xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 sm:p-3 bg-red-600/20 rounded-lg sm:rounded-xl shrink-0">
+                      <Users size={20} className="text-red-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Assigned Trainer</p>
+                      <p className="text-white font-bold text-base sm:text-lg">{assignedTrainer.name}</p>
+                    </div>
+                    <span className="ml-auto px-2 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-[10px] font-bold uppercase text-red-300">
+                      Your Trainer
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {assignedTrainer.email && (
+                      <div className="flex items-center gap-2 bg-black/30 rounded-xl p-3">
+                        <Mail size={14} className="text-red-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-gray-500 uppercase font-bold">Email</p>
+                          <p className="text-white text-sm break-all">{assignedTrainer.email}</p>
+                        </div>
+                      </div>
+                    )}
+                    {assignedTrainer.phone && (
+                      <div className="flex items-center gap-2 bg-black/30 rounded-xl p-3">
+                        <Phone size={14} className="text-red-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-gray-500 uppercase font-bold">Phone</p>
+                          <p className="text-white text-sm">{assignedTrainer.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                    {assignedTrainer.specialization && (
+                      <div className="flex items-center gap-2 bg-black/30 rounded-xl p-3">
+                        <Shield size={14} className="text-red-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-gray-500 uppercase font-bold">Specialization</p>
+                          <p className="text-white text-sm">{assignedTrainer.specialization}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Status Badge */}
               <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-black/40 border border-white/5 rounded-xl sm:rounded-2xl gap-4">
