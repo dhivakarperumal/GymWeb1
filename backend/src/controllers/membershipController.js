@@ -282,7 +282,7 @@ async function createMembership(req, res) {
     let membershipId = null;
     let membershipRowUpdated = false;
 
-    if (isPTPlanPurchase && resolvedUserId) {
+    if (resolvedUserId) {
       const [existingRows] = await connection.query(
         'SELECT id FROM memberships WHERE userId = ? ORDER BY createdAt DESC LIMIT 1 FOR UPDATE',
         [resolvedUserId]
@@ -290,47 +290,97 @@ async function createMembership(req, res) {
 
       if (existingRows.length > 0) {
         membershipId = existingRows[0].id;
-        await connection.query(
-          `UPDATE memberships
-           SET
-             has_pt_plan = 1,
-             pt_planId = ?,
-             pt_planName = ?,
-             pt_price = ?,
-             pt_pricePaid = ?,
-             pt_duration = ?,
-             pt_startDate = ?,
-             pt_endDate = ?,
-             pt_paymentMode = ?,
-             pt_paymentDate = ?,
-             pt_paymentStatus = ?,
-             pt_trainerId = ?,
-             pt_trainerName = ?,
-             pt_discount = ?,
-             pt_amount = ?,
-             pt_status = ?,
-             updated_by = @web_user_id,
-             updated_by_name = @web_username
-           WHERE id = ?`,
-          [
-            pt_planId || null,
-            pt_planName || null,
-            pt_price || null,
-            pt_pricePaid || null,
-            pt_duration || null,
-            pt_startDate || null,
-            pt_endDate || null,
-            pt_paymentMode || null,
-            pt_paymentDate || null,
-            pt_paymentStatus || null,
-            pt_trainerId || null,
-            pt_trainerName || null,
-            pt_discount !== undefined ? pt_discount : 0,
-            pt_amount !== undefined ? pt_amount : 0,
-            pt_status || 'active',
-            membershipId,
-          ]
-        );
+        
+        if (isPTPlanPurchase) {
+          await connection.query(
+            `UPDATE memberships
+             SET
+               has_pt_plan = 1,
+               pt_planId = ?,
+               pt_planName = ?,
+               pt_price = ?,
+               pt_pricePaid = ?,
+               pt_duration = ?,
+               pt_startDate = ?,
+               pt_endDate = ?,
+               pt_paymentMode = ?,
+               pt_paymentDate = ?,
+               pt_paymentStatus = ?,
+               pt_trainerId = ?,
+               pt_trainerName = ?,
+               pt_discount = ?,
+               pt_amount = ?,
+               pt_status = ?,
+               updated_by = @web_user_id,
+               updated_by_name = @web_username
+             WHERE id = ?`,
+            [
+              pt_planId || null,
+              pt_planName || null,
+              pt_price || null,
+              pt_pricePaid || null,
+              pt_duration || null,
+              pt_startDate || null,
+              pt_endDate || null,
+              pt_paymentMode || null,
+              pt_paymentDate || null,
+              pt_paymentStatus || null,
+              pt_trainerId || null,
+              pt_trainerName || null,
+              pt_discount !== undefined ? pt_discount : 0,
+              pt_amount !== undefined ? pt_amount : 0,
+              pt_status || 'active',
+              membershipId,
+            ]
+          );
+        } else {
+          await connection.query(
+            `UPDATE memberships
+             SET
+               planId = ?,
+               planName = ?,
+               price = ?,
+               pricePaid = ?,
+               secondPaymentPaid = ?,
+               duration = ?,
+               startDate = ?,
+               endDate = ?,
+               paymentId = ?,
+               paymentMode = ?,
+               paymentDate = ?,
+               paymentStatus = ?,
+               status = ?,
+               referredBy = ?,
+               trainerId = ?,
+               trainerName = ?,
+               discount = ?,
+               amount = ?,
+               collectedBy = ?
+             WHERE id = ?`,
+            [
+              planId || null,
+              planName || null,
+              price || null,
+              actualPricePaid,
+              actualSecondPaymentPaid,
+              duration || null,
+              startDate || null,
+              endDate || null,
+              paymentId || null,
+              paymentMode || null,
+              paymentDate || null,
+              finalPaymentStatus || null,
+              status || 'active',
+              referredBy || null,
+              trainerId || null,
+              trainerName || null,
+              discount !== undefined ? discount : 0,
+              amount !== undefined ? amount : 0,
+              req.body.collectedBy || null,
+              membershipId,
+            ]
+          );
+        }
         membershipRowUpdated = true;
       } else {
         const [result] = await connection.query(membershipInsertQuery, membershipInsertValues);
