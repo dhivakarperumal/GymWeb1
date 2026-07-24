@@ -436,13 +436,8 @@ async function getAllMembers(req, res) {
 async function getMemberById(req, res) {
   try {
     const { id } = req.params;
-    const idNum = parseInt(id, 10);
-    const isNum = !isNaN(idNum);
-
-    let sql;
-    let params;
-    if (isNum) {
-      sql = `
+    const idStr = String(id);
+    const sql = `
         SELECT gm.*,
                u.id AS u_id,
                COALESCE(gm.user_id, u.user_id) AS u_uuid,
@@ -451,23 +446,9 @@ async function getMemberById(req, res) {
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
         FROM gym_members gm
         LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        WHERE gm.id = ?
-      `;
-      params = [idNum];
-    } else {
-      sql = `
-        SELECT gm.*,
-               u.id AS u_id,
-               COALESCE(gm.user_id, u.user_id) AS u_uuid,
-               u.email AS user_email,
-               (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
-               (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
-        FROM gym_members gm
-        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        WHERE gm.member_id = ?
-      `;
-      params = [id];
-    }
+        WHERE gm.id = ? OR gm.member_id = ?
+    `;
+    const params = [idStr, idStr];
 
     const [rows] = await db.query(sql, params);
     if (rows.length === 0) {
@@ -687,13 +668,9 @@ async function updateMember(req, res) {
     await connection.beginTransaction();
 
     const { id } = req.params;
-    const idNum = parseInt(id, 10);
-    const isNum = !isNaN(idNum);
-
-    const selectExistingQuery = isNum
-      ? `SELECT * FROM gym_members WHERE id = ?`
-      : `SELECT * FROM gym_members WHERE member_id = ?`;
-    const [existingRows] = await connection.query(selectExistingQuery, [isNum ? idNum : id]);
+    const idStr = String(id);
+    const selectExistingQuery = `SELECT * FROM gym_members WHERE id = ? OR member_id = ?`;
+    const [existingRows] = await connection.query(selectExistingQuery, [idStr, idStr]);
     if (existingRows.length === 0) {
       await connection.rollback();
       return res.status(404).json({ error: 'Member not found' });
@@ -761,15 +738,8 @@ async function updateMember(req, res) {
 
     // Check for duplicate phone in gym_members AND users
     if (phone && phone !== existingMember.phone) {
-      let dupQuery;
-      let dupParams;
-      if (isNum) {
-        dupQuery = `SELECT id FROM gym_members WHERE phone = ? AND id != ?`;
-        dupParams = [phone, idNum];
-      } else {
-        dupQuery = `SELECT id FROM gym_members WHERE phone = ? AND member_id != ?`;
-        dupParams = [phone, id];
-      }
+      const dupQuery = `SELECT id FROM gym_members WHERE phone = ? AND id != ?`;
+      const dupParams = [phone, existingMember.id];
       const [existing] = await connection.query(dupQuery, dupParams);
       if (existing.length > 0) {
         await connection.rollback();
@@ -788,106 +758,72 @@ async function updateMember(req, res) {
       }
     }
 
-    let updateQuery;
-    let updateParams;
-    if (isNum) {
-      updateQuery = `UPDATE gym_members SET
-        name=?, phone=?, email=?, gender=?,
-        height=?, weight=?, bmi=?, plan=?, duration=?,
-        join_date=?, expiry_date=?, status=?,
-        photo=?, notes=?, address=?,
-        dob=?, age=?, employer=?, occupation=?,
-        emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
-        emergency_contact_phone_home=?, emergency_contact_phone_work=?,
-        fitness_goal=?, blood_group=?, pt_form_completed=?,
-        pt_plan=?, pt_duration=?, pt_join_date=?, pt_expiry_date=?, pt_status=?,
-        fingerprint_id=?,
-        updated_at=CURRENT_TIMESTAMP
-       WHERE id=?`;
-      updateParams = [
-        name, phone, email, gender, numHeight, numWeight, numBmi,
-        plan, numDuration, joinDate, expiryDate, status,
-        photo, notes, address,
-        dob || null, age || null, employer || null, occupation || null,
-        emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
-        emergency_contact_phone_home || null, emergency_contact_phone_work || null,
-        fitness_goal || null, blood_group || null,
-        pt_form_completed ? 1 : 0,
-        pt_plan || null, pt_duration || null, pt_join_date || null, pt_expiry_date || null, pt_status || null,
-        fingerprintId || null,
-        idNum
-      ];
-    } else {
-      updateQuery = `UPDATE gym_members SET
-        name=?, phone=?, email=?, gender=?,
-        height=?, weight=?, bmi=?, plan=?, duration=?,
-        join_date=?, expiry_date=?, status=?,
-        photo=?, notes=?, address=?,
-        dob=?, age=?, employer=?, occupation=?,
-        emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
-        emergency_contact_phone_home=?, emergency_contact_phone_work=?,
-        fitness_goal=?, blood_group=?, pt_form_completed=?,
-        pt_plan=?, pt_duration=?, pt_join_date=?, pt_expiry_date=?, pt_status=?,
-        fingerprint_id=?,
-        updated_at=CURRENT_TIMESTAMP
-       WHERE member_id=?`;
-      updateParams = [
-        name, phone, email, gender, numHeight, numWeight, numBmi,
-        plan, numDuration, joinDate, expiryDate, status,
-        photo, notes, address,
-        dob || null, age || null, employer || null, occupation || null,
-        emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
-        emergency_contact_phone_home || null, emergency_contact_phone_work || null,
-        fitness_goal || null, blood_group || null,
-        pt_form_completed ? 1 : 0,
-        pt_plan || null, pt_duration || null, pt_join_date || null, pt_expiry_date || null, pt_status || null,
-        fingerprintId || null,
-        id
-      ];
-    }
-
+    const updateQuery = `UPDATE gym_members SET
+      name=?, phone=?, email=?, gender=?,
+      height=?, weight=?, bmi=?, plan=?, duration=?,
+      join_date=?, expiry_date=?, status=?,
+      photo=?, notes=?, address=?,
+      dob=?, age=?, employer=?, occupation=?,
+      emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_address=?,
+      emergency_contact_phone_home=?, emergency_contact_phone_work=?,
+      fitness_goal=?, blood_group=?, pt_form_completed=?,
+      pt_plan=?, pt_duration=?, pt_join_date=?, pt_expiry_date=?, pt_status=?,
+      fingerprint_id=?,
+      updated_at=CURRENT_TIMESTAMP
+     WHERE id=?`;
+    const updateParams = [
+      name, phone, email, gender, numHeight, numWeight, numBmi,
+      plan, numDuration, joinDate, expiryDate, status,
+      photo, notes, address,
+      dob || null, age || null, employer || null, occupation || null,
+      emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
+      emergency_contact_phone_home || null, emergency_contact_phone_work || null,
+      fitness_goal || null, blood_group || null,
+      pt_form_completed ? 1 : 0,
+      pt_plan || null, pt_duration || null, pt_join_date || null, pt_expiry_date || null, pt_status || null,
+      fingerprintId || null,
+      existingMember.id
+    ];
     const [result] = await connection.query(updateQuery, updateParams);
 
-    if (result.affectedRows === 0) {
-      await connection.rollback();
-      return res.status(404).json({ error: 'Member not found' });
-    }
+    const updatedMember = {
+      ...existingMember,
+      name,
+      phone,
+      email,
+      gender,
+      height: numHeight,
+      weight: numWeight,
+      bmi: numBmi,
+      plan,
+      duration: numDuration,
+      join_date: joinDate,
+      expiry_date: expiryDate,
+      status,
+      photo,
+      notes,
+      address,
+      dob: dob || null,
+      age: age || null,
+      employer: employer || null,
+      occupation: occupation || null,
+      emergency_contact_name: emergency_contact_name || null,
+      emergency_contact_relationship: emergency_contact_relationship || null,
+      emergency_contact_address: emergency_contact_address || null,
+      emergency_contact_phone_home: emergency_contact_phone_home || null,
+      emergency_contact_phone_work: emergency_contact_phone_work || null,
+      fitness_goal: fitness_goal || null,
+      blood_group: blood_group || null,
+      pt_form_completed: pt_form_completed ? 1 : 0,
+      pt_plan: pt_plan || null,
+      pt_duration: pt_duration || null,
+      pt_join_date: pt_join_date || null,
+      pt_expiry_date: pt_expiry_date || null,
+      pt_status: pt_status || null,
+      fingerprint_id: fingerprintId || null,
+      u_id: linkedUserId
+    };
 
-    // Fetch the updated member to get user ID and sync memberships table
-    let sql;
-    let params;
-    if (isNum) {
-      sql = `
-        SELECT gm.*,
-               u.id AS u_id,
-               u.user_id AS u_uuid,
-               u.email AS user_email,
-               (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
-               (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
-        FROM gym_members gm
-        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        WHERE gm.id = ?
-      `;
-      params = [idNum];
-    } else {
-      sql = `
-        SELECT gm.*,
-               u.id AS u_id,
-               u.user_id AS u_uuid,
-               u.email AS user_email,
-               (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
-               (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
-        FROM gym_members gm
-        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        WHERE gm.member_id = ?
-      `;
-      params = [id];
-    }
-
-    const [rows] = await connection.query(sql, params);
-    const updatedMember = rows[0];
-
-    // SYNC with memberships table (history/tracking)
     if (updatedMember && updatedMember.u_id) {
       try {
         let planPrice = null;
@@ -1127,16 +1063,10 @@ async function updateMember(req, res) {
 
 async function deleteMember(req, res) {
   const { id } = req.params;
-  const idNum = parseInt(id, 10);
-  const isNum = !isNaN(idNum);
-
-  const selectQuery = isNum ?
-    `SELECT id, email, phone, user_id FROM gym_members WHERE id = ?` :
-    `SELECT id, email, phone, user_id FROM gym_members WHERE member_id = ?`;
-  const deleteQuery = isNum ?
-    `DELETE FROM gym_members WHERE id = ?` :
-    `DELETE FROM gym_members WHERE member_id = ?`;
-  const params = [isNum ? idNum : id];
+  const idStr = String(id);
+  const selectQuery = `SELECT id, email, phone, user_id FROM gym_members WHERE id = ? OR member_id = ?`;
+  const deleteQuery = `DELETE FROM gym_members WHERE id = ? OR member_id = ?`;
+  const params = [idStr, idStr];
 
   let connection;
   try {
@@ -1155,13 +1085,14 @@ async function deleteMember(req, res) {
 
     // ── Step 2: Find the linked user (users table) ───────────────────────────
     let internalUserId = null;
+    let userRole = null;
     if (member.user_id || member.email || member.phone) {
-      const userQuery = member.user_id
-        ? `SELECT id, role FROM users WHERE user_id = ? LIMIT 1`
-        : `SELECT id, role FROM users WHERE (email = ? AND email != '') OR (mobile = ? AND mobile != '') LIMIT 1`;
-      const userParams = member.user_id
-        ? [member.user_id]
-        : [member.email || '', member.phone || ''];
+      const userQuery = `SELECT id, role FROM users WHERE (user_id = ? AND user_id IS NOT NULL AND user_id != '') OR (email = ? AND email IS NOT NULL AND email != '') OR (mobile = ? AND mobile IS NOT NULL AND mobile != '') LIMIT 1`;
+      const userParams = [
+        member.user_id || '',
+        member.email || '',
+        member.phone || ''
+      ];
       const [userRows] = await connection.query(userQuery, userParams);
       if (userRows.length > 0) {
         internalUserId = userRows[0].id;
@@ -1220,9 +1151,7 @@ async function deleteMember(req, res) {
     }
 
     // ── Step 6: Delete gym_members record ────────────────────────────────────
-    const gymDeleteQuery = isNum
-      ? `DELETE FROM gym_members WHERE id = ?`
-      : `DELETE FROM gym_members WHERE member_id = ?`;
+    const gymDeleteQuery = `DELETE FROM gym_members WHERE id = ? OR member_id = ?`;
     const [deleteResult] = await connection.query(gymDeleteQuery, params);
     if (deleteResult.affectedRows === 0) {
       await connection.rollback();

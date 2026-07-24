@@ -5,7 +5,6 @@ function quoteIdentifier(identifier) {
 }
 
 async function applyTriggers() {
-  console.log("Applying triggers to automatically populate created_by and updated_by...");
   try {
     const [tables] = await db.query(`
       SELECT TABLE_NAME
@@ -31,8 +30,6 @@ async function applyTriggers() {
         continue;
       }
 
-      console.log(`Processing table: ${tableName}`);
-
       if (hasCreatedBy || hasCreatedByName) {
         const triggerNameInsert = `before_insert_${tableName}`.replace(/[^a-zA-Z0-9_]/g, '_');
         await db.query(`DROP TRIGGER IF EXISTS ${quoteIdentifier(triggerNameInsert)}`);
@@ -52,7 +49,6 @@ async function applyTriggers() {
               END IF;
             END;
           `);
-          console.log('  - Created BEFORE INSERT trigger');
         }
       }
 
@@ -75,12 +71,9 @@ async function applyTriggers() {
               END IF;
             END;
           `);
-          console.log('  - Created BEFORE UPDATE trigger');
         }
       }
     }
-
-    console.log('✅ All triggers applied successfully.');
   } catch (err) {
     console.error('❌ Error applying triggers:', err);
     throw err;

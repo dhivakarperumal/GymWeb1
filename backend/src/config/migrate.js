@@ -111,10 +111,7 @@ async function runMigrations() {
     }
   }
 
-  console.log('Ensuring audit columns exist on tables...');
   await ensureAuditColumns();
-
-  console.log('Ensuring audit triggers are active...');
   await applyTriggers();
 }
 
