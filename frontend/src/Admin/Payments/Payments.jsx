@@ -1408,19 +1408,31 @@ const Payments = () => {
               Prev
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded border ${
-                  currentPage === page
-                    ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white/10 border-white/20"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {(() => {
+              let startPage = Math.max(1, currentPage - 2);
+              let endPage = Math.min(totalPages, startPage + 4);
+
+              if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+              }
+
+              return Array.from(
+                { length: endPage - startPage + 1 },
+                (_, i) => startPage + i
+              ).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1 rounded border ${
+                    currentPage === page
+                      ? "bg-orange-500 text-white border-orange-500"
+                      : "bg-white/10 border-white/20"
+                  }`}
+                >
+                  {page}
+                </button>
+              ));
+            })()}
 
             <button
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
