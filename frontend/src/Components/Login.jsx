@@ -213,7 +213,7 @@ const Login = () => {
             </div>
 
             {/* Google Login Custom Button */}
-            <button 
+            {/* <button 
               onClick={() => googleLogin()}
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-black py-3 rounded-lg font-bold transition mb-4 disabled:opacity-50"
@@ -224,11 +224,11 @@ const Login = () => {
                 className="w-6 h-6"
               />
               Continue with Google
-            </button>
+            </button> */}
 
             <p className="text-sm mt-5 text-center text-gray-400">
               New member?{" "}
-              <Link to="/register" className="text-red-500 font-semibold hover:underline">
+              <Link to="/userenquiry" className="text-red-500 font-semibold hover:underline">
                 Join Now
               </Link>
             </p>
