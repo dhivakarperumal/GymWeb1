@@ -301,16 +301,15 @@ const MemberDetails = () => {
                 <h2 className="text-2xl font-bold text-white mb-1">{member.name}</h2>
                 <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">ID: #{member.id}</p>
 
-                <button
-                  onClick={handleToggleStatus}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl transition-all hover:scale-105 active:scale-95 ${displayStatus === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}
-                  title={`Click to set as ${displayStatus === 'active' ? 'Inactive' : 'Active'}`}
+                <div
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl transition-all ${displayStatus === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}
+                  title={`Current Status: ${statusText}`}
                 >
                   <div className={`w-2 h-2 rounded-full ${displayStatus === 'active' ? 'bg-emerald-500' : 'bg-red-500'} animate-pulse`} />
                   <span className="text-xs font-bold uppercase">
                     {statusText}
                   </span>
-                </button>
+                </div>
               </div>
 
               {/* Trainer Card */}
