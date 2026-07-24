@@ -1416,22 +1416,43 @@ const Payments = () => {
                 startPage = Math.max(1, endPage - 4);
               }
 
-              return Array.from(
-                { length: endPage - startPage + 1 },
-                (_, i) => startPage + i
-              ).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-1 rounded border ${
-                    currentPage === page
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : "bg-white/10 border-white/20"
-                  }`}
-                >
-                  {page}
-                </button>
-              ));
+              const pages = [];
+              
+              if (startPage > 1) {
+                pages.push(
+                  <button key="first" onClick={() => setCurrentPage(1)} className="px-3 py-1 rounded border bg-white/10 border-white/20 hover:bg-white/20 transition">1</button>
+                );
+                if (startPage > 2) {
+                  pages.push(<span key="ellipsis-start" className="px-2 text-white/50">...</span>);
+                }
+              }
+
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i)}
+                    className={`px-3 py-1 rounded border transition ${
+                      currentPage === i
+                        ? "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20"
+                        : "bg-white/10 border-white/20 hover:bg-white/20"
+                    }`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+
+              if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                  pages.push(<span key="ellipsis-end" className="px-2 text-white/50">...</span>);
+                }
+                pages.push(
+                  <button key="last" onClick={() => setCurrentPage(totalPages)} className="px-3 py-1 rounded border bg-white/10 border-white/20 hover:bg-white/20 transition">{totalPages}</button>
+                );
+              }
+
+              return pages;
             })()}
 
             <button
