@@ -183,16 +183,25 @@ const Reports = () => {
 
     const initialMode = membership.paymentMode || membership.paymentId || "Cash";
     if (initialAmount > 0) {
-      amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${initialAmount.toFixed(2)}`);
-      modeLines.push(initialMode);
+      amountLines.push(
+        `${getPaymentOrdinal(amountLines.length + 1)} payment: ₹${initialAmount.toFixed(2)}`
+      );
+      modeLines.push(
+        String(initialMode).replace(/^emi-/i, "")
+      );
     }
 
     if (dues.length > 0) {
       dues.forEach((due) => {
         const amount = Number(due?.amount ?? due?.amt ?? 0);
         if (!Number.isFinite(amount) || amount <= 0) return;
-        amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${amount.toFixed(2)}`);
-        modeLines.push(due?.paymentId || due?.payment_id || "Cash");
+        amountLines.push(
+          `${getPaymentOrdinal(amountLines.length + 1)}\u00A0payment ₹${amount.toFixed(2)}`
+        );
+        modeLines.push(
+          String(due?.paymentId || due?.payment_id || "Cash")
+            .replace(/^emi-/i, "")
+        );
       });
     } else if (secondAmount > 0) {
       amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${secondAmount.toFixed(2)}`);
@@ -275,7 +284,7 @@ const Reports = () => {
       // or maybe it should? The user wants "Next EMI Date based filter add give proeprly"
       // Let's filter by the Next EMI Date. If there's no Next EMI Date (because it's paid), skip.
       if (typeof remaining === "number" && remaining <= 0) {
-         return false; // Paid, no next EMI date
+        return false; // Paid, no next EMI date
       }
 
       const nextDate = calculateNextPaymentDate(membership);
@@ -313,12 +322,12 @@ const Reports = () => {
         });
       }
     } else {
-        const today = dayjs();
-        const next5Days = today.add(5, "day");
-        base = base.filter(m => {
-          const expiryDate = dayjs(m.expiry_date);
-          return expiryDate.isAfter(today.subtract(1, 'day')) && expiryDate.isBefore(next5Days.add(1, 'day'));
-        });
+      const today = dayjs();
+      const next5Days = today.add(5, "day");
+      base = base.filter(m => {
+        const expiryDate = dayjs(m.expiry_date);
+        return expiryDate.isAfter(today.subtract(1, 'day')) && expiryDate.isBefore(next5Days.add(1, 'day'));
+      });
     }
     return base.sort((a, b) => dayjs(a.expiry_date).diff(dayjs(b.expiry_date)));
   }, [members, dateRange]);
@@ -409,7 +418,7 @@ const Reports = () => {
         const totalAmount = p.price != null ? parseFloat(p.price) : null;
         const paidAmount = p.pricePaid != null ? parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0) : null;
         const remaining = totalAmount != null && paidAmount != null ? Math.max(0, totalAmount - paidAmount) : "-";
-        
+
         let nextEmiDateStr = "-";
         if (typeof remaining === "number" && remaining > 0) {
           nextEmiDateStr = dayjs(calculateNextPaymentDate(p)).format("DD MMM YYYY");
@@ -444,13 +453,13 @@ const Reports = () => {
       rows: filteredPTPlans.map((p, i) => {
         const startDate = p.pt_startDate || p.startDate || p.start_date;
         const endDate = p.pt_endDate || p.endDate || p.end_date;
-        const paymentAmount = p.pt_pricePaid != null 
-          ? (parseFloat(p.pt_pricePaid) + (p.pt_secondPaymentPaid ? parseFloat(p.pt_secondPaymentPaid) : 0)) 
-          : p.pricePaid != null 
-            ? (parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0)) 
+        const paymentAmount = p.pt_pricePaid != null
+          ? (parseFloat(p.pt_pricePaid) + (p.pt_secondPaymentPaid ? parseFloat(p.pt_secondPaymentPaid) : 0))
+          : p.pricePaid != null
+            ? (parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0))
             : null;
-        const paymentMode = (p.pt_paymentMode || p.paymentMode || p.payment_mode || "-").toLowerCase().startsWith("emi-") 
-          ? (p.pt_paymentMode || p.paymentMode || p.payment_mode || "").split('-')[1] 
+        const paymentMode = (p.pt_paymentMode || p.paymentMode || p.payment_mode || "-").toLowerCase().startsWith("emi-")
+          ? (p.pt_paymentMode || p.paymentMode || p.payment_mode || "").split('-')[1]
           : p.pt_paymentMode || p.paymentMode || p.payment_mode || "-";
 
         return [
@@ -586,7 +595,7 @@ const Reports = () => {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-            <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             <input
               type="text"
               value={searchTerm}
@@ -601,11 +610,10 @@ const Reports = () => {
           <div className="relative inline-block text-left">
             <button
               onClick={() => setIsTrainerFilterOpen(!isTrainerFilterOpen)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition whitespace-nowrap ${
-                trainerFilter !== 'all'
-                  ? 'bg-orange-500/20 border-orange-500/40 text-orange-400'
-                  : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition whitespace-nowrap ${trainerFilter !== 'all'
+                ? 'bg-orange-500/20 border-orange-500/40 text-orange-400'
+                : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                }`}
             >
               <Users size={15} />
               <span className="truncate max-w-[120px]">
@@ -620,11 +628,10 @@ const Reports = () => {
                 <div className="absolute right-0 mt-2 w-56 max-h-72 overflow-y-auto rounded-2xl bg-[#0f172a] border border-white/10 shadow-2xl z-[100] p-2 custom-scrollbar">
                   <button
                     onClick={() => { setTrainerFilter('all'); setCurrentPage(1); setIsTrainerFilterOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                      trainerFilter === 'all'
-                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                    }`}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${trainerFilter === 'all'
+                      ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      }`}
                   >
                     <Users size={14} />
                     All Trainers
@@ -633,11 +640,10 @@ const Reports = () => {
                     <button
                       key={name}
                       onClick={() => { setTrainerFilter(name); setCurrentPage(1); setIsTrainerFilterOpen(false); }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                        trainerFilter === name
-                          ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
-                          : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                      }`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${trainerFilter === name
+                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                        }`}
                     >
                       <User size={14} />
                       <span className="truncate">{name}</span>
@@ -682,8 +688,8 @@ const Reports = () => {
               key={t.key}
               onClick={() => setActiveTab(t.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${activeTab === t.key
-                  ? "bg-orange-500 text-white shadow-lg"
-                  : "bg-white/10 text-white/70 hover:bg-white/20"
+                ? "bg-orange-500 text-white shadow-lg"
+                : "bg-white/10 text-white/70 hover:bg-white/20"
                 }`}
             >
               <Icon size={16} /> {t.label}
@@ -731,7 +737,11 @@ const Reports = () => {
                         const value = String(cell).trim().toLowerCase();
                         const badgeClasses = getCellBadgeClasses(cell);
                         return (
-                          <td key={j} className="px-4 py-3 whitespace-pre-line break-words align-top">
+                          <td
+                            key={j}
+                            className={`px-4 py-3 whitespace-pre-line align-top ${j === 5 ? "min-w-[220px] whitespace-nowrap" : ""
+                              }`}
+                          >
                             {value === "yes" || value === "no" || value === "active" || value === "inactive" || value === "expired" ? (
                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeClasses}`}>
                                 {cell}
@@ -756,7 +766,7 @@ const Reports = () => {
                   onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
                   className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-white outline-none"
                 >
-                  {[10, 20, 30, 50,100,200,300,400,500].map((size) => (
+                  {[10, 20, 30, 50, 100, 200, 300, 400, 500].map((size) => (
                     <option key={size} value={size}>{size}</option>
                   ))}
                 </select>
