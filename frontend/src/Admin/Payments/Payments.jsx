@@ -480,17 +480,34 @@ const Payments = () => {
       if (dateFilter === "custom" && !isInCustomRange(plan.createdAt))
         passDate = false;
 
-      if (passDate && matchesPaymentTab(plan)) {
+      const hasValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
+      const isPTPrimary = plan.planName && /\bpt\b/i.test(plan.planName);
+      
+      let passPlanType = true;
+      if (planTypeTab === "normal") {
+        const hasNormal = plan.planName && (!isPTPrimary || hasValidPTAddon);
+        if (!hasNormal) passPlanType = false;
+      } else if (planTypeTab === "pt") {
+        const hasPT = hasValidPTAddon || isPTPrimary;
+        if (!hasPT) passPlanType = false;
+      }
+
+      if (passDate && matchesPaymentTab(plan) && passPlanType) {
         allInitialPlans.push(plan);
       }
     });
   });
 
+  const getPlanEndDate = (p) => {
+    const hasValidPTAddon = p.pt_planName && p.pt_planName !== "null" && p.pt_planName !== "undefined" && p.pt_planName.trim() !== "";
+    return planTypeTab === "pt" && hasValidPTAddon ? (p.pt_endDate || p.endDate) : p.endDate;
+  };
+
   const counts = {
     all: allInitialPlans.length,
     active: allInitialPlans.filter((p) => p.status === "active").length,
     inactive: allInitialPlans.filter((p) => p.status === "inactive").length,
-    expiry: allInitialPlans.filter((p) => isExpiringPlan(p.endDate)).length,
+    expiry: allInitialPlans.filter((p) => isExpiringPlan(getPlanEndDate(p))).length,
   };
 
   const filteredMembers = members
@@ -516,21 +533,6 @@ const Payments = () => {
         // Payment Tab Filter
         if (!matchesPaymentTab(plan)) return false;
 
-        // Status Filter
-        if (filterType === "active" && plan.status !== "active") return false;
-        if (filterType === "inactive" && plan.status !== "inactive")
-          return false;
-        if (filterType === "expiry" && !isExpiringPlan(plan.endDate))
-          return false;
-
-        // Date Filter
-        if (dateFilter === "today" && !isToday(plan.createdAt)) return false;
-        if (dateFilter === "yesterday" && !isYesterday(plan.createdAt))
-          return false;
-        if (dateFilter === "this week" && !isThisWeek(plan.createdAt))
-          return false;
-        if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
-          return false;
         // Plan Type Filter
         const hasValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
         const isPTPrimary = plan.planName && /\bpt\b/i.test(plan.planName);
@@ -542,6 +544,24 @@ const Payments = () => {
           const hasPT = hasValidPTAddon || isPTPrimary;
           if (!hasPT) return false;
         }
+
+        // Status Filter
+        if (filterType === "active" && plan.status !== "active") return false;
+        if (filterType === "inactive" && plan.status !== "inactive")
+          return false;
+        
+        const currentEndDate = planTypeTab === "pt" && hasValidPTAddon ? (plan.pt_endDate || plan.endDate) : plan.endDate;
+        if (filterType === "expiry" && !isExpiringPlan(currentEndDate))
+          return false;
+
+        // Date Filter
+        if (dateFilter === "today" && !isToday(plan.createdAt)) return false;
+        if (dateFilter === "yesterday" && !isYesterday(plan.createdAt))
+          return false;
+        if (dateFilter === "this week" && !isThisWeek(plan.createdAt))
+          return false;
+        if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
+          return false;
 
         return true;
       }),
