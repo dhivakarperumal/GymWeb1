@@ -249,7 +249,8 @@ const Members = () => {
     // 2. Plan Filter
     let matchesPlanFilter = true;
     const hasPlan = hasActiveOrPendingPlan(m);
-    const hasPTPlan = Boolean(m.pt_plan) || Boolean(m.plan?.toLowerCase().includes("pt")) || Boolean(m.has_pt_plan);
+    const isPtExpired = m.pt_expiry_date && new Date(m.pt_expiry_date) < new Date();
+    const hasPTPlan = !isPtExpired && (Boolean(m.pt_plan) || Boolean(m.plan?.toLowerCase().includes("pt")) || Boolean(m.has_pt_plan));
     
     if (filterType === "withPlan") matchesPlanFilter = hasPlan;
     if (filterType === "withoutPlan") matchesPlanFilter = !hasPlan;
@@ -911,7 +912,8 @@ const Members = () => {
                           );
                         })()}
                         {(() => {
-                          const hasPTPlan = Boolean(m.pt_plan) || Boolean(m.plan?.toLowerCase().includes("pt")) || Boolean(m.has_pt_plan);
+                          const isPtExpired = m.pt_expiry_date && new Date(m.pt_expiry_date) < new Date();
+                          const hasPTPlan = !isPtExpired && (Boolean(m.pt_plan) || Boolean(m.plan?.toLowerCase().includes("pt")) || Boolean(m.has_pt_plan));
                           return (
                             <button
                               onClick={() => !hasPTPlan && navigate(`${basePath}/buy-pt-plan`, { state: { member: m, returnUrl: location.pathname + location.search } })}

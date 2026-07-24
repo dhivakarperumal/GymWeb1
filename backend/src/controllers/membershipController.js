@@ -179,6 +179,19 @@ async function createMembership(req, res) {
       }
     }
 
+    // Fix: Mark old PT plan memberships as expired before creating new one
+    if (isPTPlanPurchase && resolvedUserId) {
+      try {
+        await db.query(
+          `UPDATE memberships SET pt_status = 'expired', has_pt_plan = 0 
+           WHERE userId = ? AND has_pt_plan = 1 AND pt_status IN ('active', 'pending')`,
+          [resolvedUserId]
+        );
+      } catch (e) {
+        console.error("Failed to expire old PT plans:", e);
+      }
+    }
+
     const query = `
       INSERT INTO memberships
       (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan, pt_planId, pt_planName, pt_price, pt_pricePaid, pt_duration, pt_startDate, pt_endDate, pt_paymentMode, pt_paymentDate, pt_paymentStatus, pt_status, pt_trainerId, pt_trainerName, pt_discount, pt_amount)

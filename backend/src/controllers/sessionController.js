@@ -2,14 +2,20 @@ const db = require('../config/db');
 
 async function getSessions(req, res) {
     try {
-        const { trainerUserId } = req.query;
+        const { trainerUserId, membershipId } = req.query;
         let sql = `
             SELECT ts.*, s.name as trainer_name, gm.status as member_status
             FROM trainer_sessions ts
             LEFT JOIN staff s ON ts.trainer_id = s.id
             LEFT JOIN gym_members gm ON (gm.id = ts.member_id OR gm.member_id = ts.member_id)
+            WHERE 1=1
         `;
         const params = [];
+        
+        if (membershipId) {
+            sql += ' AND ts.membership_id = ?';
+            params.push(membershipId);
+        }
 
         if (trainerUserId) {
             // Resolve trainer user id to staff id
@@ -21,7 +27,7 @@ async function getSessions(req, res) {
                     [u.email, u.username]
                 );
                 if (staffRows.length > 0) {
-                    sql += ' WHERE ts.trainer_id = ?';
+                    sql += ' AND ts.trainer_id = ?';
                     params.push(staffRows[0].id);
                 } else {
                     return res.json([]);
@@ -64,12 +70,13 @@ async function createSession(req, res) {
 
         const sql = `
             INSERT INTO trainer_sessions 
-            (trainer_id, member_id, member_name, session_date, start_time, end_time, session_type, status, workouts, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (trainer_id, member_id, membership_id, member_name, session_date, start_time, end_time, session_type, status, workouts, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const params = [
             staffId, 
             memberId, 
+            req.body.membership_id || null,
             memberName, 
             sessionDate, 
             startTime || null, 

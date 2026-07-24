@@ -828,8 +828,10 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       });
 
       // If member already has an active/pending membership, update it
-      // This applies to both regular plans and PT plan upgrades
-      if (activeOrPendingMembership) {
+      // For PT plans, always create a NEW record so sessions reset
+      if (filterTrainerPlans) {
+        await api.post("/memberships", membershipData);
+      } else if (activeOrPendingMembership) {
         await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
       } else {
         await api.post("/memberships", membershipData);
