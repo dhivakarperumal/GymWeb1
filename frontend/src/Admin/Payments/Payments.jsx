@@ -480,17 +480,34 @@ const Payments = () => {
       if (dateFilter === "custom" && !isInCustomRange(plan.createdAt))
         passDate = false;
 
-      if (passDate && matchesPaymentTab(plan)) {
+      const hasValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
+      const isPTPrimary = plan.planName && /\bpt\b/i.test(plan.planName);
+      
+      let passPlanType = true;
+      if (planTypeTab === "normal") {
+        const hasNormal = plan.planName && (!isPTPrimary || hasValidPTAddon);
+        if (!hasNormal) passPlanType = false;
+      } else if (planTypeTab === "pt") {
+        const hasPT = hasValidPTAddon || isPTPrimary;
+        if (!hasPT) passPlanType = false;
+      }
+
+      if (passDate && matchesPaymentTab(plan) && passPlanType) {
         allInitialPlans.push(plan);
       }
     });
   });
 
+  const getPlanEndDate = (p) => {
+    const hasValidPTAddon = p.pt_planName && p.pt_planName !== "null" && p.pt_planName !== "undefined" && p.pt_planName.trim() !== "";
+    return planTypeTab === "pt" && hasValidPTAddon ? (p.pt_endDate || p.endDate) : p.endDate;
+  };
+
   const counts = {
     all: allInitialPlans.length,
     active: allInitialPlans.filter((p) => p.status === "active").length,
     inactive: allInitialPlans.filter((p) => p.status === "inactive").length,
-    expiry: allInitialPlans.filter((p) => isExpiringPlan(p.endDate)).length,
+    expiry: allInitialPlans.filter((p) => isExpiringPlan(getPlanEndDate(p))).length,
   };
 
   const filteredMembers = members
@@ -499,28 +516,42 @@ const Payments = () => {
       plans: member.plans.filter((plan) => {
         const q = search.toLowerCase().trim();
 
-        // empty search = show all
-        if (!q) return true;
-
-        const match =
-          member.username?.toLowerCase().includes(q) ||
-          member.email?.toLowerCase().includes(q) ||
-          plan.planName?.toLowerCase().includes(q) ||
-          plan.pt_planName?.toLowerCase().includes(q) ||
-          plan.phone?.toLowerCase().includes(q) ||
-          member.phone?.toLowerCase().includes(q) ||
-          member.phoneNumber?.toLowerCase().includes(q);
+        let match = true;
+        if (q) {
+          match =
+            member.username?.toLowerCase().includes(q) ||
+            member.email?.toLowerCase().includes(q) ||
+            plan.planName?.toLowerCase().includes(q) ||
+            plan.pt_planName?.toLowerCase().includes(q) ||
+            plan.phone?.toLowerCase().includes(q) ||
+            member.phone?.toLowerCase().includes(q) ||
+            member.phoneNumber?.toLowerCase().includes(q);
+        }
 
         if (!match) return false;
 
         // Payment Tab Filter
         if (!matchesPaymentTab(plan)) return false;
 
+        // Plan Type Filter
+        const hasValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
+        const isPTPrimary = plan.planName && /\bpt\b/i.test(plan.planName);
+
+        if (planTypeTab === "normal") {
+          const hasNormal = plan.planName && (!isPTPrimary || hasValidPTAddon);
+          if (!hasNormal) return false;
+        } else if (planTypeTab === "pt") {
+          const hasPT = hasValidPTAddon || isPTPrimary;
+          if (!hasPT) return false;
+        }
+
         // Status Filter
         if (filterType === "active" && plan.status !== "active") return false;
         if (filterType === "inactive" && plan.status !== "inactive")
           return false;
-        if (filterType === "expiry" && !isExpiringPlan(plan.endDate))
+        
+        const currentEndDate = planTypeTab === "pt" && hasValidPTAddon ? (plan.pt_endDate || plan.endDate) : plan.endDate;
+        if (filterType === "expiry" && !isExpiringPlan(currentEndDate))
           return false;
 
         // Date Filter
@@ -531,14 +562,6 @@ const Payments = () => {
           return false;
         if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
           return false;
-        // Plan Type Filter
-        if (planTypeTab === "normal") {
-          const hasNormal = plan.planName && (!plan.planName.toLowerCase().includes("pt") || plan.pt_planName);
-          if (!hasNormal) return false;
-        } else if (planTypeTab === "pt") {
-          const hasPT = plan.pt_planName || plan.planName?.toLowerCase().includes("pt");
-          if (!hasPT) return false;
-        }
 
         return true;
       }),
@@ -1084,7 +1107,7 @@ const Payments = () => {
                     >
                       <FaPrint />
                     </button>
-                    {plan.status === "active" ? (
+                    {/* {plan.status === "active" ? (
                       <button
                         onClick={() =>
                           handleStatusChange(member.uid, plan.id, "inactive")
@@ -1102,7 +1125,7 @@ const Payments = () => {
                       >
                         Mark Active
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               );
@@ -1188,8 +1211,9 @@ const Payments = () => {
                       const paidTotal = initialPaid + secondPaid;
                       const remainingAmount = Math.max(0, totalAmount - paidTotal);
 
+                      const isValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
                       const planNameDisplay = isPTTab
-                        ? (plan.pt_planName || plan.planName)
+                        ? (isValidPTAddon ? plan.pt_planName : plan.planName)
                         : plan.planName;
 
                     return (
@@ -1408,19 +1432,52 @@ const Payments = () => {
               Prev
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded border ${
-                  currentPage === page
-                    ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white/10 border-white/20"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {(() => {
+              let startPage = Math.max(1, currentPage - 2);
+              let endPage = Math.min(totalPages, startPage + 4);
+
+              if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+              }
+
+              const pages = [];
+              
+              if (startPage > 1) {
+                pages.push(
+                  <button key="first" onClick={() => setCurrentPage(1)} className="px-3 py-1 rounded border bg-white/10 border-white/20 hover:bg-white/20 transition">1</button>
+                );
+                if (startPage > 2) {
+                  pages.push(<span key="ellipsis-start" className="px-2 text-white/50">...</span>);
+                }
+              }
+
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i)}
+                    className={`px-3 py-1 rounded border transition ${
+                      currentPage === i
+                        ? "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20"
+                        : "bg-white/10 border-white/20 hover:bg-white/20"
+                    }`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+
+              if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                  pages.push(<span key="ellipsis-end" className="px-2 text-white/50">...</span>);
+                }
+                pages.push(
+                  <button key="last" onClick={() => setCurrentPage(totalPages)} className="px-3 py-1 rounded border bg-white/10 border-white/20 hover:bg-white/20 transition">{totalPages}</button>
+                );
+              }
+
+              return pages;
+            })()}
 
             <button
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
