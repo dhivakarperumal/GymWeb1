@@ -497,12 +497,19 @@ const Payments = () => {
     .map((member) => ({
       ...member,
       plans: member.plans.filter((plan) => {
-        const q = search.toLowerCase();
+        const q = search.toLowerCase().trim();
+
+        // empty search = show all
+        if (!q) return true;
 
         const match =
           member.username?.toLowerCase().includes(q) ||
           member.email?.toLowerCase().includes(q) ||
-          plan.planName?.toLowerCase().includes(q);
+          plan.planName?.toLowerCase().includes(q) ||
+          plan.pt_planName?.toLowerCase().includes(q) ||
+          plan.phone?.toLowerCase().includes(q) ||
+          member.phone?.toLowerCase().includes(q) ||
+          member.phoneNumber?.toLowerCase().includes(q);
 
         if (!match) return false;
 
