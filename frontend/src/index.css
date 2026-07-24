@@ -26,34 +26,45 @@ textarea:-webkit-autofill:focus {
 input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
 textarea,
 select {
-  color: white !important;
-  -webkit-text-fill-color: white !important;
+  color: white;
 }
 
+/* Placeholder color */
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af !important;
+  color: #6b7280 !important;
+  /* gray-500 */
+  -webkit-text-fill-color: #6b7280 !important;
   opacity: 1;
 }
 
+
 /* Hide scrollbar globally but allow scrolling */
-html, body {
-  -ms-overflow-style: none; /* IE & Edge */
-  scrollbar-width: none; /* Firefox */
+html,
+body {
+  -ms-overflow-style: none;
+  /* IE & Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
-html::-webkit-scrollbar, body::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari */
 }
 
 /* Specific utility for containers that need to hide scrollbars */
 .hide-scrollbar {
-  -ms-overflow-style: none; /* IE & Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE & Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
+  display: none;
+  /* Chrome, Safari */
 }
 
 .scrollbar-hide {
@@ -68,6 +79,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 .small-caps {
   font-variant: small-caps;
 }
+
 /* Admin area: ensure interactive elements show pointer */
 .admin-root button,
 .admin-root a,
@@ -95,7 +107,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 .trainer-root select,
 .trainer-root select option,
 .trainer-root [role="option"] {
-  background-color: #111827; /* gray-900 */
+  background-color: #111827;
+  /* gray-900 */
   color: #ffffff;
 }
 
@@ -124,18 +137,21 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 .page-title {
   font-weight: 700;
   line-height: 1.1;
-  font-size: 1.25rem; /* 20px mobile */
+  font-size: 1.25rem;
+  /* 20px mobile */
 }
 
 @media (min-width: 640px) {
   .page-title {
-    font-size: 1.75rem; /* 28px small screens and up */
+    font-size: 1.75rem;
+    /* 28px small screens and up */
   }
 }
 
 @media (min-width: 1024px) {
   .page-title {
-    font-size: 2rem; /* 32px desktop */
+    font-size: 2rem;
+    /* 32px desktop */
   }
 }
 
@@ -143,14 +159,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
@@ -160,4 +179,3 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
 }
-
