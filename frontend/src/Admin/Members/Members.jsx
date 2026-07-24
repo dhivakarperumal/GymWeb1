@@ -227,6 +227,18 @@ const Members = () => {
     fetchMembers();
   }, [selectedTrainer, role, user]);
 
+  useEffect(() => {
+    // Ensure the page is valid when filters change or filtered results shrink.
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages === 0 ? 1 : totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    // If search/filter settings change, go back to the first page.
+    setCurrentPage(1);
+  }, [search, filterType, selectedTrainer, dateRange.type, dateRange.range, itemsPerPage]);
+
   // 🔎 SEARCH & DATE FILTER - Robust filtering
   const filtered = (members || []).filter((m) => {
     // 1. Text Search
