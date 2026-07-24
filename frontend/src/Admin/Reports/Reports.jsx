@@ -141,7 +141,7 @@ const Reports = () => {
   };
 
   const isEMIMembership = (membership) =>
-    String(membership.paymentMode || membership.payment_mode || "").toLowerCase() === "emi";
+    String(membership.paymentMode || membership.payment_mode || "").toLowerCase().startsWith("emi");
 
   const getMembershipStartDate = (membership) =>
     membership.pt_startDate || membership.pt_start_date || membership.startDate || membership.start_date || null;
@@ -326,8 +326,8 @@ const Reports = () => {
           p.userEmail || p.email || "-",
           p.planName || "-",
           getMembershipTrainerName(p),
-          p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
-          p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
+          p.pricePaid != null ? `₹${(parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0)).toFixed(2)}` : "-",
+          (p.paymentMode || "").toLowerCase().startsWith("emi-") ? p.paymentMode.split('-')[1] : p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
           hasWorkout ? "Yes" : "No",
           hasDiet ? "Yes" : "No",
           ptFormCompleted ? "Yes" : "Pending",
@@ -366,7 +366,7 @@ const Reports = () => {
           paidAmount != null ? `₹${paidAmount.toFixed(2)}` : "-",
           typeof remaining === "number" ? `₹${remaining.toFixed(2)}` : "-",
           nextEmiDateStr,
-          p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
+          (p.paymentMode || "").toLowerCase().startsWith("emi-") ? p.paymentMode.split('-')[1] : p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
           p.status || "active",
           p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
           p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
@@ -383,8 +383,14 @@ const Reports = () => {
       rows: filteredPTPlans.map((p, i) => {
         const startDate = p.pt_startDate || p.startDate || p.start_date;
         const endDate = p.pt_endDate || p.endDate || p.end_date;
-        const paymentAmount = p.pt_pricePaid != null ? p.pt_pricePaid : p.pricePaid != null ? p.pricePaid : null;
-        const paymentMode = p.pt_paymentMode || p.paymentMode || p.payment_mode || "-";
+        const paymentAmount = p.pt_pricePaid != null 
+          ? (parseFloat(p.pt_pricePaid) + (p.pt_secondPaymentPaid ? parseFloat(p.pt_secondPaymentPaid) : 0)) 
+          : p.pricePaid != null 
+            ? (parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0)) 
+            : null;
+        const paymentMode = (p.pt_paymentMode || p.paymentMode || p.payment_mode || "-").toLowerCase().startsWith("emi-") 
+          ? (p.pt_paymentMode || p.paymentMode || p.payment_mode || "").split('-')[1] 
+          : p.pt_paymentMode || p.paymentMode || p.payment_mode || "-";
 
         return [
           i + 1,

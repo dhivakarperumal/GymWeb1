@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search, ArrowLeft, Download, LayoutList, LayoutGrid,
@@ -92,8 +92,8 @@ const PlanHistory = () => {
 
     if (statusFilter !== "all" && m.status !== statusFilter) return false;
 
-    if (paymentFilter === "emi" && m.paymentMode !== "emi") return false;
-    if (paymentFilter === "full" && m.paymentMode === "emi") return false;
+    if (paymentFilter === "emi" && !String(m.paymentMode || "").toLowerCase().startsWith("emi")) return false;
+    if (paymentFilter === "full" && String(m.paymentMode || "").toLowerCase().startsWith("emi")) return false;
 
     if (dateFilter === "today" && !isToday(m.createdAt)) return false;
     if (dateFilter === "week" && !isThisWeek(m.createdAt)) return false;

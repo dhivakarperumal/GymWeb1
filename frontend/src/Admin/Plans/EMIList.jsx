@@ -193,7 +193,7 @@ const EMIList = () => {
     fetchData();
   }, [trainerFilter, role, user]);
 
-  const emiMemberships = memberships.filter((m) => m.paymentMode === "emi");
+  const emiMemberships = memberships.filter((m) => String(m.paymentMode || "").toLowerCase().startsWith("emi"));
 
   // Filtering Logic
   const filteredEMIs = emiMemberships.filter((m) => {

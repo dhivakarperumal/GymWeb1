@@ -1053,7 +1053,7 @@ const Payments = () => {
                       </p>
                     </div>
 
-                    {plan.paymentMode === "emi" || plan.paymentStatus === "Partial" ? (
+                    {String(plan.paymentMode || "").toLowerCase().startsWith("emi") || plan.paymentStatus === "Partial" ? (
                       <div>
                         <p className="text-gray-400">Next Payment Due</p>
                         <p className="whitespace-nowrap text-blue-400 font-semibold">
@@ -1322,7 +1322,7 @@ const Payments = () => {
                           }
                         </td>
                         <td className="px-4 py-4 font-medium text-base whitespace-nowrap">
-                          {plan.paymentMode === "emi" || plan.paymentStatus === "Partial" ? (
+                          {String(plan.paymentMode || "").toLowerCase().startsWith("emi") || plan.paymentStatus === "Partial" ? (
                             <span className="text-blue-400">
                               {(() => {
                                 const nextDate = calculateNextPaymentDate(plan);

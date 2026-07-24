@@ -366,8 +366,8 @@ const Members = () => {
       "Expiry Date": (hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("YYYY-MM-DD") : "-",
       Status: m.status || "active",
       "Plan Price": m.price || "-",
-      "Payment Status": m.paymentMode === 'emi' ? "Pending" : m.plan ? "Paid" : "N/A",
-      "Remaining Amount": m.paymentMode === 'emi' ? (Number(m.price || 0) - Number(m.pricePaid || 0) - Number(m.secondPaymentPaid || 0)) : 0
+      "Payment Status": String(m.paymentMode || "").toLowerCase().startsWith('emi') ? "Pending" : m.plan ? "Paid" : "N/A",
+      "Remaining Amount": String(m.paymentMode || "").toLowerCase().startsWith('emi') ? (Number(m.price || 0) - Number(m.pricePaid || 0) - Number(m.secondPaymentPaid || 0)) : 0
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);

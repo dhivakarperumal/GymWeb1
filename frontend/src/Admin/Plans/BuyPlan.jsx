@@ -476,11 +476,11 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
             // Check for pending EMIs
             const pending = normalized.filter(m => {
               if (filterTrainerPlans) {
-                if (m.pt_paymentMode !== 'emi') return false;
+                if (!String(m.pt_paymentMode || "").toLowerCase().startsWith('emi')) return false;
                 const status = (m.pt_paymentStatus || '').toLowerCase();
                 return status === 'pending' || status === 'partial';
               } else {
-                if (m.paymentMode !== 'emi') return false;
+                if (!String(m.paymentMode || "").toLowerCase().startsWith('emi')) return false;
                 const status = (m.paymentStatus || '').toLowerCase();
                 return status === 'pending' || status === 'partial';
               }
@@ -684,7 +684,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       const planTotal = getSelectedPlanTotal();
       const isEMI = paymentType === "emi" && isEMIAllowed;
       const amountNow = isEMI ? parseDecimal(initialPayment) : planTotal;
-      const paymentModeValue = isEMI ? "emi" : form.paymentMode;
+      const paymentModeValue = isEMI ? `emi-${form.paymentMode}` : form.paymentMode;
 
       // ===== UPDATE/CREATE MEMBER FIRST =====
       let updatedMember = {
@@ -1011,11 +1011,11 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                                   // Check for pending EMIs
                                   const pending = normalized.filter(m => {
                                     if (filterTrainerPlans) {
-                                      if (m.pt_paymentMode !== 'emi') return false;
+                                      if (!String(m.pt_paymentMode || "").toLowerCase().startsWith('emi')) return false;
                                       const status = (m.pt_paymentStatus || '').toLowerCase();
                                       return status === 'pending' || status === 'partial';
                                     } else {
-                                      if (m.paymentMode !== 'emi') return false;
+                                      if (!String(m.paymentMode || "").toLowerCase().startsWith('emi')) return false;
                                       const status = (m.paymentStatus || '').toLowerCase();
                                       return status === 'pending' || status === 'partial';
                                     }
