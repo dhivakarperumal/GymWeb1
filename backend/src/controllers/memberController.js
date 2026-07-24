@@ -846,7 +846,8 @@ async function updateMember(req, res) {
         const wantsClearNormal = (Object.prototype.hasOwnProperty.call(req.body, 'plan') && req.body.plan === null)
           || (Object.prototype.hasOwnProperty.call(req.body, 'joinDate') && req.body.joinDate === null)
           || (Object.prototype.hasOwnProperty.call(req.body, 'expiryDate') && req.body.expiryDate === null)
-          || (Object.prototype.hasOwnProperty.call(req.body, 'duration') && req.body.duration === null);
+          || (Object.prototype.hasOwnProperty.call(req.body, 'duration') && req.body.duration === null)
+          || (Object.prototype.hasOwnProperty.call(req.body, 'status') && req.body.status === null);
 
         if (wantsClearPt) {
           try {

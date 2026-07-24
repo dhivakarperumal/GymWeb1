@@ -209,7 +209,8 @@ const MemberDetails = () => {
         plan: null,
         duration: null,
         joinDate: null,
-        expiryDate: null
+        expiryDate: null,
+        status: null
       };
       const res = await api.put(`/members/${id}`, payload);
       setMember(res.data);
