@@ -149,6 +149,66 @@ const Reports = () => {
   const getMembershipPlanName = (membership) =>
     membership.pt_planName || membership.pt_plan_name || membership.planName || membership.plan || membership.plan_name || "";
 
+  const safeParseDues = (membership) => {
+    let dues = membership?.dues ?? [];
+    if (typeof dues === "string") {
+      try {
+        dues = JSON.parse(dues || "[]");
+      } catch (err) {
+        dues = [];
+      }
+    }
+    return Array.isArray(dues) ? dues : [];
+  };
+
+  const getPaymentOrdinal = (num) => {
+    const n = Number(num);
+    if (Number.isNaN(n)) return `${num}th`;
+    const mod100 = n % 100;
+    if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+    switch (n % 10) {
+      case 1: return `${n}st`;
+      case 2: return `${n}nd`;
+      case 3: return `${n}rd`;
+      default: return `${n}th`;
+    }
+  };
+
+  const buildMembershipPaymentLines = (membership) => {
+    const initialAmount = Number(membership.pricePaid || 0);
+    const secondAmount = Number(membership.secondPaymentPaid || 0);
+    const dues = safeParseDues(membership);
+    const amountLines = [];
+    const modeLines = [];
+
+    const initialMode = membership.paymentMode || membership.paymentId || "Cash";
+    if (initialAmount > 0) {
+      amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${initialAmount.toFixed(2)}`);
+      modeLines.push(initialMode);
+    }
+
+    if (dues.length > 0) {
+      dues.forEach((due) => {
+        const amount = Number(due?.amount ?? due?.amt ?? 0);
+        if (!Number.isFinite(amount) || amount <= 0) return;
+        amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${amount.toFixed(2)}`);
+        modeLines.push(due?.paymentId || due?.payment_id || "Cash");
+      });
+    } else if (secondAmount > 0) {
+      amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${secondAmount.toFixed(2)}`);
+      modeLines.push(membership.paymentId || membership.paymentMode || "Cash");
+    }
+
+    if (amountLines.length === 0) {
+      return { amountText: "-", modeText: membership.paymentMode || membership.paymentId || "-" };
+    }
+
+    return {
+      amountText: amountLines.join("\n"),
+      modeText: modeLines.join("\n"),
+    };
+  };
+
   const findAssignment = (record) => {
     if (!assignments || assignments.length === 0) return null;
 
@@ -320,14 +380,15 @@ const Reports = () => {
         const hasWorkout = !!(p.workout_count || p.workoutCount || p.hasWorkout || p.workoutAssigned || p.workout);
         const hasDiet = !!(p.diet_count || p.dietCount || p.hasDiet || p.dietAssigned || p.diet);
         const ptFormCompleted = !!(p.pt_form_completed);
+        const paymentLines = buildMembershipPaymentLines(p);
         return [
           i + 1,
           p.userName || p.username || "-",
           p.userEmail || p.email || "-",
           p.planName || "-",
           getMembershipTrainerName(p),
-          p.pricePaid != null ? `₹${(parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0)).toFixed(2)}` : "-",
-          (p.paymentMode || "").toLowerCase().startsWith("emi-") ? p.paymentMode.split('-')[1] : p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
+          paymentLines.amountText,
+          paymentLines.modeText,
           hasWorkout ? "Yes" : "No",
           hasDiet ? "Yes" : "No",
           ptFormCompleted ? "Yes" : "Pending",
@@ -670,7 +731,7 @@ const Reports = () => {
                         const value = String(cell).trim().toLowerCase();
                         const badgeClasses = getCellBadgeClasses(cell);
                         return (
-                          <td key={j} className="px-4 py-3 whitespace-nowrap">
+                          <td key={j} className="px-4 py-3 whitespace-pre-line break-words align-top">
                             {value === "yes" || value === "no" || value === "active" || value === "inactive" || value === "expired" ? (
                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeClasses}`}>
                                 {cell}
