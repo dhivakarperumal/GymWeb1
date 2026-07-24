@@ -92,8 +92,10 @@ const PTForm = () => {
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;
 
-              if (isPtExpired) {
-                // If expired, retain all form data but reset the session tracker
+              const isRenewed = savedData.pt_join_date && data.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(data.pt_join_date), 'day');
+
+              if (isPtExpired || isRenewed) {
+                // If expired or renewed, retain all form data but reset the session tracker
                 setFormData(prev => ({
                   ...prev,
                   ...savedData,

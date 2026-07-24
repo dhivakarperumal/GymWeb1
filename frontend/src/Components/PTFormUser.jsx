@@ -119,14 +119,18 @@ const PTFormUser = () => {
           if (ptRes.data && ptRes.data.form_data && memberData.pt_form_completed) {
             const savedData = safeParse(ptRes.data.form_data);
 
-            if (ptExpired) {
-              // PT plan expired — retain ALL saved data but reset sessions only
+            const isRenewed = savedData.pt_join_date && memberData?.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
+
+            if (ptExpired || isRenewed) {
+              // PT plan expired or renewed — retain ALL saved data but reset sessions only
               initialForm = {
                 ...initialForm,
                 ...savedData,
                 sessions: [],  // reset session tracker only
               };
-              setPtExpiredAlert(true);
+              if (ptExpired) {
+                setPtExpiredAlert(true);
+              }
             } else {
               // PT plan active — merge all saved data as before
               initialForm = { ...initialForm, ...savedData };

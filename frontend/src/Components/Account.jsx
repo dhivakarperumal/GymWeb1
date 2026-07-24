@@ -244,7 +244,11 @@ const Account = () => {
         const formData = typeof ptData.form_data === 'string' ? JSON.parse(ptData.form_data || '{}') : ptData.form_data || {};
         
         let finalFormData = { ...formData };
-        if (isExpired) {
+        
+        // Check if plan was renewed by comparing joining dates
+        const isRenewed = formData.pt_join_date && memberData?.pt_join_date && !dayjs(formData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
+
+        if (isExpired || isRenewed) {
           finalFormData = {
             ...formData,
             sessions: []

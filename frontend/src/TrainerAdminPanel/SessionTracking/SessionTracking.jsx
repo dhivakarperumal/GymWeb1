@@ -98,8 +98,9 @@ const SessionTracking = () => {
     };
 
     const isExpired = member?.planEndDate && dayjs(member.planEndDate).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+    const isRenewed = savedData.pt_join_date && member?.planStartDate && !dayjs(savedData.pt_join_date).isSame(dayjs(member.planStartDate), 'day');
 
-    const sessions = !isExpired && Array.isArray(savedData.sessions) && savedData.sessions.length > 0
+    const sessions = (!isExpired && !isRenewed) && Array.isArray(savedData.sessions) && savedData.sessions.length > 0
       ? savedData.sessions.map((session, index) => ({
           session_no: index + 1,
           date: session.date || "",
