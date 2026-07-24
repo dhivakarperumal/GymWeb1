@@ -159,16 +159,19 @@ const Login = () => {
 
               {/* Identifier */}
               <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="identifier" className="block text-sm font-semibold text-white mb-2">
                   Email, Username or Phone
                 </label>
                 <input
                   id="identifier"
                   type="text"
+                  name="identifier"
+                  autoComplete="username"
                   placeholder="Enter your email, username or phone"
                   className="w-full bg-gray-900 text-white border border-gray-700 
-                             p-3 rounded-lg focus:outline-none 
+                             px-3 py-3 rounded-lg placeholder:text-gray-400 focus:outline-none 
                              focus:ring-2 focus:ring-red-500"
+                  style={{ color: "#fff", WebkitTextFillColor: "#fff" }}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required
@@ -177,17 +180,20 @@ const Login = () => {
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    name="password"
+                    autoComplete="current-password"
                     placeholder="Enter your password"
                     className="w-full bg-gray-900 text-white border border-gray-700 
-                               p-3 pr-12 rounded-lg focus:outline-none 
+                               px-3 py-3 pr-12 rounded-lg placeholder:text-gray-400 focus:outline-none 
                                focus:ring-2 focus:ring-red-500"
+                    style={{ color: "#fff", WebkitTextFillColor: "#fff" }}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
