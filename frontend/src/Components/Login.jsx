@@ -207,7 +207,7 @@ const Login = () => {
               {/* Login Button */}
               <button
                 disabled={loading}
-                className="w-full mt-2 bg-gradient-to-r from-red-600 to-orange-500 
+                className="w-full  bg-gradient-to-r mt-5 from-red-600 to-orange-500 
                            text-white py-3 rounded-lg font-bold tracking-wide 
                            hover:opacity-90 transition disabled:opacity-50"
               >
