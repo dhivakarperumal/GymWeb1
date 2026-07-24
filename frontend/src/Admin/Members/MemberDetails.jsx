@@ -59,6 +59,11 @@ const MemberDetails = () => {
           payment_status: activeMembership?.paymentStatus || memberData.payment_status,
           discount: activeMembership?.discount || 0,
           amount: activeMembership?.amount || 0,
+          pt_price: activeMembership?.pt_price || memberData.pt_price || 0,
+          pt_pricePaid: activeMembership?.pt_pricePaid || memberData.pt_pricePaid || 0,
+          pt_secondPaymentPaid: activeMembership?.pt_secondPaymentPaid || memberData.pt_secondPaymentPaid || 0,
+          pt_discount: activeMembership?.pt_discount || memberData.pt_discount || 0,
+          pt_amount: activeMembership?.pt_amount || memberData.pt_amount || 0,
         };
         setMember(enhancedMember);
 
@@ -440,6 +445,45 @@ const MemberDetails = () => {
                       <InfoRow icon={<Clock size={18} className="text-orange-500" />} label="Expiry" value={member.pt_expiry_date ? dayjs(member.pt_expiry_date).format('MMM DD, YYYY') : 'N/A'} />
                       {member.pt_duration && (
                         <InfoRow icon={<Activity size={18} className="text-orange-500" />} label="Duration" value={`${member.pt_duration} Days`} />
+                      )}
+
+                      {(member.pt_plan || member.has_pt_plan) && (
+                        <div className="pt-4 border-t border-white/10 space-y-3">
+                          {Number(member.pt_amount) > 0 && (
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-white/40">Original Price</span>
+                              <span className="text-white/80 font-semibold">₹{member.pt_amount}</span>
+                            </div>
+                          )}
+                          {Number(member.pt_discount) > 0 && (
+                            <div className="flex justify-between items-center text-sm text-red-400/80">
+                              <span className="text-white/40">Discount</span>
+                              <span className="font-semibold">-₹{member.pt_discount}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-white/40">Total Price</span>
+                            <span className="text-white font-bold">₹{member.pt_price || '0'}</span>
+                          </div>
+                          {Number(member.pt_pricePaid) > 0 && (
+                            <div className="flex justify-between items-center text-sm text-emerald-400/80">
+                              <span className="text-white/40">Initial Paid</span>
+                              <span className="font-bold">₹{member.pt_pricePaid}</span>
+                            </div>
+                          )}
+                          {Number(member.pt_secondPaymentPaid) > 0 && (
+                            <div className="flex justify-between items-center text-sm text-cyan-400/80">
+                              <span className="text-white/40">Second Paid</span>
+                              <span className="font-bold">₹{member.pt_secondPaymentPaid}</span>
+                            </div>
+                          )}
+                          {Number(member.pt_price) > (Number(member.pt_pricePaid) || 0) + (Number(member.pt_secondPaymentPaid) || 0) && (
+                            <div className="flex justify-between items-center text-sm text-orange-400">
+                              <span className="text-white/40">Remaining</span>
+                              <span className="font-bold">₹{Number(member.pt_price) - (Number(member.pt_pricePaid) || 0) - (Number(member.pt_secondPaymentPaid) || 0)}</span>
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       {(member.pt_plan || member.has_pt_plan) && (

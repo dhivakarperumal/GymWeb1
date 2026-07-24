@@ -49,6 +49,7 @@ const Payments = () => {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [paymentTab, setPaymentTab] = useState("all");
+  const [planTypeTab, setPlanTypeTab] = useState("normal");
   const [dateFilter, setDateFilter] = useState("all");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -523,8 +524,14 @@ const Payments = () => {
           return false;
         if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
           return false;
-        if (dateFilter === "custom" && !isInCustomRange(plan.createdAt))
-          return false;
+        // Plan Type Filter
+        if (planTypeTab === "normal") {
+          const hasNormal = plan.planName && (!plan.planName.toLowerCase().includes("pt") || plan.pt_planName);
+          if (!hasNormal) return false;
+        } else if (planTypeTab === "pt") {
+          const hasPT = plan.pt_planName || plan.planName?.toLowerCase().includes("pt");
+          if (!hasPT) return false;
+        }
 
         return true;
       }),
@@ -551,7 +558,7 @@ const Payments = () => {
     setCurrentPage(1);
     setSelectedRows([]);
     setSelectAll(false);
-  }, [search, filterType, paymentTab, dateFilter, customStart, customEnd]);
+  }, [search, filterType, paymentTab, planTypeTab, dateFilter, customStart, customEnd]);
 
   useEffect(() => {
     setSelectAll(allPlans.length > 0 && selectedRows.length === allPlans.length);
@@ -717,7 +724,16 @@ const Payments = () => {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
           {/* Title */}
-          <h1 className="text-2xl md:text-3xl font-bold"></h1>
+          <div className="relative w-full md:max-w-md">
+            <Search className="absolute left-4 top-3 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search by name, email, or plan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20"
+            />
+          </div>
 
           {/* Right Section */}
           <div className="flex flex-wrap items-center gap-3 mb-5 ml-auto">
@@ -779,16 +795,7 @@ const Payments = () => {
         {/* SEARCH + FILTERS SAME ROW */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           {/* LEFT → SEARCH */}
-          <div className="relative w-full md:max-w-md">
-            <Search className="absolute left-4 top-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search by name, email, or plan..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20"
-            />
-          </div>
+         
 
           {/* RIGHT → FILTER BUTTONS */}
           <div className="flex flex-wrap gap-4 md:justify-end items-center">
@@ -838,6 +845,26 @@ const Payments = () => {
               </div>
             )}
 
+            {/* Plan Type Tabs */}
+            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
+              {[
+                { key: "normal", label: "Normal Plan" },
+                { key: "pt", label: "PT Plan" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setPlanTypeTab(tab.key)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
+                    planTypeTab === tab.key
+                      ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
             {/* Payment Type Filters */}
             <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
               {[
@@ -859,8 +886,7 @@ const Payments = () => {
               ))}
             </div>
 
-            {/* Status Filters */}
-            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
+             <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
               {["all", "active", "inactive", "expiry"].map((type) => (
                 <button
                   key={type}
@@ -875,6 +901,7 @@ const Payments = () => {
                 </button>
               ))}
             </div>
+           
           </div>
         </div>
 
@@ -1107,18 +1134,15 @@ const Payments = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Member Info</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Plan Price</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">PT Price</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">Price</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
                     {paymentTab === "emi" && <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>}
                     <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold text-orange-400">Remaining Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold text-blue-400">Total Payable</th>
                     
-                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Normal Validity</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Validity</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Validity</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Payment Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Next Payment Due</th>
                     <th className="px-4 py-4 text-center text-sm font-semibold">Payment</th>
@@ -1129,12 +1153,29 @@ const Payments = () => {
                 <tbody>
                   {paginatedPlans.length > 0 ? (
                     paginatedPlans.map(({ member, plan }, index) => {
-                      const planPrice = Number(plan.amount) || Number(plan.price) || 0;
-                      const ptPrice = Number(plan.pt_amount) || Number(plan.pt_price) || 0;
-                      const totalDiscount = (Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0);
-                      const totalAmount = planPrice + ptPrice - totalDiscount;
-                      const paidTotal = (Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0) + (Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0);
+                      const isPTTab = planTypeTab === "pt";
+                      
+                      const planPrice = isPTTab 
+                        ? (Number(plan.pt_amount) || Number(plan.pt_price) || 0) 
+                        : (Number(plan.amount) || Number(plan.price) || 0);
+                      const totalDiscount = isPTTab 
+                        ? (Number(plan.pt_discount) || 0) 
+                        : (Number(plan.discount) || 0);
+                      const totalAmount = planPrice - totalDiscount;
+                      
+                      const initialPaid = isPTTab 
+                        ? (Number(plan.pt_pricePaid) || 0) 
+                        : (Number(plan.pricePaid) || 0);
+                      const secondPaid = isPTTab 
+                        ? (Number(plan.pt_secondPaymentPaid) || 0) 
+                        : (Number(plan.secondPaymentPaid) || 0);
+                        
+                      const paidTotal = initialPaid + secondPaid;
                       const remainingAmount = Math.max(0, totalAmount - paidTotal);
+
+                      const planNameDisplay = isPTTab
+                        ? (plan.pt_planName || plan.planName)
+                        : plan.planName;
 
                     return (
                       <tr
@@ -1167,48 +1208,30 @@ const Payments = () => {
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <span className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-orange-500/20 text-orange-400 inline-block whitespace-nowrap">
-                            {plan.planName || "-"}
+                            {planNameDisplay || "-"}
                           </span>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          {plan.pt_planName ? (
-                            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
-                              ✓ {plan.pt_planName}
-                            </span>
-                          ) : plan.planName?.toLowerCase().includes("pt") ? (
-                            <span className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-purple-500/20 text-purple-400 inline-flex items-center gap-1 whitespace-nowrap">
-                              ✓ {plan.planName}
-                            </span>
-                          ) : (
-                            <span className="text-white/30 text-xs">-</span>
-                          )}
                         </td>
                         <td className="px-4 py-4 text-base font-medium text-orange-400">
                           {plan.referredBy || "Admin"}
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-white/60">
-                            ₹{Number(plan.amount) || Number(plan.price) || 0}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className="text-base font-medium text-purple-400">
-                            ₹{Number(plan.pt_amount) || Number(plan.pt_price) || 0}
+                            ₹{planPrice}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-red-400">
-                            ₹{(Number(plan.discount) || 0) + (Number(plan.pt_discount) || 0)}
+                            ₹{totalDiscount}
                           </span>
                         </td>
                         {paymentTab === "emi" && <td className="px-4 py-4">
                           <span className="text-base font-medium text-white/80">
-                            ₹{(Number(plan.pricePaid) || 0) + (Number(plan.pt_pricePaid) || 0)}
+                            ₹{initialPaid}
                           </span>
                         </td>}
                         <td className="px-4 py-4">
                           <span className="text-base font-medium text-cyan-300">
-                            ₹{(Number(plan.secondPaymentPaid) || 0) + (Number(plan.pt_secondPaymentPaid) || 0)}
+                            ₹{secondPaid}
                           </span>
                         </td>
                         <td className="px-4 py-4">
@@ -1224,7 +1247,7 @@ const Payments = () => {
                        
                         <td className="px-4 py-4 text-white/70 text-xs font-medium whitespace-nowrap">
                           <div className="flex flex-col gap-2">
-                            {plan.planName && (!plan.planName?.toLowerCase().includes("pt") || plan.pt_planName) ? (
+                            {!isPTTab ? (
                               <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 w-max">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded self-center bg-orange-500/20 text-orange-400`}>
                                   NRM
@@ -1249,12 +1272,7 @@ const Payments = () => {
                                   ) : null}
                                 </div>
                               </div>
-                            ) : <span className="text-white/30">-</span>}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-white/70 text-xs font-medium whitespace-nowrap">
-                          <div className="flex flex-col gap-2">
-                            {plan.pt_planName || plan.pt_startDate || plan.pt_endDate || plan.planName?.toLowerCase().includes("pt") ? (
+                            ) : (
                               <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 w-max">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded self-center bg-purple-500/20 text-purple-400`}>
                                   PT
@@ -1279,7 +1297,7 @@ const Payments = () => {
                                   ) : null}
                                 </div>
                               </div>
-                            ) : <span className="text-white/30">-</span>}
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-4 font-medium text-base whitespace-nowrap">

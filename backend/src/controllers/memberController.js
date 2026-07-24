@@ -786,112 +786,55 @@ async function updateMember(req, res) {
     ];
     const [result] = await connection.query(updateQuery, updateParams);
 
-    const updatedMember = {
-      ...existingMember,
-      name,
-      phone,
-      email,
-      gender,
-      height: numHeight,
-      weight: numWeight,
-      bmi: numBmi,
-      plan,
-      duration: numDuration,
-      join_date: joinDate,
-      expiry_date: expiryDate,
-      status,
-      photo,
-      notes,
-      address,
-      dob: dob || null,
-      age: age || null,
-      employer: employer || null,
-      occupation: occupation || null,
-      emergency_contact_name: emergency_contact_name || null,
-      emergency_contact_relationship: emergency_contact_relationship || null,
-      emergency_contact_address: emergency_contact_address || null,
-      emergency_contact_phone_home: emergency_contact_phone_home || null,
-      emergency_contact_phone_work: emergency_contact_phone_work || null,
-      fitness_goal: fitness_goal || null,
-      blood_group: blood_group || null,
-      pt_form_completed: pt_form_completed ? 1 : 0,
-      pt_plan: pt_plan || null,
-      pt_duration: pt_duration || null,
-      pt_join_date: pt_join_date || null,
-      pt_expiry_date: pt_expiry_date || null,
-      pt_status: pt_status || null,
-      fingerprint_id: fingerprintId || null,
-      u_id: linkedUserId
-    };
+    const [updatedRows] = await connection.query(
+      `SELECT * FROM gym_members WHERE id = ? LIMIT 1`,
+      [existingMember.id]
+    );
+
+    const updatedMember = updatedRows[0]
+      ? { ...updatedRows[0], u_id: linkedUserId }
+      : { ...existingMember, u_id: linkedUserId };
 
     if (updatedMember && updatedMember.u_id) {
       try {
-        let planPrice = null;
-        let planId = null;
-        const newPlanName = plan === undefined ? updatedMember.plan : plan;
-        if (newPlanName) {
-          const [planRows] = await connection.query(`SELECT id, final_price, price FROM gym_plans WHERE name = ?`, [newPlanName]);
-          if (planRows.length > 0) {
-            planId = planRows[0].id;
-            planPrice = planRows[0].final_price || planRows[0].price;
+        const updatingNormalPlan = plan !== undefined || joinDate !== undefined || expiryDate !== undefined || duration !== undefined;
+        
+        if (updatingNormalPlan) {
+          let planPrice = null;
+          let planId = null;
+          const newPlanName = plan === undefined ? updatedMember.plan : plan;
+          if (newPlanName) {
+            const [planRows] = await connection.query(`SELECT id, final_price, price FROM gym_plans WHERE name = ?`, [newPlanName]);
+            if (planRows.length > 0) {
+              planId = planRows[0].id;
+              // we do NOT overwrite price and pricePaid if we are just syncing dates
+            }
           }
-        }
 
-        if (planPrice !== null) {
+          // If we are setting plan to null, we will clear it in the wantsClearNormal block
+          // Otherwise, just update the dates and planName/planId if they changed
           await connection.query(
             `UPDATE memberships 
-             SET endDate = ?, 
-                 startDate = ?, 
-                 duration = ?, 
-                 planId = ?,
-                 planName = ?,
-                 userName = ?,
-                 userEmail = ?,
-                 userPhone = ?,
-                 price = ?,
-                 pricePaid = ?,
-                 paymentMode = 'cash',
-                 paymentStatus = 'Paid'
+             SET endDate = COALESCE(?, endDate), 
+                 startDate = COALESCE(?, startDate), 
+                 duration = COALESCE(?, duration), 
+                 planId = COALESCE(?, planId),
+                 planName = COALESCE(?, planName),
+                 userName = COALESCE(?, userName),
+                 userEmail = COALESCE(?, userEmail),
+                 userPhone = COALESCE(?, userPhone)
              WHERE userId = ? 
              ORDER BY createdAt DESC 
              LIMIT 1`,
             [
-              expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
-              joinDate === undefined ? updatedMember.join_date : joinDate,
-              duration === undefined ? updatedMember.duration : numDuration,
-              planId,
-              newPlanName,
-              name === undefined ? updatedMember.name : name,
-              email === undefined ? updatedMember.email : email,
-              phone === undefined ? updatedMember.phone : phone,
-              planPrice,
-              planPrice,
-              updatedMember.u_id
-            ]
-          );
-        } else {
-          await connection.query(
-            `UPDATE memberships 
-             SET endDate = ?, 
-                 startDate = ?, 
-                 duration = ?, 
-                 planId = ?,
-                 planName = ?,
-                 userName = ?,
-                 userEmail = ?,
-                 userPhone = ?
-             WHERE userId = ? 
-             ORDER BY createdAt DESC 
-             LIMIT 1`,
-            [
-              expiryDate === undefined ? updatedMember.expiry_date : expiryDate,
-              joinDate === undefined ? updatedMember.join_date : joinDate,
-              duration === undefined ? updatedMember.duration : numDuration,
-              planId,
-              newPlanName,
-              name === undefined ? updatedMember.name : name,
-              email === undefined ? updatedMember.email : email,
-              phone === undefined ? updatedMember.phone : phone,
+              expiryDate === undefined ? null : (expiryDate || null),
+              joinDate === undefined ? null : (joinDate || null),
+              duration === undefined ? null : (numDuration || null),
+              plan === undefined ? null : (planId || null),
+              plan === undefined ? null : (newPlanName || null),
+              name === undefined ? null : (name || null),
+              email === undefined ? null : (email || null),
+              phone === undefined ? null : (phone || null),
               updatedMember.u_id
             ]
           );
