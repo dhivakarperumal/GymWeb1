@@ -71,49 +71,49 @@ const Login = () => {
   };
 
   // 🔹 Custom Google Login Hook (More Robust Popup)
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        setLoading(true);
-        // Get user info from Google API using the access token
-        const userInfo = await axios.get(
-          "https://www.googleapis.com/oauth2/v3/userinfo",
-          { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
-        );
+  // const googleLogin = useGoogleLogin({
+  //   onSuccess: async (tokenResponse) => {
+  //     try {
+  //       setLoading(true);
+  //       // Get user info from Google API using the access token
+  //       const userInfo = await axios.get(
+  //         "https://www.googleapis.com/oauth2/v3/userinfo",
+  //         { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
+  //       );
 
-        const googleUser = {
-          name: userInfo.data.name,
-          email: userInfo.data.email,
-          picture: userInfo.data.picture,
-          googleId: userInfo.data.sub
-        };
+  //       const googleUser = {
+  //         name: userInfo.data.name,
+  //         email: userInfo.data.email,
+  //         picture: userInfo.data.picture,
+  //         googleId: userInfo.data.sub
+  //       };
 
-        // Send to our backend
-        const res = await api.post("/auth/google-login", googleUser);
+  //       // Send to our backend
+  //       const res = await api.post("/auth/google-login", googleUser);
 
-        const userData = res.data.user;
-        const token = res.data.token;
+  //       const userData = res.data.user;
+  //       const token = res.data.token;
 
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(userData));
+  //       localStorage.setItem("token", token);
+  //       localStorage.setItem("user", JSON.stringify(userData));
 
-        contextLogin(userData, token);
+  //       contextLogin(userData, token);
 
-        toast.success("Google Login Successful");
-        redirectByRole(userData.role);
+  //       toast.success("Google Login Successful");
+  //       redirectByRole(userData.role);
 
-      } catch (error) {
-        console.error("Google Success Error:", error);
-        toast.error("Google Authentication Failed");
-      } finally {
-        setLoading(false);
-      }
-    },
-    onError: (error) => {
-      console.error("Google Login Error:", error);
-      toast.error("Google Login Failed - Check Pop-up Blocker");
-    }
-  });
+  //     } catch (error) {
+  //       console.error("Google Success Error:", error);
+  //       toast.error("Google Authentication Failed");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     console.error("Google Login Error:", error);
+  //     toast.error("Google Login Failed - Check Pop-up Blocker");
+  //   }
+  // });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black px-4">
@@ -158,46 +158,56 @@ const Login = () => {
             <form onSubmit={handleLogin} className="space-y-4">
 
               {/* Identifier */}
-              <input
-                type="text"
-                placeholder="Email, Username or Phone"
-                className="w-full bg-gray-900 text-white border border-gray-700 
-                           p-3 rounded-lg focus:outline-none 
-                           focus:ring-2 focus:ring-red-500"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                required
-              />
-
-              {/* Password */}
-              <div className="relative">
-
+              <div>
+                <label htmlFor="identifier" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email, Username or Phone
+                </label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
+                  id="identifier"
+                  type="text"
+                  placeholder="Enter your email, username or phone"
                   className="w-full bg-gray-900 text-white border border-gray-700 
-                             p-3 pr-12 rounded-lg focus:outline-none 
+                             p-3 rounded-lg focus:outline-none 
                              focus:ring-2 focus:ring-red-500"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                 />
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-3 flex items-center 
-                             text-gray-400 hover:text-red-500"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+              {/* Password */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    className="w-full bg-gray-900 text-white border border-gray-700 
+                               p-3 pr-12 rounded-lg focus:outline-none 
+                               focus:ring-2 focus:ring-red-500"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
 
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 flex items-center 
+                               text-gray-400 hover:text-red-500"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               {/* Login Button */}
               <button
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-red-600 to-orange-500 
+                className="w-full mt-2 bg-gradient-to-r from-red-600 to-orange-500 
                            text-white py-3 rounded-lg font-bold tracking-wide 
                            hover:opacity-90 transition disabled:opacity-50"
               >
