@@ -225,14 +225,7 @@ const Members = () => {
 
   useEffect(() => {
     fetchMembers();
-  }, [selectedTrainer, role, user]);
-
-  useEffect(() => {
-    // Ensure the page is valid when filters change or filtered results shrink.
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages === 0 ? 1 : totalPages);
-    }
-  }, [currentPage, totalPages]);
+  }, [selectedTrainer, role, user]); 
 
   useEffect(() => {
     // If search/filter settings change, go back to the first page.
@@ -284,6 +277,13 @@ const Members = () => {
     setSearch(value);
     setCurrentPage(1);
   };
+
+   useEffect(() => {
+    // Ensure the page is valid when filters change or filtered results shrink.
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages === 0 ? 1 : totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // 🗑 DELETE MEMBER
   const handleDelete = async (m) => {
