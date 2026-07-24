@@ -532,11 +532,14 @@ const Payments = () => {
         if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
           return false;
         // Plan Type Filter
+        const hasValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
+        const isPTPrimary = plan.planName && /\bpt\b/i.test(plan.planName);
+
         if (planTypeTab === "normal") {
-          const hasNormal = plan.planName && (!plan.planName.toLowerCase().includes("pt") || plan.pt_planName);
+          const hasNormal = plan.planName && (!isPTPrimary || hasValidPTAddon);
           if (!hasNormal) return false;
         } else if (planTypeTab === "pt") {
-          const hasPT = plan.pt_planName || plan.planName?.toLowerCase().includes("pt");
+          const hasPT = hasValidPTAddon || isPTPrimary;
           if (!hasPT) return false;
         }
 
