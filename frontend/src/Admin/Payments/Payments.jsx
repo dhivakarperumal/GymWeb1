@@ -499,17 +499,17 @@ const Payments = () => {
       plans: member.plans.filter((plan) => {
         const q = search.toLowerCase().trim();
 
-        // empty search = show all
-        if (!q) return true;
-
-        const match =
-          member.username?.toLowerCase().includes(q) ||
-          member.email?.toLowerCase().includes(q) ||
-          plan.planName?.toLowerCase().includes(q) ||
-          plan.pt_planName?.toLowerCase().includes(q) ||
-          plan.phone?.toLowerCase().includes(q) ||
-          member.phone?.toLowerCase().includes(q) ||
-          member.phoneNumber?.toLowerCase().includes(q);
+        let match = true;
+        if (q) {
+          match =
+            member.username?.toLowerCase().includes(q) ||
+            member.email?.toLowerCase().includes(q) ||
+            plan.planName?.toLowerCase().includes(q) ||
+            plan.pt_planName?.toLowerCase().includes(q) ||
+            plan.phone?.toLowerCase().includes(q) ||
+            member.phone?.toLowerCase().includes(q) ||
+            member.phoneNumber?.toLowerCase().includes(q);
+        }
 
         if (!match) return false;
 
@@ -1191,8 +1191,9 @@ const Payments = () => {
                       const paidTotal = initialPaid + secondPaid;
                       const remainingAmount = Math.max(0, totalAmount - paidTotal);
 
+                      const isValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
                       const planNameDisplay = isPTTab
-                        ? (plan.pt_planName || plan.planName)
+                        ? (isValidPTAddon ? plan.pt_planName : plan.planName)
                         : plan.planName;
 
                     return (
