@@ -723,8 +723,8 @@ const Payments = () => {
       <div className="min-h-screen p-4 md:p-8 text-white">
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-          {/* Title */}
-          <div className="relative w-full md:max-w-md">
+           {/* LEFT → SEARCH */}
+          <div className="relative w-full xl:max-w-sm shrink-0">
             <Search className="absolute left-4 top-3 text-gray-400" size={20} />
             <input
               type="text"
@@ -793,42 +793,54 @@ const Payments = () => {
         </div>
 
         {/* SEARCH + FILTERS SAME ROW */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* LEFT → SEARCH */}
-         
-
-          {/* RIGHT → FILTER BUTTONS */}
-          <div className="flex flex-wrap gap-4 md:justify-end items-center">
-            {/* Date Filters */}
-            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
-              <div className="px-3 text-gray-400 border-r border-white/10 hidden lg:block">
-                <Calendar size={16} />
-              </div>
+        <div className="mb-6 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+         {/* Plan Type Tabs */}
+            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1 shrink-0">
               {[
-                "all",
-                "today",
-                "yesterday",
-                "this week",
-                "this month",
-                "custom",
-              ].map((df) => (
+                { key: "normal", label: "Normal Plan" },
+                { key: "pt", label: "PT Plan" },
+              ].map((tab) => (
                 <button
-                  key={df}
-                  onClick={() => setDateFilter(df)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                    dateFilter === df
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                  key={tab.key}
+                  onClick={() => setPlanTypeTab(tab.key)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+                    planTypeTab === tab.key
+                      ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
                       : "text-gray-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  {df.charAt(0).toUpperCase() + df.slice(1)}
+                  {tab.label}
                 </button>
               ))}
             </div>
 
+          {/* RIGHT → FILTER BUTTONS */}
+          <div className="flex flex-nowrap overflow-x-auto gap-3 xl:justify-end items-center w-full pb-2 custom-scrollbar">
+           
+          
+            {/* Date Filters */}
+            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl px-2 py-2 gap-2 shrink-0">
+              <div className="text-gray-400 hidden lg:block">
+                <Calendar size={16} />
+              </div>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="!bg-transparent bg-transparent border-none text-xs font-medium text-gray-300 focus:ring-0 cursor-pointer outline-none"
+              >
+                <option value="all" className="bg-gray-900 text-white">All Time</option>
+                <option value="today" className="bg-gray-900 text-white">Today</option>
+                <option value="yesterday" className="bg-gray-900 text-white">Yesterday</option>
+                <option value="this week" className="bg-gray-900 text-white">This week</option>
+                <option value="this month" className="bg-gray-900 text-white">This month</option>
+                <option value="custom" className="bg-gray-900 text-white">Custom</option>
+              </select>
+            </div>
+           
+
             {/* Custom Range Inputs */}
             {dateFilter === "custom" && (
-              <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl p-1 animate-in slide-in-from-right-2 duration-300">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-xl p-1 animate-in slide-in-from-right-2 duration-300 shrink-0">
                 <input
                   type="date"
                   value={customStart}
@@ -845,28 +857,11 @@ const Payments = () => {
               </div>
             )}
 
-            {/* Plan Type Tabs */}
-            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
-              {[
-                { key: "normal", label: "Normal Plan" },
-                { key: "pt", label: "PT Plan" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setPlanTypeTab(tab.key)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
-                    planTypeTab === tab.key
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+
+            
 
             {/* Payment Type Filters */}
-            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
+            <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1 shrink-0">
               {[
                 { key: "all", label: "All" },
                 { key: "full", label: "Full Payment" },
@@ -875,7 +870,7 @@ const Payments = () => {
                 <button
                   key={tab.key}
                   onClick={() => setPaymentTab(tab.key)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                     paymentTab === tab.key
                       ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
                       : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -886,12 +881,13 @@ const Payments = () => {
               ))}
             </div>
 
-             <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1">
+            {/* Status Filters */}
+             <div className="flex items-center bg-white/5 border border-white/20 rounded-xl p-1 gap-1 shrink-0">
               {["all", "active", "inactive", "expiry"].map((type) => (
                 <button
                   key={type}
                   onClick={() => setFilterType(type)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                     filterType === type
                       ? "bg-orange-600 text-white shadow-lg shadow-orange-500/20"
                       : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -901,7 +897,6 @@ const Payments = () => {
                 </button>
               ))}
             </div>
-           
           </div>
         </div>
 
@@ -1133,12 +1128,25 @@ const Payments = () => {
                     </th>
                     <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">S.No</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Member Info</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Price</th>
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
-                    {paymentTab === "emi" && <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>}
-                    <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
+                    {planTypeTab === "pt" ? (
+                      <>
+                        <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">PT Plan Name</th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">PT Price</th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">PT Discount</th>
+                        {paymentTab === "emi" && <th className="px-4 py-4 text-left text-sm font-semibold">PT Initial Amount</th>}
+                        <th className="px-4 py-4 text-left text-sm font-semibold">PT Second Payment</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-4 py-4 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">Collected By</th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">Price</th>
+                        <th className="px-4 py-4 text-left text-sm font-semibold">Discount</th>
+                        {paymentTab === "emi" && <th className="px-4 py-4 text-left text-sm font-semibold">Initial Amount</th>}
+                        <th className="px-4 py-4 text-left text-sm font-semibold">Second Payment</th>
+                      </>
+                    )}
                     <th className="px-4 py-4 text-left text-sm font-semibold text-orange-400">Remaining Amount</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold text-blue-400">Total Payable</th>
                     
