@@ -370,7 +370,7 @@ const Reports = () => {
           paidAmount != null ? `₹${paidAmount.toFixed(2)}` : "-",
           typeof remaining === "number" ? `₹${remaining.toFixed(2)}` : "-",
           nextEmiDateStr,
-          p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
+          getCleanMode(p.paymentMode || p.paymentId || "-"),
           p.status || "active",
           p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
           p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
