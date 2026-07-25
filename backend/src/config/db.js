@@ -29,11 +29,12 @@ if (!config.host || !config.user || !config.database) {
 
 const pool = mysql.createPool(config);
 
-// Proper way to set session variables for every connection in a pool
+// This app does not require setting max_allowed_packet at runtime in the connection pool.
+// If you need a larger packet size, configure it on the MySQL server or use SET GLOBAL with admin privileges.
 pool.on('connection', (connection) => {
-  connection.query("SET SESSION max_allowed_packet = 67108864", (err) => {
+  connection.query('SELECT 1', (err) => {
     if (err) {
-      console.warn("⚠️ Could not set max_allowed_packet on new connection:", err.message);
+      console.warn('⚠️ DB connection test failed:', err.message);
     }
   });
 });
