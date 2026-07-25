@@ -46,7 +46,7 @@ const SessionTracking = () => {
       }
     }
 
-    const planName = item.planName || item.plan_name || "";
+    const planName = item.planName || item.plan_name || item.pt_planName || item.pt_plan_name || item.ptPlanName || item.pt_plan || "";
     const hasPtPlan = Boolean(
       item.hasPtPlan ||
       item.has_pt_plan ||
@@ -67,7 +67,7 @@ const SessionTracking = () => {
       planName,
       planPrice,
       planDuration,
-      planStartDate: item.planStartDate || item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
+      planStartDate: item.planStartDate || item.pt_startDate || item.ptStartDate || item.ptJoinDate || item.pt_join_date || "",
       planEndDate: endDate,
       isExpired,
       hasPtPlan,
@@ -208,35 +208,6 @@ const SessionTracking = () => {
               Session tracker is now available inside the assigned member PT form view. Select a member to edit session records with the same trainer form UI.
             </p>
           </div>
-          {selectedMember && (
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
-              <p className="text-white font-semibold">Selected Member</p>
-              <p>{selectedMember.name}</p>
-              <p className="text-xs text-white/40">ID: {selectedMember.id}</p>
-              <div className="mt-3 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-white/80">
-                  <span className="font-semibold text-white">Plan:</span>
-                  <span className="text-orange-300">{selectedMember.planName || '-'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <span className="font-semibold text-white">Price:</span>
-                  <span className="text-white/80">{selectedMember.planPrice ? `₹ ${Number(selectedMember.planPrice).toLocaleString('en-IN')}` : '-'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <span className="font-semibold text-white">Duration:</span>
-                  <span className="text-white/80">{selectedMember.planDuration ? selectedMember.planDuration : '-'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <span className="font-semibold text-white">Start:</span>
-                  <span className="text-white/80">{selectedMember.planStartDate ? dayjs(selectedMember.planStartDate).format('DD/MM/YYYY') : '-'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <span className="font-semibold text-white">End:</span>
-                  <span className="text-white/80">{selectedMember.planEndDate ? dayjs(selectedMember.planEndDate).format('DD/MM/YYYY') : '-'}</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -314,6 +285,33 @@ const SessionTracking = () => {
             </div>
 
             <div className="mt-6">
+              {selectedMember && (
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-white/80 mb-6">
+                  <p className="text-white font-semibold">PT Plan Details</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase text-white/50">Plan</p>
+                      <p className="text-sm text-orange-300">{selectedMember.planName || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase text-white/50">Price</p>
+                      <p className="text-sm text-white/80">{selectedMember.planPrice ? `₹ ${Number(selectedMember.planPrice).toLocaleString('en-IN')}` : '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase text-white/50">Duration</p>
+                      <p className="text-sm text-white/80">{selectedMember.planDuration ? selectedMember.planDuration : '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase text-white/50">Start</p>
+                      <p className="text-sm text-white/80">{selectedMember.planStartDate ? dayjs(selectedMember.planStartDate).format('DD/MM/YYYY') : '-'}</p>
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <p className="text-xs uppercase text-white/50">End</p>
+                      <p className="text-sm text-white/80">{selectedMember.planEndDate ? dayjs(selectedMember.planEndDate).format('DD/MM/YYYY') : '-'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               {loading ? (
                 <div className="rounded-3xl bg-black/20 p-10 text-center text-white/40">Loading form data…</div>
               ) : selectedMember ? (
