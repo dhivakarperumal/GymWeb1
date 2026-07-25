@@ -27,12 +27,12 @@ const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range:
     'Yesterday',
     'This Week',
     'This Month',
-    'Custom Range'
+    'Custom'
   ];
 
   const handleRangeSelect = (range) => {
     setSelectedRange(range);
-    if (range === 'Custom Range') {
+    if (range === 'Custom') {
       setShowCustom(true);
     } else {
       setShowCustom(false);
@@ -43,7 +43,9 @@ const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range:
 
   const handleCustomSubmit = () => {
     if (customRange.start && customRange.end) {
-      setSelectedRange(`${customRange.start} to ${customRange.end}`);
+      // keep the selected range type as 'Custom' and rely on the display
+      // logic to show the exact dates when available
+      setSelectedRange('Custom');
       onRangeChange('Custom', customRange);
       setIsOpen(false);
     }

@@ -376,7 +376,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
           <p className="text-gray-400 text-sm">Overview of your gym's performance</p>
         </div>
-        <DateRangeFilter onRangeChange={handleRangeChange} />
+        <DateRangeFilter onRangeChange={handleRangeChange} dateRange={filterRange} />
       </div>
 
       {/* 🚀 QUICK ACCESS COMMAND CENTER */}

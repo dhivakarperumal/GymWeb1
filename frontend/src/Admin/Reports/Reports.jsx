@@ -606,7 +606,7 @@ const Reports = () => {
               className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/50"
             />
           </div>
-          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} dateRange={dateRange} />
 
           {/* Trainer Filter Dropdown */}
           <div className="relative inline-block text-left">
