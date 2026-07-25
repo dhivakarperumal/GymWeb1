@@ -68,21 +68,21 @@ const Account = () => {
   const [plans, setPlans] = useState([]);
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [assignedTrainer, setAssignedTrainer] = useState(null);
-  
+
 
   const isActivePtPlan = (member) => {
     if (!member) return false;
     const hasPlan = Boolean(member.pt_plan);
     const hasDates = Boolean(member.pt_join_date && member.pt_expiry_date);
     const isActive = String(member.pt_status || '').toLowerCase() === 'active';
-    
+
     let isNotExpired = true;
     if (member.pt_expiry_date) {
       const isExpired = dayjs(member.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
       // We will keep the isExpired check here in case we need it, but we won't hide the tabs.
       // The user wants the PT tabs to be visible even if the plan is expired.
     }
-    
+
     return isActive && hasPlan && hasDates;
   };
 
@@ -238,13 +238,13 @@ const Account = () => {
     const fetchPtForm = async () => {
       try {
         const isExpired = memberData?.pt_expiry_date && dayjs(memberData.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
-        
+
         const res = await api.get(`/pt-forms/${memberData.id}`);
         const ptData = res.data || {};
         const formData = typeof ptData.form_data === 'string' ? JSON.parse(ptData.form_data || '{}') : ptData.form_data || {};
-        
+
         let finalFormData = { ...formData };
-        
+
         // Check if plan was renewed by comparing joining dates
         const isRenewed = formData.pt_join_date && memberData?.pt_join_date && !dayjs(formData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
 
@@ -1304,10 +1304,7 @@ const Account = () => {
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Status</p>
                             <p className="text-white font-semibold mt-2">{paymentStatus}</p>
                           </div>
-                          <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Mode</p>
-                            <p className="text-white font-semibold mt-2">{paymentMode}</p>
-                          </div>
+
 
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Start Date</p>
@@ -1333,12 +1330,44 @@ const Account = () => {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/10 bg-black/20">
+
+                                  {/* Initial Payment */}
+                                  <tr>
+                                    <td className="px-4 py-4 text-white font-semibold">
+                                      {formatCurrency(getMembershipField(membership, "pricePaid", "price_paid") || 0)}
+                                    </td>
+
+                                    <td className="px-4 py-4 text-gray-300">
+                                      {formatDate(createdAt)}
+                                    </td>
+
+                                    <td className="px-4 py-4 text-gray-300">
+                                      Initial Payment
+                                    </td>
+
+                                    <td className="px-4 py-4 text-gray-300">
+                                      {paymentMode}
+                                    </td>
+                                  </tr>
+
+                                  {/* EMI Due History */}
                                   {dues.map((due, dueIndex) => (
                                     <tr key={dueIndex} className="hover:bg-white/5 transition-colors">
-                                      <td className="px-4 py-4 text-white font-semibold">{formatCurrency(due.amount)}</td>
-                                      <td className="px-4 py-4 text-gray-300">{formatDate(due.collectedAt)}</td>
-                                      <td className="px-4 py-4 text-gray-300">{due.collectedBy}</td>
-                                      <td className="px-4 py-4 text-gray-300">{due.paymentId || "Cash"}</td>
+                                      <td className="px-4 py-4 text-white font-semibold">
+                                        {formatCurrency(due.amount)}
+                                      </td>
+
+                                      <td className="px-4 py-4 text-gray-300">
+                                        {formatDate(due.collectedAt)}
+                                      </td>
+
+                                      <td className="px-4 py-4 text-gray-300">
+                                        {due.collectedBy}
+                                      </td>
+
+                                      <td className="px-4 py-4 text-gray-300">
+                                        {due.paymentId || "Cash"}
+                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>
