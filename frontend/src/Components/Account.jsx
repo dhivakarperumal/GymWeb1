@@ -1342,7 +1342,13 @@ const Account = () => {
                                     </td>
 
                                     <td className="px-4 py-4 text-gray-300">
-                                      Initial Payment
+                                      {getMembershipField(
+                                        membership,
+                                        "createdBy",
+                                        "created_by",
+                                        "collectedBy",
+                                        "collected_by"
+                                      )}
                                     </td>
 
                                     <td className="px-4 py-4 text-gray-300">
