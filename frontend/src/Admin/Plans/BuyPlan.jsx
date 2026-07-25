@@ -144,28 +144,20 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
   };
 
   // ================= FILTER PLANS FOR DROPDOWN =================
+  const isPTPlan = (p) =>
+    p && (
+      p.trainerIncluded === true ||
+      p.trainerIncluded === 1 ||
+      p.trainerIncluded === "1" ||
+      p.trainer_included === true ||
+      p.trainer_included === 1 ||
+      p.trainer_included === "1"
+    );
+
   const getFilteredPlans = () => {
-    let availablePlans;
-    
-    if (filterTrainerPlans) {
-      // PT Buy Plan page - show ONLY PT plans (trainer_included = true/1)
-      availablePlans = plans.filter((p) => {
-        const isPT = p.trainerIncluded === true || 
-                     p.trainerIncluded === 1 || 
-                     p.trainer_included === true || 
-                     p.trainer_included === 1;
-        return isPT;
-      });
-    } else {
-      // Regular Buy Plan page - show ONLY normal plans (trainer_included = false/0/null)
-      availablePlans = plans.filter((p) => {
-        const isPT = p.trainerIncluded === true || 
-                     p.trainerIncluded === 1 || 
-                     p.trainer_included === true || 
-                     p.trainer_included === 1;
-        return !isPT;
-      });
-    }
+    const availablePlans = plans.filter((p) =>
+      filterTrainerPlans ? isPTPlan(p) : !isPTPlan(p)
+    );
 
     const searchLower = planSearch.toLowerCase().trim();
     if (!searchLower) return availablePlans;
@@ -383,10 +375,14 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     const combined = Array.isArray(enquiries) ? [...enquiries] : [];
     if (Array.isArray(followups)) combined.push(...followups);
 
+    const availablePlans = plans.filter((p) =>
+      filterTrainerPlans ? isPTPlan(p) : !isPTPlan(p)
+    );
+
     // prefer explicit user enquiry/followup preference
     const pref = findPreferredEnquiryPlan(selectedUser, combined);
     if (pref && (pref.plan || pref.duration)) {
-      const byName = plans.find(
+      const byName = availablePlans.find(
         (p) => normalizePlanText(p.name) === normalizePlanText(pref.plan)
       );
       if (byName && byName.id !== selectedPlan?.id) {
@@ -396,7 +392,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
 
       const durationVal = parseDurationValue(pref.duration);
       if (durationVal != null) {
-        const byDuration = plans.find(
+        const byDuration = availablePlans.find(
           (p) => parseDurationValue(p.duration) === durationVal
         );
         if (byDuration && byDuration.id !== selectedPlan?.id) {
@@ -406,11 +402,11 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       }
     }
 
-    const matchedPlan = findMatchingPlan(selectedUser, plans, combined);
+    const matchedPlan = findMatchingPlan(selectedUser, availablePlans, combined);
     if (matchedPlan && matchedPlan.id !== selectedPlan?.id) {
       setSelectedPlan(matchedPlan);
     }
-  }, [selectedUser, plans, enquiries]);
+  }, [selectedUser, plans, enquiries, followups, filterTrainerPlans]);
 
   // ================= FETCH TRAINERS =================
   useEffect(() => {
@@ -502,13 +498,16 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         }));
 
         const forceChange = location.state?.forceChange;
-        const matchedPlan = findMatchingPlan(user, plans, enquiries);
+        const availablePlans = plans.filter((p) =>
+          filterTrainerPlans ? isPTPlan(p) : !isPTPlan(p)
+        );
+        const matchedPlan = findMatchingPlan(user, availablePlans, enquiries);
         if (matchedPlan && !forceChange) {
           setSelectedPlan(matchedPlan);
         }
       }
     }
-  }, [location.state, members, plans, enquiries]);
+  }, [location.state, members, plans, enquiries, filterTrainerPlans]);
 
   // ================= CALCULATE BMI =================
   useEffect(() => {
@@ -1426,7 +1425,9 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
           <h2 className="text-xl mb-4 font-semibold text-white">Select Plan</h2>
 
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">Gym Plan</label>
+            <label className="block text-sm text-gray-400 mb-1">
+              {filterTrainerPlans ? "PT Plan" : "Gym Plan"}
+            </label>
             <div className="relative">
               {/* Search Input */}
               <div className="flex items-center gap-2 px-3 py-3 bg-gray-900 rounded-lg border border-white/10 focus-within:ring-2 focus-within:ring-orange-500">
