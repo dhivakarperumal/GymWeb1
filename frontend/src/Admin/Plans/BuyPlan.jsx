@@ -201,6 +201,23 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     return Number.isFinite(number) ? number : 0;
   };
 
+  const getPlanNameFromHistory = (historyItem) => {
+    if (!historyItem) return 'Unknown Plan';
+
+    const explicitName = historyItem.planName || historyItem.plan_name || historyItem.pt_planName || historyItem.pt_plan_name || historyItem.plan;
+    if (explicitName) return explicitName;
+
+    const lookupId = historyItem.pt_planId ?? historyItem.pt_plan_id ?? historyItem.planId ?? historyItem.plan_id;
+    if (lookupId != null) {
+      const matchedPlan = plans.find(
+        (p) => p.id === lookupId || p.id?.toString() === lookupId?.toString()
+      );
+      if (matchedPlan) return matchedPlan.name || matchedPlan.title || matchedPlan.plan_name || 'Unknown Plan';
+    }
+
+    return 'Unknown Plan';
+  };
+
   const getSelectedPlanTotal = () => {
     if (!selectedPlan) return 0;
     const originalPrice = parseDecimal(
@@ -454,9 +471,9 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
               ...m,
               id: m.id ?? m._id,
               planId: m.planId ?? m.plan_id,
-              planName: m.planName ?? m.plan_name,
+              planName: m.planName ?? m.plan_name ?? m.plan,
               pt_planId: m.pt_planId ?? m.pt_plan_id,
-              pt_planName: m.pt_planName ?? m.pt_plan_name,
+              pt_planName: m.pt_planName ?? m.pt_plan_name ?? m.plan ?? m.plan,
               pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
               pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
               pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
@@ -992,9 +1009,9 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                                     ...m,
                                     id: m.id ?? m._id,
                                     planId: m.planId ?? m.plan_id,
-                                    planName: m.planName ?? m.plan_name,
+                                    planName: m.planName ?? m.plan_name ?? m.plan,
                                     pt_planId: m.pt_planId ?? m.pt_plan_id,
-                                    pt_planName: m.pt_planName ?? m.pt_plan_name,
+                                    pt_planName: m.pt_planName ?? m.pt_plan_name ?? m.plan,
                                     pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
                                     pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
                                     pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
@@ -1600,7 +1617,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                       <div key={h.id || i} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <p className="font-bold text-lg text-white mb-1">{planName || 'Unknown Plan'}</p>
+                            <p className="font-bold text-lg text-white mb-1">{getPlanNameFromHistory(h)}</p>
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
                               {status || 'Past'}
                             </span>
