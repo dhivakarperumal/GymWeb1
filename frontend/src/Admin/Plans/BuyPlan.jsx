@@ -218,6 +218,31 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
     return 'Unknown Plan';
   };
 
+  const findPlanFromHistory = (historyItem) => {
+    if (!historyItem) return null;
+
+    const lookupId = historyItem.planId ?? historyItem.plan_id ?? historyItem.pt_planId ?? historyItem.pt_plan_id;
+    if (lookupId != null) {
+      const matchedById = plans.find(
+        (p) => p.id === lookupId || p.id?.toString() === lookupId?.toString()
+      );
+      if (matchedById) return matchedById;
+    }
+
+    const planName = historyItem.planName || historyItem.plan_name || historyItem.pt_planName || historyItem.pt_plan_name || historyItem.plan;
+    if (!planName) return null;
+
+    const normalizedTarget = normalizePlanText(planName);
+    return plans.find((p) => {
+      const candidateName = normalizePlanText(p.name || p.title || p.plan_name || '');
+      return (
+        candidateName === normalizedTarget ||
+        candidateName.includes(normalizedTarget) ||
+        normalizedTarget.includes(candidateName)
+      );
+    }) || null;
+  };
+
   const getSelectedPlanTotal = () => {
     if (!selectedPlan) return 0;
     const originalPrice = parseDecimal(
@@ -479,16 +504,24 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
               secondPaymentPaid: m.secondPaymentPaid ?? m.second_payment_paid ?? 0,
               amount: m.amount ?? m.amount_paid ?? m.price ?? m.plan_price ?? 0,
               discount: m.discount ?? m.discount_amount ?? 0,
+              status: m.status ?? m.state ?? m.paymentStatus ?? m.payment_status ?? m.pt_status ?? m.pt_status ?? 'past',
+              paymentMode: m.paymentMode ?? m.payment_mode ?? m.pt_paymentMode ?? m.pt_payment_mode,
+              paymentStatus: m.paymentStatus ?? m.payment_status ?? m.pt_paymentStatus ?? m.pt_payment_status,
+              startDate: m.startDate ?? m.start_date ?? m.plan_start_date ?? m.joinDate ?? m.join_date ?? m.createdAt ?? m.created_at,
+              endDate: m.endDate ?? m.end_date ?? m.plan_end_date ?? m.expiryDate ?? m.expiry_date,
+              paymentDate: m.paymentDate ?? m.payment_date ?? m.pt_paymentDate ?? m.pt_payment_date ?? m.createdAt ?? m.created_at,
+              createdAt: m.createdAt ?? m.created_at,
+              updatedAt: m.updatedAt ?? m.updated_at,
               pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
               pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
               pt_secondPaymentPaid: m.pt_secondPaymentPaid ?? m.pt_second_paymentPaid ?? m.pt_second_payment_paid ?? 0,
               pt_amount: m.pt_amount ?? m.pt_amount_paid ?? m.pt_price ?? 0,
               pt_discount: m.pt_discount ?? m.pt.discount ?? 0,
               pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
-              pt_startDate: m.pt_startDate ?? m.pt_start_date,
-              pt_endDate: m.pt_endDate ?? m.pt_end_date,
+              pt_startDate: m.pt_startDate ?? m.pt_start_date ?? m.startDate ?? m.start_date,
+              pt_endDate: m.pt_endDate ?? m.pt_end_date ?? m.endDate ?? m.end_date,
               pt_paymentMode: m.pt_paymentMode ?? m.pt_payment_mode,
-              pt_paymentDate: m.pt_paymentDate ?? m.pt_payment_date,
+              pt_paymentDate: m.pt_paymentDate ?? m.pt_payment_date ?? m.paymentDate ?? m.payment_date,
               pt_paymentStatus: m.pt_paymentStatus ?? m.pt_payment_status,
               pt_status: m.pt_status ?? m.ptStatus,
             }));
@@ -1021,20 +1054,28 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                                     pt_planId: m.pt_planId ?? m.pt_plan_id,
                                     pt_planName: m.pt_planName ?? m.pt_plan_name ?? m.plan,
                                     price: m.price ?? m.price_paid ?? m.plan_price ?? m.amount ?? m.amount_paid ?? 0,
-                                    pricePaid: m.pricePaid ?? m.price_paid ?? m.price_paid ?? m.amount_paid ?? 0,
+                                    pricePaid: m.pricePaid ?? m.price_paid ?? m.amount_paid ?? 0,
                                     secondPaymentPaid: m.secondPaymentPaid ?? m.second_payment_paid ?? 0,
                                     amount: m.amount ?? m.amount_paid ?? m.price ?? m.plan_price ?? 0,
                                     discount: m.discount ?? m.discount_amount ?? 0,
+                                    status: m.status ?? m.state ?? m.paymentStatus ?? m.payment_status ?? m.pt_status ?? m.pt_status ?? 'past',
+                                    paymentMode: m.paymentMode ?? m.payment_mode ?? m.pt_paymentMode ?? m.pt_payment_mode,
+                                    paymentStatus: m.paymentStatus ?? m.payment_status ?? m.pt_paymentStatus ?? m.pt_payment_status,
+                                    startDate: m.startDate ?? m.start_date ?? m.plan_start_date ?? m.joinDate ?? m.join_date ?? m.createdAt ?? m.created_at,
+                                    endDate: m.endDate ?? m.end_date ?? m.plan_end_date ?? m.expiryDate ?? m.expiry_date,
+                                    paymentDate: m.paymentDate ?? m.payment_date ?? m.pt_paymentDate ?? m.pt_payment_date ?? m.createdAt ?? m.created_at,
+                                    createdAt: m.createdAt ?? m.created_at,
+                                    updatedAt: m.updatedAt ?? m.updated_at,
                                     pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
                                     pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
                                     pt_secondPaymentPaid: m.pt_secondPaymentPaid ?? m.pt_second_paymentPaid ?? m.pt_second_payment_paid ?? 0,
                                     pt_amount: m.pt_amount ?? m.pt_amount_paid ?? m.pt_price ?? 0,
                                     pt_discount: m.pt_discount ?? m.pt.discount ?? 0,
                                     pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
-                                    pt_startDate: m.pt_startDate ?? m.pt_start_date,
-                                    pt_endDate: m.pt_endDate ?? m.pt_end_date,
+                                    pt_startDate: m.pt_startDate ?? m.pt_start_date ?? m.startDate ?? m.start_date,
+                                    pt_endDate: m.pt_endDate ?? m.pt_end_date ?? m.endDate ?? m.end_date,
                                     pt_paymentMode: m.pt_paymentMode ?? m.pt_payment_mode,
-                                    pt_paymentDate: m.pt_paymentDate ?? m.pt_payment_date,
+                                    pt_paymentDate: m.pt_paymentDate ?? m.pt_payment_date ?? m.paymentDate ?? m.payment_date,
                                     pt_paymentStatus: m.pt_paymentStatus ?? m.pt_payment_status,
                                     pt_status: m.pt_status ?? m.ptStatus,
                                   }));
@@ -1610,20 +1651,37 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                   memberHistory.map((h, i) => {
                     const isPT = filterTrainerPlans;
                     const planName = getPlanNameFromHistory(h);
-                    const status = isPT ? (h.pt_status || h.status) : h.status;
-                    const price = parseDecimal(isPT ? (h.pt_price ?? h.price) : h.price);
-                    const pricePaid = parseDecimal(isPT ? (h.pt_pricePaid ?? h.pricePaid) : h.pricePaid);
-                    const amount = parseDecimal(
-                      isPT
-                        ? (h.pt_amount ?? h.amount ?? h.pt_price ?? h.price)
-                        : (h.amount ?? h.price)
-                    );
-                    const discount = parseDecimal(isPT ? (h.pt_discount ?? h.discount) : h.discount);
-                    
-                    const startDate = isPT ? (h.pt_startDate || h.startDate) : h.startDate;
-                    const endDate = isPT ? (h.pt_endDate || h.endDate) : h.endDate;
-                    const purchaseDate = isPT ? (h.pt_paymentDate || h.createdAt) : (h.paymentDate || h.createdAt);
-                    const updatedDate = h.updatedAt || h.createdAt;
+                    const resolvedPlan = findPlanFromHistory(h);
+                    const status = isPT ? (h.pt_status || h.status || h.paymentStatus || h.payment_status || 'past') : (h.status || h.paymentStatus || h.payment_status || 'past');
+
+                    const rawPrice = isPT
+                      ? (h.pt_price ?? h.pt_amount ?? h.price ?? h.amount ?? h.plan_price ?? h.price_paid ?? 0)
+                      : (h.price ?? h.amount ?? h.plan_price ?? h.price_paid ?? 0);
+                    const rawPricePaid = isPT
+                      ? (h.pt_pricePaid ?? h.pt_price ?? h.pt_amount ?? h.pricePaid ?? h.price ?? h.amount ?? 0)
+                      : (h.pricePaid ?? h.price ?? h.amount ?? h.price_paid ?? 0);
+                    const rawAmount = isPT
+                      ? (h.pt_amount ?? h.pt_price ?? h.amount ?? h.price ?? h.plan_price ?? h.amount_paid ?? 0)
+                      : (h.amount ?? h.price ?? h.plan_price ?? h.price_paid ?? h.amount_paid ?? 0);
+                    const rawDiscount = isPT
+                      ? (h.pt_discount ?? h.discount ?? 0)
+                      : (h.discount ?? 0);
+
+                    const price = parseDecimal(rawPrice) || parseDecimal(resolvedPlan?.finalPrice ?? resolvedPlan?.price);
+                    const pricePaid = parseDecimal(rawPricePaid) || (status && status.toLowerCase() === 'active' ? price : 0);
+                    const amount = parseDecimal(rawAmount) || price;
+                    const discount = parseDecimal(rawDiscount);
+
+                    const startDate = isPT
+                      ? (h.pt_startDate ?? h.pt_start_date ?? h.startDate ?? h.start_date ?? h.plan_start_date ?? h.joinDate ?? h.join_date)
+                      : (h.startDate ?? h.start_date ?? h.pt_startDate ?? h.pt_start_date ?? h.plan_start_date ?? h.joinDate ?? h.join_date);
+                    const endDate = isPT
+                      ? (h.pt_endDate ?? h.pt_end_date ?? h.endDate ?? h.end_date ?? h.plan_end_date ?? h.expiryDate ?? h.expiry_date)
+                      : (h.endDate ?? h.end_date ?? h.pt_endDate ?? h.pt_end_date ?? h.plan_end_date ?? h.expiryDate ?? h.expiry_date);
+                    const purchaseDate = isPT
+                      ? (h.pt_paymentDate ?? h.pt_payment_date ?? h.paymentDate ?? h.payment_date ?? h.createdAt ?? h.created_at)
+                      : (h.paymentDate ?? h.payment_date ?? h.pt_paymentDate ?? h.pt_payment_date ?? h.createdAt ?? h.created_at);
+                    const updatedDate = h.updatedAt ?? h.updated_at ?? h.createdAt ?? h.created_at;
 
                     const formatDateTime = (dateString) => {
                       if (!dateString || dateString === '0' || dateString === 0) return "--";
