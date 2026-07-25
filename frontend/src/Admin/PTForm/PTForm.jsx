@@ -440,6 +440,7 @@ const PTForm = () => {
             formData={formData}
             isFirstStep={currentStep === 1}
             isLastStep={currentStep === steps.length}
+            trainerSignReadOnly={true}
           />
         )}
       </div>

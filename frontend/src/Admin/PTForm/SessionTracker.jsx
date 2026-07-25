@@ -18,6 +18,7 @@ const SessionTracker = ({
   disabled = false,
   buttonLabel = null,
   hideFooter = false,
+  trainerSignReadOnly = false,
 }) => {
   const { user, profileName } = useAuth();
   const currentLoginName = profileName || "";
@@ -293,7 +294,7 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "trainer_sign", e.target.value)}
                         placeholder="Sign/Initial"
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10 font-bold"
-                        readOnly={userMode}
+                        readOnly={userMode || trainerSignReadOnly}
                       />
                     </td>
                   </tr>

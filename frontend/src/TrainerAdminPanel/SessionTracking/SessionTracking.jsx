@@ -337,6 +337,7 @@ const SessionTracking = () => {
                   formData={formData}
                   buttonLabel={saving ? "Saving..." : "Save Session Tracker"}
                   disabled={saving}
+                  trainerSignReadOnly={true}
                 />
               ) : (
                 <div className="rounded-3xl border border-white/10 bg-black/20 p-10 text-center text-white/50">
