@@ -229,7 +229,7 @@ const Payments = () => {
     (currentPage - 1) * itemsPerPage + index + 1;
 
   const isEmiPlan = (plan) =>
-    String(plan?.paymentMode || "").trim().toLowerCase() === "emi";
+    String(plan?.paymentMode || "").trim().toLowerCase().startsWith("emi");
 
   const isFullPayment = (plan) => {
     const totalPrice = (Number(plan.amount) || Number(plan.price) || 0) + (Number(plan.pt_amount) || Number(plan.pt_price) || 0);
@@ -469,15 +469,16 @@ const Payments = () => {
   members.forEach((member) => {
     member.plans.forEach((plan) => {
       // Date Filter for counts
+      const filterDate = plan.paymentDate || plan.createdAt;
       let passDate = true;
-      if (dateFilter === "today" && !isToday(plan.createdAt)) passDate = false;
-      if (dateFilter === "yesterday" && !isYesterday(plan.createdAt))
+      if (dateFilter === "today" && !isToday(filterDate)) passDate = false;
+      if (dateFilter === "yesterday" && !isYesterday(filterDate))
         passDate = false;
-      if (dateFilter === "this week" && !isThisWeek(plan.createdAt))
+      if (dateFilter === "this week" && !isThisWeek(filterDate))
         passDate = false;
-      if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
+      if (dateFilter === "this month" && !isThisMonth(filterDate))
         passDate = false;
-      if (dateFilter === "custom" && !isInCustomRange(plan.createdAt))
+      if (dateFilter === "custom" && !isInCustomRange(filterDate))
         passDate = false;
 
       const hasValidPTAddon = plan.pt_planName && plan.pt_planName !== "null" && plan.pt_planName !== "undefined" && plan.pt_planName.trim() !== "";
@@ -555,12 +556,15 @@ const Payments = () => {
           return false;
 
         // Date Filter
-        if (dateFilter === "today" && !isToday(plan.createdAt)) return false;
-        if (dateFilter === "yesterday" && !isYesterday(plan.createdAt))
+        const filterDate = plan.paymentDate || plan.createdAt;
+        if (dateFilter === "today" && !isToday(filterDate)) return false;
+        if (dateFilter === "yesterday" && !isYesterday(filterDate))
           return false;
-        if (dateFilter === "this week" && !isThisWeek(plan.createdAt))
+        if (dateFilter === "this week" && !isThisWeek(filterDate))
           return false;
-        if (dateFilter === "this month" && !isThisMonth(plan.createdAt))
+        if (dateFilter === "this month" && !isThisMonth(filterDate))
+          return false;
+        if (dateFilter === "custom" && !isInCustomRange(filterDate))
           return false;
 
         return true;
