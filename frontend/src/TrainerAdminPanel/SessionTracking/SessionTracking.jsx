@@ -55,8 +55,8 @@ const SessionTracking = () => {
       planName.toLowerCase().includes("pt")
     );
 
-    const planPrice = item.planPrice || item.plan_price || item.price || item.pt_price || item.ptPrice || item.pt_amount || item.amount || 0;
-    const planDuration = item.duration || item.plan_duration || item.pt_duration || item.duration_months || item.pt_duration_months || "";
+    const planPrice = item.pt_price ?? item.planPrice ?? item.plan_price ?? item.price ?? item.ptPrice ?? item.pt_amount ?? item.amount ?? 0;
+    const planDuration = item.pt_duration ?? item.duration ?? item.plan_duration ?? item.duration_months ?? item.pt_duration_months ?? "";
 
     return {
       id: item.gymMemberId || item.id || item.gm_id || item.member_id || "",
@@ -295,7 +295,7 @@ const SessionTracking = () => {
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs uppercase text-white/50">Price</p>
-                      <p className="text-sm text-white/80">{selectedMember.planPrice ? `₹ ${Number(selectedMember.planPrice).toLocaleString('en-IN')}` : '-'}</p>
+                      <p className="text-sm text-white/80">{selectedMember.planPrice !== null && selectedMember.planPrice !== undefined ? `₹ ${Number(selectedMember.planPrice).toLocaleString('en-IN')}` : '-'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs uppercase text-white/50">Duration</p>
