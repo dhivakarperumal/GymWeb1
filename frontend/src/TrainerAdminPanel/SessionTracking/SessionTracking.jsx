@@ -37,26 +37,42 @@ const SessionTracking = () => {
   }, [selectedMemberId, assignedMembers]);
 
   const normalizeMember = (item) => {
-    const endDate = item.planEndDate || item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || item.endDate || "";
-    let isExpired = false;
-    if (endDate) {
-      const end = new Date(endDate);
-      if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
-        isExpired = true;
-      }
-    }
-
-    const planName = item.planName || item.plan_name || item.pt_planName || item.pt_plan_name || item.ptPlanName || item.pt_plan || "";
+    // Check if this is a PT plan member
     const hasPtPlan = Boolean(
       item.hasPtPlan ||
       item.has_pt_plan ||
       item.pt_plan ||
-      item.ptPlan ||
-      planName.toLowerCase().includes("pt")
+      item.ptPlan
     );
 
-    const planPrice = item.pt_price ?? item.planPrice ?? item.plan_price ?? item.price ?? item.ptPrice ?? item.pt_amount ?? item.amount ?? 0;
-    const planDuration = item.pt_duration ?? item.duration ?? item.plan_duration ?? item.duration_months ?? item.pt_duration_months ?? "";
+    // If it's a PT plan, use PT plan details; otherwise, use regular plan details
+    const planName = hasPtPlan
+      ? (item.pt_planName || item.pt_plan_name || item.ptPlanName || "")
+      : (item.planName || item.plan_name || "");
+    
+    const planPrice = hasPtPlan
+      ? (item.pt_price ?? 0)
+      : (item.planPrice ?? item.plan_price ?? item.price ?? item.amount ?? 0);
+    
+    const planDuration = hasPtPlan
+      ? (item.pt_duration || "")
+      : (item.duration ?? item.plan_duration ?? item.duration_months ?? item.pt_duration_months ?? "");
+    
+    const planStartDate = hasPtPlan
+      ? (item.pt_startDate || item.ptStartDate || item.ptJoinDate || item.pt_join_date || "")
+      : (item.planStartDate || item.pt_startDate || item.ptStartDate || item.ptJoinDate || item.pt_join_date || "");
+    
+    const planEndDate = hasPtPlan
+      ? (item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || "")
+      : (item.planEndDate || item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || "");
+
+    let isExpired = false;
+    if (planEndDate) {
+      const end = new Date(planEndDate);
+      if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
+        isExpired = true;
+      }
+    }
 
     return {
       id: item.gymMemberId || item.id || item.gm_id || item.member_id || "",
@@ -67,8 +83,8 @@ const SessionTracking = () => {
       planName,
       planPrice,
       planDuration,
-      planStartDate: item.planStartDate || item.pt_startDate || item.ptStartDate || item.ptJoinDate || item.pt_join_date || "",
-      planEndDate: endDate,
+      planStartDate,
+      planEndDate,
       isExpired,
       hasPtPlan,
       ptFormCompleted: item.ptFormCompleted || item.pt_form_completed || 0,
