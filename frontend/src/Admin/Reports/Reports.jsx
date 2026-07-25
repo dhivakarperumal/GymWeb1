@@ -174,6 +174,11 @@ const Reports = () => {
     }
   };
 
+  const getCleanMode = (modeStr) => {
+    let clean = String(modeStr || "").replace(/^emi-?/i, "").trim();
+    return clean || "Cash";
+  };
+
   const buildMembershipPaymentLines = (membership) => {
     const initialAmount = Number(membership.pricePaid || 0);
     const secondAmount = Number(membership.secondPaymentPaid || 0);
@@ -186,9 +191,7 @@ const Reports = () => {
       amountLines.push(
         `${getPaymentOrdinal(amountLines.length + 1)} payment: ₹${initialAmount.toFixed(2)}`
       );
-      modeLines.push(
-        String(initialMode).replace(/^emi-/i, "")
-      );
+      modeLines.push(getCleanMode(initialMode));
     }
 
     if (dues.length > 0) {
@@ -198,18 +201,15 @@ const Reports = () => {
         amountLines.push(
           `${getPaymentOrdinal(amountLines.length + 1)}\u00A0payment ₹${amount.toFixed(2)}`
         );
-        modeLines.push(
-          String(due?.paymentId || due?.payment_id || "Cash")
-            .replace(/^emi-/i, "")
-        );
+        modeLines.push(getCleanMode(due?.paymentId || due?.payment_id || "Cash"));
       });
     } else if (secondAmount > 0) {
       amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${secondAmount.toFixed(2)}`);
-      modeLines.push(membership.paymentId || membership.paymentMode || "Cash");
+      modeLines.push(getCleanMode(membership.paymentId || membership.paymentMode || "Cash"));
     }
 
     if (amountLines.length === 0) {
-      return { amountText: "-", modeText: membership.paymentMode || membership.paymentId || "-" };
+      return { amountText: "-", modeText: getCleanMode(membership.paymentMode || membership.paymentId || "-") };
     }
 
     return {

@@ -290,6 +290,11 @@ const Reports = () => {
   /* ========================
      TABLE CONFIGS
   ======================== */
+  const getCleanMode = (modeStr) => {
+    let clean = String(modeStr || "").replace(/^emi-?/i, "").trim();
+    return clean || "Cash";
+  };
+
   const tabs = [
     {
       key: "members",
@@ -303,8 +308,8 @@ const Reports = () => {
         m.name || "N/A",
         m.email || m.user_email || "-",
         m.phone || "-",
-        m.plan || m.role || "Member",
-        m.status || "Active",
+        m.plan && m.plan.toLowerCase() !== 'user' ? m.plan : (m.plan || "-"),
+        m.status ? m.status.charAt(0).toUpperCase() + m.status.slice(1) : "Active",
         m.join_date ? dayjs(m.join_date).format("DD MMM YYYY") : "-",
       ]),
     },
@@ -326,7 +331,7 @@ const Reports = () => {
           p.planName || "-",
           getMembershipTrainerName(p),
           p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
-          p.paymentMode || p.paymentId ? (p.paymentMode || "Razorpay") : "-",
+          getCleanMode(p.paymentMode || p.paymentId || "-"),
           hasWorkout ? "Yes" : "No",
           hasDiet ? "Yes" : "No",
           ptFormCompleted ? "Yes" : "Pending",
