@@ -55,6 +55,9 @@ const SessionTracking = () => {
       planName.toLowerCase().includes("pt")
     );
 
+    const planPrice = item.planPrice || item.plan_price || item.price || item.pt_price || item.ptPrice || item.pt_amount || item.amount || 0;
+    const planDuration = item.duration || item.plan_duration || item.pt_duration || item.duration_months || item.pt_duration_months || "";
+
     return {
       id: item.gymMemberId || item.id || item.gm_id || item.member_id || "",
       userId: item.userId || item.user_id || "",
@@ -62,6 +65,8 @@ const SessionTracking = () => {
       email: item.userEmail || item.user_email || item.email || "",
       phone: item.userMobile || item.user_mobile || item.phone || "",
       planName,
+      planPrice,
+      planDuration,
       planStartDate: item.planStartDate || item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
       planEndDate: endDate,
       isExpired,
@@ -208,7 +213,28 @@ const SessionTracking = () => {
               <p className="text-white font-semibold">Selected Member</p>
               <p>{selectedMember.name}</p>
               <p className="text-xs text-white/40">ID: {selectedMember.id}</p>
-              {selectedMember.planName && <p className="text-xs text-orange-300">{selectedMember.planName}</p>}
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-white/80">
+                  <span className="font-semibold text-white">Plan:</span>
+                  <span className="text-orange-300">{selectedMember.planName || '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <span className="font-semibold text-white">Price:</span>
+                  <span className="text-white/80">{selectedMember.planPrice ? `₹ ${Number(selectedMember.planPrice).toLocaleString('en-IN')}` : '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <span className="font-semibold text-white">Duration:</span>
+                  <span className="text-white/80">{selectedMember.planDuration ? selectedMember.planDuration : '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <span className="font-semibold text-white">Start:</span>
+                  <span className="text-white/80">{selectedMember.planStartDate ? dayjs(selectedMember.planStartDate).format('DD/MM/YYYY') : '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <span className="font-semibold text-white">End:</span>
+                  <span className="text-white/80">{selectedMember.planEndDate ? dayjs(selectedMember.planEndDate).format('DD/MM/YYYY') : '-'}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
