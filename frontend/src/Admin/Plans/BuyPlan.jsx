@@ -473,9 +473,17 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
               planId: m.planId ?? m.plan_id,
               planName: m.planName ?? m.plan_name ?? m.plan,
               pt_planId: m.pt_planId ?? m.pt_plan_id,
-              pt_planName: m.pt_planName ?? m.pt_plan_name ?? m.plan ?? m.plan,
+              pt_planName: m.pt_planName ?? m.pt_plan_name ?? m.plan,
+              price: m.price ?? m.price_paid ?? m.plan_price ?? m.amount ?? m.amount_paid ?? 0,
+              pricePaid: m.pricePaid ?? m.price_paid ?? m.amount_paid ?? 0,
+              secondPaymentPaid: m.secondPaymentPaid ?? m.second_payment_paid ?? 0,
+              amount: m.amount ?? m.amount_paid ?? m.price ?? m.plan_price ?? 0,
+              discount: m.discount ?? m.discount_amount ?? 0,
               pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
               pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
+              pt_secondPaymentPaid: m.pt_secondPaymentPaid ?? m.pt_second_paymentPaid ?? m.pt_second_payment_paid ?? 0,
+              pt_amount: m.pt_amount ?? m.pt_amount_paid ?? m.pt_price ?? 0,
+              pt_discount: m.pt_discount ?? m.pt.discount ?? 0,
               pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
               pt_startDate: m.pt_startDate ?? m.pt_start_date,
               pt_endDate: m.pt_endDate ?? m.pt_end_date,
@@ -1012,8 +1020,16 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                                     planName: m.planName ?? m.plan_name ?? m.plan,
                                     pt_planId: m.pt_planId ?? m.pt_plan_id,
                                     pt_planName: m.pt_planName ?? m.pt_plan_name ?? m.plan,
+                                    price: m.price ?? m.price_paid ?? m.plan_price ?? m.amount ?? m.amount_paid ?? 0,
+                                    pricePaid: m.pricePaid ?? m.price_paid ?? m.price_paid ?? m.amount_paid ?? 0,
+                                    secondPaymentPaid: m.secondPaymentPaid ?? m.second_payment_paid ?? 0,
+                                    amount: m.amount ?? m.amount_paid ?? m.price ?? m.plan_price ?? 0,
+                                    discount: m.discount ?? m.discount_amount ?? 0,
                                     pt_price: m.pt_price ?? m.ptPrice ?? m.pt_pricePaid ?? 0,
                                     pt_pricePaid: m.pt_pricePaid ?? m.ptPricePaid ?? m.pt_price_paid ?? 0,
+                                    pt_secondPaymentPaid: m.pt_secondPaymentPaid ?? m.pt_second_paymentPaid ?? m.pt_second_payment_paid ?? 0,
+                                    pt_amount: m.pt_amount ?? m.pt_amount_paid ?? m.pt_price ?? 0,
+                                    pt_discount: m.pt_discount ?? m.pt.discount ?? 0,
                                     pt_duration: m.pt_duration ?? m.ptDuration ?? m.pt_duration_months,
                                     pt_startDate: m.pt_startDate ?? m.pt_start_date,
                                     pt_endDate: m.pt_endDate ?? m.pt_end_date,
@@ -1593,12 +1609,16 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                 ) : (
                   memberHistory.map((h, i) => {
                     const isPT = filterTrainerPlans;
-                    const planName = isPT ? (h.pt_planName || h.planName) : h.planName;
+                    const planName = getPlanNameFromHistory(h);
                     const status = isPT ? (h.pt_status || h.status) : h.status;
-                    const price = isPT ? (h.pt_price || h.price) : h.price;
-                    const pricePaid = isPT ? (h.pt_pricePaid || h.pricePaid) : h.pricePaid;
-                    const amount = isPT ? (h.pt_amount || h.amount || price) : (h.amount || price);
-                    const discount = isPT ? (h.pt_discount || h.discount) : h.discount;
+                    const price = parseDecimal(isPT ? (h.pt_price ?? h.price) : h.price);
+                    const pricePaid = parseDecimal(isPT ? (h.pt_pricePaid ?? h.pricePaid) : h.pricePaid);
+                    const amount = parseDecimal(
+                      isPT
+                        ? (h.pt_amount ?? h.amount ?? h.pt_price ?? h.price)
+                        : (h.amount ?? h.price)
+                    );
+                    const discount = parseDecimal(isPT ? (h.pt_discount ?? h.discount) : h.discount);
                     
                     const startDate = isPT ? (h.pt_startDate || h.startDate) : h.startDate;
                     const endDate = isPT ? (h.pt_endDate || h.endDate) : h.endDate;
