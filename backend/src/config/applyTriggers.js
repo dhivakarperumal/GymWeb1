@@ -39,16 +39,24 @@ async function applyTriggers() {
         if (hasCreatedByName) insertBody += 'IF NEW.created_by_name IS NULL THEN SET NEW.created_by_name = @web_username; END IF;\n';
 
         if (insertBody) {
-          await db.query(`
-            CREATE TRIGGER ${quoteIdentifier(triggerNameInsert)}
-            BEFORE INSERT ON ${quoteIdentifier(tableName)}
-            FOR EACH ROW
-            BEGIN
-              IF @web_user_id IS NOT NULL THEN
-                ${insertBody}
-              END IF;
-            END;
-          `);
+          try {
+            await db.query(`
+              CREATE TRIGGER ${quoteIdentifier(triggerNameInsert)}
+              BEFORE INSERT ON ${quoteIdentifier(tableName)}
+              FOR EACH ROW
+              BEGIN
+                IF @web_user_id IS NOT NULL THEN
+                  ${insertBody}
+                END IF;
+              END;
+            `);
+          } catch (err) {
+            if (err.code === 'ER_TRG_ALREADY_EXISTS') {
+              console.warn(`⚠️ Trigger already exists: ${triggerNameInsert}. Skipping creation.`);
+            } else {
+              throw err;
+            }
+          }
         }
       }
 
@@ -61,16 +69,24 @@ async function applyTriggers() {
         if (hasUpdatedByName) updateBody += 'SET NEW.updated_by_name = @web_username;\n';
 
         if (updateBody) {
-          await db.query(`
-            CREATE TRIGGER ${quoteIdentifier(triggerNameUpdate)}
-            BEFORE UPDATE ON ${quoteIdentifier(tableName)}
-            FOR EACH ROW
-            BEGIN
-              IF @web_user_id IS NOT NULL THEN
-                ${updateBody}
-              END IF;
-            END;
-          `);
+          try {
+            await db.query(`
+              CREATE TRIGGER ${quoteIdentifier(triggerNameUpdate)}
+              BEFORE UPDATE ON ${quoteIdentifier(tableName)}
+              FOR EACH ROW
+              BEGIN
+                IF @web_user_id IS NOT NULL THEN
+                  ${updateBody}
+                END IF;
+              END;
+            `);
+          } catch (err) {
+            if (err.code === 'ER_TRG_ALREADY_EXISTS') {
+              console.warn(`⚠️ Trigger already exists: ${triggerNameUpdate}. Skipping creation.`);
+            } else {
+              throw err;
+            }
+          }
         }
       }
     }
