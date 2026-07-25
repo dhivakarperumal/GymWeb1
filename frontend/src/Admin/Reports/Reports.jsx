@@ -739,7 +739,7 @@ const Reports = () => {
                         return (
                           <td
                             key={j}
-                            className={`px-4 py-3 whitespace-pre-line align-top ${j === 5 ? "min-w-[220px] whitespace-nowrap" : ""
+                            className={`px-4 py-3 whitespace-nowrap align-middle ${j === 5 ? "min-w-[220px] whitespace-nowrap" : ""
                               }`}
                           >
                             {value === "yes" || value === "no" || value === "active" || value === "inactive" || value === "expired" ? (
