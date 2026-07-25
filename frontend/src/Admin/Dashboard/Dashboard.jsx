@@ -40,7 +40,7 @@ import api from "../../api";
 import toast from "react-hot-toast";
 import cache from "../../cache";
 import DateRangeFilter from "../DateRangeFilter";
-import { getDateRangeBounds } from "../utils/dateUtils";
+import { buildDashboardStats } from "../utils/dashboardStats.js";
 
 
 
@@ -183,41 +183,16 @@ export default function Dashboard() {
         const products = productsRes.data || [];
         const attendance = attendanceRes.data || [];
 
-        // Determine date bounds
-        const { start, end } = getDateRangeBounds(filterRange.type, filterRange.range);
-
-        const filteredOrders = orders.filter(o => {
-          const d = dayjs(o.created_at || o.createdAt);
-          if (filterRange.type === 'All Time') return true;
-          return (d.isAfter(start) || d.isSame(start)) && (d.isBefore(end) || d.isSame(end));
+        const { stats: newStats, filteredOrders } = buildDashboardStats({
+          members,
+          plans,
+          orders,
+          staff,
+          equipment,
+          products,
+          attendance,
+          filterRange,
         });
-
-        const filteredMembers = members.filter(m => {
-          const d = dayjs(m.created_at || m.createdAt);
-          if (filterRange.type === 'All Time') return true;
-          return (d.isAfter(start) || d.isSame(start)) && (d.isBefore(end) || d.isSame(end));
-        });
-
-        const filteredAttendance = attendance.filter(a => {
-          const d = dayjs(a.date || a.check_in);
-          if (filterRange.type === 'All Time') return true;
-          return (d.isAfter(start) || d.isSame(start)) && (d.isBefore(end) || d.isSame(end));
-        });
-
-        const newStats = {
-          members: members.length,
-          checkinsToday: filteredAttendance.filter(a => a.status.toLowerCase().includes('present')).length,
-          activePlans: plans.length,
-          pendingPayments: orders.filter(o => o.status === 'pending').length,
-          trainers: staff.length,
-          equipmentDue: equipment.length,
-          totalOrders: orders.length,
-          totalProducts: products.length,
-          newMembersToday: filteredMembers.length,
-          todayOrdersCount: filteredOrders.length,
-          lowStockCount: products.filter(p => (p.stock || p.quantity || 0) < 5).length,
-          expiringCount: 0 // Logic for expiring plans would go here
-        };
 
         setStats(newStats);
         
