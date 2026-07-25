@@ -1352,7 +1352,10 @@ const Account = () => {
                                     </td>
 
                                     <td className="px-4 py-4 text-gray-300">
-                                      {paymentMode}
+                                      {paymentMode
+                                        ?.replace(/^emi[-_\s]*/i, "")
+                                        ?.replace(/^card[-_\s]*/i, "")
+                                        ?.trim()}
                                     </td>
                                   </tr>
 
