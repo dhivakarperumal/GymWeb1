@@ -1038,10 +1038,14 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                               // First try to find a preferred plan from enquiries for this user
                               const combined = Array.isArray(enquiries) ? [...enquiries] : [];
                               if (Array.isArray(followups)) combined.push(...followups);
+                              const availablePlans = plans.filter((p) =>
+                                filterTrainerPlans ? isPTPlan(p) : !isPTPlan(p)
+                              );
+
                               const pref = findPreferredEnquiryPlan(user, combined);
                               if (pref && (pref.plan || pref.duration)) {
                                 // try exact name match
-                                const byName = plans.find(
+                                const byName = availablePlans.find(
                                   (p) => normalizePlanText(p.name) === normalizePlanText(pref.plan)
                                 );
                                 if (byName) {
@@ -1052,7 +1056,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                                 // try match by duration if provided
                                 const durationVal = parseDurationValue(pref.duration);
                                 if (durationVal != null) {
-                                  const byDuration = plans.find(
+                                  const byDuration = availablePlans.find(
                                     (p) => parseDurationValue(p.duration) === durationVal
                                   );
                                   if (byDuration) {
@@ -1062,7 +1066,7 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
                                 }
                               }
 
-                              const matchedPlan = findMatchingPlan(user, plans, combined);
+                              const matchedPlan = findMatchingPlan(user, availablePlans, combined);
                               if (matchedPlan) {
                                 setSelectedPlan(matchedPlan);
                                 return;
