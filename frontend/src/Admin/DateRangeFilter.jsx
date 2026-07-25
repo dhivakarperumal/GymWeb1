@@ -7,23 +7,29 @@ const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range:
   const [customRange, setCustomRange] = useState(dateRange.range || { start: '', end: '' });
   const [showCustom, setShowCustom] = useState(dateRange.type === 'Custom');
 
-  // Update UI when dateRange prop changes (e.g., from URL query params)
+  // Update UI when the incoming range values actually change.
   useEffect(() => {
-    if (dateRange) {
-      const selected = dateRange.type === 'Custom' ? 'Custom Range' : (dateRange.type || 'All Time');
-      setSelectedRange(selected);
-      if (dateRange.type === 'Custom' && dateRange.range) {
-        // Handle both 'start/end' and 'from/to' property names
-        setCustomRange({
+    if (!dateRange) return;
+
+    const nextType = dateRange.type || 'All Time';
+    const nextSelected = nextType === 'Custom' ? 'Custom' : nextType;
+    const nextCustomRange = nextType === 'Custom' && dateRange.range
+      ? {
           start: dateRange.range.start || dateRange.range.from || '',
           end: dateRange.range.end || dateRange.range.to || ''
-        });
-      } else {
-        setCustomRange({ start: '', end: '' });
+        }
+      : { start: '', end: '' };
+    const nextShowCustom = nextType === 'Custom';
+
+    setSelectedRange((prev) => (prev === nextSelected ? prev : nextSelected));
+    setCustomRange((prev) => {
+      if (prev.start === nextCustomRange.start && prev.end === nextCustomRange.end) {
+        return prev;
       }
-      setShowCustom(dateRange.type === 'Custom');
-    }
-  }, [dateRange]);
+      return nextCustomRange;
+    });
+    setShowCustom((prev) => (prev === nextShowCustom ? prev : nextShowCustom));
+  }, [dateRange?.type, dateRange?.range?.start, dateRange?.range?.end]);
 
   const ranges = [
     'All Time',
