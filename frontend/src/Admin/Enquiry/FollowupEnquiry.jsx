@@ -29,7 +29,8 @@ const FollowupEnquiry = () => {
 
   // Search & Filter
   const parseDateRangeFromParams = (params) => {
-    const type = params.get("dateType") || "All Time";
+    let type = params.get("dateType") || "All Time";
+    if (type === "Custom Range") type = "Custom";
     if (type === "Custom") {
       const from = params.get("from") || null;
       const to = params.get("to") || null;
@@ -618,7 +619,13 @@ const FollowupEnquiry = () => {
               />
             </div>
 
-            <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+            <DateRangeFilter
+              dateRange={dateRange}
+              onRangeChange={(type, range) => {
+                setDateRange({ type, range });
+                setCurrentPage(1);
+              }}
+            />
           </div>
 
           <div className="flex items-center gap-3 w-full lg:w-auto">
