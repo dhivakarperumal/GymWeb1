@@ -356,6 +356,9 @@ const TrainerDashboard = () => {
                     <th className="px-4 py-4 text-left text-sm font-semibold">Plan</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Start Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">End Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">PT Plan Name</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">PT Start Date</th>
+                    <th className="px-4 py-4 text-left text-sm font-semibold">PT End Date</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">PT Form</th>
                     <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
                   </tr>
@@ -364,7 +367,7 @@ const TrainerDashboard = () => {
                 <tbody>
                   {assignedMembers.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-6 text-base text-gray-400">
+                      <td colSpan="11" className="text-center py-6 text-base text-gray-400">
                         No members assigned
                       </td>
                     </tr>
@@ -401,6 +404,20 @@ const TrainerDashboard = () => {
 
                         <td className="px-4 py-4 text-base text-gray-400">
                           {m.planEndDate ? new Date(m.planEndDate).toLocaleDateString() : "-"}
+                        </td>
+
+                        <td className="px-4 py-4 text-base">
+                          <span className="text-cyan-400 font-medium">
+                            {m.pt_planName || m.ptPlanName || "-"}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-4 text-base text-gray-400">
+                          {m.pt_startDate || m.ptStartDate ? new Date(m.pt_startDate || m.ptStartDate).toLocaleDateString() : "-"}
+                        </td>
+
+                        <td className="px-4 py-4 text-base text-gray-400">
+                          {m.pt_endDate || m.ptEndDate ? new Date(m.pt_endDate || m.ptEndDate).toLocaleDateString() : "-"}
                         </td>
 
                         <td className="px-4 py-4">
@@ -496,6 +513,21 @@ const TrainerDashboard = () => {
                           <div>
                             <p className="text-[10px] text-gray-500 uppercase">Ends</p>
                             <p className="text-[11px] text-gray-300">{m.planEndDate ? new Date(m.planEndDate).toLocaleDateString() : "-"}</p>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-gray-400 mt-3">
+                          PT Plan: <span className="text-cyan-400">{m.pt_planName || m.ptPlanName || "-"}</span>
+                        </p>
+
+                        <div className="flex gap-4 mt-2">
+                          <div>
+                            <p className="text-[10px] text-gray-500 uppercase">PT Starts</p>
+                            <p className="text-[11px] text-gray-300">{m.pt_startDate || m.ptStartDate ? new Date(m.pt_startDate || m.ptStartDate).toLocaleDateString() : "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-500 uppercase">PT Ends</p>
+                            <p className="text-[11px] text-gray-300">{m.pt_endDate || m.ptEndDate ? new Date(m.pt_endDate || m.ptEndDate).toLocaleDateString() : "-"}</p>
                           </div>
                         </div>
 
