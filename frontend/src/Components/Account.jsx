@@ -1257,7 +1257,7 @@ const Account = () => {
                           </div>
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
+                        <div className={`grid gap-4 md:grid-cols-2 ${hasEmi ? 'xl:grid-cols-4' : ''} mb-6`}>
                           <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Total Amount</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(totalAmount)}</p>
@@ -1266,43 +1266,49 @@ const Account = () => {
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Initial Paid</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "pricePaid", "price_paid") || 0)}</p>
                           </div>
-                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Second Paid</p>
-                            <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
-                          </div>
-                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Remaining</p>
-                            <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
-                          </div>
+                          {hasEmi && (
+                            <>
+                              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                                <p className="text-[10px] uppercase tracking-widest text-blue-300">Second Paid</p>
+                                <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
+                              </div>
+                              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                                <p className="text-[10px] uppercase tracking-widest text-blue-300">Remaining</p>
+                                <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
+                              </div>
+                            </>
+                          )}
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-blue-300 mb-2">
-                              Next EMI Due
-                            </p>
+                        <div className={`grid gap-4 md:grid-cols-2 ${hasEmi ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
+                          {hasEmi && (
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                              <p className="text-[10px] uppercase tracking-widest text-blue-300 mb-2">
+                                Next EMI Due
+                              </p>
 
-                            <div className="inline-flex px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
-                              <span className="text-lg font-bold text-blue-200">
-                                {(() => {
-                                  const dueDate = new Date(membership.createdAt);
-                                  dueDate.setDate(dueDate.getDate() + 30);
+                              <div className="inline-flex px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
+                                <span className="text-lg font-bold text-blue-200">
+                                  {(() => {
+                                    const dueDate = new Date(membership.createdAt);
+                                    dueDate.setDate(dueDate.getDate() + 30);
 
-                                  return dueDate.toLocaleDateString("en-IN", {
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                  });
-                                })()}
-                              </span>
+                                    return dueDate.toLocaleDateString("en-IN", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    });
+                                  })()}
+                                </span>
+                              </div>
+
+                              <p className="text-sm text-gray-300 mt-3">
+                                EMI Amount: <span className="font-semibold text-white">
+                                  {formatCurrency(remainingAmount)}
+                                </span>
+                              </p>
                             </div>
-
-                            <p className="text-sm text-gray-300 mt-3">
-                              EMI Amount: <span className="font-semibold text-white">
-                                {formatCurrency(remainingAmount)}
-                              </span>
-                            </p>
-                          </div>
+                          )}
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Status</p>
                             <p className="text-white font-semibold mt-2">{paymentStatus}</p>
