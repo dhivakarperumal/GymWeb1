@@ -10,14 +10,18 @@ const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range:
   // Update UI when dateRange prop changes (e.g., from URL query params)
   useEffect(() => {
     if (dateRange) {
-      setSelectedRange(dateRange.type || 'All Time');
+      const selected = dateRange.type === 'Custom' ? 'Custom Range' : (dateRange.type || 'All Time');
+      setSelectedRange(selected);
       if (dateRange.type === 'Custom' && dateRange.range) {
         // Handle both 'start/end' and 'from/to' property names
         setCustomRange({
           start: dateRange.range.start || dateRange.range.from || '',
           end: dateRange.range.end || dateRange.range.to || ''
         });
+      } else {
+        setCustomRange({ start: '', end: '' });
       }
+      setShowCustom(dateRange.type === 'Custom');
     }
   }, [dateRange]);
 
@@ -59,8 +63,10 @@ const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range:
       >
         <FaCalendarAlt className="text-orange-500" />
         <span className="text-sm font-medium">
-          {selectedRange === 'Custom' && customRange.start && customRange.end
-            ? `${customRange.start} to ${customRange.end}`
+          {selectedRange === 'Custom'
+            ? customRange.start && customRange.end
+              ? `${customRange.start} to ${customRange.end}`
+              : 'Custom Range'
             : selectedRange}
         </span>
         <FaChevronDown className={`text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`} />

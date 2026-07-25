@@ -688,13 +688,16 @@ const Account = () => {
     });
   };
 
+  const hasEmi = plans && plans.some(m => getMembershipRemaining(m) > 0);
+  const paymentTabLabel = hasEmi ? "EMI Details" : "Payment Details";
+
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
     { key: "plans", label: "My Plans", icon: CalendarCheck },
 
     ...(hasActivePlan
       ? [
-        { key: "emi", label: "EMI Details", icon: CreditCard },
+        { key: "emi", label: paymentTabLabel, icon: CreditCard },
         { key: "diet", label: "Diet Chart", icon: Shield },
         { key: "workouts", label: "Workouts", icon: Key },
       ]
@@ -1193,9 +1196,9 @@ const Account = () => {
               <div className="bg-gray-900/50 border border-white/10 rounded-3xl p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold uppercase text-white">EMI Details</h2>
+                    <h2 className="text-2xl font-bold uppercase text-white">{paymentTabLabel}</h2>
                     <p className="text-sm text-gray-400 max-w-2xl">
-                      Review your membership EMI schedule, plan summary, total amount paid and remaining dues.
+                      Review your membership {hasEmi ? "EMI schedule, " : ""}plan summary, total amount paid and remaining dues.
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -1219,7 +1222,7 @@ const Account = () => {
 
               {activePlans.length === 0 ? (
                 <div className="rounded-3xl border border-white/10 bg-gray-900/50 p-8 text-center text-gray-400">
-                  No EMI membership records found for your account.
+                  No {hasEmi ? "EMI " : ""}membership records found for your account.
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -1254,7 +1257,7 @@ const Account = () => {
                           </div>
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
+                        <div className={`grid gap-4 md:grid-cols-2 ${hasEmi ? 'xl:grid-cols-4' : ''} mb-6`}>
                           <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Total Amount</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(totalAmount)}</p>
@@ -1263,43 +1266,49 @@ const Account = () => {
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Initial Paid</p>
                             <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "pricePaid", "price_paid") || 0)}</p>
                           </div>
-                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Second Paid</p>
-                            <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
-                          </div>
-                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-blue-300">Remaining</p>
-                            <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
-                          </div>
+                          {hasEmi && (
+                            <>
+                              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                                <p className="text-[10px] uppercase tracking-widest text-blue-300">Second Paid</p>
+                                <p className="text-white font-semibold mt-2">{formatCurrency(getMembershipField(membership, "secondPaymentPaid", "second_payment_paid") || 0)}</p>
+                              </div>
+                              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                                <p className="text-[10px] uppercase tracking-widest text-blue-300">Remaining</p>
+                                <p className="text-white font-semibold mt-2">{formatCurrency(remainingAmount)}</p>
+                              </div>
+                            </>
+                          )}
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-blue-300 mb-2">
-                              Next EMI Due
-                            </p>
+                        <div className={`grid gap-4 md:grid-cols-2 ${hasEmi ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
+                          {hasEmi && (
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                              <p className="text-[10px] uppercase tracking-widest text-blue-300 mb-2">
+                                Next EMI Due
+                              </p>
 
-                            <div className="inline-flex px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
-                              <span className="text-lg font-bold text-blue-200">
-                                {(() => {
-                                  const dueDate = new Date(membership.createdAt);
-                                  dueDate.setDate(dueDate.getDate() + 30);
+                              <div className="inline-flex px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30">
+                                <span className="text-lg font-bold text-blue-200">
+                                  {(() => {
+                                    const dueDate = new Date(membership.createdAt);
+                                    dueDate.setDate(dueDate.getDate() + 30);
 
-                                  return dueDate.toLocaleDateString("en-IN", {
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                  });
-                                })()}
-                              </span>
+                                    return dueDate.toLocaleDateString("en-IN", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    });
+                                  })()}
+                                </span>
+                              </div>
+
+                              <p className="text-sm text-gray-300 mt-3">
+                                EMI Amount: <span className="font-semibold text-white">
+                                  {formatCurrency(remainingAmount)}
+                                </span>
+                              </p>
                             </div>
-
-                            <p className="text-sm text-gray-300 mt-3">
-                              EMI Amount: <span className="font-semibold text-white">
-                                {formatCurrency(remainingAmount)}
-                              </span>
-                            </p>
-                          </div>
+                          )}
                           <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
                             <p className="text-[10px] uppercase tracking-widest text-blue-300">Payment Status</p>
                             <p className="text-white font-semibold mt-2">{paymentStatus}</p>
@@ -1316,8 +1325,9 @@ const Account = () => {
                           </div>
                         </div>
 
-                        <div className="mt-6">
-                          <h4 className="text-sm font-bold uppercase tracking-widest text-white mb-3">EMI Dues History</h4>
+                        {remainingAmount > 0 && (
+                          <div className="mt-6">
+                            <h4 className="text-sm font-bold uppercase tracking-widest text-white mb-3">EMI Dues History</h4>
                           {dues.length > 0 ? (
                             <div className="overflow-x-auto rounded-3xl border border-white/10 bg-black/40">
                               <table className="min-w-full divide-y divide-white/10 text-sm">
@@ -1386,6 +1396,7 @@ const Account = () => {
                             <p className="text-gray-400">No dues recorded yet for this plan.</p>
                           )}
                         </div>
+                        )}
                       </div>
                     );
                   })}

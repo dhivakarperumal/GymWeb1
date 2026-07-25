@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../../api";
 import cache from "../../cache";
 import {
@@ -682,7 +682,7 @@ ${items
       </div>
 
       {/* ================= FILTER BAR ================= */}
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-3 flex flex-wrap items-center gap-3">
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-3 flex flex-wrap items-center gap-3 relative z-50">
 
         {/* SEARCH */}
         <div className="relative w-full lg:w-[220px]">
@@ -696,7 +696,7 @@ ${items
         </div>
 
         {/* FILTERS & ACTIONS */}
-          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+          <DateRangeFilter dateRange={dateRange} onRangeChange={(type, range) => setDateRange({ type, range })} />
 
           <select
             value={statusFilter}
