@@ -47,15 +47,48 @@ const followupMasterController = {
                 return res.status(400).json({ error: 'Name and phone are required' });
             }
 
-            // Check if phone number already exists
-            const [existing] = await pool.query(
-                'SELECT id, name FROM followups WHERE phone = ? LIMIT 1',
-                [phone]
+            // Check for duplicates in followups table
+            const [existingFollowup] = await pool.query(
+                'SELECT id, name, email, phone FROM followups WHERE phone = ? OR email = ? LIMIT 1',
+                [phone, email]
             );
-            if (existing.length > 0) {
-                return res.status(409).json({
-                    error: `Mobile number ${phone} already exists!`
-                });
+            if (existingFollowup.length > 0) {
+                const dup = existingFollowup[0];
+                if (dup.phone === phone && email && dup.email === email) {
+                    return res.status(409).json({
+                        error: `This email (${email}) and mobile number (${phone}) already exist in followup enquiries!`
+                    });
+                } else if (dup.phone === phone) {
+                    return res.status(409).json({
+                        error: `Mobile number ${phone} already exists in followup enquiries!`
+                    });
+                } else if (email && dup.email === email) {
+                    return res.status(409).json({
+                        error: `Email ${email} already exists in followup enquiries!`
+                    });
+                }
+            }
+
+            // Check for duplicates in gym_members table
+            const [existingMember] = await pool.query(
+                'SELECT id, name, email, phone FROM gym_members WHERE phone = ? OR email = ? LIMIT 1',
+                [phone, email]
+            );
+            if (existingMember.length > 0) {
+                const dup = existingMember[0];
+                if (dup.phone === phone && email && dup.email === email) {
+                    return res.status(409).json({
+                        error: `This email (${email}) and mobile number (${phone}) already exist as registered members!`
+                    });
+                } else if (dup.phone === phone) {
+                    return res.status(409).json({
+                        error: `Mobile number ${phone} already exists as a registered member!`
+                    });
+                } else if (email && dup.email === email) {
+                    return res.status(409).json({
+                        error: `Email ${email} already exists as a registered member!`
+                    });
+                }
             }
 
             const [result] = await pool.query(
