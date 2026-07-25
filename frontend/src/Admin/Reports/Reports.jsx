@@ -413,7 +413,7 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-red-500/20 text-red-400",
       data: filteredEMIs,
-      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Total", "Paid", "Remaining", "Next EMI Date", "Mode", "Status", "Start", "End"],
+      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Total", "Paid", "Mode", "Remaining", "Next EMI Date", "Status", "Start", "End"],
       rows: filteredEMIs.map((p, i) => {
         const totalAmount = p.price != null ? parseFloat(p.price) : null;
         const paidAmount = p.pricePaid != null ? parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0) : null;
@@ -426,6 +426,8 @@ const Reports = () => {
           nextEmiDateStr = "Paid";
         }
 
+        const paymentLines = buildMembershipPaymentLines(p);
+
         return [
           i + 1,
           p.userName || p.username || "-",
@@ -433,10 +435,10 @@ const Reports = () => {
           p.planName || "-",
           getMembershipTrainerName(p),
           totalAmount != null ? `₹${totalAmount.toFixed(2)}` : "-",
-          paidAmount != null ? `₹${paidAmount.toFixed(2)}` : "-",
+          paymentLines.amountText,
+          paymentLines.modeText,
           typeof remaining === "number" ? `₹${remaining.toFixed(2)}` : "-",
           nextEmiDateStr,
-          getCleanMode(p.paymentMode || p.paymentId || "-"),
           p.status || "active",
           p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
           p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
@@ -755,7 +757,11 @@ const Reports = () => {
                                 {cell}
                               </span>
                             ) : (
-                              <span className={badgeClasses}>{cell}</span>
+                              <span
+                                className={`${badgeClasses} whitespace-pre-line`}
+                              >
+                                {cell}
+                              </span>
                             )}
                           </td>
 

@@ -295,6 +295,70 @@ const Reports = () => {
     return clean || "Cash";
   };
 
+  const safeParseDues = (membership) => {
+    let dues = membership?.dues ?? [];
+    if (typeof dues === "string") {
+      try {
+        dues = JSON.parse(dues || "[]");
+      } catch (err) {
+        dues = [];
+      }
+    }
+    return Array.isArray(dues) ? dues : [];
+  };
+
+  const getPaymentOrdinal = (num) => {
+    const n = Number(num);
+    if (Number.isNaN(n)) return `${num}th`;
+    const mod100 = n % 100;
+    if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+    switch (n % 10) {
+      case 1: return `${n}st`;
+      case 2: return `${n}nd`;
+      case 3: return `${n}rd`;
+      default: return `${n}th`;
+    }
+  };
+
+  const buildMembershipPaymentLines = (membership) => {
+    const initialAmount = Number(membership.pricePaid || 0);
+    const secondAmount = Number(membership.secondPaymentPaid || 0);
+    const dues = safeParseDues(membership);
+    const amountLines = [];
+    const modeLines = [];
+
+    const initialMode = membership.paymentMode || membership.paymentId || "Cash";
+    if (initialAmount > 0) {
+      amountLines.push(
+        `${getPaymentOrdinal(amountLines.length + 1)} payment: ₹${initialAmount.toFixed(2)}`
+      );
+      modeLines.push(getCleanMode(initialMode));
+    }
+
+    if (dues.length > 0) {
+      dues.forEach((due) => {
+        const amount = Number(due?.amount ?? due?.amt ?? 0);
+        if (!Number.isFinite(amount) || amount <= 0) return;
+        amountLines.push(
+          `${getPaymentOrdinal(amountLines.length + 1)}\u00A0payment ₹${amount.toFixed(2)}`
+        );
+        modeLines.push(getCleanMode(due?.paymentId || due?.payment_id || "Cash"));
+      });
+    } else if (secondAmount > 0) {
+      amountLines.push(`${getPaymentOrdinal(amountLines.length + 1)} payment ₹${secondAmount.toFixed(2)}`);
+      modeLines.push(getCleanMode(membership.paymentId || membership.paymentMode || "Cash"));
+    }
+
+    if (amountLines.length === 0) {
+      return { amountText: "-", modeText: getCleanMode(membership.paymentMode || membership.paymentId || "-") };
+    }
+
+    return {
+      amountText: amountLines.join("\n"),
+      modeText: modeLines.join("\n"),
+    };
+  };
+
   const tabs = [
     {
       key: "members",
@@ -324,14 +388,15 @@ const Reports = () => {
         const hasWorkout = !!(p.workout_count || p.workoutCount || p.hasWorkout || p.workoutAssigned || p.workout);
         const hasDiet = !!(p.diet_count || p.dietCount || p.hasDiet || p.dietAssigned || p.diet);
         const ptFormCompleted = !!(p.pt_form_completed);
+        const paymentLines = buildMembershipPaymentLines(p);
         return [
           i + 1,
           p.userName || p.username || "-",
           p.userEmail || p.email || "-",
           p.planName || "-",
           getMembershipTrainerName(p),
-          p.pricePaid != null ? `₹${parseFloat(p.pricePaid).toFixed(2)}` : "-",
-          getCleanMode(p.paymentMode || p.paymentId || "-"),
+          paymentLines.amountText,
+          paymentLines.modeText,
           hasWorkout ? "Yes" : "No",
           hasDiet ? "Yes" : "No",
           ptFormCompleted ? "Yes" : "Pending",
@@ -347,7 +412,7 @@ const Reports = () => {
       icon: CreditCard,
       color: "bg-red-500/20 text-red-400",
       data: filteredEMIs,
-      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Total", "Paid", "Remaining", "Next EMI Date", "Mode", "Status", "Start", "End"],
+      headers: ["S No", "Member", "Email", "Plan", "Assigned Trainer", "Total", "Paid", "Mode", "Remaining", "Next EMI Date", "Status", "Start", "End"],
       rows: filteredEMIs.map((p, i) => {
         const totalAmount = p.price != null ? parseFloat(p.price) : null;
         const paidAmount = p.pricePaid != null ? parseFloat(p.pricePaid) + (p.secondPaymentPaid ? parseFloat(p.secondPaymentPaid) : 0) : null;
@@ -360,6 +425,8 @@ const Reports = () => {
           nextEmiDateStr = "Paid";
         }
 
+        const paymentLines = buildMembershipPaymentLines(p);
+
         return [
           i + 1,
           p.userName || p.username || "-",
@@ -367,10 +434,10 @@ const Reports = () => {
           p.planName || "-",
           getMembershipTrainerName(p),
           totalAmount != null ? `₹${totalAmount.toFixed(2)}` : "-",
-          paidAmount != null ? `₹${paidAmount.toFixed(2)}` : "-",
+          paymentLines.amountText,
+          paymentLines.modeText,
           typeof remaining === "number" ? `₹${remaining.toFixed(2)}` : "-",
           nextEmiDateStr,
-          getCleanMode(p.paymentMode || p.paymentId || "-"),
           p.status || "active",
           p.startDate ? dayjs(p.startDate).format("DD MMM YYYY") : "-",
           p.endDate ? dayjs(p.endDate).format("DD MMM YYYY") : "-",
