@@ -688,13 +688,16 @@ const Account = () => {
     });
   };
 
+  const hasEmi = plans && plans.some(m => getMembershipRemaining(m) > 0);
+  const paymentTabLabel = hasEmi ? "EMI Details" : "Payment Details";
+
   const tabs = [
     { key: "personal", label: "Personal Details", icon: User },
     { key: "plans", label: "My Plans", icon: CalendarCheck },
 
     ...(hasActivePlan
       ? [
-        { key: "emi", label: "EMI Details", icon: CreditCard },
+        { key: "emi", label: paymentTabLabel, icon: CreditCard },
         { key: "diet", label: "Diet Chart", icon: Shield },
         { key: "workouts", label: "Workouts", icon: Key },
       ]
@@ -1193,9 +1196,9 @@ const Account = () => {
               <div className="bg-gray-900/50 border border-white/10 rounded-3xl p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold uppercase text-white">EMI Details</h2>
+                    <h2 className="text-2xl font-bold uppercase text-white">{paymentTabLabel}</h2>
                     <p className="text-sm text-gray-400 max-w-2xl">
-                      Review your membership EMI schedule, plan summary, total amount paid and remaining dues.
+                      Review your membership {hasEmi ? "EMI schedule, " : ""}plan summary, total amount paid and remaining dues.
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -1219,7 +1222,7 @@ const Account = () => {
 
               {activePlans.length === 0 ? (
                 <div className="rounded-3xl border border-white/10 bg-gray-900/50 p-8 text-center text-gray-400">
-                  No EMI membership records found for your account.
+                  No {hasEmi ? "EMI " : ""}membership records found for your account.
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -1316,8 +1319,9 @@ const Account = () => {
                           </div>
                         </div>
 
-                        <div className="mt-6">
-                          <h4 className="text-sm font-bold uppercase tracking-widest text-white mb-3">EMI Dues History</h4>
+                        {remainingAmount > 0 && (
+                          <div className="mt-6">
+                            <h4 className="text-sm font-bold uppercase tracking-widest text-white mb-3">EMI Dues History</h4>
                           {dues.length > 0 ? (
                             <div className="overflow-x-auto rounded-3xl border border-white/10 bg-black/40">
                               <table className="min-w-full divide-y divide-white/10 text-sm">
@@ -1386,6 +1390,7 @@ const Account = () => {
                             <p className="text-gray-400">No dues recorded yet for this plan.</p>
                           )}
                         </div>
+                        )}
                       </div>
                     );
                   })}
