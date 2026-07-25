@@ -45,18 +45,27 @@ const SessionTracking = () => {
         isExpired = true;
       }
     }
-    
+
+    const planName = item.planName || item.plan_name || "";
+    const hasPtPlan = Boolean(
+      item.hasPtPlan ||
+      item.has_pt_plan ||
+      item.pt_plan ||
+      item.ptPlan ||
+      planName.toLowerCase().includes("pt")
+    );
+
     return {
       id: item.gymMemberId || item.id || item.gm_id || item.member_id || "",
       userId: item.userId || item.user_id || "",
       name: item.username || item.name || item.user_name || item.full_name || "Member",
       email: item.userEmail || item.user_email || item.email || "",
       phone: item.userMobile || item.user_mobile || item.phone || "",
-      planName: item.planName || item.plan_name || "",
+      planName,
       planStartDate: item.planStartDate || item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
       planEndDate: endDate,
       isExpired,
-      hasPtPlan: item.hasPtPlan || item.has_pt_plan || 0,
+      hasPtPlan,
       ptFormCompleted: item.ptFormCompleted || item.pt_form_completed || 0,
     };
   };
@@ -69,7 +78,7 @@ const SessionTracking = () => {
       const data = Array.isArray(res.data) ? res.data : res.data?.data || res.data?.assignments || [];
       const members = data
         .map(normalizeMember)
-        .filter((m) => m.id && !m.isExpired)
+        .filter((m) => m.id && !m.isExpired && m.hasPtPlan)
         .filter((m, index, arr) => arr.findIndex((u) => String(u.id) === String(m.id)) === index);
       setAssignedMembers(members);
     } catch (err) {
@@ -209,7 +218,7 @@ const SessionTracking = () => {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-bold text-white">Assigned Members</h2>
-                <p className="text-xs text-white/40">Only members assigned to you appear here.</p>
+                <p className="text-xs text-white/40">Only assigned members with an active PT plan appear here.</p>
               </div>
               <button
                 type="button"
