@@ -739,17 +739,26 @@ const Reports = () => {
                         return (
                           <td
                             key={j}
-                            className={`px-4 py-3 whitespace-nowrap align-middle ${j === 5 ? "min-w-[220px] whitespace-nowrap" : ""
+                            className={`px-4 py-3 align-top ${j === 5 || j === 6
+                              ? "min-w-[220px] whitespace-pre-line"
+                              : "whitespace-nowrap"
                               }`}
                           >
-                            {value === "yes" || value === "no" || value === "active" || value === "inactive" || value === "expired" ? (
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeClasses}`}>
+                            {value === "yes" ||
+                              value === "no" ||
+                              value === "active" ||
+                              value === "inactive" ||
+                              value === "expired" ? (
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeClasses}`}
+                              >
                                 {cell}
                               </span>
                             ) : (
                               <span className={badgeClasses}>{cell}</span>
                             )}
                           </td>
+
                         );
                       })}
                     </tr>
@@ -799,12 +808,14 @@ const Reports = () => {
       </div>
 
       {/* FOOTER COUNT */}
-      {!loading && currentTab.rows.length > 0 && (
-        <p className="text-white/40 text-xs text-right">
-          Showing {currentTab.rows.length} {currentTab.label.toLowerCase()} records
-        </p>
-      )}
-    </div>
+      {
+        !loading && currentTab.rows.length > 0 && (
+          <p className="text-white/40 text-xs text-right">
+            Showing {currentTab.rows.length} {currentTab.label.toLowerCase()} records
+          </p>
+        )
+      }
+    </div >
   );
 };
 
