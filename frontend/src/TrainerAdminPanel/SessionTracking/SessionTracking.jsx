@@ -37,7 +37,7 @@ const SessionTracking = () => {
   }, [selectedMemberId, assignedMembers]);
 
   const normalizeMember = (item) => {
-    const endDate = item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || "";
+    const endDate = item.planEndDate || item.pt_endDate || item.ptExpiryDate || item.pt_expiry_date || item.endDate || "";
     let isExpired = false;
     if (endDate) {
       const end = new Date(endDate);
@@ -53,9 +53,10 @@ const SessionTracking = () => {
       email: item.userEmail || item.user_email || item.email || "",
       phone: item.userMobile || item.user_mobile || item.phone || "",
       planName: item.planName || item.plan_name || "",
-      planStartDate: item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
+      planStartDate: item.planStartDate || item.pt_startDate || item.ptJoinDate || item.pt_join_date || "",
       planEndDate: endDate,
-      hasPtPlan: isExpired ? 0 : (item.hasPtPlan || item.has_pt_plan || 0),
+      isExpired,
+      hasPtPlan: item.hasPtPlan || item.has_pt_plan || 0,
       ptFormCompleted: item.ptFormCompleted || item.pt_form_completed || 0,
     };
   };
@@ -63,12 +64,13 @@ const SessionTracking = () => {
   const fetchAssignedMembers = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/assignments?trainerUserId=${trainerId}`);
-      const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      const trainerEmail = user?.email || "";
+      const res = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}`);
+      const data = Array.isArray(res.data) ? res.data : res.data?.data || res.data?.assignments || [];
       const members = data
         .map(normalizeMember)
-        .filter((m) => m.id && m.hasPtPlan)
-        .filter((m, index, arr) => arr.findIndex((u) => u.id === m.id) === index);
+        .filter((m) => m.id && !m.isExpired)
+        .filter((m, index, arr) => arr.findIndex((u) => String(u.id) === String(m.id)) === index);
       setAssignedMembers(members);
     } catch (err) {
       console.error(err);
