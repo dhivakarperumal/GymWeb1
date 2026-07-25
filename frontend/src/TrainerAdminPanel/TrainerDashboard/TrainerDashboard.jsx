@@ -59,6 +59,17 @@ const TrainerDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  const memberHasPtPlan = (member) => {
+    const planName = String(member.planName || member.plan_name || member.plan || "").toLowerCase();
+    return Boolean(
+      member.hasPtPlan ||
+      member.has_pt_plan ||
+      member.pt_plan ||
+      member.ptPlan ||
+      planName.includes("pt")
+    );
+  };
+
   /* ---------------- LOAD DASHBOARD DATA ---------------- */
   useEffect(() => {
     if (!trainerId || !user) return;
@@ -393,36 +404,40 @@ const TrainerDashboard = () => {
                         </td>
 
                         <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
-                              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all hover:scale-105 active:scale-95 ${m.ptFormCompleted
-                                ? "bg-green-500/10 text-green-400 border-green-500/20"
-                                : "bg-red-500/10 text-red-400 border-red-500/20"
-                                }`}
-                            >
-                              {m.ptFormCompleted ? "Completed" : "Pending"}
-                            </button>
+                          {memberHasPtPlan(m) ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
+                                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all hover:scale-105 active:scale-95 ${m.ptFormCompleted
+                                  ? "bg-green-500/10 text-green-400 border-green-500/20"
+                                  : "bg-red-500/10 text-red-400 border-red-500/20"
+                                  }`}
+                              >
+                                {m.ptFormCompleted ? "Completed" : "Pending"}
+                              </button>
 
-                            {m.ptFormCompleted ? (
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => setPtViewMember(m)}
-                                  className="p-1.5 text-blue-400 hover:bg-blue-400/20 rounded-lg transition-all"
-                                  title="View PT Form"
-                                >
-                                  <FaEye size={12} />
-                                </button>
-                                <button
-                                  onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}&edit=true`)}
-                                  className="p-2 text-orange-400 hover:bg-orange-400/20 rounded-xl transition-all"
-                                  title="Edit PT Form"
-                                >
-                                  <FaPencilAlt size={12} />
-                                </button>
-                              </div>
-                            ) : null}
-                          </div>
+                              {m.ptFormCompleted ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => setPtViewMember(m)}
+                                    className="p-1.5 text-blue-400 hover:bg-blue-400/20 rounded-lg transition-all"
+                                    title="View PT Form"
+                                  >
+                                    <FaEye size={12} />
+                                  </button>
+                                  <button
+                                    onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}&edit=true`)}
+                                    className="p-2 text-orange-400 hover:bg-orange-400/20 rounded-xl transition-all"
+                                    title="Edit PT Form"
+                                  >
+                                    <FaPencilAlt size={12} />
+                                  </button>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">-</span>
+                          )}
                         </td>
 
                         <td className="px-4 py-4">
@@ -485,15 +500,21 @@ const TrainerDashboard = () => {
                         </div>
 
                         <div className="mt-3">
-                          <button
-                            onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
-                            className={`w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${m.ptFormCompleted
-                              ? "bg-green-500/10 text-green-400 border-green-500/20"
-                              : "bg-red-500/10 text-red-400 border-red-500/20"
-                              }`}
-                          >
-                            PT Form: {m.ptFormCompleted ? "Completed" : "Pending"}
-                          </button>
+                          {memberHasPtPlan(m) ? (
+                            <button
+                              onClick={() => navigate(`/trainer/pt-form?member_id=${m.gymMemberId}`)}
+                              className={`w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${m.ptFormCompleted
+                                ? "bg-green-500/10 text-green-400 border-green-500/20"
+                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                                }`}
+                            >
+                              PT Form: {m.ptFormCompleted ? "Completed" : "Pending"}
+                            </button>
+                          ) : (
+                            <div className="w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-white/10 text-gray-400 text-center">
+                              -
+                            </div>
+                          )}
                         </div>
                       </div>
 
