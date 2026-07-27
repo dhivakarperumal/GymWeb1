@@ -87,7 +87,7 @@ const PTForm = () => {
               if (myAssign) trainerName = myAssign.trainerName;
             }
 
-            if (ptRes.data && ptRes.data.form_data && (isEditMode || data.pt_form_completed)) {
+            if (ptRes.data && ptRes.data.form_data) {
               const savedData = typeof ptRes.data.form_data === 'string'
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;

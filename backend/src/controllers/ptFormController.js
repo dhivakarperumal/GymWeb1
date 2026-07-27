@@ -121,28 +121,43 @@ async function resetPTForm(req, res) {
       [member_id]
     );
 
-    if (existing.length > 0) {
-      // Parse existing form data
+    if (existing.length > 0 && existing[0].form_data) {
+      // Parse existing form data safely
       let formData = existing[0].form_data;
+      let parsedSuccessfully = true;
+
       if (typeof formData === 'string') {
         try {
           formData = JSON.parse(formData);
-        } catch (e) {
-          formData = {};
+        } catch (parseError) {
+          console.warn(`Failed to parse form_data for member ${member_id}:`, parseError);
+          parsedSuccessfully = false;
+          // If parsing fails, don't update - keep original data intact
         }
-      } else if (!formData) {
-        formData = {};
+      } else if (typeof formData === 'object' && formData !== null) {
+        // Already an object, use it as-is
+        parsedSuccessfully = true;
+      } else {
+        parsedSuccessfully = false;
       }
 
-      // Keep all form data (VA enquiry, health history, fitness screening, flexibility measurement)
-      // but ONLY reset the sessions array (session tracker step)
-      formData.sessions = [];
+      // Only update if we have valid data to work with
+      if (parsedSuccessfully && formData && Object.keys(formData).length > 0) {
+        // Keep all form data (VA enquiry, health history, fitness screening, flexibility measurement)
+        // but ONLY reset the sessions array (session tracker step)
+        formData.sessions = [];
 
-      // Update pt_forms with cleared sessions but keep all other data
-      await connection.query(
-        'UPDATE pt_forms SET form_data = ? WHERE member_id = ?',
-        [JSON.stringify(formData), member_id]
-      );
+        // Update pt_forms with cleared sessions but keep all other data
+        await connection.query(
+          'UPDATE pt_forms SET form_data = ? WHERE member_id = ?',
+          [JSON.stringify(formData), member_id]
+        );
+        console.log(`✅ Session tracker cleared for member ${member_id}, first 5 tabs retained`);
+      } else {
+        console.warn(`⚠️ Could not parse form data for member ${member_id}, keeping as-is`);
+      }
+    } else {
+      console.log(`ℹ️ No existing form data for member ${member_id}, skipping reset`);
     }
 
     // Reset pt_form_completed flag only for session tracker completion

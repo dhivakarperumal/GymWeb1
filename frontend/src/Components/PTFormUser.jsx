@@ -116,7 +116,7 @@ const PTFormUser = () => {
       if (memberData?.id) {
         try {
           const ptRes = await api.get(`/pt-forms/${memberData.id}`);
-          if (ptRes.data && ptRes.data.form_data && memberData.pt_form_completed) {
+          if (ptRes.data && ptRes.data.form_data) {
             const savedData = safeParse(ptRes.data.form_data);
 
             const isRenewed = savedData.pt_join_date && memberData?.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
