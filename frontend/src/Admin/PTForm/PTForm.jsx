@@ -262,12 +262,14 @@ const PTForm = () => {
 
       try {
         const ptRes = await api.get(`/pt-forms/${memberId}`);
-        if (ptRes.data && ptRes.data.form_data && (isEditMode || data.pt_form_completed)) {
+        if (ptRes.data && ptRes.data.form_data) {
           const savedData = typeof ptRes.data.form_data === 'string'
             ? JSON.parse(ptRes.data.form_data)
             : ptRes.data.form_data;
           
-          if (isPtExpired) {
+          const isRenewed = savedData.pt_join_date && data.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(data.pt_join_date), 'day');
+
+          if (isPtExpired || isRenewed) {
             setFormData(prev => ({
               ...prev,
               ...savedData,
