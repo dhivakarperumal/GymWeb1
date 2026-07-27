@@ -13,6 +13,12 @@ import FitnessScreening from './FitnessScreening';
 import FlexibilityAndMeasurements from './FlexibilityAndMeasurements';
 import SessionTracker from './SessionTracker';
 
+const parseDateForCompare = (value) => {
+  if (!value) return dayjs(value);
+  const normalized = normalizeDateForDateInput(value);
+  return normalized ? dayjs(normalized, 'YYYY-MM-DD') : dayjs(value);
+};
+
 const PTForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
@@ -65,7 +71,8 @@ const PTForm = () => {
           // Check if PT plan is expired
           const isPtExpired =
             data.pt_expiry_date &&
-            dayjs(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+            parseDateForCompare(data.pt_expiry_date).isValid() &&
+            parseDateForCompare(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
 
           if (isPtExpired) {
             setPtExpiredAlert(true);
@@ -92,7 +99,10 @@ const PTForm = () => {
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;
 
-              const isRenewed = savedData.pt_join_date && data.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(data.pt_join_date), 'day');
+              const isRenewed = savedData.pt_join_date && data.pt_join_date &&
+                parseDateForCompare(savedData.pt_join_date).isValid() &&
+                parseDateForCompare(data.pt_join_date).isValid() &&
+                !parseDateForCompare(savedData.pt_join_date).isSame(parseDateForCompare(data.pt_join_date), 'day');
 
               if (isPtExpired || isRenewed) {
                 // If expired or renewed, retain all form data but reset the session tracker
@@ -250,7 +260,8 @@ const PTForm = () => {
 
       const isPtExpired =
         data.pt_expiry_date &&
-        dayjs(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+        parseDateForCompare(data.pt_expiry_date).isValid() &&
+        parseDateForCompare(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
 
       if (isPtExpired) {
         setPtExpiredAlert(true);
@@ -266,8 +277,13 @@ const PTForm = () => {
           const savedData = typeof ptRes.data.form_data === 'string'
             ? JSON.parse(ptRes.data.form_data)
             : ptRes.data.form_data;
+
+          const isRenewed = savedData.pt_join_date && member?.pt_join_date &&
+            parseDateForCompare(savedData.pt_join_date).isValid() &&
+            parseDateForCompare(member.pt_join_date).isValid() &&
+            !parseDateForCompare(savedData.pt_join_date).isSame(parseDateForCompare(member.pt_join_date), 'day');
           
-          if (isPtExpired) {
+          if (isPtExpired || isRenewed) {
             setFormData(prev => ({
               ...prev,
               ...savedData,

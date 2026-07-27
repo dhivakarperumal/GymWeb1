@@ -10,6 +10,13 @@ import HealthHistory2Page from './PTFormPages/HealthHistory2Page';
 import FitnessScreening from '../Admin/PTForm/FitnessScreening';
 import FlexibilityAndMeasurements from '../Admin/PTForm/FlexibilityAndMeasurements';
 import SessionTracker from '../Admin/PTForm/SessionTracker';
+import { normalizeDateForDateInput } from '../utils/dateUtils';
+
+const parseDateForCompare = (value) => {
+  if (!value) return dayjs(value);
+  const normalized = normalizeDateForDateInput(value);
+  return normalized ? dayjs(normalized, 'YYYY-MM-DD') : dayjs(value);
+};
 
 const PTFormUser = () => {
   const { user } = useAuth();
@@ -119,7 +126,10 @@ const PTFormUser = () => {
           if (ptRes.data && ptRes.data.form_data && memberData.pt_form_completed) {
             const savedData = safeParse(ptRes.data.form_data);
 
-            const isRenewed = savedData.pt_join_date && memberData?.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
+            const isRenewed = savedData.pt_join_date && memberData?.pt_join_date &&
+              parseDateForCompare(savedData.pt_join_date).isValid() &&
+              parseDateForCompare(memberData.pt_join_date).isValid() &&
+              !parseDateForCompare(savedData.pt_join_date).isSame(parseDateForCompare(memberData.pt_join_date), 'day');
 
             if (ptExpired || isRenewed) {
               // PT plan expired or renewed — retain ALL saved data but reset sessions only

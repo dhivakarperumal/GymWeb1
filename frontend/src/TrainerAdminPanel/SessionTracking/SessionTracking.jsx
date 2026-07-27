@@ -4,7 +4,14 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import SessionTracker from "../../Admin/PTForm/SessionTracker";
+import { normalizeDateForDateInput } from "../../utils/dateUtils";
 import dayjs from "dayjs";
+
+const parseDateForCompare = (value) => {
+  if (!value) return dayjs(value);
+  const normalized = normalizeDateForDateInput(value);
+  return normalized ? dayjs(normalized, 'YYYY-MM-DD') : dayjs(value);
+};
 
 const SessionTracking = () => {
   const { user } = useAuth();
@@ -129,8 +136,11 @@ const SessionTracking = () => {
       trainer_name_assigned: trainerName || savedData.trainer_name_assigned || "",
     };
 
-    const isExpired = member?.planEndDate && dayjs(member.planEndDate).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
-    const isRenewed = savedData.pt_join_date && member?.planStartDate && !dayjs(savedData.pt_join_date).isSame(dayjs(member.planStartDate), 'day');
+    const isExpired = member?.planEndDate && parseDateForCompare(member.planEndDate).isValid() && parseDateForCompare(member.planEndDate).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+    const isRenewed = savedData.pt_join_date && member?.planStartDate &&
+      parseDateForCompare(savedData.pt_join_date).isValid() &&
+      parseDateForCompare(member.planStartDate).isValid() &&
+      !parseDateForCompare(savedData.pt_join_date).isSame(parseDateForCompare(member.planStartDate), 'day');
 
     const sessions = (!isExpired && !isRenewed) && Array.isArray(savedData.sessions) && savedData.sessions.length > 0
       ? savedData.sessions.map((session, index) => ({

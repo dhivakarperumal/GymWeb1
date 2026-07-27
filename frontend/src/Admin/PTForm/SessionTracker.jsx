@@ -56,17 +56,20 @@ const SessionTracker = ({
   }
 
   const [localFormData, setLocalFormData] = useState(() => {
-    const existingSessions = initialFormData?.sessions && Array.isArray(initialFormData.sessions) 
-      ? initialFormData.sessions 
+    const existingSessions = initialFormData?.sessions && Array.isArray(initialFormData.sessions)
+      ? initialFormData.sessions
       : [];
-      
-    // Create exactly `numRows` sessions
-    const updatedSessions = Array(numRows).fill(null).map((_, i) => {
-      // Use existing session if available
+
+    const rowCount = Math.max(numRows, existingSessions.length);
+
+    const updatedSessions = Array.from({ length: rowCount }, (_, i) => {
       if (i < existingSessions.length) {
-        return existingSessions[i];
+        return {
+          ...existingSessions[i],
+          session_no: existingSessions[i].session_no || i + 1,
+          trainer_sign: existingSessions[i].trainer_sign || initialFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
+        };
       }
-      // Otherwise pad with new empty session
       return {
         session_no: i + 1,
         date: "",
@@ -78,7 +81,7 @@ const SessionTracker = ({
     });
 
     return {
-      sessions: updatedSessions
+      sessions: updatedSessions,
     };
   });
 
@@ -90,11 +93,13 @@ const SessionTracker = ({
         ? initialFormData.sessions
         : prev.sessions;
 
-      // Create exactly `numRows` sessions
-      const resizedSessions = Array(numRows).fill(null).map((_, i) => {
+      const rowCount = Math.max(numRows, existingSessions.length);
+
+      const resizedSessions = Array.from({ length: rowCount }, (_, i) => {
         if (i < existingSessions.length) {
           return {
             ...existingSessions[i],
+            session_no: existingSessions[i].session_no || i + 1,
             trainer_sign: existingSessions[i].trainer_sign || initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName)
           };
         }
