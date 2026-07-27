@@ -182,7 +182,17 @@ const MemberDetails = () => {
 
   const handleDeletePtPlan = async () => {
     if (!member) return;
-    if (!window.confirm(`Delete PT Plan for ${member.name}? This will not affect the normal plan.`)) return;
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the PT Plan for ${member.name}?\n\n` +
+      `This will:\n` +
+      `• Remove the PT Plan.\n` +
+      `• Reset all data entered in the PT Form.\n` +
+      `• Clear PT payment details and plan information.\n\n` +
+      `This will NOT affect the member's normal gym plan.\n\n` +
+      `Do you want to continue?`
+    );
+
+    if (!confirmDelete) return;
     try {
       const payload = {
         pt_plan: null,
@@ -239,25 +249,25 @@ const MemberDetails = () => {
   const isNormalExpired =
     member?.expiry_date &&
     dayjs(member.expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") <= 0;
-    
+
   const isNormalActive = member?.plan && member.plan !== "user" && !isNormalExpired;
 
   const isPtExpired =
     member?.pt_expiry_date &&
     dayjs(member.pt_expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") <= 0;
-    
+
   const isPtActive = member?.pt_plan && member.pt_plan !== "user" && !isPtExpired;
 
   const displayStatus = (isNormalActive || isPtActive) && member?.status !== 'inactive' ? "active" : "inactive";
 
-  const statusText = displayStatus === 'inactive' 
-    ? "Inactive" 
-    : (isNormalActive && isPtActive) 
-      ? "Normal & PT Plan Active" 
-      : isNormalActive 
-        ? "Normal Plan Active" 
-        : isPtActive 
-          ? "PT Plan Active" 
+  const statusText = displayStatus === 'inactive'
+    ? "Inactive"
+    : (isNormalActive && isPtActive)
+      ? "Normal & PT Plan Active"
+      : isNormalActive
+        ? "Normal Plan Active"
+        : isPtActive
+          ? "PT Plan Active"
           : "Active";
 
   return (
@@ -446,7 +456,7 @@ const MemberDetails = () => {
                         const isExpired = member.pt_expiry_date && dayjs(member.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
                         const displayStatus = isExpired ? 'EXPIRED' : (member.pt_status || '');
                         const isActiveStyle = displayStatus.toLowerCase() === 'paid' || displayStatus.toLowerCase() === 'active';
-                        
+
                         return displayStatus ? (
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${isActiveStyle ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-500/20 text-gray-400'}`}>
                             {displayStatus}
