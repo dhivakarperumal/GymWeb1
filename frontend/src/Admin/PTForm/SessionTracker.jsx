@@ -55,10 +55,21 @@ const SessionTracker = ({
     if (diff > 0) numRows = diff;
   }
 
+  const parseSavedSessions = (value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const [localFormData, setLocalFormData] = useState(() => {
-    const existingSessions = initialFormData?.sessions && Array.isArray(initialFormData.sessions)
-      ? initialFormData.sessions
-      : [];
+    const existingSessions = parseSavedSessions(initialFormData?.sessions);
 
     const rowCount = Math.max(numRows, existingSessions.length);
 
@@ -88,12 +99,10 @@ const SessionTracker = ({
   useEffect(() => {
     if (!initialFormData) return;
 
-    setLocalFormData(prev => {
-      const existingSessions = (initialFormData.sessions && Array.isArray(initialFormData.sessions) && initialFormData.sessions.length > 0)
-        ? initialFormData.sessions
-        : prev.sessions;
+    const existingSessions = parseSavedSessions(initialFormData.sessions);
 
-      const rowCount = Math.max(numRows, existingSessions.length);
+    setLocalFormData(prev => {
+      const rowCount = Math.max(numRows, existingSessions.length, prev.sessions.length);
 
       const resizedSessions = Array.from({ length: rowCount }, (_, i) => {
         if (i < existingSessions.length) {
@@ -102,6 +111,9 @@ const SessionTracker = ({
             session_no: existingSessions[i].session_no || i + 1,
             trainer_sign: existingSessions[i].trainer_sign || initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName)
           };
+        }
+        if (i < prev.sessions.length) {
+          return prev.sessions[i];
         }
         return {
           session_no: i + 1,

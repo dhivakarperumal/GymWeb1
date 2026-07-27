@@ -19,6 +19,19 @@ const parseDateForCompare = (value) => {
   return normalized ? dayjs(normalized, 'YYYY-MM-DD') : dayjs(value);
 };
 
+const parseSavedSessions = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 const PTForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
@@ -98,10 +111,7 @@ const PTForm = () => {
               const savedData = typeof ptRes.data.form_data === 'string'
                 ? JSON.parse(ptRes.data.form_data)
                 : ptRes.data.form_data;
-
-              const isRenewed = savedData.pt_join_date && data.pt_join_date &&
-                parseDateForCompare(savedData.pt_join_date).isValid() &&
-                parseDateForCompare(data.pt_join_date).isValid() &&
+              savedData.sessions = parseSavedSessions(savedData.sessions);
                 !parseDateForCompare(savedData.pt_join_date).isSame(parseDateForCompare(data.pt_join_date), 'day');
 
               if (isPtExpired || isRenewed) {
@@ -277,6 +287,7 @@ const PTForm = () => {
           const savedData = typeof ptRes.data.form_data === 'string'
             ? JSON.parse(ptRes.data.form_data)
             : ptRes.data.form_data;
+          savedData.sessions = parseSavedSessions(savedData.sessions);
 
           const isRenewed = savedData.pt_join_date && member?.pt_join_date &&
             parseDateForCompare(savedData.pt_join_date).isValid() &&
