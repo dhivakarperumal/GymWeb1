@@ -14,6 +14,7 @@ import SessionTracker from "../Admin/PTForm/SessionTracker";
 import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
 import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users, CreditCard } from "lucide-react";
+import { normalizeDateForDateInput } from '../utils/dateUtils';
 
 
 const Account = () => {
@@ -237,21 +238,28 @@ const Account = () => {
 
     const fetchPtForm = async () => {
       try {
-        const isExpired = memberData?.pt_expiry_date && dayjs(memberData.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+        const isExpired = memberData?.pt_expiry_date && parseDateForCompare(memberData.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
 
         const res = await api.get(`/pt-forms/${memberData.id}`);
         const ptData = res.data || {};
         const formData = typeof ptData.form_data === 'string' ? JSON.parse(ptData.form_data || '{}') : ptData.form_data || {};
+        const savedSessions = parseSavedSessions(formData.sessions);
 
-        let finalFormData = { ...formData };
+        let finalFormData = {
+          ...formData,
+          sessions: savedSessions,
+        };
 
         // Check if plan was renewed by comparing joining dates
-        const isRenewed = formData.pt_join_date && memberData?.pt_join_date && !dayjs(formData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
+        const isRenewed = formData.pt_join_date && memberData?.pt_join_date &&
+          parseDateForCompare(formData.pt_join_date).isValid() &&
+          parseDateForCompare(memberData.pt_join_date).isValid() &&
+          !parseDateForCompare(formData.pt_join_date).isSame(parseDateForCompare(memberData.pt_join_date), 'day');
 
         if (isExpired || isRenewed) {
           finalFormData = {
             ...formData,
-            sessions: []
+            sessions: [],
           };
         }
 
@@ -1714,16 +1722,6 @@ const InputField = ({ label, value, onChange, type = 'text', isTextArea = false,
       />
     </label>
   );
-};
-
-const normalizeDateForDateInput = (value) => {
-  if (!value) return "";
-  const parsed = dayjs(value, ['YYYY-MM-DD', 'DD-MM-YYYY', 'MM/DD/YYYY', 'YYYY/MM/DD', 'DD/MM/YYYY'], true);
-  if (!parsed.isValid()) {
-    const fallback = dayjs(value);
-    return fallback.isValid() ? fallback.format('YYYY-MM-DD') : "";
-  }
-  return parsed.format('YYYY-MM-DD');
 };
 
 const getConsent = (consentData) => {
