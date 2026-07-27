@@ -906,6 +906,22 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         await api.post("/memberships", membershipData);
       }
 
+      // ===== RESET PT FORM FOR NEW PT PLAN =====
+      // When a new PT plan is purchased, reset the old session tracker
+      if (filterTrainerPlans) {
+        try {
+          const memberId = selectedUser.id || selectedUser.member_id || selectedUser.u_id;
+          if (memberId) {
+            await api.delete(`/pt-forms/${memberId}/reset`);
+            console.log("✅ PT Form reset successfully for new plan");
+          }
+        } catch (err) {
+          console.warn("⚠️ Failed to reset PT form (may not exist yet):", err);
+          // Don't fail the entire plan assignment if PT form reset fails
+          // (it might be a first-time PT plan with no existing form)
+        }
+      }
+
       // ===== OPTIONAL ASSIGN TRAINER =====
       if (selectedTrainer && selectedTrainer !== "") {
         const assignPayload = {
