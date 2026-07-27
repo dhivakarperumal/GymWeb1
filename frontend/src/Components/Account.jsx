@@ -71,6 +71,25 @@ const Account = () => {
   const [assignedTrainer, setAssignedTrainer] = useState(null);
 
 
+  const parseDateForCompare = (value) => {
+    if (!value) return dayjs(value);
+    const normalized = normalizeDateForDateInput(value);
+    return normalized ? dayjs(normalized, 'YYYY-MM-DD') : dayjs(value);
+  };
+
+  const parseSavedSessions = (value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const isActivePtPlan = (member) => {
     if (!member) return false;
     const hasPlan = Boolean(member.pt_plan);
@@ -79,7 +98,7 @@ const Account = () => {
 
     let isNotExpired = true;
     if (member.pt_expiry_date) {
-      const isExpired = dayjs(member.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+      const isExpired = parseDateForCompare(member.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
       // We will keep the isExpired check here in case we need it, but we won't hide the tabs.
       // The user wants the PT tabs to be visible even if the plan is expired.
     }
