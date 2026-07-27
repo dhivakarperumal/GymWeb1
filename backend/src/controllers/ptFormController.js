@@ -115,24 +115,49 @@ async function resetPTForm(req, res) {
   try {
     await connection.beginTransaction();
 
-    // Clear the saved form data from pt_forms table
-    await connection.query(
-      'UPDATE pt_forms SET form_data = NULL WHERE member_id = ?',
+    // Get existing form data
+    const [existing] = await connection.query(
+      'SELECT form_data FROM pt_forms WHERE member_id = ?',
       [member_id]
     );
 
-    // Reset pt_form_completed flag in gym_members
+    if (existing.length > 0) {
+      // Parse existing form data
+      let formData = existing[0].form_data;
+      if (typeof formData === 'string') {
+        try {
+          formData = JSON.parse(formData);
+        } catch (e) {
+          formData = {};
+        }
+      } else if (!formData) {
+        formData = {};
+      }
+
+      // Keep all form data (VA enquiry, health history, fitness screening, flexibility measurement)
+      // but ONLY reset the sessions array (session tracker step)
+      formData.sessions = [];
+
+      // Update pt_forms with cleared sessions but keep all other data
+      await connection.query(
+        'UPDATE pt_forms SET form_data = ? WHERE member_id = ?',
+        [JSON.stringify(formData), member_id]
+      );
+    }
+
+    // Reset pt_form_completed flag only for session tracker completion
+    // Users can re-save with new sessions for the new plan
     await connection.query(
       'UPDATE gym_members SET pt_form_completed = 0, pt_form_completed_at = NULL WHERE id = ? OR member_id = ?',
       [member_id, member_id]
     );
 
     await connection.commit();
-    res.json({ success: true, message: 'PT Form reset successfully' });
+    res.json({ success: true, message: 'PT Form session tracker reset successfully (first 5 steps retained)' });
   } catch (err) {
     await connection.rollback();
     console.error('resetPTForm error:', err);
-    res.status(500).json({ error: 'Failed to reset PT Form' });
+    res.status(500).json({ error: 'Failed to reset PT Form sessions' });
   } finally {
     connection.release();
   }
