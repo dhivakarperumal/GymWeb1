@@ -190,8 +190,9 @@ const PTForm = () => {
 
         await api.post("/pt-forms", payload);
         toast.success(isEditMode ? "PT Form updated successfully!" : "PT Registration completed and stored successfully!");
+        const basePath = role === 'trainer' ? '/trainer' : '/admin';
         if (isEditMode && targetMemberId) {
-          navigate(`/admin/member_details/${targetMemberId}`);
+          navigate(`${basePath}/member_details/${targetMemberId}`);
         } else if (returnUrl) {
           navigate(returnUrl);
         } else if (role === 'trainer') {
@@ -340,10 +341,11 @@ const PTForm = () => {
           </div>
           <button
             onClick={() => {
+              const basePath = role === 'trainer' ? '/trainer' : '/admin';
               if (isEditMode && memberId) {
-                navigate(`/admin/member_details/${memberId}`);
+                navigate(`${basePath}/member_details/${memberId}`);
               } else {
-                navigate('/admin/payments');
+                navigate(`${basePath}/payments`);
               }
             }}
             className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition text-sm font-medium"

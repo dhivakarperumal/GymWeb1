@@ -8,12 +8,15 @@ import {
 import api from "../../api";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 
 const MemberDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const returnUrl = location.state?.returnUrl;
+  const { role } = useAuth();
+  const basePath = role === 'trainer' ? '/trainer' : '/admin';
 
   // State
   const [member, setMember] = useState(null);
@@ -162,7 +165,7 @@ const MemberDetails = () => {
     try {
       await api.delete(`/members/${id}`);
       toast.success("Deleted successfully");
-      navigate(returnUrl || "/admin/members");
+      navigate(returnUrl || `${basePath}/members`);
     } catch (err) {
       toast.error("Delete failed");
     }
@@ -270,7 +273,7 @@ const MemberDetails = () => {
         </button>
 
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(`/admin/addmembers/${id}`, { state: { returnUrl: returnUrl || "/admin/members" } })} className="flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-all font-bold text-sm">
+          <button onClick={() => navigate(`${basePath}/addmembers/${id}`, { state: { returnUrl: returnUrl || `${basePath}/members` } })} className="flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-all font-bold text-sm">
             <Pencil size={18} className="text-orange-500" />
             Edit Profile
           </button>
@@ -549,13 +552,13 @@ const MemberDetails = () => {
                     {member.pt_form_completed ? (
                       <>
                         <button
-                          onClick={() => navigate(`/admin/pt-form/print/${id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form/print/${id}`)}
                           className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white"
                         >
                           View Form
                         </button>
                         <button
-                          onClick={() => navigate(`/admin/pt-form?member_id=${id}&edit=true`)}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${id}&edit=true`)}
                           className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white"
                         >
                           Edit Form
@@ -563,7 +566,7 @@ const MemberDetails = () => {
                       </>
                     ) : (
                       <button
-                        onClick={() => navigate(`/admin/pt-form?member_id=${id}`)}
+                        onClick={() => navigate(`${basePath}/pt-form?member_id=${id}`)}
                         className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase transition-all bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white"
                       >
                         Complete Now
