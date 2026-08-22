@@ -239,16 +239,19 @@ const UserEnquiry = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const normalizedPhone = String(formData.phone || '').replace(/\D/g, '');
+    const normalizedEmail = String(formData.email || '').trim().toLowerCase();
+
     if (!formData.name.trim()) {
       toast.error("Name is required");
       return;
     }
-    if (!formData.phone || formData.phone.length !== 10) {
+    if (normalizedPhone.length !== 10) {
       toast.error("A valid 10-digit phone number is required");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
+    if (normalizedEmail && !emailRegex.test(normalizedEmail)) {
       toast.error("Please enter a valid email address");
       return;
     }
@@ -257,8 +260,8 @@ const UserEnquiry = () => {
     if (!selectedEnquiry) {
       const duplicate = enquiries.find(
         (enq) => 
-          (formData.email && enq.email?.toLowerCase() === formData.email.toLowerCase()) || 
-          (formData.phone && enq.phone === formData.phone)
+          (normalizedEmail && enq.email?.trim().toLowerCase() === normalizedEmail) ||
+          (normalizedPhone && String(enq.phone || '').replace(/\D/g, '') === normalizedPhone)
       );
 
       if (duplicate) {
@@ -278,6 +281,8 @@ const UserEnquiry = () => {
     try {
       const payload = {
         ...formData,
+        email: normalizedEmail,
+        phone: normalizedPhone,
         dob: formData.dob ? dayjs(formData.dob).format('YYYY-MM-DD') : "",
         consent_data: {
           participant_name: formData.participant_name,

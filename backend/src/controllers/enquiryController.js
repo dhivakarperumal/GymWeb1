@@ -77,36 +77,61 @@ const enquiryController = {
                 return res.status(400).json({ error: 'Phone number is required' });
             }
 
+            const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+            const normalizedPhone = String(phone).replace(/\D/g, '');
+
+            if (normalizedPhone.length !== 10) {
+                return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
+            }
+
             // Check for duplicate in users / gym_members
             const [existingUsers] = await connection.query(
-                'SELECT id FROM users WHERE (email = ? AND email IS NOT NULL AND email != "") OR mobile = ?',
-                [email, phone]
+                `SELECT id, user_id, username, email, mobile FROM users
+                 WHERE (LOWER(TRIM(email)) = ? AND email IS NOT NULL AND TRIM(email) != '')
+                    OR REPLACE(REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '-', ''), '+91', ''), '(', '') = ?`,
+                [normalizedEmail, normalizedPhone]
             );
 
             const [existingMembers] = await connection.query(
-                'SELECT id FROM gym_members WHERE phone = ? OR (email = ? AND email IS NOT NULL AND email != "")',
-                [phone, email]
+                `SELECT id, name, email, phone FROM gym_members
+                 WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+91', ''), '(', '') = ?
+                    OR (LOWER(TRIM(email)) = ? AND email IS NOT NULL AND TRIM(email) != '')`,
+                [normalizedPhone, normalizedEmail]
             );
 
-            if (existingUsers.length > 0 || existingMembers.length > 0) {
-                return res.status(400).json({
-                    error: 'A member with this email or phone number already exists.'
+            const existingUser = existingUsers.find(userRecord =>
+                String(userRecord.mobile || '').replace(/\D/g, '') === normalizedPhone
+            );
+
+            if (existingMembers.length > 0 || (existingUsers.length > 0 && !existingUser)) {
+                const matchedRecord = existingMembers[0] || existingUsers[0];
+                const matchedByPhone = matchedRecord && String(matchedRecord.mobile || matchedRecord.phone || '').replace(/\D/g, '') === normalizedPhone;
+                return res.status(409).json({
+                    error: matchedByPhone
+                        ? 'This mobile number is already registered. Please log in or use a different number.'
+                        : 'This email address is already registered. Please use a different email address.',
+                    duplicate: true,
+                    field: matchedByPhone ? 'phone' : 'email'
                 });
             }
 
             await connection.beginTransaction();
 
-            // 1. Create user
-            const userId_uuid = uuidv4();
-            // Password is mobile number
-            const defaultPassword = phone.toString();
-            const passwordHash = await bcrypt.hash(defaultPassword, 10);
-
-            const [userResult] = await connection.query(
-                `INSERT INTO users (user_id, username, email, mobile, password_hash, role, status, created_at)
-                 VALUES (?, ?, ?, ?, ?, 'user', 'active', NOW())`,
-                [userId_uuid, name, email || null, phone, passwordHash]
-            );
+            // Reuse an account that exists without a member record; otherwise create both records.
+            let userId_uuid;
+            let memberEmail = normalizedEmail || null;
+            if (existingUser) {
+                userId_uuid = existingUser.user_id;
+                memberEmail = existingUser.email || memberEmail;
+            } else {
+                userId_uuid = uuidv4();
+                const passwordHash = await bcrypt.hash(normalizedPhone, 10);
+                await connection.query(
+                    `INSERT INTO users (user_id, username, email, mobile, password_hash, role, status, created_at)
+                     VALUES (?, ?, ?, ?, ?, 'user', 'active', NOW())`,
+                    [userId_uuid, name, memberEmail, normalizedPhone, passwordHash]
+                );
+            }
 
             // 2. Generate numeric member_id sequence matching admin-created members
             const [maxResult] = await connection.query(
@@ -125,7 +150,7 @@ const enquiryController = {
                     fitness_goal, blood_group
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    userId_uuid, memberId, name, phone, email || null, gender,
+                    userId_uuid, memberId, name, normalizedPhone, memberEmail, gender,
                     height || null, weight || null, bmi || null, plan_name || null, plan_duration || null,
                     address || null, dob || null, age || null, employer || null, occupation || null,
                     emergency_contact_name || null, emergency_contact_relationship || null,
