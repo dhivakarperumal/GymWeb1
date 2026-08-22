@@ -72,39 +72,48 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
           #join-print-view { display: none; }
         }
         @media print {
+          @page { size: A4 portrait; margin: 0; }
           body * { visibility: hidden !important; }
           #join-print-view {
             visibility: visible !important;
             display: block !important;
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important; top: 0 !important;
             width: 100% !important;
             height: auto !important;
+            box-sizing: border-box !important;
             background: white !important;
             color: black !important;
-            padding: 30px 40px !important;
+            padding: 10mm 12mm !important;
             font-family: Arial, sans-serif !important;
-            font-size: 13px !important;
+            font-size: 11px !important;
+            line-height: 1.4 !important;
             z-index: 999999 !important;
           }
           #join-print-view * { visibility: visible !important; }
-          #join-print-view h1 { font-size: 20px; text-align: center; border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 16px; }
-          #join-print-view .p-section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin: 14px 0 8px; color: #111; }
-          #join-print-view .p-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
-          #join-print-view .p-full { grid-column: span 2; }
-          #join-print-view .p-field { margin: 3px 0; font-size: 12px; }
-          #join-print-view .p-consent { font-size: 12px; line-height: 1.7; }
-          #join-print-view .p-consent h4 { font-weight: bold; margin: 8px 0 2px; font-size: 12px; }
-          #join-print-view .p-footer { text-align: center; font-weight: bold; margin-top: 16px; font-size: 11px; border-top: 1px solid #ccc; padding-top: 8px; }
+          #join-print-view h1 { font-size: 18px; text-align: center; margin: 0; flex: 1; }
+          #join-print-view .print-header { display: flex; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+          #join-print-view .print-logo { width: 80px; height: auto; object-fit: contain; }
+          #join-print-view .section-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #bbb; padding-bottom: 2px; margin: 10px 0 6px; color: #111; }
+          #join-print-view .grid1 { display: block !important; }
+          #join-print-view .field { margin: 4px 0; font-size: 11px; }
+          #join-print-view .consent-text { font-size: 10px; line-height: 1.4; }
+          #join-print-view .consent-text p { margin: 3px 0; }
+          #join-print-view .consent-text h4 { font-weight: bold; margin: 6px 0 2px; font-size: 10px; }
+          #join-print-view .footer-note { text-align: center; font-weight: bold; margin-top: 15px; font-size: 9px; border-top: 1px solid #ccc; padding-top: 6px; }
         }
       `}</style>
 
       {/* ===== HIDDEN PRINT DOCUMENT (only shows when printing) ===== */}
       <div id="join-print-view">
-        <h1>Join Form — DAP Unisex Fitness Studio</h1>
+        <div className="print-header">
+          <img src="/images/logo-dark.png" alt="Logo" className="print-logo" onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.jpeg" }} />
+          <h1>Join Form — DAP Unisex Fitness Studio</h1>
+          <div style={{ width: '80px' }}></div> {/* Spacer for center alignment */}
+        </div>
 
         <div className="section-title">Personal Information</div>
-        <div className="grid2">
+        <div className="grid1">
           <div className="field"><strong>Full Name: </strong>{formData.name}</div>
           <div className="field"><strong>Email: </strong>{formData.email}</div>
           <div className="field"><strong>Phone: </strong>{formData.phone}</div>
@@ -112,31 +121,31 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
           <div className="field"><strong>Age: </strong>{formData.age} Years</div>
           <div className="field"><strong>Gender: </strong>{formData.gender}</div>
           <div className="field"><strong>Blood Group: </strong>{formData.blood_group}</div>
-          <div className="field full"><strong>Permanent Address: </strong>{formData.address}</div>
+          <div className="field"><strong>Permanent Address: </strong>{formData.address}</div>
         </div>
 
         <div className="section-title">Work & Career</div>
-        <div className="grid2">
+        <div className="grid1">
           <div className="field"><strong>Company / Employer: </strong>{formData.employer}</div>
           <div className="field"><strong>Job Title / Occupation: </strong>{formData.occupation}</div>
         </div>
 
         <div className="section-title">Emergency Contact</div>
-        <div className="grid2">
+        <div className="grid1">
           <div className="field"><strong>Guardian/Contact Name: </strong>{formData.emergency_contact_name}</div>
           <div className="field"><strong>Relationship: </strong>{formData.emergency_contact_relationship}</div>
           <div className="field"><strong>Home Phone: </strong>{formData.emergency_contact_phone_home}</div>
           <div className="field"><strong>Work Phone: </strong>{formData.emergency_contact_phone_work}</div>
-          <div className="field full"><strong>Emergency Address: </strong>{formData.emergency_contact_address}</div>
+          <div className="field"><strong>Emergency Address: </strong>{formData.emergency_contact_address}</div>
         </div>
 
         <div className="section-title">Fitness Profile</div>
-        <div className="grid2">
+        <div className="grid1">
           <div className="field"><strong>Height: </strong>{formData.height} cm</div>
           <div className="field"><strong>Weight: </strong>{formData.weight} kg</div>
           <div className="field"><strong>BMI: </strong>{formData.bmi}</div>
-          <div className="field full"><strong>Fitness Goals: </strong>{formData.fitness_goal}</div>
-          <div className="field full"><strong>Medical History / Notes: </strong>{formData.medical_history}</div>
+          <div className="field"><strong>Fitness Goals: </strong>{formData.fitness_goal}</div>
+          <div className="field"><strong>Medical History / Notes: </strong>{formData.medical_history}</div>
         </div>
 
         <div className="section-title">Informed Consent Form</div>
@@ -157,7 +166,7 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
 
       {/* ===== MODAL (screen only) ===== */}
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-        <div className="bg-[#1a1a1a] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
+        <div className="bg-[#1a1a1a] w-full max-w-6xl max-h-[90vh] overflow-y-auto hide-scrollbar rounded-2xl shadow-2xl">
 
           {/* Sticky Header */}
           <div className="flex items-center justify-between p-6 border-b border-white/10 sticky top-0 bg-[#1a1a1a] z-10">
