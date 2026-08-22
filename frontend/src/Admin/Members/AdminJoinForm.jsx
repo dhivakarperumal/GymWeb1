@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Printer, User, Phone, MapPin, Activity, FileText, Clock } from "lucide-react";
 import dayjs from "dayjs";
 
@@ -69,43 +70,37 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
       {/* ===== PRINT STYLES — only active during window.print() ===== */}
       <style>{`
         @media screen {
-          #join-print-view { display: none; }
+          #join-print-view { display: none !important; }
         }
         @media print {
-          @page { size: A4 portrait; margin: 0; }
-          body * { visibility: hidden !important; }
+          @page { size: A4 portrait; margin: 0.5cm; }
+          body > :not(#join-print-view) { display: none !important; }
+          body { background: white !important; margin: 0 !important; padding: 0 !important; }
           #join-print-view {
-            visibility: visible !important;
             display: block !important;
-            position: absolute !important;
-            left: 0 !important; top: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            box-sizing: border-box !important;
             background: white !important;
             color: black !important;
-            padding: 10mm 12mm !important;
+            padding: 10mm 15mm !important;
             font-family: Arial, sans-serif !important;
-            font-size: 11px !important;
-            line-height: 1.4 !important;
-            z-index: 999999 !important;
+            font-size: 12px !important;
+            line-height: 1.5 !important;
           }
-          #join-print-view * { visibility: visible !important; }
-          #join-print-view h1 { font-size: 18px; text-align: center; margin: 0; flex: 1; }
-          #join-print-view .print-header { display: flex; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
-          #join-print-view .print-logo { width: 80px; height: auto; object-fit: contain; }
-          #join-print-view .section-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #bbb; padding-bottom: 2px; margin: 10px 0 6px; color: #111; }
+          #join-print-view h1 { font-size: 20px; text-align: center; margin: 0; flex: 1; }
+          #join-print-view .print-header { display: flex; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+          #join-print-view .print-logo { width: 90px; height: auto; object-fit: contain; }
+          #join-print-view .section-title { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #bbb; padding-bottom: 4px; margin: 15px 0 8px; color: #111; }
           #join-print-view .grid1 { display: block !important; }
-          #join-print-view .field { margin: 4px 0; font-size: 11px; }
-          #join-print-view .consent-text { font-size: 10px; line-height: 1.4; }
-          #join-print-view .consent-text p { margin: 3px 0; }
-          #join-print-view .consent-text h4 { font-weight: bold; margin: 6px 0 2px; font-size: 10px; }
-          #join-print-view .footer-note { text-align: center; font-weight: bold; margin-top: 15px; font-size: 9px; border-top: 1px solid #ccc; padding-top: 6px; }
+          #join-print-view .field { margin: 6px 0; font-size: 12px; }
+          #join-print-view .consent-text { font-size: 11px; line-height: 1.5; }
+          #join-print-view .consent-text p { margin: 4px 0; }
+          #join-print-view .consent-text h4 { font-weight: bold; margin: 10px 0 3px; font-size: 11px; }
+          #join-print-view .footer-note { text-align: center; font-weight: bold; margin-top: 20px; font-size: 10px; border-top: 1px solid #ccc; padding-top: 10px; }
         }
       `}</style>
 
       {/* ===== HIDDEN PRINT DOCUMENT (only shows when printing) ===== */}
-      <div id="join-print-view">
+      {createPortal(
+        <div id="join-print-view">
         <div className="print-header">
           <img src="/images/logo-dark.png" alt="Logo" className="print-logo" onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.jpeg" }} />
           <h1>Join Form — DAP Unisex Fitness Studio</h1>
@@ -162,7 +157,9 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
           <p style={{marginTop: "4px"}}>By signing this consent form, I understand I am personally responsible for my actions during my tenure at DAP Unisex Fitness Studio.</p>
         </div>
         <div className="footer-note">* No Refund &bull; No Transfer &bull; No Extension &bull; No Freezing</div>
-      </div>
+      </div>,
+      document.body
+      )}
 
       {/* ===== MODAL (screen only) ===== */}
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
