@@ -86,11 +86,12 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
             line-height: 1.5 !important;
           }
           #join-print-view h1 { font-size: 20px; text-align: center; margin: 0; flex: 1; }
-          #join-print-view .print-header { display: flex; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+          #join-print-view .print-header { display: flex; align-items: center; padding-bottom: 15px; margin-bottom: 20px; }
           #join-print-view .print-logo { width: 90px; height: auto; object-fit: contain; }
           #join-print-view .section-title { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #bbb; padding-bottom: 4px; margin: 15px 0 8px; color: #111; }
-          #join-print-view .grid1 { display: block !important; }
-          #join-print-view .field { margin: 6px 0; font-size: 12px; }
+          #join-print-view .grid2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 4px 20px !important; }
+          #join-print-view .full { grid-column: span 2 !important; }
+          #join-print-view .field { margin: 2px 0; font-size: 12px; }
           #join-print-view .consent-text { font-size: 11px; line-height: 1.5; }
           #join-print-view .consent-text p { margin: 4px 0; }
           #join-print-view .consent-text h4 { font-weight: bold; margin: 10px 0 3px; font-size: 11px; }
@@ -104,11 +105,11 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
         <div className="print-header">
           <img src="/images/logo-dark.png" alt="Logo" className="print-logo" onError={(e) => { e.target.onerror = null; e.target.src = "/images/logo.jpeg" }} />
           <h1>Join Form — DAP Unisex Fitness Studio</h1>
-          <div style={{ width: '80px' }}></div> {/* Spacer for center alignment */}
+          <div style={{ width: '90px' }}></div> {/* Spacer for center alignment */}
         </div>
 
         <div className="section-title">Personal Information</div>
-        <div className="grid1">
+        <div className="grid2">
           <div className="field"><strong>Full Name: </strong>{formData.name}</div>
           <div className="field"><strong>Email: </strong>{formData.email}</div>
           <div className="field"><strong>Phone: </strong>{formData.phone}</div>
@@ -120,27 +121,27 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
         </div>
 
         <div className="section-title">Work & Career</div>
-        <div className="grid1">
+        <div className="grid2">
           <div className="field"><strong>Company / Employer: </strong>{formData.employer}</div>
           <div className="field"><strong>Job Title / Occupation: </strong>{formData.occupation}</div>
         </div>
 
         <div className="section-title">Emergency Contact</div>
-        <div className="grid1">
+        <div className="grid2">
           <div className="field"><strong>Guardian/Contact Name: </strong>{formData.emergency_contact_name}</div>
           <div className="field"><strong>Relationship: </strong>{formData.emergency_contact_relationship}</div>
           <div className="field"><strong>Home Phone: </strong>{formData.emergency_contact_phone_home}</div>
           <div className="field"><strong>Work Phone: </strong>{formData.emergency_contact_phone_work}</div>
-          <div className="field"><strong>Emergency Address: </strong>{formData.emergency_contact_address}</div>
+          <div className="field full"><strong>Emergency Address: </strong>{formData.emergency_contact_address}</div>
         </div>
 
         <div className="section-title">Fitness Profile</div>
-        <div className="grid1">
+        <div className="grid2">
           <div className="field"><strong>Height: </strong>{formData.height} cm</div>
           <div className="field"><strong>Weight: </strong>{formData.weight} kg</div>
           <div className="field"><strong>BMI: </strong>{formData.bmi}</div>
           <div className="field"><strong>Fitness Goals: </strong>{formData.fitness_goal}</div>
-          <div className="field"><strong>Medical History / Notes: </strong>{formData.medical_history}</div>
+          <div className="field full"><strong>Medical History / Notes: </strong>{formData.medical_history}</div>
         </div>
 
         <div className="section-title">Informed Consent Form</div>
