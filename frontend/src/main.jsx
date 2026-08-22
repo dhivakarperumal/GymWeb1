@@ -92,6 +92,7 @@ const EMIList = lazyWithRetry(() => import("./Admin/Plans/EMIList.jsx"));
 const PlanHistory = lazy(() => import("./Admin/Plans/PlanHistory.jsx"));
 const TrainerReferredPlans = lazy(() => import("./Admin/Plans/TrainerReferredPlans.jsx"));
 const MemberDetails = lazy(() => import("./Admin/Members/MemberDetails.jsx"));
+const AdminJoinForm = lazy(() => import("./Admin/Members/AdminJoinForm.jsx"));
 const ExpiryMembers = lazy(() => import("./Admin/Members/ExpiryMembers.jsx"));
 const Offers = lazy(() => import("./Admin/Settingss/Offers.jsx"));
 const PublicOffers = lazy(() => import("./Pages/PublicOffers.jsx"));
@@ -175,6 +176,7 @@ const router = createHashRouter([
       { path: "orders/:id", element: <OrderDetails /> },
       { path: "members", element: <Members /> },
       { path: "member_details/:id", element: <MemberDetails /> },
+      { path: "member_join/:id", element: <AdminJoinForm /> },
       { path: "expiry-members", element: <ExpiryMembers /> },
       { path: "addmembers", element: <AddMember /> },
       { path: "addmembers/:id", element: <AddMember /> },
@@ -284,6 +286,7 @@ const router = createHashRouter([
       { path: "payments", element: <Payments /> },
       { path: "members", element: <Members /> },
       { path: "member_details/:id", element: <MemberDetails /> },
+      { path: "member_join/:id", element: <AdminJoinForm /> },
       { path: "addmembers", element: <AddMember /> },
       { path: "addmembers/:id", element: <AddMember /> },
       { path: "emi", element: <EMIList /> },

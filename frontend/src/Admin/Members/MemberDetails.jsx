@@ -9,6 +9,7 @@ import api from "../../api";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import AdminJoinForm from "./AdminJoinForm";
 
 const MemberDetails = () => {
   const { id } = useParams();
@@ -19,6 +20,7 @@ const MemberDetails = () => {
   const basePath = role === 'trainer' ? '/trainer' : '/admin';
 
   // State
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview"); // overview, workout, diet
@@ -283,6 +285,10 @@ const MemberDetails = () => {
         </button>
 
         <div className="flex items-center gap-3">
+          <button onClick={() => setIsJoinModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-orange-500/10 border border-orange-500/20 rounded-xl text-orange-500 hover:bg-orange-500 hover:text-white transition-all font-bold text-sm">
+            <FileText size={18} />
+            Join Now
+          </button>
           <button onClick={() => navigate(`${basePath}/addmembers/${id}`, { state: { returnUrl: returnUrl || `${basePath}/members` } })} className="flex items-center gap-2 px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-all font-bold text-sm">
             <Pencil size={18} className="text-orange-500" />
             Edit Profile
@@ -708,6 +714,12 @@ const MemberDetails = () => {
           </div>
         )}
       </div>
+
+      <AdminJoinForm 
+        isOpen={isJoinModalOpen} 
+        onClose={() => setIsJoinModalOpen(false)} 
+        memberData={member} 
+      />
     </div>
   );
 };
