@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Printer, User, Phone, MapPin, Activity, FileText, Clock } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
@@ -165,21 +165,105 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
                 <div className="md:col-span-3"><label className="block text-sm text-white/60 mb-1">Any Medical History or Notes?</label><textarea name="medical_history" value={formData.medical_history} onChange={handleInputChange} placeholder="List any injuries, conditions, or specific requests..." rows="3" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-white/20 resize-none focus:outline-none focus:border-orange-500/50" /></div>
               </div>
             </section>
-            <section className="bg-black/20 p-6 rounded-xl border border-white/5">
-              <h2 className="text-sm font-semibold mb-4 text-orange-500 uppercase tracking-wider flex items-center gap-2"><MapPin size={16} /> Informed Consent Form</h2>
-              <div className="space-y-5">
-                <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="termsAccepted" checked={formData.termsAccepted} onChange={handleInputChange} className="w-5 h-5 accent-orange-500" /><span className="text-sm text-white/80">Please read the Terms & Conditions</span></label>
-                <div className="bg-white/5 p-6 rounded-lg border border-white/10 space-y-5">
-                  <p className="font-bold text-center text-white">Please Fill In All Information Requested Below</p>
-                  <div className="flex flex-col md:flex-row items-center gap-3"><span className="text-white whitespace-nowrap">I</span><input type="text" name="participant_name" value={formData.participant_name} onChange={handleInputChange} placeholder="Full Name" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white text-center placeholder-white/30 focus:outline-none focus:border-orange-500/50" /><span className="text-white/70 text-sm text-center">give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.</span></div>
-                  <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" name="consent_agree" checked={formData.consent_agree} onChange={handleInputChange} className="w-5 h-5 accent-orange-500" /><span className="font-bold text-white">I Agree</span></label>
-                  <div className="space-y-4 text-sm text-white/60 leading-relaxed border-t border-white/10 pt-4">
-                    <div><h3 className="font-bold text-white mb-1">BENEFITS</h3><p>Participation in a regular program of physical activity has been shown to produce positive changes in a number of organ systems. These changes include increased work capacity, improved cardiovascular efficiency, increased muscular strength, flexibility, power and endurance.</p></div>
-                    <div><h3 className="font-bold text-white mb-1">RISKS</h3><p>Exercise carries some risk to the musculoskeletal system (sprains, strains) and cardiorespiratory system (dizziness, discomfort in breathing, heart attack). I certify that I know of no medical problem that would increase my risk of illness or injury.</p></div>
-                    <div><h3 className="font-bold text-white mb-1">TESTING AND EVALUATION RESULTS</h3><p>I understand I will undergo initial testing to determine my current physical fitness status including health inventory, body composition, treadmill testing, muscular fitness and flexibility screening.</p><p className="mt-1">My individual results will be made available only to me and are not intended to replace any medical test or physician services.</p><p className="mt-1">By signing this consent form, I understand I am personally responsible for my actions during my tenure at DAP Unisex Fitness Studio.</p></div>
+            <section className="space-y-3">
+
+              {/* "Please read the Terms & Conditions" text */}
+              <p className="text-sm text-white/60">
+                Please read the{" "}
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, termsAccepted: !prev.termsAccepted }))}
+                  className="text-orange-500 font-semibold hover:text-orange-400 transition-colors"
+                >
+                  Terms & Conditions
+                </button>
+              </p>
+
+              {/* Accordion Header */}
+              <div className="border border-white/15 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, termsAccepted: !prev.termsAccepted }))}
+                  className="w-full flex items-center justify-between px-6 py-4 bg-[#1e1e1e] hover:bg-[#252525] transition-colors"
+                >
+                  <span className="text-white font-bold uppercase tracking-widest text-sm">
+                    Informed Consent Form
+                  </span>
+                  <span className="text-white/60 text-xl font-light leading-none">
+                    {formData.termsAccepted ? "−" : "+"}
+                  </span>
+                </button>
+
+                {/* Collapsible body */}
+                {formData.termsAccepted && (
+                  <div className="border-t border-white/10">
+                    {/* Fill info card */}
+                    <div className="bg-[#222] p-6 space-y-4">
+                      <p className="text-orange-500 font-bold uppercase tracking-wider text-xs">
+                        Please Fill In All Information Requested Below
+                      </p>
+                      <div className="flex items-end gap-3">
+                        <span className="text-white text-lg">I</span>
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            name="participant_name"
+                            value={formData.participant_name}
+                            onChange={handleInputChange}
+                            placeholder="Full Name"
+                            className="w-full bg-transparent border-b border-white/30 px-0 py-1 text-white placeholder-white/30 focus:outline-none focus:border-orange-500 transition-colors"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-white text-sm leading-relaxed">
+                        give my consent to participate in the physical fitness evaluation program conducted by DAP Unisex Fitness Studio.
+                      </p>
+                      <label className="flex items-center gap-3 cursor-pointer mt-2">
+                        <input
+                          type="checkbox"
+                          name="consent_agree"
+                          checked={formData.consent_agree}
+                          onChange={handleInputChange}
+                          className="w-5 h-5 accent-orange-500 cursor-pointer"
+                        />
+                        <span className="text-white font-medium">I Agree</span>
+                      </label>
+                    </div>
+
+                    {/* Benefits card */}
+                    <div className="bg-[#1e1e1e] border-t border-white/10 p-6">
+                      <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm mb-3">Benefits</h3>
+                      <p className="text-white/70 text-sm leading-relaxed">
+                        Participation in a regular program of physical activity has been shown to produce positive changes in a number of organ systems. These changes include increased work capacity, improved cardiovascular efficiency, increased muscular strength, flexibility, power and endurance.
+                      </p>
+                    </div>
+
+                    {/* Risks card */}
+                    <div className="bg-[#222] border-t border-white/10 p-6">
+                      <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm mb-3">Risks</h3>
+                      <p className="text-white/70 text-sm leading-relaxed">
+                        Exercise carries some risk to the musculoskeletal system (sprains, strains) and cardiorespiratory system (dizziness, discomfort in breathing, heart attack). I certify that I know of no medical problem that would increase my risk of illness or injury.
+                      </p>
+                    </div>
+
+                    {/* Testing card */}
+                    <div className="bg-[#1e1e1e] border-t border-white/10 p-6">
+                      <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm mb-3">Testing and Evaluation Results</h3>
+                      <p className="text-white/70 text-sm leading-relaxed">
+                        I understand I will undergo initial testing to determine my current physical fitness status including health inventory, body composition, treadmill testing, muscular fitness and flexibility screening.
+                      </p>
+                      <p className="text-white/70 text-sm leading-relaxed mt-2">
+                        My individual results will be made available only to me and are not intended to replace any medical test or physician services.
+                      </p>
+                      <p className="text-white/70 text-sm leading-relaxed mt-2">
+                        By signing this consent form, I understand I am personally responsible for my actions during my tenure at DAP Unisex Fitness Studio.
+                      </p>
+                      <p className="mt-4 font-bold text-white/40 text-sm text-center">
+                        * No Refund • No Transfer • No Extension • No Freezing
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-center text-white/40 text-sm font-bold">* No Refund • No Transfer • No Extension • No Freezing</p>
-                </div>
+                )}
               </div>
             </section>
             <div className="flex justify-between items-center pt-2">
