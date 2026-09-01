@@ -68,12 +68,17 @@ export default function TrainerReferredPlans() {
         if (t.email) trainerIdentifiers.add(t.email.toLowerCase().trim());
       });
 
-      const filtered = all.filter(
-        (m) =>
-          m.referredBy &&
-          m.referredBy.toString().trim() !== "" &&
-          trainerIdentifiers.has(m.referredBy.toLowerCase().trim())
-      );
+      const filtered = all.filter((m) => {
+        const referredBy = (m.referredBy || "").toString().trim();
+        const trainerName = (m.trainerName || "").toString().trim();
+        const trainerId = (m.trainerId || "").toString().trim();
+
+        const directMatch = referredBy && trainerIdentifiers.has(referredBy.toLowerCase());
+        const trainerNameMatch = trainerName && trainerIdentifiers.has(trainerName.toLowerCase());
+        const trainerIdMatch = trainerId && trainerIdentifiers.has(trainerId.toLowerCase());
+
+        return directMatch || trainerNameMatch || trainerIdMatch;
+      });
       setMemberships(filtered);
     } catch (err) {
       console.error("Failed to fetch memberships:", err);
@@ -106,6 +111,10 @@ export default function TrainerReferredPlans() {
       result = result.filter((m) => m.status === filterStatus);
     }
 
+    if (filterStatus !== "all") {
+      result = result.filter((m) => (m.status || "").toLowerCase() === filterStatus);
+    }
+
     const q = search.toLowerCase().trim();
     if (q) {
       result = result.filter(
@@ -114,7 +123,8 @@ export default function TrainerReferredPlans() {
           (m.userPhone || "").includes(q) ||
           (m.userEmail || "").toLowerCase().includes(q) ||
           (m.planName || "").toLowerCase().includes(q) ||
-          (m.referredBy || "").toLowerCase().includes(q)
+          (m.referredBy || "").toLowerCase().includes(q) ||
+          (m.trainerName || "").toLowerCase().includes(q)
       );
     }
 

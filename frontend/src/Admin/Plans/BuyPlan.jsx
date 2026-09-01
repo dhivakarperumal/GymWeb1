@@ -670,50 +670,6 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
   //   return doc.output('datauristring');
   // };
 
-  // ================= EMAIL JS =================
-  const sendEmailReceipt = async () => {
-    // Always generate and download PDF, even if email is missing
-    let pdfDataUri = null;
-    try {
-      pdfDataUri = generateAndDownloadPDF();
-    } catch (e) {
-      console.error("Failed to generate PDF", e);
-    }
-
-    if (!form.email) {
-      console.warn("No email provided, skipping email sending.");
-      return;
-    }
-
-    const paidNow = paymentType === "emi" && isEMIAllowed ? parseDecimal(initialPayment) : getSelectedPlanTotal();
-    const paymentModeLabel = paymentType === "emi" && isEMIAllowed ? "EMI" : form.paymentMode;
-
-    const templateParams = {
-      to_name: selectedUser.name || "Member",
-      to_email: form.email,
-      plan_name: selectedPlan.name,
-      duration: selectedPlan.duration,
-      start_date: form.startDate,
-      end_date: form.endDate,
-      amount_paid: paidNow,
-      payment_mode: paymentModeLabel,
-      total_price: getSelectedPlanTotal(),
-      discount_amount: parseDecimal(discount),
-      content: pdfDataUri // Attaching the PDF base64 to the email template
-    };
-
-    try {
-      const response = await emailjs.send(
-        'service_gesrr9d',
-        'template_3hkcx6m',
-        templateParams,
-        'e9Nfh3WsTPBxH3bn1'
-      );
-      console.log('Email sent SUCCESS!', response.status, response.text);
-    } catch (error) {
-      console.error('Email sent FAILED...', error);
-    }
-  };
 
   // ================= ASSIGN PLAN =================
   const handleAssignPlan = async () => {
@@ -947,9 +903,6 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
       }
 
       alert("Plan assigned successfully");
-
-      // sendWhatsApp();
-      await sendEmailReceipt();
 
       navigate(location.state?.returnUrl || (location.pathname.startsWith("/trainer") ? "/trainer" : "/admin/members"));
     } catch (err) {

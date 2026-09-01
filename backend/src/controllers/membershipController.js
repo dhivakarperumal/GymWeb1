@@ -53,7 +53,7 @@ async function getAllMemberships(req, res) {
         sql += ` INNER JOIN trainer_assignments ta ON ta.user_id = m.userId AND ta.trainer_id = ? `;
       }
 
-      sql += ` WHERE (m.status = 'active' OR m.status IS NULL OR m.status = '')
+      sql += ` WHERE (m.status = 'active' OR m.status = 'pending' OR m.status IS NULL OR m.status = '')
         ORDER BY m.createdAt DESC`;
 
     const [rows] = await db.query(sql, staffId ? [staffId] : []);
