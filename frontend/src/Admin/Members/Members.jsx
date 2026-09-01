@@ -56,13 +56,24 @@ const isUpdatePlanEnabled = (m) => {
 };
 
 const getMemberPlanDisplay = (m) => {
-  const referralName = (m.referredBy || m.trainerName || m.trainer_name || "").toString().trim();
-  if (referralName && referralName.toLowerCase() !== "user") return referralName;
-
   const planName = (m.plan || "").toString().trim();
   if (planName && planName.toLowerCase() !== "user") return planName;
 
+  const referralName = (m.referredBy || m.trainerName || m.trainer_name || "").toString().trim();
+  if (referralName && referralName.toLowerCase() !== "user") return referralName;
+
   return m.role && m.role.toLowerCase() !== "user" ? m.role : "Member";
+};
+
+const getMemberReferralDisplay = (m) => {
+  const referralName = (m.referredBy || m.trainerName || m.trainer_name || "").toString().trim();
+  const planName = (m.plan || "").toString().trim();
+
+  if (!referralName || referralName.toLowerCase() === "user") return "";
+  if (!planName || planName.toLowerCase() === "user") return "";
+  const normalizedReferral = referralName.toLowerCase();
+  const normalizedPlan = planName.toLowerCase();
+  return normalizedReferral === normalizedPlan ? "" : referralName;
 };
 
 const hasActiveOrPendingPlan = (m) => {
@@ -819,9 +830,16 @@ const Members = () => {
 
 
                     <td className="px-4 py-5 whitespace-nowrap">
-                      <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400 inline-block whitespace-nowrap">
-                        {getMemberPlanDisplay(m)}
-                      </span>
+                      <div className="flex flex-col items-start">
+                        <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400 inline-block whitespace-nowrap">
+                          {getMemberPlanDisplay(m)}
+                        </span>
+                        {getMemberReferralDisplay(m) && (
+                          <span className="mt-1 text-[10px] text-gray-400 whitespace-nowrap">
+                            Referred by: {getMemberReferralDisplay(m)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
                       {m.pt_plan ? (
@@ -1161,26 +1179,31 @@ const Members = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
-                        {getMemberPlanDisplay(m)}
-                      </span>
-                      {m.pt_plan ? (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
-                          ✓ {m.pt_plan}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
+                          {getMemberPlanDisplay(m)}
                         </span>
-                      ) : m.has_pt_plan ? (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
-                          ✓ PT Plan
-                        </span>
-                      ) : null}
-                      {m.price && (
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
-                          ₹{m.price}
-                        </span>
+                        {m.pt_plan ? (
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
+                            ✓ {m.pt_plan}
+                          </span>
+                        ) : m.has_pt_plan ? (
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">
+                            ✓ PT Plan
+                          </span>
+                        ) : null}
+                        {m.price && (
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30">
+                            ₹{m.price}
+                          </span>
+                        )}
+                      </div>
+                      {getMemberReferralDisplay(m) && (
+                        <div className="text-[10px] text-gray-400">
+                          Referred by: {getMemberReferralDisplay(m)}
+                        </div>
                       )}
-
-
                     </div>
                     <div className="flex items-center gap-2 pt-1">
                       <p className="text-[10px] text-gray-500 uppercase">PT Form:</p>
