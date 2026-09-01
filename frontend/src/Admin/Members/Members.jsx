@@ -55,6 +55,16 @@ const isUpdatePlanEnabled = (m) => {
   return days <= 5;
 };
 
+const getMemberPlanDisplay = (m) => {
+  const referralName = (m.referredBy || m.trainerName || m.trainer_name || "").toString().trim();
+  if (referralName && referralName.toLowerCase() !== "user") return referralName;
+
+  const planName = (m.plan || "").toString().trim();
+  if (planName && planName.toLowerCase() !== "user") return planName;
+
+  return m.role && m.role.toLowerCase() !== "user" ? m.role : "Member";
+};
+
 const hasActiveOrPendingPlan = (m) => {
   return !!(m.plan && m.plan !== 'user' && (m.status === 'active' || m.status === 'pending'));
 };
@@ -810,7 +820,7 @@ const Members = () => {
 
                     <td className="px-4 py-5 whitespace-nowrap">
                       <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-400 inline-block whitespace-nowrap">
-                        {m.plan || m.role || "Member"}
+                        {getMemberPlanDisplay(m)}
                       </span>
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
@@ -1153,7 +1163,7 @@ const Members = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/30">
-                        {m.plan || m.role || "Member"}
+                        {getMemberPlanDisplay(m)}
                       </span>
                       {m.pt_plan ? (
                         <span className="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30">

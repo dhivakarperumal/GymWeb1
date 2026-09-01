@@ -46,6 +46,8 @@ async function getAllMembers(req, res) {
           gm.weight,
           gm.bmi,
           COALESCE(m_pay.m_planName, NULLIF(gm.plan, '')) AS plan,
+          m_pay.referredBy,
+          m_pay.trainerName,
           COALESCE(m_pay.m_duration, gm.duration) AS duration,
           COALESCE(m_pay.m_status, NULLIF(gm.status, ''), 'active') AS status,
           gm.pt_plan,
@@ -87,7 +89,8 @@ async function getAllMembers(req, res) {
         INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
         LEFT JOIN (
           SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
-                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration
+                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration,
+                 m.referredBy, m.trainerName
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
@@ -111,6 +114,8 @@ async function getAllMembers(req, res) {
           NULL as weight,
           NULL as bmi,
           m_pay.m_planName as plan,
+          m_pay.referredBy,
+          m_pay.trainerName,
           m_pay.m_duration as duration,
           COALESCE(m_pay.m_status, 'active') as status,
           NULL as pt_plan,
@@ -150,7 +155,8 @@ async function getAllMembers(req, res) {
         INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
         LEFT JOIN (
           SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
-                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration
+                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration,
+                 m.referredBy, m.trainerName
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
@@ -182,6 +188,8 @@ async function getAllMembers(req, res) {
           gm.weight,
           gm.bmi,
           COALESCE(m_pay.m_planName, NULLIF(gm.plan, '')) AS plan,
+          m_pay.referredBy,
+          m_pay.trainerName,
           COALESCE(m_pay.m_duration, gm.duration) AS duration,
           COALESCE(m_pay.m_status, NULLIF(gm.status, ''), 'active') AS status,
           gm.pt_plan,
@@ -222,7 +230,8 @@ async function getAllMembers(req, res) {
                           OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
         LEFT JOIN (
           SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
-                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration
+                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration,
+                 m.referredBy, m.trainerName
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
@@ -246,6 +255,8 @@ async function getAllMembers(req, res) {
           NULL as weight,
           NULL as bmi,
           m_pay.m_planName as plan,
+          m_pay.referredBy,
+          m_pay.trainerName,
           m_pay.m_duration as duration,
           COALESCE(m_pay.m_status, 'active') as status,
           NULL as pt_plan,
@@ -284,7 +295,8 @@ async function getAllMembers(req, res) {
         FROM users u
         LEFT JOIN (
           SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
-                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration
+                 m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration,
+                 m.referredBy, m.trainerName
           FROM memberships m
           JOIN (
             SELECT userId, MAX(id) AS max_id
