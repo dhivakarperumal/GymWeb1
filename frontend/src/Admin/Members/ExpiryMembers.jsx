@@ -16,6 +16,7 @@ const ExpiryMembers = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [expiryFilter, setExpiryFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -65,17 +66,34 @@ const ExpiryMembers = () => {
     }
   };
 
+  const getExpiryStatus = (member) => {
+    const expiryValue = member.expiry_date || member.endDate || member.end_date || member.expiryDate || member.pt_expiry_date;
+    if (!expiryValue) return "all";
+
+    const expiryDate = dayjs(expiryValue);
+    if (!expiryDate.isValid()) return "all";
+
+    const today = dayjs();
+    if (expiryDate.isSame(today, "day")) return "today";
+    if (expiryDate.isBefore(today, "day")) return "expired";
+    return "soon";
+  };
+
   const filteredMembers = useMemo(() => {
-    return members.filter(m => 
-      m.name?.toLowerCase().includes(search.toLowerCase()) ||
-      m.phone?.includes(search) ||
-      m.id?.toString().includes(search)
-    );
-  }, [members, search]);
+    return members.filter((m) => {
+      const matchesSearch =
+        m.name?.toLowerCase().includes(search.toLowerCase()) ||
+        m.phone?.includes(search) ||
+        m.id?.toString().includes(search);
+
+      const matchesFilter = expiryFilter === "all" || getExpiryStatus(m) === expiryFilter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [members, search, expiryFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, expiryFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMembers.length / itemsPerPage));
   const paginatedMembers = filteredMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -105,11 +123,11 @@ const ExpiryMembers = () => {
   }
 
   return (
-    <div className="min-h-screen pb-12 text-white">
+    <div className="min-h-screen px-3 pb-12 text-white sm:px-0">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-           <div className="relative w-full md:w-80">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="w-full md:w-auto">
+          <div className="relative w-full md:w-80">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
             <input
               type="text"
@@ -121,9 +139,25 @@ const ExpiryMembers = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end md:w-auto">
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={expiryFilter}
+              onChange={(e) => setExpiryFilter(e.target.value)}
+              className="w-full appearance-none bg-white/5 border border-white/10 rounded-2xl px-4 py-3 pr-10 text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500 sm:w-auto"
+            >
+              <option value="all" className="bg-slate-900">All</option>
+              <option value="today" className="bg-slate-900">Today</option>
+              <option value="expired" className="bg-slate-900">Expired</option>
+              <option value="soon" className="bg-slate-900">Soon</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white/50">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
+            </div>
+          </div>
+
           {/* View Toggle */}
-          <div className="flex rounded-xl overflow-hidden border border-white/10 bg-white/5 p-1">
+          <div className="flex rounded-xl overflow-hidden border border-white/10 bg-white/5 p-1 self-end sm:self-auto">
             <button
               onClick={() => setViewMode("card")}
               className={`p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-orange-500 text-white shadow-lg' : 'text-white/40 hover:text-white'}`}
@@ -139,13 +173,11 @@ const ExpiryMembers = () => {
               <TableIcon size={18} />
             </button>
           </div>
-
-         
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-yellow-500/15 to-orange-500/10 p-5 shadow-lg shadow-orange-500/10">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-yellow-500/15 to-orange-500/10 p-4 shadow-lg shadow-orange-500/10 sm:p-5">
           <div className="flex items-center justify-between text-white/70 text-sm">
             <span>Total Expiry</span>
             <Clock size={18} className="text-orange-400" />
@@ -153,7 +185,7 @@ const ExpiryMembers = () => {
           <div className="mt-3 text-3xl font-bold text-white">{expirySummary.total}</div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-red-500/15 to-rose-500/10 p-5 shadow-lg shadow-red-500/10">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-red-500/15 to-rose-500/10 p-4 shadow-lg shadow-red-500/10 sm:p-5">
           <div className="flex items-center justify-between text-white/70 text-sm">
             <span>Today Expiry</span>
             <AlertCircle size={18} className="text-red-400" />
@@ -169,54 +201,54 @@ const ExpiryMembers = () => {
         </div>
       ) : viewMode === "card" ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {paginatedMembers.map((m) => {
             const expiryValue = m.expiry_date || m.endDate || m.end_date || m.expiryDate || m.pt_expiry_date;
             const daysLeft = expiryValue ? dayjs(expiryValue).startOf('day').diff(dayjs().startOf('day'), 'day') : 0;
             const isCritical = daysLeft <= 7;
 
             return (
-              <div key={m.id} className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:bg-white/[0.07] transition-all group">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+              <div key={m.id} className="bg-white/5 border border-white/10 rounded-3xl p-4 hover:bg-white/[0.07] transition-all group sm:p-6">
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-rose-600 text-sm font-bold text-white shadow-lg sm:h-12 sm:w-12 sm:text-xl">
                       {m.name?.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <h3 className="font-bold text-white group-hover:text-orange-500 transition-colors">{m.name}</h3>
-                      <p className="text-white/30 text-[10px] uppercase font-black tracking-widest">ID: #{m.id}</p>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-bold text-white group-hover:text-orange-500 transition-colors sm:text-base">{m.name}</h3>
+                      <p className="text-white/30 text-[9px] uppercase font-black tracking-widest sm:text-[10px]">ID: #{m.id}</p>
                     </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${isCritical && daysLeft > 0 ? 'bg-red-500/20 text-red-500' : daysLeft <= 0 ? 'bg-gray-500/20 text-gray-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                  <div className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase sm:px-3 sm:text-[10px] ${isCritical && daysLeft > 0 ? 'bg-red-500/20 text-red-500' : daysLeft <= 0 ? 'bg-gray-500/20 text-gray-400' : 'bg-orange-500/20 text-orange-400'}`}>
                     {daysLeft > 0 ? `${daysLeft} Days Left` : 'Expired'}
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-3 text-sm text-white/60">
+                <div className="mb-5 space-y-3">
+                  <div className="flex items-center gap-3 text-xs text-white/60 sm:text-sm">
                     <Calendar size={16} className="text-orange-500" />
                     <span>Plan: <span className="text-white font-bold">{m.plan || 'N/A'}</span></span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-white/60">
+                  <div className="flex items-center gap-3 text-xs text-white/60 sm:text-sm">
                     <Clock size={16} className="text-orange-500" />
                     <span>Expires: <span className="text-white font-bold">{expiryValue ? dayjs(expiryValue).format('DD MMM, YYYY') : 'N/A'}</span></span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-white/60">
+                  <div className="flex items-center gap-3 text-xs text-white/60 sm:text-sm">
                     <Phone size={16} className="text-orange-500" />
                     <span>{m.phone || 'N/A'}</span>
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t border-white/5">
+                <div className="flex flex-col gap-2 border-t border-white/5 pt-4 sm:flex-row">
                   <button 
                     onClick={() => navigate(`${basePath}/member_details/${m.id}`)}
-                    className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-xs uppercase hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 rounded-xl bg-white/5 border border-white/10 py-2.5 text-white font-bold text-[10px] uppercase hover:bg-white/10 transition-all flex items-center justify-center gap-2 sm:text-xs"
                   >
                     <User size={14} /> Profile
                   </button>
                   <button 
                     onClick={() => navigate(`${basePath}/buyplanadmin`, { state: { member: m } })}
-                    className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-xs uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+                    className="flex-1 rounded-xl bg-orange-500 py-2.5 text-white font-bold text-[10px] uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 sm:text-xs"
                   >
                     Renew <ArrowRight size={14} />
                   </button>
