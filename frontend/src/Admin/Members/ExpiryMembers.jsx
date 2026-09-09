@@ -17,7 +17,12 @@ const ExpiryMembers = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [expiryFilter, setExpiryFilter] = useState("all");
-  const [viewMode, setViewMode] = useState("table");
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 768 ? "table" : "card";
+    }
+    return "table";
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -94,6 +99,20 @@ const ExpiryMembers = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [search, expiryFilter]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 768 && viewMode !== "table") {
+        setViewMode("table");
+      }
+      if (window.innerWidth < 768 && viewMode !== "card") {
+        setViewMode("card");
+      }
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [viewMode]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMembers.length / itemsPerPage));
   const paginatedMembers = filteredMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
