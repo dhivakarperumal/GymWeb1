@@ -18,6 +18,7 @@ import {
   DollarSign,
   Users,
   CreditCard,
+  Clock,
 } from "lucide-react";
 
 
@@ -83,6 +84,11 @@ const navItems = [
     path: "/trainer/payments",
     label: "Payments",
     icon: DollarSign,
+  },
+  {
+    path: "/trainer/expiry-members",
+    label: "Expiry Plan History",
+    icon: Clock,
   },
   {
     path: "/trainer/followupenquriy",

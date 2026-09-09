@@ -34,16 +34,27 @@ const ExpiryMembers = () => {
       const res = await api.get(url);
       const data = Array.isArray(res.data) ? res.data : [];
       
-      // Filter members whose plans are expiring in the next 5 days
+      // Show assigned members whose plans are already expired or expiring in the next 5 days
       const today = dayjs();
       const next5Days = today.add(5, "day");
-      
-      const expiring = data.filter(m => {
-        if (!m.expiry_date) return false;
-        const expiryDate = dayjs(m.expiry_date);
-        // Show if expiring between today and next 5 days
-        return expiryDate.isAfter(today.subtract(1, 'day')) && expiryDate.isBefore(next5Days.add(1, 'day'));
-      }).sort((a, b) => dayjs(a.expiry_date).diff(dayjs(b.expiry_date)));
+
+      const expiring = data.filter((m) => {
+        const expiryValue = m.expiry_date || m.endDate || m.end_date || m.expiryDate || m.pt_expiry_date;
+        if (!expiryValue) return false;
+
+        const expiryDate = dayjs(expiryValue);
+        if (!expiryDate.isValid()) return false;
+
+        const expiredOrSoon =
+          expiryDate.isBefore(today, "day") ||
+          (expiryDate.isAfter(today.subtract(1, "day")) && expiryDate.isBefore(next5Days.add(1, "day")));
+
+        return expiredOrSoon;
+      }).sort((a, b) => {
+        const aDate = dayjs(a.expiry_date || a.endDate || a.end_date || a.expiryDate || a.pt_expiry_date);
+        const bDate = dayjs(b.expiry_date || b.endDate || b.end_date || b.expiryDate || b.pt_expiry_date);
+        return aDate.diff(bDate);
+      });
 
       setMembers(expiring);
     } catch (err) {
@@ -135,7 +146,8 @@ const ExpiryMembers = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedMembers.map((m) => {
-            const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
+            const expiryValue = m.expiry_date || m.endDate || m.end_date || m.expiryDate || m.pt_expiry_date;
+            const daysLeft = expiryValue ? dayjs(expiryValue).startOf('day').diff(dayjs().startOf('day'), 'day') : 0;
             const isCritical = daysLeft <= 7;
 
             return (
@@ -162,7 +174,7 @@ const ExpiryMembers = () => {
                   </div>
                   <div className="flex items-center gap-3 text-sm text-white/60">
                     <Clock size={16} className="text-orange-500" />
-                    <span>Expires: <span className="text-white font-bold">{dayjs(m.expiry_date).format('DD MMM, YYYY')}</span></span>
+                    <span>Expires: <span className="text-white font-bold">{expiryValue ? dayjs(expiryValue).format('DD MMM, YYYY') : 'N/A'}</span></span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-white/60">
                     <Phone size={16} className="text-orange-500" />
@@ -205,7 +217,8 @@ const ExpiryMembers = () => {
             <tbody className="divide-y divide-white/5 text-gray-200">
               {paginatedMembers.map((m, idx) => {
                 const sNo = (currentPage - 1) * itemsPerPage + idx + 1;
-                const daysLeft = dayjs(m.expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day');
+                const expiryValue = m.expiry_date || m.endDate || m.end_date || m.expiryDate || m.pt_expiry_date;
+                const daysLeft = expiryValue ? dayjs(expiryValue).startOf('day').diff(dayjs().startOf('day'), 'day') : 0;
                 const isCritical = daysLeft <= 7;
                 return (
                   <tr key={m.id} className="hover:bg-white/[0.03] transition-colors group">
@@ -222,7 +235,7 @@ const ExpiryMembers = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 font-medium">{m.plan || 'N/A'}</td>
-                    <td className="px-6 py-4">{dayjs(m.expiry_date).format('DD MMM, YYYY')}</td>
+                    <td className="px-6 py-4">{expiryValue ? dayjs(expiryValue).format('DD MMM, YYYY') : 'N/A'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${isCritical && daysLeft > 0 ? 'bg-red-500/20 text-red-500' : daysLeft <= 0 ? 'bg-gray-500/20 text-gray-400' : 'bg-orange-500/20 text-orange-500'}`}>
                         {daysLeft > 0 ? `${daysLeft} Days` : 'Expired'}

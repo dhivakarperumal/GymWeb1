@@ -41,7 +41,7 @@ const pageTitles = {
   "/trainer/members": "Members",
   "/trainer/member_details": "Member Details",
   "/trainer/emi": "EMI List",
-  "/trainer/expiry-members": "Plan Expiry Details",
+  "/trainer/expiry-members": "Expiry Plan History",
   "/trainer/settings": "Settings",
   "/trainer/settings/usermanagement": "User Management",
   "/trainer/settings/reviews": "Reviews Settings",

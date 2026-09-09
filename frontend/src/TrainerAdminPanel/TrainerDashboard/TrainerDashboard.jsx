@@ -385,11 +385,11 @@ const TrainerDashboard = () => {
                         </td>
 
                         <td className="px-4 py-4 text-base">
-                          {m.userEmail || m.user_email || "-"}
+                          {m.userEmail || m.user_email || m.email || "-"}
                         </td>
 
                         <td className="px-4 py-4 text-base">
-                          {m.userMobile || m.user_mobile || "-"}
+                          {m.userMobile || m.user_mobile || m.mobile || m.phone || "-"}
                         </td>
 
                         <td className="px-4 py-4 text-base">
