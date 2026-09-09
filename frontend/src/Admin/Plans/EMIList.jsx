@@ -195,6 +195,23 @@ const EMIList = () => {
 
   const emiMemberships = memberships.filter((m) => String(m.paymentMode || "").toLowerCase().startsWith("emi"));
 
+  const getStatusKey = (membership) => {
+    const paymentStatus = normalizeText(membership.paymentStatus || membership.status || "");
+    if (["paid", "completed"].includes(paymentStatus)) return "completed";
+    if (["pending", "partial", "due"].includes(paymentStatus)) return "pending";
+    const plan = findPlanForMembership(membership);
+    const duration = parseDuration(membership.duration) || 1;
+    const totalPrice = membership.price
+      ? parseDecimal(membership.price)
+      : plan
+        ? parseDecimal(plan.finalPrice ?? plan.final_price ?? plan.price)
+        : parseDecimal(membership.pricePaid) * duration;
+    const initialPayment = parseDecimal(membership.pricePaid);
+    const secondPayment = parseDecimal(membership.secondPaymentPaid);
+    const remainingDue = Math.max(0, Number((totalPrice - initialPayment - secondPayment).toFixed(2)));
+    return remainingDue > 0 ? "pending" : "completed";
+  };
+
   // Filtering Logic
   const filteredEMIs = emiMemberships.filter((m) => {
     const matchesSearch =
@@ -202,7 +219,11 @@ const EMIList = () => {
       (m.planName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.paymentId || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || m.status === statusFilter;
+    const currentStatus = getStatusKey(m);
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "pending" && currentStatus === "pending") ||
+      (statusFilter === "completed" && currentStatus === "completed");
 
     // Date Range Filter
     const matchesDate = filterByDateRange([m], 'createdAt', dateRange.type, dateRange.range).length > 0;
@@ -503,7 +524,7 @@ const EMIList = () => {
             >
               <CreditCard className="text-orange-500" size={16} />
               <span className="text-sm font-medium uppercase tracking-wide">
-                {statusFilter === 'all' ? 'All Status' : statusFilter}
+                {statusFilter === 'all' ? 'All' : statusFilter === 'pending' ? 'Pending' : 'Completed'}
               </span>
               <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -513,10 +534,9 @@ const EMIList = () => {
                 <div className="fixed inset-0 z-[90]" onClick={() => setIsStatusOpen(false)} />
                 <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2 overflow-hidden animate-in fade-in zoom-in duration-200">
                   {[
-                    { id: 'all', label: 'All Status' },
-                    { id: 'active', label: 'Active' },
+                    { id: 'all', label: 'All' },
+                    { id: 'pending', label: 'Pending' },
                     { id: 'completed', label: 'Completed' },
-                    { id: 'expired', label: 'Expired' },
                   ].map((option) => (
                     <button
                       key={option.id}
