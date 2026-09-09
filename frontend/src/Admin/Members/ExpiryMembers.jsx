@@ -18,7 +18,7 @@ const ExpiryMembers = () => {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 10;
 
   const isTrainer = location.pathname.startsWith("/trainer");
   const basePath = isTrainer ? "/trainer" : "/admin";
@@ -80,6 +80,21 @@ const ExpiryMembers = () => {
   const totalPages = Math.max(1, Math.ceil(filteredMembers.length / itemsPerPage));
   const paginatedMembers = filteredMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const expirySummary = useMemo(() => {
+    const today = dayjs();
+    const todayCount = members.filter((m) => {
+      const expiryValue = m.expiry_date || m.endDate || m.end_date || m.expiryDate || m.pt_expiry_date;
+      if (!expiryValue) return false;
+      const expiryDate = dayjs(expiryValue);
+      return expiryDate.isValid() && expiryDate.isSame(today, "day");
+    }).length;
+
+    return {
+      total: members.length,
+      today: todayCount,
+    };
+  }, [members]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-6">
@@ -94,15 +109,16 @@ const ExpiryMembers = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-2">
-            <ChevronLeft size={20} />
-            <span className="font-bold uppercase tracking-wider text-xs">Back</span>
-          </button>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Clock className="text-orange-500" />
-            Plan Expiry Details
-          </h1>
-          <p className="text-white/40 text-sm mt-1">Members with plans expiring in the next 5 days</p>
+           <div className="relative w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+            <input
+              type="text"
+              placeholder="Search member name, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
@@ -124,16 +140,25 @@ const ExpiryMembers = () => {
             </button>
           </div>
 
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-            <input
-              type="text"
-              placeholder="Search member name, phone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+         
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-yellow-500/15 to-orange-500/10 p-5 shadow-lg shadow-orange-500/10">
+          <div className="flex items-center justify-between text-white/70 text-sm">
+            <span>Total Expiry</span>
+            <Clock size={18} className="text-orange-400" />
           </div>
+          <div className="mt-3 text-3xl font-bold text-white">{expirySummary.total}</div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-red-500/15 to-rose-500/10 p-5 shadow-lg shadow-red-500/10">
+          <div className="flex items-center justify-between text-white/70 text-sm">
+            <span>Today Expiry</span>
+            <AlertCircle size={18} className="text-red-400" />
+          </div>
+          <div className="mt-3 text-3xl font-bold text-white">{expirySummary.today}</div>
         </div>
       </div>
 

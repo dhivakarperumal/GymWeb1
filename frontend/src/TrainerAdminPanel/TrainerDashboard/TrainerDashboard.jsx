@@ -23,16 +23,16 @@ import api from "../../api";
 
 /* -------------------- STAT CARD -------------------- */
 const StatCard = ({ title, value, icon, color }) => (
-  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 flex justify-between items-center">
-    <div>
-      <p className="text-xs uppercase tracking-widest text-gray-300">
+  <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#2f2b4e] via-[#2a2644] to-[#26233f] shadow-[0_12px_30px_rgba(15,23,42,0.35)] p-5 min-h-[136px] flex items-center justify-between">
+    <div className="flex flex-col justify-center">
+      <p className="text-[12px] font-medium uppercase tracking-[0.18em] text-white/80">
         {title}
       </p>
-      <h2 className="text-3xl font-bold text-white mt-2">{value !== undefined ? value : 0}</h2>
+      <h2 className="mt-3 text-[42px] leading-none font-bold text-white">{value !== undefined ? value : 0}</h2>
     </div>
 
     <div
-      className={`p-4 rounded-xl bg-gradient-to-br ${color} text-white text-2xl`}
+      className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-lg ${color}`}
     >
       {icon}
     </div>
@@ -199,28 +199,28 @@ const TrainerDashboard = () => {
             title="Assigned Members"
             value={stats.members}
             icon={<FaUsers />}
-            color="from-blue-500 to-cyan-500"
+            color="bg-gradient-to-br from-[#5aa3ff] to-[#3d8bfd] text-white"
           />
 
           <StatCard
             title="Today's Check-ins"
             value={stats.todayCheckins}
             icon={<FaCalendarCheck />}
-            color="from-emerald-500 to-teal-500"
+            color="bg-gradient-to-br from-[#39d7b5] to-[#17b897] text-white"
           />
 
           <StatCard
             title="Workout Plans"
             value={stats.workoutPlans}
             icon={<FaDumbbell />}
-            color="from-purple-500 to-pink-500"
+            color="bg-gradient-to-br from-[#d448d4] to-[#b855f6] text-white"
           />
 
           <StatCard
             title="Diet Plans"
             value={stats.dietPlans}
             icon={<FaClipboardList />}
-            color="from-orange-500 to-amber-500"
+            color="bg-gradient-to-br from-[#ff9a3d] to-[#ff7f1c] text-white"
           />
 
         </div>
