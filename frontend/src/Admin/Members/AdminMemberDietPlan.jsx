@@ -586,17 +586,19 @@ const AdminMemberDietPlan = ({ member, creator }) => {
                   )}
                 </div>
                 {meals.map((meal) => (
-                  <div key={meal} className="space-y-2 rounded-lg border border-white/5 bg-white/5 p-3">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_150px]">
+                  <div key={meal} className="min-w-0 space-y-2 rounded-lg border border-white/5 bg-white/5 p-3">
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_150px] items-center gap-2">
                       <h5 className="self-center text-xs font-bold uppercase text-amber-300">{meal}</h5>
-                      <input className={inputClass} type="time" aria-label={`${meal} time`} value={day[meal].time} onChange={(event) => updateMeal(dayIndex, meal, { time: event.target.value })} />
+                      <input className={`${inputClass} min-w-0`} type="time" aria-label={`${meal} time`} value={day[meal].time} onChange={(event) => updateMeal(dayIndex, meal, { time: event.target.value })} />
                     </div>
                     {day[meal].items.map((item, itemIndex) => (
-                      <div key={itemIndex} className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_130px_110px_auto]">
-                        <input className={inputClass} placeholder="Food Item" value={item.food} onChange={(event) => updateFoodItem(dayIndex, meal, itemIndex, "food", event.target.value)} />
-                        <input className={inputClass} placeholder="Qty / Serving" value={item.quantity} onChange={(event) => updateFoodItem(dayIndex, meal, itemIndex, "quantity", event.target.value)} />
-                        <input className={inputClass} type="number" min="0" placeholder="Kcal" value={item.calories} onChange={(event) => updateFoodItem(dayIndex, meal, itemIndex, "calories", event.target.value)} />
-                        <button type="button" onClick={() => removeFoodItem(dayIndex, meal, itemIndex)} className="flex h-9 w-9 items-center justify-center rounded-lg text-white/50 hover:bg-red-500/20 hover:text-red-300" aria-label="Remove food item"><X size={16} /></button>
+                      <div key={itemIndex} className="overflow-x-auto">
+                        <div className="grid w-full min-w-[560px] grid-cols-[minmax(0,1fr)_130px_110px_36px] items-center gap-2">
+                          <input className={`${inputClass} min-w-0`} placeholder="Food Item" value={item.food} onChange={(event) => updateFoodItem(dayIndex, meal, itemIndex, "food", event.target.value)} />
+                          <input className={`${inputClass} min-w-0`} placeholder="Qty / Serving" value={item.quantity} onChange={(event) => updateFoodItem(dayIndex, meal, itemIndex, "quantity", event.target.value)} />
+                          <input className={`${inputClass} min-w-0`} type="number" min="0" placeholder="Kcal" value={item.calories} onChange={(event) => updateFoodItem(dayIndex, meal, itemIndex, "calories", event.target.value)} />
+                          <button type="button" onClick={() => removeFoodItem(dayIndex, meal, itemIndex)} className="flex h-9 w-9 items-center justify-center rounded-lg text-white/50 hover:bg-red-500/20 hover:text-red-300" aria-label="Remove food item"><X size={16} /></button>
+                        </div>
                       </div>
                     ))}
                     <button type="button" onClick={() => addFoodItem(dayIndex, meal)} className="inline-flex items-center gap-1 text-xs text-amber-200"><Plus size={14} /> Add Food Item</button>
