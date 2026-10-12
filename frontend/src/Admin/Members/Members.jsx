@@ -15,6 +15,106 @@ import dayjs from "dayjs";
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 import AdminMemberWorkoutPlan from "./AdminMemberWorkoutPlan";
 
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return "";
+  const videoId = url.includes("youtube.com/shorts/")
+    ? url.split("shorts/")[1].split("?")[0]
+    : url.includes("youtube.com/watch?v=")
+      ? url.split("v=")[1].split("&")[0]
+      : url.includes("youtu.be/")
+        ? url.split("youtu.be/")[1].split("?")[0]
+        : "";
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+};
+
+const TrainerWorkoutPlanPreview = ({ workoutData }) => (
+  workoutData?.length ? (
+    <div className="space-y-4">
+      {workoutData.map((workout, index) => {
+        const items = Array.isArray(workout.items)
+          ? workout.items
+          : Array.isArray(workout.exercises)
+            ? workout.exercises
+            : Array.isArray(workout.days)
+              ? workout.days
+              : workout.days && typeof workout.days === "object"
+                ? Object.values(workout.days).flat()
+                : null;
+
+        if (items?.length) {
+          return (
+            <div key={workout.id || index} className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 className="mb-2 text-lg font-bold text-white">{workout.name || workout.title || `Workout ${index + 1}`}</h4>
+              <div className="space-y-2">
+                {items.map((item, itemIndex) => (
+                  <div key={itemIndex} className="grid grid-cols-1 items-start gap-3 rounded bg-white/5 p-3 md:grid-cols-[120px_minmax(0,1fr)]">
+                    <div className="flex h-20 w-full items-center justify-center overflow-hidden rounded border border-white/5 bg-black/10 md:w-28">
+                      {item.media ? (
+                        item.media.includes("youtube.com") || item.media.includes("youtu.be") ? (
+                          <iframe src={getYouTubeEmbedUrl(item.media)} title={item.name || "Preview"} className="h-full w-full border-0 pointer-events-none" />
+                        ) : item.media.match(/\.(mp4|webm|ogg)$/i) || item.media.startsWith("data:video") ? (
+                          <video src={item.media} className="h-full w-full object-cover" controls />
+                        ) : (
+                          <img src={item.media} alt={item.name || "Exercise media"} className="h-full w-full object-cover" />
+                        )
+                      ) : <span className="text-sm text-white/30">No media</span>}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-white">{item.name || item.exerciseName || item.food || `Item ${itemIndex + 1}`}</div>
+                      {item.notes && <div className="mt-1 text-xs text-gray-400">{typeof item.notes === "string" ? item.notes : JSON.stringify(item.notes)}</div>}
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-400">
+                        {item.time && <div><div className="text-white/40">Time</div><div className="font-bold text-white">{item.time}</div></div>}
+                        {item.sets && <div><div className="text-white/40">Sets</div><div className="font-bold text-white">{item.sets}</div></div>}
+                        {item.count && <div><div className="text-white/40">Reps/Count</div><div className="font-bold text-white">{item.count}</div></div>}
+                        {item.type && <div><div className="text-white/40">Type</div><div className="font-bold text-white">{item.type}</div></div>}
+                        {item.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="font-bold text-white">{item.massGain}</div></div>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div key={workout.id || index} className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <h4 className="mb-2 text-lg font-bold text-white">{workout.exerciseName || workout.name || "Unnamed Exercise"}</h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
+              <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-white/5 bg-black/10 md:w-28">
+                {workout.media ? (
+                  workout.media.includes("youtube.com") || workout.media.includes("youtu.be") ? (
+                    <iframe src={getYouTubeEmbedUrl(workout.media)} title={workout.exerciseName || workout.name} className="h-full w-full border-0 pointer-events-none" />
+                  ) : workout.media.match(/\.(mp4|webm|ogg)$/i) || workout.media.startsWith("data:video") ? (
+                    <video src={workout.media} className="h-full w-full object-cover" controls />
+                  ) : (
+                    <img src={workout.media} alt={workout.exerciseName || workout.name || "Exercise media"} className="h-full w-full object-cover" />
+                  )
+                ) : <span className="text-sm text-white/30">No media</span>}
+              </div>
+              <div>
+                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                  {workout.time && <div><div className="text-white/40">Time</div><div className="font-bold text-white">{workout.time}</div></div>}
+                  {workout.sets && <div><div className="text-white/40">Sets</div><div className="font-bold text-white">{workout.sets}</div></div>}
+                  {workout.count && <div><div className="text-white/40">Reps</div><div className="font-bold text-white">{workout.count}</div></div>}
+                  {workout.type && <div><div className="text-white/40">Type</div><div className="font-bold text-white">{workout.type}</div></div>}
+                  {workout.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="font-bold text-white">{workout.massGain}</div></div>}
+                </div>
+                {workout.notes && <div className="mt-3 text-sm text-white/80">{typeof workout.notes === "string" ? workout.notes : JSON.stringify(workout.notes)}</div>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  ) : (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <Dumbbell size={48} className="mb-3 text-white/20" />
+      <p className="text-sm text-white/40">No workout plan assigned</p>
+    </div>
+  )
+);
+
 const formatDobToDDMMYYYY = (dateString) => {
   if (!dateString || dateString.includes('0000-00-00') || dateString.includes('1899')) return "-";
   if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) return dateString;
@@ -151,6 +251,7 @@ const Members = () => {
   const [isPtModalOpen, setIsPtModalOpen] = useState(false);
   const [workoutMember, setWorkoutMember] = useState(null);
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [trainerWorkoutData, setTrainerWorkoutData] = useState([]);
   const [dietMemberId, setDietMemberId] = useState(null);
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
   const [dietData, setDietData] = useState(null);
@@ -517,8 +618,17 @@ const Members = () => {
   };
 
   // 🏋️ FETCH WORKOUTS
-  const openWorkoutModal = (member) => {
+  const openWorkoutModal = async (member) => {
     setWorkoutMember(member);
+    if (isTrainer) {
+      try {
+        const response = await api.get(`/workouts?memberId=${member.id || member.member_id}`);
+        setTrainerWorkoutData(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Error fetching workouts:", error);
+        setTrainerWorkoutData([]);
+      }
+    }
     setIsWorkoutModalOpen(true);
   };
 
@@ -1309,7 +1419,7 @@ const Members = () => {
       {/* 📄 PT FORM VIEW MODAL */}
       {isPtModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#1a1625] border border-white/10 w-full max-w-5xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className={`bg-[#1a1625] border border-white/10 w-full ${isTrainer ? "max-w-4xl" : "max-w-5xl"} max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300`}>
             {/* Modal Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
               <div className="flex items-center gap-3">
@@ -1387,8 +1497,10 @@ const Members = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6">
-              {workoutMember && (
+            <div className={`flex-1 overflow-y-auto custom-scrollbar ${isTrainer ? "p-6" : "p-4 sm:p-6"}`}>
+              {isTrainer ? (
+                <TrainerWorkoutPlanPreview workoutData={trainerWorkoutData} />
+              ) : workoutMember && (
                 <AdminMemberWorkoutPlan
                   key={workoutMember.id || workoutMember.member_id}
                   member={workoutMember}
