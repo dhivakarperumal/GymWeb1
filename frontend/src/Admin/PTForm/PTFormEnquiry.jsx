@@ -561,7 +561,7 @@ const Enquiry = ({
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
-                  <div>
+                  <div className="hidden">
                     <label className="block text-sm font-medium text-white/80 mb-1">Consent Date</label>
                     <input
                       type="date"
@@ -615,7 +615,7 @@ const Enquiry = ({
                   {localFormData.consent_agree ? '' : 'You must check the box to proceed.'}
                 </div>
 
-                <div className="max-w-sm">
+                <div className="hidden">
                   <label className="block text-sm font-medium text-white/80 mb-1">
                     Assigned PT Session Time
                   </label>
