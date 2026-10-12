@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 import AdminMemberWorkoutPlan from "./AdminMemberWorkoutPlan";
+import AdminMemberDietPlan from "./AdminMemberDietPlan";
 
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return "";
@@ -253,6 +254,7 @@ const Members = () => {
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
   const [trainerWorkoutData, setTrainerWorkoutData] = useState([]);
   const [dietMemberId, setDietMemberId] = useState(null);
+  const [dietMember, setDietMember] = useState(null);
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
   const [dietData, setDietData] = useState(null);
   const [dietTitle, setDietTitle] = useState("");
@@ -416,37 +418,6 @@ const Members = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || "Delete failed");
-    }
-  };
-
-  // 🍽 FETCH AND DISPLAY DIET DATA
-  const handleOpenDiet = (memberId) => {
-    setDietMemberId(memberId);
-    setIsDietModalOpen(true);
-    fetchDietData(memberId);
-  };
-
-  const fetchDietData = async (memberId) => {
-    try {
-      const res = await api.get(`/diet-plans?memberId=${memberId}`);
-      const plans = Array.isArray(res.data) ? res.data : [];
-      if (plans.length > 0) {
-        const latestPlan = plans.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-        setDietTitle(latestPlan.title || "Diet Plan");
-        let daysData = latestPlan.days;
-        if (typeof daysData === "string") {
-          daysData = JSON.parse(daysData);
-        }
-        setDietData(daysData);
-        setActiveDietDay(Object.keys(daysData)[0]);
-      } else {
-        setDietData(null);
-        setDietTitle("");
-      }
-    } catch (err) {
-      console.error("Diet fetch error:", err);
-      toast.error("Failed to load diet data");
-      setDietData(null);
     }
   };
 
@@ -633,28 +604,37 @@ const Members = () => {
   };
 
   // 🥗 FETCH DIET
-  const openDietModal = async (memberId, memberEmail) => {
+  const openDietModal = async (member) => {
+    const memberId = member.id || member.member_id;
+    setDietMember(member);
     setDietMemberId(memberId);
+    setDietData(null);
+    setDietTitle("");
+    setIsDietModalOpen(true);
+    if (!isTrainer) return;
+
     try {
+      const memberEmail = member.email || member.user_email || "";
       const res = await api.get(`/diet-plans?email=${encodeURIComponent(memberEmail)}`);
       const diets = Array.isArray(res.data) ? res.data : [];
-      if (diets.length > 0) {
-        const latestDiet = diets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-        setDietTitle(latestDiet.title || "Diet Plan");
-        let daysData = latestDiet.days;
-        if (typeof daysData === "string") {
-          try { daysData = JSON.parse(daysData); } catch (e) { daysData = null; }
+      const latestDiet = diets.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
+      if (!latestDiet) return;
+
+      setDietTitle(latestDiet.title || "Diet Plan");
+      let daysData = latestDiet.days;
+      if (typeof daysData === "string") {
+        try { daysData = JSON.parse(daysData); } catch (error) {
+          console.error("Failed to parse trainer diet plan days", error);
+          toast.error("Diet plan data could not be displayed.");
+          return;
         }
-        setDietData(daysData);
-        if (daysData) setActiveDietDay(Object.keys(daysData)[0]);
-      } else {
-        setDietData(null);
       }
-    } catch (err) {
-      console.error("Error fetching diet:", err);
-      setDietData(null);
+      setDietData(daysData);
+      if (daysData && typeof daysData === "object") setActiveDietDay(Object.keys(daysData)[0]);
+    } catch (error) {
+      console.error("Error fetching trainer diet:", error);
+      toast.error("Failed to load diet data");
     }
-    setIsDietModalOpen(true);
   };
 
   return (
@@ -1073,7 +1053,7 @@ const Members = () => {
                               View Workout
                             </button>
                             <button
-                              onClick={() => { setExpandedActionRow(null); openDietModal(m.id || m.member_id, m.email || m.user_email); }}
+                              onClick={() => { setExpandedActionRow(null); openDietModal(m); }}
                               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-amber-500/20 transition"
                             >
                               <Utensils size={15} className="text-amber-400" />
@@ -1193,7 +1173,7 @@ const Members = () => {
                         <Dumbbell size={14} />
                       </button>
                       <button
-                        onClick={() => openDietModal(m.id || m.member_id, m.email || m.user_email)}
+                        onClick={() => openDietModal(m)}
                         className="p-2 rounded-lg bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition"
                         title="View Diet Plan"
                       >
@@ -1525,7 +1505,7 @@ const Members = () => {
       {/* 🥗 DIET MODAL */}
       {isDietModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#1a1625] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className={`bg-[#1a1625] border border-white/10 w-full ${isTrainer ? "max-w-4xl" : "max-w-6xl"} max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300`}>
             {/* Modal Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
               <div className="flex items-center gap-3">
@@ -1533,7 +1513,7 @@ const Members = () => {
                   <Utensils size={20} className="text-amber-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">{dietTitle || "Diet Plan"}</h3>
+                  <h3 className="text-lg font-bold text-white">{isTrainer ? dietTitle || "Diet Plan" : "Diet Plan"}</h3>
                   <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{dietMemberId}</p>
                 </div>
               </div>
@@ -1546,8 +1526,14 @@ const Members = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-              {dietData ? (
+            <div className={`flex-1 overflow-y-auto custom-scrollbar ${isTrainer ? "p-6" : "p-4 sm:p-6"}`}>
+              {!isTrainer && dietMember ? (
+                <AdminMemberDietPlan
+                  key={dietMember.id || dietMember.member_id}
+                  member={dietMember}
+                  creator={user}
+                />
+              ) : dietData ? (
                 <div className="space-y-4">
                   <div className="flex gap-2 flex-wrap mb-4">
                     {Object.keys(dietData).map((day) => (
