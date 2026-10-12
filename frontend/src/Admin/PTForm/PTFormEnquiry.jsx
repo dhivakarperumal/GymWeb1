@@ -2,10 +2,20 @@ import { useState, useEffect } from "react";
 import { Plus, Search, Eye, Trash2, CheckCircle, XCircle, Clock, Users, X } from "lucide-react";
 import api from "../../api";
 import DateRangeFilter from "../DateRangeFilter";
-import { filterByDateRange } from "../utils/dateUtils";
 import { useAuth } from "../../PrivateRouter/AuthContext";
-import dayjs from "dayjs";
 import { normalizeDateForDateInput } from "../../utils/dateUtils";
+
+const parseConsentValue = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    return ["true", "1", "yes", "on", "accepted"].includes(value.trim().toLowerCase());
+  }
+  return false;
+};
+
+const firstConsentValue = (...values) =>
+  values.find((value) => value !== undefined && value !== null && value !== "");
 
 const Enquiry = ({
   onNext,
@@ -14,7 +24,8 @@ const Enquiry = ({
   formData: initialFormData,
   isFirstStep,
   isLastStep,
-  isModal = false
+  isModal = false,
+  canEditSessionTime = false,
 }) => {
   const { user, role } = useAuth();
   const [members, setMembers] = useState([]);
@@ -47,8 +58,17 @@ const Enquiry = ({
     fitness_goal: initialFormData?.fitness_goal || "",
     blood_group: initialFormData?.blood_group || "",
     gender: initialFormData?.gender || "",
-    participant_name: initialFormData?.participant_name || "",
-    consent_agree: initialFormData?.consent_agree || false,
+    participant_name: initialFormData?.participant_name || initialFormData?.name || "",
+    consent_agree: parseConsentValue(
+      initialFormData?.consent_agree ?? initialFormData?.agree,
+    ),
+    consent_date: initialFormData?.consent_date
+      ? normalizeDateForDateInput(initialFormData.consent_date)
+      : normalizeDateForDateInput(initialFormData?.date),
+    consent_signature: initialFormData?.consent_signature || initialFormData?.signature || "",
+    guardian_signature: initialFormData?.guardian_signature || "",
+    witness: initialFormData?.witness || "",
+    session_time: initialFormData?.session_time || "",
   });
 
   useEffect(() => {
@@ -56,13 +76,44 @@ const Enquiry = ({
       const consentData = initialFormData.consent_data && typeof initialFormData.consent_data === 'string'
         ? JSON.parse(initialFormData.consent_data)
         : initialFormData.consent_data || {};
+      const informedConsent = initialFormData.informed_consent || initialFormData.informedConsent || {};
+      const participantName =
+        initialFormData.participant_name ||
+        consentData.participant_name ||
+        informedConsent.participant_name;
+      const consentValue = firstConsentValue(
+        initialFormData.consent_agree,
+        initialFormData.agree,
+        consentData.consent_agree,
+        consentData.agree,
+        informedConsent.consent_agree,
+        informedConsent.agree,
+      );
+      const consentDate =
+        initialFormData.consent_date ||
+        initialFormData.date ||
+        consentData.consent_date ||
+        consentData.date ||
+        informedConsent.consent_date ||
+        informedConsent.date;
+      const consentSignature =
+        initialFormData.consent_signature ||
+        initialFormData.signature ||
+        consentData.consent_signature ||
+        consentData.signature ||
+        informedConsent.consent_signature ||
+        informedConsent.signature;
 
       setLocalFormData(prev => ({
         ...prev,
         ...initialFormData,
         dob: initialFormData.dob ? normalizeDateForDateInput(initialFormData.dob) : prev.dob,
-        participant_name: initialFormData.participant_name || consentData.participant_name || prev.participant_name,
-        consent_agree: initialFormData.consent_agree || consentData.agree || prev.consent_agree,
+        consent_date: consentDate ? normalizeDateForDateInput(consentDate) : prev.consent_date,
+        consent_signature: consentSignature ?? prev.consent_signature,
+        participant_name: participantName ?? prev.participant_name,
+        consent_agree: consentValue === undefined
+          ? prev.consent_agree
+          : parseConsentValue(consentValue),
       }));
     }
   }, [initialFormData]);
@@ -510,17 +561,16 @@ const Enquiry = ({
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
-                  {/* <div>
+                  <div>
                     <label className="block text-sm font-medium text-white/80 mb-1">Consent Date</label>
                     <input
                       type="date"
                       name="consent_date"
                       value={localFormData.consent_date}
                       onChange={(e) => setLocalFormData(prev => ({ ...prev, consent_date: e.target.value }))}
-                      required
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
-                  </div> */}
+                  </div>
                 </div>
 
                 {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -563,6 +613,28 @@ const Enquiry = ({
 
                 <div className="text-sm text-red-400">
                   {localFormData.consent_agree ? '' : 'You must check the box to proceed.'}
+                </div>
+
+                <div className="max-w-sm">
+                  <label className="block text-sm font-medium text-white/80 mb-1">
+                    Assigned PT Session Time
+                  </label>
+                  <input
+                    type="time"
+                    name="session_time"
+                    value={localFormData.session_time || ""}
+                    onChange={(e) => setLocalFormData((prev) => ({
+                      ...prev,
+                      session_time: e.target.value,
+                    }))}
+                    disabled={!canEditSessionTime}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  {!canEditSessionTime && (
+                    <p className="mt-1 text-xs text-white/40">
+                      A trainer assignment is required to update the session time.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

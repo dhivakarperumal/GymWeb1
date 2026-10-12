@@ -11,6 +11,11 @@ export const normalizeDateForDateInput = (value) => {
   const text = String(value).trim();
   if (!text) return '';
 
+  const datePrefix = text.match(/^(\d{4}-\d{2}-\d{2})(?:T|$)/);
+  if (datePrefix && dayjs(datePrefix[1], 'YYYY-MM-DD', true).isValid()) {
+    return datePrefix[1];
+  }
+
   const parsed = dayjs(text, [
     'YYYY-MM-DD',
     'YYYY/MM/DD',

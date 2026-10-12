@@ -42,7 +42,7 @@ const FitnessScreening = ({
     fs_curl_ups_level: initialFormData?.fs_curl_ups_level || "",
   });
 
-  const [isManualLevel, setIsManualLevel] = useState(false);
+  const [isManualLevel, setIsManualLevel] = useState(() => Boolean(initialFormData?.fs_fat_level));
 
   React.useEffect(() => {
     if (initialFormData && Object.keys(initialFormData).length > 0) {
@@ -93,6 +93,7 @@ const FitnessScreening = ({
   const handleChange = (e) => {
     if (readOnly) return;
     const { name, value, type, checked } = e.target;
+    if (name === "fs_fat_percentage") setIsManualLevel(false);
     if (type === "radio") {
       if (checked) {
         if (name === "fs_fat_level") setIsManualLevel(true);

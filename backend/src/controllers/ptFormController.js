@@ -1,10 +1,37 @@
 const db = require('../config/db');
 
+function mergeFormData(existingData, incomingData) {
+  const merged = { ...existingData };
+
+  Object.entries(incomingData).forEach(([key, value]) => {
+    if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
+      return;
+    }
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      merged[key] &&
+      typeof merged[key] === 'object' &&
+      !Array.isArray(merged[key])
+    ) {
+      merged[key] = mergeFormData(merged[key], value);
+      return;
+    }
+    merged[key] = value;
+  });
+
+  return merged;
+}
+
 async function savePTForm(req, res) {
   const { member_id, user_id, formData, completed = false } = req.body;
 
   if (!member_id) {
     return res.status(400).json({ error: 'Member ID is required' });
+  }
+  if (!formData || typeof formData !== 'object' || Array.isArray(formData)) {
+    return res.status(400).json({ error: 'Valid PT form data is required' });
   }
 
   const connection = await db.getConnection();
@@ -13,19 +40,29 @@ async function savePTForm(req, res) {
 
     // 1. Save or update PT form data
     const [existing] = await connection.query(
-      'SELECT id FROM pt_forms WHERE member_id = ?',
+      'SELECT id, user_id, form_data FROM pt_forms WHERE member_id = ?',
       [member_id]
     );
+    let existingFormData = {};
+    if (existing.length > 0 && existing[0].form_data) {
+      existingFormData = typeof existing[0].form_data === 'string'
+        ? JSON.parse(existing[0].form_data)
+        : existing[0].form_data;
+      if (!existingFormData || typeof existingFormData !== 'object' || Array.isArray(existingFormData)) {
+        existingFormData = {};
+      }
+    }
+    const updatedFormData = mergeFormData(existingFormData, formData);
 
     if (existing.length > 0) {
       await connection.query(
         'UPDATE pt_forms SET form_data = ?, user_id = ? WHERE member_id = ?',
-        [JSON.stringify(formData), user_id || null, member_id]
+        [JSON.stringify(updatedFormData), user_id || existing[0].user_id || null, member_id]
       );
     } else {
       await connection.query(
         'INSERT INTO pt_forms (member_id, user_id, form_data) VALUES (?, ?, ?)',
-        [member_id, user_id || null, JSON.stringify(formData)]
+        [member_id, user_id || null, JSON.stringify(updatedFormData)]
       );
     }
 
@@ -51,19 +88,19 @@ async function savePTForm(req, res) {
       [
         completed ? 1 : 0,
         completed ? 1 : 0,
-        formData.name || null,
-        formData.email || null,
-        formData.phone || null,
-        formData.gender || null,
-        formData.height || null,
-        formData.weight || null,
-        formData.bmi || null,
-        formData.address || null,
-        formData.dob || null,
-        formData.age || null,
-        formData.occupation || null,
-        formData.fitness_goal || null,
-        formData.blood_group || null,
+        updatedFormData.name || null,
+        updatedFormData.email || null,
+        updatedFormData.phone || null,
+        updatedFormData.gender || null,
+        updatedFormData.height || null,
+        updatedFormData.weight || null,
+        updatedFormData.bmi || null,
+        updatedFormData.address || null,
+        updatedFormData.dob || null,
+        updatedFormData.age || null,
+        updatedFormData.occupation || null,
+        updatedFormData.fitness_goal || null,
+        updatedFormData.blood_group || null,
         member_id,
         member_id
       ]

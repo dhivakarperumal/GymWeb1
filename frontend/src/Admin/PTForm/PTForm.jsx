@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { AlertTriangle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -13,149 +13,359 @@ import FitnessScreening from './FitnessScreening';
 import FlexibilityAndMeasurements from './FlexibilityAndMeasurements';
 import SessionTracker from './SessionTracker';
 
+const normalizeTimeForInput = (value) => {
+  if (!value) return "";
+  const match = String(value).match(/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/);
+  if (!match) return "";
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return hours < 24 && minutes < 60
+    ? `${String(hours).padStart(2, "0")}:${match[2]}`
+    : "";
+};
+
+const normalizePTFormDates = (data) => ({
+  ...data,
+  ...(data.dob != null && { dob: normalizeDateForDateInput(data.dob) }),
+  ...(data.consent_date != null && {
+    consent_date: normalizeDateForDateInput(data.consent_date),
+  }),
+  ...(data.date != null && { date: normalizeDateForDateInput(data.date) }),
+  ...(Array.isArray(data.measurements) && {
+    measurements: data.measurements.map((measurement) => (
+      measurement && typeof measurement === "object"
+        ? { ...measurement, date: normalizeDateForDateInput(measurement.date) }
+        : measurement
+    )),
+  }),
+  ...(Array.isArray(data.sessions) && {
+    sessions: data.sessions.map((session) => (
+      session && typeof session === "object"
+        ? { ...session, date: normalizeDateForDateInput(session.date) }
+        : session
+    )),
+  }),
+});
+
+const parseConsentValue = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    return ["true", "1", "yes", "on", "accepted"].includes(value.trim().toLowerCase());
+  }
+  return false;
+};
+
+const parseSavedObject = (value) => {
+  if (!value) return {};
+  const parsed = typeof value === "string" ? JSON.parse(value) : value;
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+};
+
 const PTForm = () => {
+  const [searchParams] = useSearchParams();
+  const memberId = searchParams.get("member_id");
+  const isEditMode = searchParams.get("edit") === "true";
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(memberId));
+  const [loadError, setLoadError] = useState("");
+  const [activeMemberId, setActiveMemberId] = useState(memberId || "");
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [ptExpiredAlert, setPtExpiredAlert] = useState(false);
-  const [searchParams] = useSearchParams();
+  const savingRef = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { role, profileName } = useAuth();
-  const memberId = searchParams.get("member_id");
-  const isEditMode = searchParams.get("edit") === "true";
   const returnUrl = location.state?.returnUrl;
 
-  useEffect(() => {
-    if (memberId) {
-      const fetchMember = async () => {
-        setLoading(true);
+  const fetchMemberForm = useCallback(async (selectedMemberId) => {
+    if (!selectedMemberId) return;
+
+    const memberRes = await api.get(`/members/${selectedMemberId}`);
+    const member = memberRes.data;
+    if (!member) throw new Error("Member record was not returned by the server.");
+
+    const savedMemberId = member.id || selectedMemberId;
+    const [ptFormResult, assignmentsResult] = await Promise.allSettled([
+      api.get(`/pt-forms/${savedMemberId}`),
+      api.get("/assignments"),
+    ]);
+
+      const memberPrefill = {
+        member_id: savedMemberId,
+        u_id: member.u_id,
+        name: member.name || "",
+        email: member.email || member.user_email || "",
+        phone: member.phone || "",
+        location: member.location || "",
+        height: member.height || "",
+        weight: member.weight || "",
+        bmi: member.bmi || "",
+        dob: normalizeDateForDateInput(member.dob),
+        age: member.age || "",
+        address: member.address || "",
+        employer: member.employer || "",
+        occupation: member.occupation || "",
+        emergency_contact_name: member.emergency_contact_name || "",
+        emergency_contact_relationship: member.emergency_contact_relationship || "",
+        emergency_contact_address: member.emergency_contact_address || "",
+        emergency_contact_phone_home: member.emergency_contact_phone_home || "",
+        emergency_contact_phone_work: member.emergency_contact_phone_work || "",
+        fitness_goal: member.fitness_goal || "",
+        blood_group: member.blood_group || "",
+        gender: member.gender || "",
+        pt_join_date: member.pt_join_date || "",
+        pt_expiry_date: member.pt_expiry_date || "",
+        join_date: member.join_date || "",
+        expiry_date: member.expiry_date || "",
+      };
+
+      const isPtExpired =
+        member.pt_expiry_date &&
+        dayjs(member.pt_expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") < 0;
+
+      let savedData = {};
+      if (ptFormResult.status === "fulfilled") {
+        const formRecord = ptFormResult.value.data;
+        const rawFormData = formRecord?.form_data;
+        if (rawFormData) {
+          savedData = typeof rawFormData === "string"
+            ? JSON.parse(rawFormData)
+            : rawFormData;
+          if (!savedData || typeof savedData !== "object" || Array.isArray(savedData)) {
+            throw new Error("Saved PT form data has an invalid format.");
+          }
+        }
+      } else if (ptFormResult.reason?.response?.status !== 404) {
+        throw ptFormResult.reason;
+      }
+
+      const assignmentRows = assignmentsResult.status === "fulfilled"
+        ? (Array.isArray(assignmentsResult.value.data) ? assignmentsResult.value.data : [])
+        : [];
+      const assignmentLoadFailed = assignmentsResult.status === "rejected";
+      if (assignmentLoadFailed) {
+        console.error("Failed to load PT trainer assignment", assignmentsResult.reason);
+      }
+      const assignment =
+        assignmentRows.find((item) => String(item.gymMemberId) === String(memberPrefill.member_id)) ||
+        (member.u_id != null
+          ? assignmentRows.find((item) => String(item.userId) === String(member.u_id))
+          : null) ||
+        null;
+      const isRenewed =
+        savedData.pt_join_date &&
+        member.pt_join_date &&
+        !dayjs(savedData.pt_join_date).isSame(dayjs(member.pt_join_date), "day");
+      const savedOrMemberData = { ...savedData };
+      [
+        "name", "email", "phone", "location", "height", "weight", "bmi", "dob",
+        "age", "address", "employer", "occupation", "emergency_contact_name",
+        "emergency_contact_relationship", "emergency_contact_address",
+        "emergency_contact_phone_home", "emergency_contact_phone_work",
+        "fitness_goal", "blood_group", "gender", "pt_join_date", "pt_expiry_date",
+        "join_date", "expiry_date",
+      ].forEach((field) => {
+        if (savedOrMemberData[field] == null || savedOrMemberData[field] === "") {
+          savedOrMemberData[field] = memberPrefill[field];
+        }
+      });
+      const mergedData = normalizePTFormDates({
+        ...memberPrefill,
+        ...savedOrMemberData,
+        member_id: memberPrefill.member_id,
+        u_id: member.u_id || savedData.u_id || savedData.user_id,
+        trainer_name_assigned:
+          assignment?.trainerName ||
+          savedData.trainer_name_assigned ||
+          (role === "trainer" ? profileName || "" : ""),
+        session_time: assignment
+          ? normalizeTimeForInput(assignment.sessionTime)
+          : normalizeTimeForInput(savedData.session_time),
+        ...(isPtExpired || isRenewed ? { sessions: [] } : {}),
+      });
+
+      const savedConsentData = parseSavedObject(
+        savedData.consent_data ??
+        savedData.informed_consent ??
+        savedData.informedConsent ??
+        savedData.consent,
+      );
+      const memberConsentData = parseSavedObject(member.consent_data);
+      const firstDefined = (...values) =>
+        values.find((value) => value !== undefined && value !== null && value !== "");
+      const firstNonEmpty = (...values) =>
+        values.find((value) => value !== undefined && value !== null && value !== "");
+      const consentFields = {
+        participant_name: firstNonEmpty(
+          savedData.participant_name,
+          savedConsentData.participant_name,
+          member.participant_name,
+          memberConsentData.participant_name,
+          savedData.name,
+          member.name,
+        ),
+        consent_agree: firstDefined(
+          savedData.consent_agree,
+          savedData.agree,
+          savedConsentData.consent_agree,
+          savedConsentData.agree,
+          member.consent_agree,
+          member.agree,
+          memberConsentData.consent_agree,
+          memberConsentData.agree,
+        ),
+        consent_signature: firstNonEmpty(
+          savedData.consent_signature,
+          savedData.signature,
+          savedConsentData.consent_signature,
+          savedConsentData.signature,
+          member.consent_signature,
+          member.signature,
+          memberConsentData.consent_signature,
+          memberConsentData.signature,
+        ),
+        consent_date: firstNonEmpty(
+          savedData.consent_date,
+          savedData.date,
+          savedConsentData.consent_date,
+          savedConsentData.date,
+          member.consent_date,
+          member.date,
+          memberConsentData.consent_date,
+          memberConsentData.date,
+        ),
+        guardian_signature: firstNonEmpty(
+          savedData.guardian_signature,
+          savedConsentData.guardian_signature,
+          member.guardian_signature,
+          memberConsentData.guardian_signature,
+        ),
+        witness: firstNonEmpty(
+          savedData.witness,
+          savedConsentData.witness,
+          member.witness,
+          memberConsentData.witness,
+        ),
+      };
+      Object.entries(consentFields).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          mergedData[key] = key === "consent_date"
+            ? normalizeDateForDateInput(value)
+            : key === "consent_agree"
+              ? parseConsentValue(value)
+              : value;
+        }
+      });
+      const missingConsentFields = Object.entries(consentFields)
+        .filter(([, value]) => value === undefined || value === null || value === "")
+        .map(([key]) => key);
+
+      let consentLoadFailed = false;
+      if (missingConsentFields.length && (member.email || member.phone)) {
         try {
-          const res = await api.get(`/members/${memberId}`);
-          const data = res.data;
-          setFormData({
-            member_id: data.id,
-            u_id: data.u_id,
-            name: data.name || "",
-            email: data.email || data.user_email || "",
-            phone: data.phone || "",
-            location: data.location || "",
-            height: data.height || "",
-            weight: data.weight || "",
-            bmi: data.bmi || "",
-            dob: normalizeDateForDateInput(data.dob),
-            age: data.age || "",
-            address: data.address || "",
-            employer: data.employer || "",
-            occupation: data.occupation || "",
-            emergency_contact_name: data.emergency_contact_name || "",
-            emergency_contact_relationship: data.emergency_contact_relationship || "",
-            emergency_contact_address: data.emergency_contact_address || "",
-            emergency_contact_phone_home: data.emergency_contact_phone_home || "",
-            emergency_contact_phone_work: data.emergency_contact_phone_work || "",
-            fitness_goal: data.fitness_goal || "",
-            blood_group: data.blood_group || "",
-            gender: data.gender || "",
-            pt_join_date: data.pt_join_date || "",
-            pt_expiry_date: data.pt_expiry_date || "",
-            join_date: data.join_date || "",
-            expiry_date: data.expiry_date || ""
-          });
-
-          // Check if PT plan is expired
-          const isPtExpired =
-            data.pt_expiry_date &&
-            dayjs(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
-
-          if (isPtExpired) {
-            setPtExpiredAlert(true);
-          }
-
-          // Also try to fetch existing PT Form data if any
-          try {
-            const [ptRes, assignRes] = await Promise.all([
-              api.get(`/pt-forms/${memberId}`).catch(() => ({ data: null })),
-              api.get('/assignments').catch(() => ({ data: [] }))
-            ]);
-
-            let trainerName = "";
-            if (assignRes.data) {
-              const myAssign = assignRes.data.find(a =>
-                String(a.gymMemberId) === String(memberId) ||
-                String(a.userId) === String(data.u_id)
-              );
-              if (myAssign) trainerName = myAssign.trainerName;
-            }
-
-            if (ptRes.data && ptRes.data.form_data) {
-              const savedData = typeof ptRes.data.form_data === 'string'
-                ? JSON.parse(ptRes.data.form_data)
-                : ptRes.data.form_data;
-
-              const isRenewed = savedData.pt_join_date && data.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(data.pt_join_date), 'day');
-
-              if (isPtExpired || isRenewed) {
-                // If expired or renewed, retain all form data but reset the session tracker
-                setFormData(prev => ({
-                  ...prev,
-                  ...savedData,
-                  dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
-                  trainer_name_assigned: trainerName || savedData.trainer_name_assigned || (role === 'trainer' ? (profileName || "") : ""),
-                  sessions: []
-                }));
-              } else {
-                setFormData(prev => ({
-                  ...prev,
-                  ...savedData,
-                  dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
-                  trainer_name_assigned: trainerName || savedData.trainer_name_assigned || (role === 'trainer' ? (profileName || "") : "")
-                }));
+          const enquiryRes = await api.get("/followups");
+          const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
+          const enquiry = enquiries.find((item) =>
+            (member.email && item.email === member.email) ||
+            (member.phone && item.phone === member.phone)
+          );
+          if (enquiry) {
+            const linkedConsent = parseSavedObject(enquiry.consent_data);
+            const fallbackConsent = {
+              participant_name: linkedConsent.participant_name ?? enquiry.name,
+              consent_agree: firstDefined(linkedConsent.consent_agree, linkedConsent.agree),
+              consent_signature: firstDefined(linkedConsent.consent_signature, linkedConsent.signature),
+              consent_date: firstDefined(linkedConsent.consent_date, linkedConsent.date),
+              guardian_signature: linkedConsent.guardian_signature,
+              witness: linkedConsent.witness,
+            };
+            missingConsentFields.forEach((key) => {
+              if (fallbackConsent[key] !== undefined && fallbackConsent[key] !== null) {
+                mergedData[key] = key === "consent_date"
+                  ? normalizeDateForDateInput(fallbackConsent[key])
+                  : key === "consent_agree"
+                    ? parseConsentValue(fallbackConsent[key])
+                    : fallbackConsent[key];
               }
-            } else {
-              setFormData(prev => ({
-                ...prev,
-                trainer_name_assigned: trainerName || (role === 'trainer' ? (profileName || "") : "")
-              }));
-            }
-          } catch (err) {
-            console.log('Error fetching supplemental PT form data', err);
+            });
           }
+        } catch (error) {
+          console.error("Failed to load linked PT consent details", error);
+          consentLoadFailed = true;
+        }
+      }
 
-          try {
-            if (data.email || data.phone) {
-              const enquiryRes = await api.get('/followups');
-              const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
-              const enquiry = enquiries.find(e =>
-                (data.email && e.email === data.email) ||
-                (data.phone && e.phone === data.phone)
-              );
-              if (enquiry) {
-                const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
-                  ? JSON.parse(enquiry.consent_data)
-                  : enquiry.consent_data || {};
-                setFormData(prev => ({
-                  ...prev,
-                  participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
-                  consent_agree: consentData.agree || prev.consent_agree,
-                  consent_signature: consentData.signature || prev.consent_signature,
-                  consent_date: consentData.date || prev.consent_date,
-                  guardian_signature: consentData.guardian_signature || prev.guardian_signature,
-                  witness: consentData.witness || prev.witness,
-                }));
-              }
-            }
-          } catch (enqErr) {
-            console.log('No linked enquiry found for this member');
-          }
-        } catch (err) {
-          console.error("Failed to pre-fill member data", err);
-        } finally {
+      return {
+        formData: mergedData,
+        assignment,
+        isPtExpired: Boolean(isPtExpired),
+        missingPTForm: ptFormResult.status === "rejected",
+        assignmentLoadFailed,
+        consentLoadFailed,
+      };
+  }, [profileName, role]);
+
+  const applyLoadedMemberForm = useCallback((result) => {
+    setFormData(result.formData);
+    setSelectedAssignment(result.assignment);
+    setPtExpiredAlert(result.isPtExpired);
+    setLoadError("");
+    if (result.missingPTForm && isEditMode) {
+      toast("No saved PT form was found. Member details have been loaded.");
+    }
+    if (result.assignmentLoadFailed) {
+      toast.error("Could not load the assigned PT session time.");
+    }
+    if (result.consentLoadFailed) {
+      toast.error("Could not load linked consent details.");
+    }
+  }, [isEditMode]);
+
+  const handleLoadFailure = useCallback((error) => {
+    console.error("Failed to load member PT form", error);
+    const message = error.response?.data?.error || error.message || "Unable to load the member's PT form.";
+    setLoadError(message);
+    toast.error(message);
+  }, []);
+
+  const loadMemberForm = useCallback(async (selectedMemberId) => {
+    if (!selectedMemberId) return;
+    setActiveMemberId(selectedMemberId);
+    setLoading(true);
+    setLoadError("");
+    try {
+      applyLoadedMemberForm(await fetchMemberForm(selectedMemberId));
+    } catch (error) {
+      handleLoadFailure(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [applyLoadedMemberForm, fetchMemberForm, handleLoadFailure]);
+
+  useEffect(() => {
+    if (!memberId) return undefined;
+    let isActive = true;
+
+    fetchMemberForm(memberId)
+      .then((result) => {
+        if (isActive) applyLoadedMemberForm(result);
+      })
+      .catch((error) => {
+        if (isActive) handleLoadFailure(error);
+      })
+      .finally(() => {
+        if (isActive) {
+          setActiveMemberId(memberId);
           setLoading(false);
         }
-      };
-      fetchMember();
-    }
-  }, [memberId]);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [memberId, fetchMemberForm, applyLoadedMemberForm, handleLoadFailure]);
 
   const steps = [
     { id: 1, name: 'Enquiry Form', component: Enquiry },
@@ -173,12 +383,14 @@ const PTForm = () => {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     } else {
-      const targetMemberId = memberId || updatedData.member_id;
+      const targetMemberId = updatedData.member_id || memberId;
       if (!targetMemberId) {
         toast.error('Please select a member before completing the PT form.');
         return;
       }
+      if (savingRef.current) return;
 
+      savingRef.current = true;
       setLoading(true);
       try {
         const payload = {
@@ -188,7 +400,51 @@ const PTForm = () => {
           completed: true
         };
 
-        await api.post("/pt-forms", payload);
+        const saveResponse = await api.post("/pt-forms", payload);
+        if (saveResponse.data?.success === false) {
+          throw new Error(saveResponse.data.message || "The PT form was not saved.");
+        }
+        setFormData(updatedData);
+        try {
+          const refreshedResponse = await api.get(`/pt-forms/${targetMemberId}`);
+          const refreshedFormData = parseSavedObject(refreshedResponse.data?.form_data);
+          setFormData((previous) => ({ ...previous, ...refreshedFormData }));
+        } catch (refreshError) {
+          console.error("PT form saved but could not be reloaded", refreshError);
+          toast.error(
+            `PT form was saved, but reloading it failed: ${
+              refreshError.response?.data?.error || refreshError.message
+            }`,
+          );
+        }
+
+        const updatedSessionTime = normalizeTimeForInput(updatedData.session_time);
+        if (
+          selectedAssignment &&
+          updatedSessionTime !== normalizeTimeForInput(selectedAssignment.sessionTime)
+        ) {
+          try {
+            await api.post("/assignments", {
+              assignments: [{
+                ...selectedAssignment,
+                sessionTime: updatedSessionTime || null,
+              }],
+            });
+            setSelectedAssignment((previous) => ({
+              ...previous,
+              sessionTime: updatedSessionTime || null,
+            }));
+          } catch (assignmentError) {
+            console.error("PT form saved, but assigned session time update failed", assignmentError);
+            toast.error(
+              `PT form was saved, but session time was not updated: ${
+                assignmentError.response?.data?.error || assignmentError.message
+              }`,
+            );
+            return;
+          }
+        }
+
         toast.success(isEditMode ? "PT Form updated successfully!" : "PT Registration completed and stored successfully!");
         const basePath = role === 'trainer' ? '/trainer' : '/admin';
         if (isEditMode && targetMemberId) {
@@ -202,8 +458,14 @@ const PTForm = () => {
         }
       } catch (err) {
         console.error("Save PT Form error:", err);
-        toast.error(err.response?.data?.error || "Failed to save registration");
+        toast.error(
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to save registration",
+        );
       } finally {
+        savingRef.current = false;
         setLoading(false);
       }
     }
@@ -216,111 +478,10 @@ const PTForm = () => {
   };
 
   const handleMemberSelected = async (memberId) => {
+    setActiveMemberId(memberId);
+    setLoadError("");
     setLoading(true);
-    try {
-      const res = await api.get(`/members/${memberId}`);
-      const data = res.data;
-      const memberPrefill = {
-        member_id: data.id,
-        u_id: data.u_id,
-        name: data.name || "",
-        email: data.email || data.user_email || "",
-        phone: data.phone || "",
-        location: data.location || "",
-        height: data.height || "",
-        weight: data.weight || "",
-        bmi: data.bmi || "",
-        dob: normalizeDateForDateInput(data.dob),
-        age: data.age || "",
-        address: data.address || "",
-        employer: data.employer || "",
-        occupation: data.occupation || "",
-        emergency_contact_name: data.emergency_contact_name || "",
-        emergency_contact_relationship: data.emergency_contact_relationship || "",
-        emergency_contact_address: data.emergency_contact_address || "",
-        emergency_contact_phone_home: data.emergency_contact_phone_home || "",
-        emergency_contact_phone_work: data.emergency_contact_phone_work || "",
-        fitness_goal: data.fitness_goal || "",
-        blood_group: data.blood_group || "",
-        gender: data.gender || "",
-        pt_join_date: data.pt_join_date || "",
-        pt_expiry_date: data.pt_expiry_date || "",
-        join_date: data.join_date || "",
-        expiry_date: data.expiry_date || ""
-      };
-
-      const isPtExpired =
-        data.pt_expiry_date &&
-        dayjs(data.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
-
-      if (isPtExpired) {
-        setPtExpiredAlert(true);
-      } else {
-        setPtExpiredAlert(false);
-      }
-
-      setFormData(memberPrefill);
-
-      try {
-        const ptRes = await api.get(`/pt-forms/${memberId}`);
-        if (ptRes.data && ptRes.data.form_data) {
-          const savedData = typeof ptRes.data.form_data === 'string'
-            ? JSON.parse(ptRes.data.form_data)
-            : ptRes.data.form_data;
-          
-          const isRenewed = savedData.pt_join_date && data.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(data.pt_join_date), 'day');
-
-          if (isPtExpired || isRenewed) {
-            setFormData(prev => ({
-              ...prev,
-              ...savedData,
-              dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
-              sessions: []
-            }));
-          } else {
-            setFormData(prev => ({
-              ...prev,
-              ...savedData,
-              dob: savedData.dob ? normalizeDateForDateInput(savedData.dob) : prev.dob,
-            }));
-          }
-        }
-
-      } catch (err) {
-        console.log('No saved PT form for selected member');
-      }
-
-      try {
-        if (memberPrefill.email || memberPrefill.phone) {
-          const enquiryRes = await api.get('/followups');
-          const enquiries = Array.isArray(enquiryRes.data) ? enquiryRes.data : [];
-          const enquiry = enquiries.find(e =>
-            (memberPrefill.email && e.email === memberPrefill.email) ||
-            (memberPrefill.phone && e.phone === memberPrefill.phone)
-          );
-          if (enquiry) {
-            const consentData = enquiry.consent_data && typeof enquiry.consent_data === 'string'
-              ? JSON.parse(enquiry.consent_data)
-              : enquiry.consent_data || {};
-            setFormData(prev => ({
-              ...prev,
-              participant_name: consentData.participant_name || enquiry.name || prev.participant_name,
-              consent_agree: consentData.agree || prev.consent_agree,
-              consent_signature: consentData.signature || prev.consent_signature,
-              consent_date: consentData.date || prev.consent_date,
-              guardian_signature: consentData.guardian_signature || prev.guardian_signature,
-              witness: consentData.witness || prev.witness,
-            }));
-          }
-        }
-      } catch (enqErr) {
-        console.log('No linked enquiry found for selected member');
-      }
-    } catch (err) {
-      console.error('Failed to pre-fill member data on selection', err);
-    } finally {
-      setLoading(false);
-    }
+    await loadMemberForm(memberId);
   };
 
   const CurrentComponent = steps[currentStep - 1].component;
@@ -373,6 +534,23 @@ const PTForm = () => {
               title="Dismiss"
             >
               <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {loadError && (
+          <div className="max-w-6xl mx-auto mb-6 flex items-center justify-between gap-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <span>{loadError}</span>
+            <button
+              type="button"
+              onClick={() => {
+                setLoadError("");
+                setLoading(true);
+                loadMemberForm(activeMemberId);
+              }}
+              className="shrink-0 rounded-lg bg-red-500/20 px-3 py-1.5 font-semibold hover:bg-red-500/30"
+            >
+              Retry
             </button>
           </div>
         )}
@@ -431,10 +609,14 @@ const PTForm = () => {
 
       {/* Form Content */}
       <div className="max-w-6xl mx-auto">
-        {loading ? (
+        {loading || (memberId && activeMemberId !== memberId) ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
-            <p className="text-white/40 text-sm animate-pulse">Pre-filling member data...</p>
+            <p className="text-white/40 text-sm animate-pulse">Loading member and saved PT form data...</p>
+          </div>
+        ) : loadError ? (
+          <div className="rounded-2xl border border-red-500/20 bg-white/5 p-8 text-center text-white/70">
+            The form is unavailable until the saved data can be loaded.
           </div>
         ) : (
           <CurrentComponent
@@ -445,6 +627,7 @@ const PTForm = () => {
             isFirstStep={currentStep === 1}
             isLastStep={currentStep === steps.length}
             trainerSignReadOnly={true}
+            canEditSessionTime={Boolean(selectedAssignment)}
           />
         )}
       </div>
