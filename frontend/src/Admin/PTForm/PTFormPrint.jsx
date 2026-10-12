@@ -34,24 +34,15 @@ const PTFormPrint = () => {
   }, [id]);
 
   useEffect(() => {
-    const handleAfterPrint = () => {
-      navigate('/admin/members');
-    };
-
-    window.addEventListener('afterprint', handleAfterPrint);
-
     if (!loading && member && ptForm && !hideControls) {
       const timer = setTimeout(() => {
         window.print();
       }, 800);
       return () => {
         clearTimeout(timer);
-        window.removeEventListener('afterprint', handleAfterPrint);
       };
     }
-
-    return () => window.removeEventListener('afterprint', handleAfterPrint);
-  }, [loading, member, ptForm, navigate, hideControls]);
+  }, [loading, member, ptForm, hideControls]);
 
   if (loading) return <div className="p-20 text-center">Loading form details...</div>;
   if (!member || !ptForm) return <div className="p-20 text-center">Form not found.</div>;
