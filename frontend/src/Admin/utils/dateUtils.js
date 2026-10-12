@@ -43,9 +43,10 @@ export const filterByDateRange = (data, dateField, type, customRange = null) => 
   
   const { start, end } = getDateRangeBounds(type, customRange);
   if (!start || !end) return data;
+  if (!start.isValid() || !end.isValid()) return [];
 
   return data.filter(item => {
     const d = dayjs(item[dateField]);
-    return !d.isBefore(start) && !d.isAfter(end);
+    return d.isValid() && !d.isBefore(start) && !d.isAfter(end);
   });
 };

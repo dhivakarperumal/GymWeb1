@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Eye, Edit, X, Trash2, Search, ChevronDown, CreditCard, Plus, LayoutGrid, List, ChevronLeft, ChevronRight, FileDown, FileUp, Download, Upload, Phone } from "lucide-react";
+import dayjs from "dayjs";
 import api from "../../api";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
@@ -46,18 +47,8 @@ const formatDuesEntry = (due) => {
 
 // Calculate next payment date based on the initial payment date or membership creation date
 const calculateNextPaymentDate = (membership) => {
-  // Get the base date - either paymentDate or createdAt
-  const baseDate = membership.paymentDate
-    ? new Date(membership.paymentDate)
-    : membership.createdAt
-      ? new Date(membership.createdAt)
-      : new Date();
-
-  // Add 30 days to the base date
-  const nextDueDate = new Date(baseDate);
-  nextDueDate.setDate(nextDueDate.getDate() + 30);
-
-  return nextDueDate;
+  const baseDate = membership.paymentDate || membership.createdAt;
+  return (baseDate ? dayjs(baseDate) : dayjs()).add(30, "day").toDate();
 };
 
 const EMIList = () => {
@@ -225,8 +216,23 @@ const EMIList = () => {
       (statusFilter === "pending" && currentStatus === "pending") ||
       (statusFilter === "completed" && currentStatus === "completed");
 
-    // Date Range Filter
-    const matchesDate = filterByDateRange([m], 'createdAt', dateRange.type, dateRange.range).length > 0;
+    // Match the record/payment date or its scheduled next payment date.
+    const dateCandidates = [m.createdAt, m.paymentDate];
+    if ((m.paymentDate || m.createdAt) && getStatusKey(m) === "pending") {
+      dateCandidates.push(calculateNextPaymentDate(m));
+    }
+    const matchesDate =
+      dateRange.type === "All Time" ||
+      dateCandidates.some(
+        (date) =>
+          date &&
+          filterByDateRange(
+            [{ date }],
+            "date",
+            dateRange.type,
+            dateRange.range,
+          ).length > 0,
+      );
 
     const assignedTrainerId = getAssignedTrainerId(m);
     const matchesTrainer =
@@ -512,7 +518,12 @@ const EMIList = () => {
             />
           </div>
 
-          <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+          <DateRangeFilter
+            onRangeChange={(type, range) => {
+              setDateRange({ type, range });
+              setCurrentPage(1);
+            }}
+          />
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
