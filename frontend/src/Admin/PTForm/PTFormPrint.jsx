@@ -60,6 +60,8 @@ const PTFormPrint = () => {
     window.print();
   };
 
+  const participantName = ptForm.participant_name || ptForm.name || member.name || '';
+
   return (
     <div className={`min-h-screen bg-white text-black font-serif ${hideControls ? 'p-0' : 'p-4 sm:p-10'}`}>
       {/* Control Panel - Hidden when printing or in modal */}
@@ -247,11 +249,12 @@ const PTFormPrint = () => {
         <div className="mt-12 pt-8 border-t-2 border-black page-break-before">
           <h2 className="text-xl font-bold mb-4 uppercase text-center">Informed Consent & Declaration</h2>
           <p className="text-xs leading-relaxed italic">
-            I, <span className="font-bold underline">{ptForm.participant_name}</span>, have given my consent to participate in the physical fitness evaluation program. I recognize that exercise carries some risk and I certify that I know of no medical problem that would increase my risk.
+            I, <span className="font-bold underline">{participantName}</span>, have given my consent to participate in the physical fitness evaluation program. I recognize that exercise carries some risk and I certify that I know of no medical problem that would increase my risk.
           </p>
           <div className="grid grid-cols-2 gap-20 mt-16 text-sm">
-            <div className="text-center border-t border-black pt-2">
-              <p className="font-bold italic">{ptForm.signature}</p>
+            <div className="text-center">
+              <p className="font-bold mb-1">{participantName}</p>
+              <div className="border-t border-black" />
               <p className="uppercase">Participant Signature</p>
             </div>
             <div className="text-center border-t border-black pt-2">
