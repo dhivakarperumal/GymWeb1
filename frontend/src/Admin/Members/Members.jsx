@@ -13,19 +13,7 @@ import "aos/dist/aos.css";
 import dayjs from "dayjs";
 
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
-
-const getYouTubeEmbedUrl = (url) => {
-  if (!url) return "";
-  let videoId = "";
-  if (url.includes("youtube.com/shorts/")) {
-    videoId = url.split("shorts/")[1].split("?")[0];
-  } else if (url.includes("youtube.com/watch?v=")) {
-    videoId = url.split("v=")[1].split("&")[0];
-  } else if (url.includes("youtu.be/")) {
-    videoId = url.split("youtu.be/")[1].split("?")[0];
-  }
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
-};
+import AdminMemberWorkoutPlan from "./AdminMemberWorkoutPlan";
 
 const formatDobToDDMMYYYY = (dateString) => {
   if (!dateString || dateString.includes('0000-00-00') || dateString.includes('1899')) return "-";
@@ -161,9 +149,8 @@ const Members = () => {
   const isTrainer = role === "trainer" || location.pathname.startsWith("/trainer");
   const [ptViewMemberId, setPtViewMemberId] = useState(null);
   const [isPtModalOpen, setIsPtModalOpen] = useState(false);
-  const [workoutMemberId, setWorkoutMemberId] = useState(null);
+  const [workoutMember, setWorkoutMember] = useState(null);
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
-  const [workoutData, setWorkoutData] = useState([]);
   const [dietMemberId, setDietMemberId] = useState(null);
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
   const [dietData, setDietData] = useState(null);
@@ -328,25 +315,6 @@ const Members = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || "Delete failed");
-    }
-  };
-
-  // 💪 FETCH AND DISPLAY WORKOUT DATA
-  const handleOpenWorkout = (memberId) => {
-    setWorkoutMemberId(memberId);
-    setIsWorkoutModalOpen(true);
-    fetchWorkoutData(memberId);
-  };
-
-  const fetchWorkoutData = async (memberId) => {
-    try {
-      const res = await api.get(`/workouts?memberId=${memberId}`);
-      const workouts = Array.isArray(res.data) ? res.data : [];
-      setWorkoutData(workouts);
-    } catch (err) {
-      console.error("Workout fetch error:", err);
-      toast.error("Failed to load workout data");
-      setWorkoutData([]);
     }
   };
 
@@ -549,16 +517,8 @@ const Members = () => {
   };
 
   // 🏋️ FETCH WORKOUTS
-  const openWorkoutModal = async (memberId) => {
-    setWorkoutMemberId(memberId);
-    try {
-      const res = await api.get(`/workouts?memberId=${memberId}`);
-      const workouts = Array.isArray(res.data) ? res.data : [];
-      setWorkoutData(workouts);
-    } catch (err) {
-      console.error("Error fetching workouts:", err);
-      setWorkoutData([]);
-    }
+  const openWorkoutModal = (member) => {
+    setWorkoutMember(member);
     setIsWorkoutModalOpen(true);
   };
 
@@ -996,7 +956,7 @@ const Members = () => {
                               </button>
                             )}
                             <button
-                              onClick={() => { setExpandedActionRow(null); openWorkoutModal(m.id || m.member_id); }}
+                              onClick={() => { setExpandedActionRow(null); openWorkoutModal(m); }}
                               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-green-500/20 transition"
                             >
                               <Dumbbell size={15} className="text-green-400" />
@@ -1116,7 +1076,7 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => openWorkoutModal(m.id || m.member_id)}
+                        onClick={() => openWorkoutModal(m)}
                         className="p-2 rounded-lg bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition"
                         title="View Workout"
                       >
@@ -1406,7 +1366,7 @@ const Members = () => {
       {/* 🏋️ WORKOUT MODAL */}
       {isWorkoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#1a1625] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className="bg-[#1a1625] border border-white/10 w-full max-w-5xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
             {/* Modal Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
               <div className="flex items-center gap-3">
@@ -1415,7 +1375,7 @@ const Members = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">Workout Plan</h3>
-                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{workoutMemberId}</p>
+                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{workoutMember?.id || workoutMember?.member_id}</p>
                 </div>
               </div>
               <button
@@ -1427,110 +1387,13 @@ const Members = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-                  {workoutData && workoutData.length > 0 ? (
-                <div className="space-y-4">
-                  {workoutData.map((workout, idx) => {
-                    // Normalize possible shapes: workout may be a single exercise object
-                    // or an object like { time, items: [...] } (collection). Handle both safely.
-                    const items = Array.isArray(workout.items)
-                      ? workout.items
-                      : Array.isArray(workout.exercises)
-                      ? workout.exercises
-                      : Array.isArray(workout.days)
-                      ? workout.days
-                      : workout.days && typeof workout.days === 'object'
-                      ? Object.values(workout.days).flat()
-                      : null;
-
-                    if (items && items.length > 0) {
-                      return (
-                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                          <h4 className="text-lg font-bold text-white mb-2">{workout.name || workout.title || `Workout ${idx + 1}`}</h4>
-                          <div className="space-y-2">
-                            {items.map((it, i) => (
-                              <div key={i} className="bg-white/2 p-3 rounded grid grid-cols-1 md:grid-cols-[120px_minmax(0,1fr)] gap-3 items-start">
-                                <div className="w-full md:w-28 h-20 bg-black/10 rounded overflow-hidden flex items-center justify-center border border-white/5">
-                                  {it.media ? (
-                                    it.media.includes('youtube.com') || it.media.includes('youtu.be') ? (
-                                      <iframe
-                                        src={getYouTubeEmbedUrl(it.media)}
-                                        title={it.name || it.exerciseName || 'Preview'}
-                                        className="w-full h-full border-0 pointer-events-none"
-                                      />
-                                    ) : it.media.match(/\.(mp4|webm|ogg)$/i) || it.media.startsWith('data:video') ? (
-                                      <video src={it.media} className="w-full h-full object-cover" controls />
-                                    ) : (
-                                      <img src={it.media} alt={it.name || it.food || 'media'} className="w-full h-full object-cover" />
-                                    )
-                                  ) : (
-                                    <div className="text-white/30 text-sm">No media</div>
-                                  )}
-                                </div>
-
-                                <div>
-                                  <div className="flex items-start justify-between">
-                                    <div>
-                                      <div className="font-semibold text-white">{it.name || it.exerciseName || it.food || `Item ${i + 1}`}</div>
-                                      <div className="text-xs text-gray-400 mt-1">{it.notes && (typeof it.notes === 'string' ? it.notes : JSON.stringify(it.notes))}</div>
-                                    </div>
-                                   
-                                  </div>
-
-                                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-400">
-                                    {it.time && <div><div className="text-white/40">Time</div><div className="text-white font-bold">{it.time}</div></div>}
-                                    {it.sets && <div><div className="text-white/40">Sets</div><div className="text-white font-bold">{it.sets}</div></div>}
-                                    {it.count && <div><div className="text-white/40">Reps/Count</div><div className="text-white font-bold">{it.count}</div></div>}
-                                    {it.type && <div><div className="text-white/40">Type</div><div className="text-white font-bold">{it.type}</div></div>}
-                                    {it.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="text-white font-bold">{it.massGain}</div></div>}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // Fallback: treat as single workout object
-                    return (
-                      <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                        <h4 className="text-lg font-bold text-white mb-2">{workout.exerciseName || workout.name || "Unnamed Exercise"}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-[120px_minmax(0,1fr)] gap-4">
-                              <div className="w-full md:w-28 h-28 bg-black/10 rounded overflow-hidden flex items-center justify-center border border-white/5">
-                                {workout.media ? (
-                                  workout.media.includes('youtube.com') || workout.media.includes('youtu.be') ? (
-                                    <iframe src={getYouTubeEmbedUrl(workout.media)} title={workout.exerciseName || workout.name} className="w-full h-full border-0 pointer-events-none" />
-                                  ) : workout.media.match(/\.(mp4|webm|ogg)$/i) || workout.media.startsWith('data:video') ? (
-                                    <video src={workout.media} className="w-full h-full object-cover" controls />
-                                  ) : (
-                                    <img src={workout.media} alt={workout.exerciseName || workout.name || 'exercise'} className="w-full h-full object-cover" />
-                                  )
-                                ) : (
-                                  <div className="text-white/30 text-sm">No media</div>
-                                )}
-                              </div>
-
-                              <div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                                  {workout.time && <div><div className="text-white/40">Time</div><div className="text-white font-bold">{workout.time}</div></div>}
-                                  {workout.sets && <div><div className="text-white/40">Sets</div><div className="text-white font-bold">{workout.sets}</div></div>}
-                                  {workout.count && <div><div className="text-white/40">Reps</div><div className="text-white font-bold">{workout.count}</div></div>}
-                                  {workout.type && <div><div className="text-white/40">Type</div><div className="text-white font-bold">{workout.type}</div></div>}
-                                  {workout.massGain && <div className="col-span-2"><div className="text-white/40">Muscle Type</div><div className="text-white font-bold">{workout.massGain}</div></div>}
-                                </div>
-                                {workout.notes && <div className="mt-3 text-white/80 text-sm">{typeof workout.notes === 'string' ? workout.notes : JSON.stringify(workout.notes)}</div>}
-                              </div>
-                            </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Dumbbell size={48} className="text-white/20 mb-3" />
-                  <p className="text-white/40 text-sm">No workout plan assigned</p>
-                </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6">
+              {workoutMember && (
+                <AdminMemberWorkoutPlan
+                  key={workoutMember.id || workoutMember.member_id}
+                  member={workoutMember}
+                  creator={user}
+                />
               )}
             </div>
 
