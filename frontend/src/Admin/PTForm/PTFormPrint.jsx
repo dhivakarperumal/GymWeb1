@@ -61,6 +61,10 @@ const PTFormPrint = () => {
   };
 
   const participantName = ptForm.participant_name || ptForm.name || member.name || '';
+  const consentDate = ptForm.date || ptForm.consent_date;
+  const formattedConsentDate = consentDate && dayjs(consentDate).isValid()
+    ? dayjs(consentDate).format('DD/MM/YYYY')
+    : '';
 
   return (
     <div className={`min-h-screen bg-white text-black font-serif ${hideControls ? 'p-0' : 'p-4 sm:p-10'}`}>
@@ -257,8 +261,9 @@ const PTFormPrint = () => {
               <div className="border-t border-black" />
               <p className="uppercase">Participant Signature</p>
             </div>
-            <div className="text-center border-t border-black pt-2">
-              <p className="font-bold">{dayjs(ptForm.date).format('DD/MM/YYYY')}</p>
+            <div className="text-center">
+              <p className="font-bold mb-1">{formattedConsentDate}</p>
+              <div className="border-t border-black" />
               <p className="uppercase">Date</p>
             </div>
           </div>
