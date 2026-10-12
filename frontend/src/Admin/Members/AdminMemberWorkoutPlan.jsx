@@ -100,6 +100,23 @@ const memberName = (member) => member?.name || member?.username || "Member";
 const memberEmail = (member) => member?.email || member?.user_email || "";
 const memberMobile = (member) => member?.phone || member?.mobile || member?.user_mobile || "";
 
+const workoutExportColumns = [
+  "Member ID",
+  "Member Name",
+  "Mobile",
+  "Training Level",
+  "Workout Goal",
+  "Duration (Weeks)",
+  "Day",
+  "Time",
+  "Type",
+  "Exercise Name",
+  "Sets",
+  "Count",
+  "Muscle Type",
+  "Media",
+];
+
 const AdminMemberWorkoutPlan = ({ member, creator }) => {
   const memberId = member?.id || member?.member_id;
   const [plans, setPlans] = useState([]);
@@ -310,40 +327,37 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
   };
 
   const exportPlan = () => {
-    if (!plan) {
-      toast.error("There is no workout plan to export.");
-      return;
-    }
     const rows = [];
-    sortedDays(normalizeDays(plan.days)).forEach((day) => {
-      normalizeDays(plan.days)[day].forEach((exercise) => {
-        rows.push({
-          "Member ID": memberId,
-          "Member Name": memberName(member),
-          Mobile: memberMobile(member),
-          "Training Level": plan.level || "Beginner",
-          "Workout Goal": plan.goal || "",
-          "Duration (Weeks)": plan.duration_weeks || Math.ceil(Object.keys(normalizeDays(plan.days)).length / 7),
-          Day: day,
-          Time: exercise.time || "",
-          Type: exercise.type || "Weight Training",
-          "Exercise Name": exercise.name || "",
-          Sets: exercise.sets || "",
-          Count: exercise.count || "",
-          "Muscle Type": exercise.massGain || "",
-          Media: exercise.media || "",
+    if (plan) {
+      const days = normalizeDays(plan.days);
+      sortedDays(days).forEach((day) => {
+        days[day].forEach((exercise) => {
+          rows.push({
+            "Member ID": memberId,
+            "Member Name": memberName(member),
+            Mobile: memberMobile(member),
+            "Training Level": plan.level || "Beginner",
+            "Workout Goal": plan.goal || "",
+            "Duration (Weeks)": plan.duration_weeks || Math.ceil(Object.keys(days).length / 7),
+            Day: day,
+            Time: exercise.time || "",
+            Type: exercise.type || "Weight Training",
+            "Exercise Name": exercise.name || "",
+            Sets: exercise.sets || "",
+            Count: exercise.count || "",
+            "Muscle Type": exercise.massGain || "",
+            Media: exercise.media || "",
+          });
         });
       });
-    });
-    if (!rows.length) {
-      toast.error("The workout plan has no exercises to export.");
-      return;
     }
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const worksheet = rows.length
+      ? XLSX.utils.json_to_sheet(rows, { header: workoutExportColumns })
+      : XLSX.utils.aoa_to_sheet([workoutExportColumns]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Member Workout Plan");
     XLSX.writeFile(workbook, `Workout_Plan_${memberId}.xlsx`);
-    toast.success("Workout plan exported.");
+    toast.success(rows.length ? "Workout plan exported." : "Blank workout template downloaded.");
   };
 
   const importPlan = async (event) => {
@@ -457,7 +471,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
           <FileUp size={16} /> Import
           <input type="file" accept=".xlsx,.xls" className="hidden" onChange={importPlan} />
         </label>
-        <button onClick={exportPlan} disabled={!plan} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">
+        <button onClick={exportPlan} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10">
           <Download size={16} /> Export
         </button>
         {plan && !editing && (

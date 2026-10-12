@@ -103,6 +103,21 @@ const memberEmailOf = (member) => member?.email || member?.user_email || "";
 const memberMobileOf = (member) => member?.phone || member?.mobile || member?.user_mobile || "";
 const normalizeMobile = (value) => String(value || "").replace(/\D/g, "").replace(/^0+/, "");
 
+const dietExportColumns = [
+  "Diet Title",
+  "Member ID",
+  "Member Name",
+  "Mobile",
+  "Member Weight (kg)",
+  "Duration (Days)",
+  "Day",
+  "Meal",
+  "time",
+  "Food",
+  "Qty",
+  "Kcal",
+];
+
 const matchesMember = (plan, member) => {
   const selectedId = String(memberIdOf(member));
   const savedMemberId = getPlanMemberId(plan);
@@ -351,48 +366,44 @@ const AdminMemberDietPlan = ({ member, creator }) => {
   };
 
   const exportPlan = () => {
-    if (!plan) {
-      toast.error("No diet plan is available to export.");
-      return;
-    }
     const rows = [];
-    const savedForm = createPlanForm(plan);
-    savedForm.days.forEach((day, dayIndex) => {
-      meals.forEach((meal) => {
-        const mealData = day[meal];
-        const items = mealData.items.length ? mealData.items : [{ food: "", quantity: "", calories: "" }];
-        items.forEach((item) => {
-          if (item.food || item.quantity || item.calories || mealData.time) {
-            rows.push({
-              "Diet Title": plan.title || "",
-              "Member ID": selectedMemberId,
-              "Member Name": memberNameOf(member),
-              Mobile: memberMobileOf(member),
-              "Member Weight (kg)": plan.member_weight || "",
-              "Duration (Days)": plan.duration || savedForm.days.length,
-              Day: dayIndex + 1,
-              Meal: meal,
-              time: normalizeTime(mealData.time),
-              Food: item.food || "",
-              Qty: item.quantity || "",
-              Kcal: item.calories || "",
-            });
-          }
+    if (plan) {
+      const savedForm = createPlanForm(plan);
+      savedForm.days.forEach((day, dayIndex) => {
+        meals.forEach((meal) => {
+          const mealData = day[meal];
+          const items = mealData.items.length ? mealData.items : [{ food: "", quantity: "", calories: "" }];
+          items.forEach((item) => {
+            if (item.food || item.quantity || item.calories || mealData.time) {
+              rows.push({
+                "Diet Title": plan.title || "",
+                "Member ID": selectedMemberId,
+                "Member Name": memberNameOf(member),
+                Mobile: memberMobileOf(member),
+                "Member Weight (kg)": plan.member_weight || "",
+                "Duration (Days)": plan.duration || savedForm.days.length,
+                Day: dayIndex + 1,
+                Meal: meal,
+                time: normalizeTime(mealData.time),
+                Food: item.food || "",
+                Qty: item.quantity || "",
+                Kcal: item.calories || "",
+              });
+            }
+          });
         });
+        if (day.notes) {
+          rows.push({ Day: dayIndex + 1, Meal: "Notes", time: "", Food: day.notes, Qty: "", Kcal: "" });
+        }
       });
-      if (day.notes) {
-        rows.push({ Day: dayIndex + 1, Meal: "Notes", Time: "", Food: day.notes, Qty: "", Kcal: "" });
-      }
-    });
-    if (!rows.length) {
-      toast.error("The diet plan has no meal details to export.");
-      return;
     }
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const worksheet = rows.length
+      ? XLSX.utils.json_to_sheet(rows, { header: dietExportColumns })
+      : XLSX.utils.aoa_to_sheet([dietExportColumns]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan");
     XLSX.writeFile(workbook, `Diet_Plan_${selectedMemberId}.xlsx`);
-    toast.success("Diet plan exported.");
+    toast.success(rows.length ? "Diet plan exported." : "Blank diet template downloaded.");
   };
 
   const importPlan = async (event) => {
