@@ -257,6 +257,19 @@ const AdminMemberDietPlan = ({ member, creator }) => {
     }));
   };
 
+  const beginAddingDay = () => {
+    const currentForm = createPlanForm(plan);
+    if (currentForm.days.length >= 60) {
+      toast.error("Maximum 60 days allowed.");
+      return;
+    }
+    setForm({
+      ...currentForm,
+      days: [...currentForm.days, createDay()],
+    });
+    setEditing(true);
+  };
+
   const addDay = () => {
     if (form.days.length >= 60) {
       toast.error("Maximum 60 days allowed.");
@@ -491,9 +504,14 @@ const AdminMemberDietPlan = ({ member, creator }) => {
           <Download size={16} /> Export
         </button>
         {plan && !editing && (
-          <button onClick={() => { setForm(createPlanForm(plan)); setEditing(true); }} className="rounded-lg bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-200 hover:bg-blue-500/30">
-            Edit Diet Plan
-          </button>
+          <>
+            <button onClick={beginAddingDay} className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+              <Plus size={16} /> Add Day / Meal
+            </button>
+            <button onClick={() => { setForm(createPlanForm(plan)); setEditing(true); }} className="rounded-lg bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-200 hover:bg-blue-500/30">
+              Edit Diet Plan
+            </button>
+          </>
         )}
         {!plan && !editing && (
           <button onClick={() => { setForm(createPlanForm(null)); setEditing(true); }} className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700">

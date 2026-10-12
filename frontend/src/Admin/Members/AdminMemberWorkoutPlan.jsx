@@ -171,6 +171,22 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
     setEditing(true);
   };
 
+  const beginAddingDay = () => {
+    const currentForm = createFormFromWorkout(plan);
+    const nextDayNumber = sortedDays(currentForm.days).reduce(
+      (max, key) => Math.max(max, Number(key.replace(/\D/g, "")) || 0),
+      0,
+    ) + 1;
+    setForm({
+      ...currentForm,
+      days: {
+        ...currentForm.days,
+        [`Day${nextDayNumber}`]: [createExercise()],
+      },
+    });
+    setEditing(true);
+  };
+
   const updateExercise = (dayKey, index, field, value) => {
     setForm((previous) => ({
       ...previous,
@@ -445,9 +461,14 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
           <Download size={16} /> Export
         </button>
         {plan && !editing && (
-          <button onClick={beginEditing} className="inline-flex items-center gap-2 rounded-lg bg-blue-500/20 px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/30">
-            <Dumbbell size={16} /> Edit Plan
-          </button>
+          <>
+            <button onClick={beginAddingDay} className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700">
+              <Plus size={16} /> Add Day / Exercise
+            </button>
+            <button onClick={beginEditing} className="inline-flex items-center gap-2 rounded-lg bg-blue-500/20 px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/30">
+              <Dumbbell size={16} /> Edit Plan
+            </button>
+          </>
         )}
         {!editing && !plan && (
           <button onClick={beginEditing} className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700">
