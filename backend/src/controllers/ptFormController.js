@@ -84,10 +84,14 @@ async function savePTForm(req, res) {
       }
     }
 
-    if (/^\d+$/.test(incomingPlanId) && Array.isArray(formData.sessions)) {
+    const incomingMembershipId = String(
+      formData.pt_membership_id ||
+      (/^\d+$/.test(incomingPlanId) ? incomingPlanId : '')
+    );
+    if (/^\d+$/.test(incomingMembershipId) && Array.isArray(formData.sessions)) {
       const [planRows] = await connection.query(
         'SELECT pt_endDate, pt_endDate < CURDATE() AS is_expired FROM memberships WHERE id = ? AND has_pt_plan = 1',
-        [incomingPlanId]
+        [incomingMembershipId]
       );
       const storedPlanId = String(existingFormData.pt_plan_id || existingFormData.active_pt_plan_id || '');
       const incomingCurrentCycle = formData.session_cycles?.[incomingPlanId];

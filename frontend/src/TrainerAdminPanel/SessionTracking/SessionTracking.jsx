@@ -90,6 +90,7 @@ const SessionTracking = () => {
       hasPtPlan,
       ptFormCompleted: item.ptFormCompleted || item.pt_form_completed || 0,
       ptPlanId: item.ptPlanId || item.pt_plan_id || "",
+      ptCycleId: item.ptCycleId || item.pt_cycle_id || "",
     };
   };
 
@@ -122,6 +123,7 @@ const SessionTracking = () => {
     };
     return buildPTSessionCycle(baseData, {
       id: member?.ptPlanId,
+      pt_cycle_id: member?.ptCycleId,
       pt_planName: member?.planName,
       pt_startDate: member?.planStartDate,
       pt_endDate: member?.planEndDate,

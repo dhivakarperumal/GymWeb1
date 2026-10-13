@@ -39,7 +39,13 @@ export const buildPTSessionCycle = (savedData = {}, membership = null, member = 
     };
   }
 
-  const planId = String(membership?.id ?? savedPlanId ?? legacyPlanId);
+  const planId = String(
+    membership?.pt_cycle_id ||
+    membership?.ptCycleId ||
+    membership?.id ||
+    savedPlanId ||
+    legacyPlanId
+  );
   const membershipEnd = membership?.pt_endDate || membership?.pt_end_date || membership?.pt_expiry_date;
   const currentCycle = cycles[planId] || {};
   const planName = membership?.pt_planName || membership?.pt_plan_name;
@@ -48,6 +54,7 @@ export const buildPTSessionCycle = (savedData = {}, membership = null, member = 
   const activeCycle = {
     ...currentCycle,
     pt_plan_id: planId,
+    pt_membership_id: membership?.id ?? savedData.pt_membership_id ?? null,
     plan_name: planName || currentCycle.plan_name || savedData.pt_plan || null,
     pt_join_date: planStart,
     pt_expiry_date: planEnd,
@@ -63,6 +70,7 @@ export const buildPTSessionCycle = (savedData = {}, membership = null, member = 
     ...savedData,
     pt_plan_id: planId,
     active_pt_plan_id: planId,
+    pt_membership_id: membership?.id ?? savedData.pt_membership_id ?? null,
     pt_plan: planName || member.pt_plan || savedData.pt_plan || "",
     pt_join_date: planStart || "",
     pt_expiry_date: planEnd || "",

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { randomUUID } = require('crypto');
 
 /* ================= GET ALL MEMBERSHIPS ================= */
 async function getAllMemberships(req, res) {
@@ -185,8 +186,10 @@ async function createMembership(req, res) {
       pt_startDate,
       pt_endDate,
       pt_paymentMode,
+      pt_paymentId,
       pt_paymentDate,
       pt_paymentStatus,
+      pt_secondPaymentPaid,
       pt_status,
       pt_trainerId,
       pt_trainerName,
@@ -231,13 +234,26 @@ async function createMembership(req, res) {
       }
     }
 
+    if (isPTPlan && !resolvedUserId) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'A valid member userId is required for a PT plan purchase',
+      });
+    }
+
+    if (isPTPlan) {
+      // Serialize PT purchases for this user so concurrent submissions update the same assignment.
+      await connection.query('SELECT id FROM users WHERE id = ? FOR UPDATE', [resolvedUserId]);
+    }
+
     const membershipInsertQuery = `
       INSERT INTO memberships
-      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan, pt_planId, pt_planName, pt_price, pt_pricePaid, pt_duration, pt_startDate, pt_endDate, pt_paymentMode, pt_paymentDate, pt_paymentStatus, pt_status, pt_trainerId, pt_trainerName, pt_discount, pt_amount)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (userId, userName, userEmail, userPhone, planId, planName, price, pricePaid, secondPaymentPaid, duration, startDate, endDate, paymentId, paymentMode, paymentDate, status, paymentStatus, referredBy, trainerId, trainerName, discount, amount, collectedBy, has_pt_plan, pt_planId, pt_planName, pt_price, pt_pricePaid, pt_duration, pt_startDate, pt_endDate, pt_paymentMode, pt_paymentId, pt_paymentDate, pt_paymentStatus, pt_secondPaymentPaid, pt_status, pt_trainerId, pt_trainerName, pt_discount, pt_amount, pt_cycle_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const membershipInsertValues = [
+    const membershipInsertValues = (ptCycleId = null) => [
       resolvedUserId,
       userName || null,
       userEmail || null,
@@ -270,19 +286,158 @@ async function createMembership(req, res) {
       pt_startDate || null,
       pt_endDate || null,
       pt_paymentMode || null,
+      pt_paymentId || paymentId || null,
       pt_paymentDate || null,
       pt_paymentStatus || null,
+      pt_secondPaymentPaid !== undefined ? pt_secondPaymentPaid : actualSecondPaymentPaid,
       pt_status || 'active',
       pt_trainerId || null,
       pt_trainerName || null,
       pt_discount || 0,
       pt_amount || 0,
+      ptCycleId,
     ];
 
     let membershipId = null;
     let membershipRowUpdated = false;
 
-    if (resolvedUserId && !isPTPlan) {
+    if (isPTPlan) {
+      const [existingRows] = await connection.query(
+        `SELECT id, planId, planName, paymentId, pt_paymentId, pt_cycle_id
+         FROM memberships
+         WHERE userId = ?
+           AND (
+             has_pt_plan = 1
+             OR pt_planId IS NOT NULL
+             OR NULLIF(TRIM(pt_planName), '') IS NOT NULL
+             OR (pt_status IS NOT NULL AND LOWER(pt_status) NOT IN ('', 'inactive'))
+           )
+         ORDER BY
+           CASE WHEN pt_planId IS NOT NULL OR NULLIF(TRIM(pt_planName), '') IS NOT NULL THEN 0 ELSE 1 END,
+           CASE WHEN LOWER(COALESCE(pt_status, status, '')) IN ('active', 'pending') THEN 0 ELSE 1 END,
+           updatedAt DESC,
+           id DESC
+         LIMIT 1
+         FOR UPDATE`,
+        [resolvedUserId]
+      );
+
+      if (existingRows.length > 0) {
+        const existing = existingRows[0];
+        membershipId = existing.id;
+        const incomingPaymentId = pt_paymentId || paymentId;
+        const existingPaymentId = existing.pt_paymentId || existing.paymentId;
+        const samePayment = incomingPaymentId && existingPaymentId &&
+          String(incomingPaymentId) === String(existingPaymentId);
+        const cycleId = samePayment
+          ? existing.pt_cycle_id || randomUUID()
+          : randomUUID();
+        const ptValue = (ptValue, regularValue, fallback = null) =>
+          ptValue !== undefined ? ptValue : regularValue !== undefined ? regularValue : fallback;
+        const ptPlanIdValue = ptValue(pt_planId, planId);
+        const ptPlanNameValue = ptValue(pt_planName, planName);
+        const ptPriceValue = ptValue(pt_price, price, 0);
+        const ptPricePaidValue = ptValue(pt_pricePaid, pricePaid, actualPricePaid);
+        const ptDurationValue = ptValue(pt_duration, duration);
+        const ptStartDateValue = ptValue(pt_startDate, startDate);
+        const ptEndDateValue = ptValue(pt_endDate, endDate);
+        const ptPaymentModeValue = ptValue(pt_paymentMode, paymentMode);
+        const ptPaymentDateValue = ptValue(pt_paymentDate, paymentDate);
+        const ptPaymentStatusValue = ptValue(pt_paymentStatus, finalPaymentStatus);
+        const ptStatusValue = pt_status || status || 'active';
+        const ptTrainerIdValue = ptValue(pt_trainerId, trainerId);
+        const ptTrainerNameValue = ptValue(pt_trainerName, trainerName);
+        const ptDiscountValue = ptValue(pt_discount, discount, 0);
+        const ptAmountValue = ptValue(pt_amount, amount, 0);
+        const ptSecondPaymentValue = pt_secondPaymentPaid !== undefined
+          ? pt_secondPaymentPaid
+          : actualSecondPaymentPaid;
+        const updateParts = [
+          'has_pt_plan = 1',
+          'pt_planId = ?',
+          'pt_planName = ?',
+          'pt_price = ?',
+          'pt_pricePaid = ?',
+          'pt_duration = ?',
+          'pt_startDate = ?',
+          'pt_endDate = ?',
+          'pt_paymentMode = ?',
+          'pt_paymentId = COALESCE(?, pt_paymentId)',
+          'pt_paymentDate = ?',
+          'pt_paymentStatus = ?',
+          'pt_secondPaymentPaid = ?',
+          'pt_status = ?',
+          'pt_trainerId = ?',
+          'pt_trainerName = ?',
+          'pt_discount = ?',
+          'pt_amount = ?',
+          'pt_cycle_id = ?',
+        ];
+        const updateValues = [
+          ptPlanIdValue,
+          ptPlanNameValue,
+          ptPriceValue,
+          ptPricePaidValue,
+          ptDurationValue,
+          ptStartDateValue,
+          ptEndDateValue,
+          ptPaymentModeValue,
+          incomingPaymentId || null,
+          ptPaymentDateValue,
+          ptPaymentStatusValue,
+          ptSecondPaymentValue,
+          ptStatusValue,
+          ptTrainerIdValue,
+          ptTrainerNameValue,
+          ptDiscountValue,
+          ptAmountValue,
+          cycleId,
+        ];
+        if (!existing.planId && !existing.planName) {
+          updateParts.push(
+            'planId = COALESCE(?, planId)',
+            'planName = COALESCE(?, planName)',
+            'price = ?',
+            'pricePaid = ?',
+            'secondPaymentPaid = ?',
+            'duration = ?',
+            'startDate = ?',
+            'endDate = ?',
+            'paymentId = COALESCE(?, paymentId)',
+            'paymentMode = ?',
+            'paymentDate = ?',
+            'paymentStatus = ?',
+            'status = ?',
+          );
+          updateValues.push(
+            ptPlanIdValue,
+            ptPlanNameValue,
+            ptPriceValue,
+            ptPricePaidValue,
+            ptSecondPaymentValue,
+            ptDurationValue,
+            ptStartDateValue,
+            ptEndDateValue,
+            incomingPaymentId || null,
+            ptPaymentModeValue,
+            ptPaymentDateValue,
+            ptPaymentStatusValue,
+            ptStatusValue,
+          );
+        }
+        updateValues.push(membershipId, resolvedUserId);
+        await connection.query(
+          `UPDATE memberships
+           SET ${updateParts.join(', ')}, updatedAt = CURRENT_TIMESTAMP
+           WHERE id = ? AND userId = ?`,
+          updateValues,
+        );
+        membershipRowUpdated = true;
+      } else {
+        const [result] = await connection.query(membershipInsertQuery, membershipInsertValues(randomUUID()));
+        membershipId = result.insertId;
+      }
+    } else if (resolvedUserId) {
       const [existingRows] = await connection.query(
         'SELECT id FROM memberships WHERE userId = ? ORDER BY createdAt DESC LIMIT 1 FOR UPDATE',
         [resolvedUserId]
@@ -338,11 +493,11 @@ async function createMembership(req, res) {
           );
         membershipRowUpdated = true;
       } else {
-        const [result] = await connection.query(membershipInsertQuery, membershipInsertValues);
+        const [result] = await connection.query(membershipInsertQuery, membershipInsertValues());
         membershipId = result.insertId;
       }
     } else {
-      const [result] = await connection.query(membershipInsertQuery, membershipInsertValues);
+      const [result] = await connection.query(membershipInsertQuery, membershipInsertValues());
       membershipId = result.insertId;
     }
 
@@ -524,7 +679,7 @@ async function getUserMemberships(req, res) {
               END AS pt_status
        FROM memberships
        WHERE userId = ?
-       ORDER BY createdAt DESC, id DESC`,
+       ORDER BY updatedAt DESC, createdAt DESC, id DESC`,
       [userId]
     );
 
@@ -571,51 +726,102 @@ async function updateMembership(req, res) {
   try {
     const { id } = req.params;
     if (req.body.isPTPlanPurchase) {
-      const [existingRows] = await db.query(
-        'SELECT * FROM memberships WHERE id = ? LIMIT 1',
-        [id]
-      );
-      if (!existingRows.length) {
-        return res.status(404).json({ success: false, message: "Membership not found" });
+      const connection = await db.getConnection();
+      let updatedMembership;
+      try {
+        await connection.beginTransaction();
+        const [existingRows] = await connection.query(
+          'SELECT * FROM memberships WHERE id = ? FOR UPDATE',
+          [id]
+        );
+        if (!existingRows.length) {
+          await connection.rollback();
+          return res.status(404).json({ success: false, message: "Membership not found" });
+        }
+
+        updatedMembership = existingRows[0];
+        if (
+          req.body.userId !== undefined &&
+          Number(req.body.userId) !== Number(updatedMembership.userId)
+        ) {
+          await connection.rollback();
+          return res.status(409).json({
+            success: false,
+            message: "PT plan purchase member does not match this membership",
+          });
+        }
+
+        const incomingPaymentId = req.body.pt_paymentId || req.body.paymentId;
+        const existingPaymentId = updatedMembership.pt_paymentId || updatedMembership.paymentId;
+        const samePayment = incomingPaymentId && existingPaymentId &&
+          String(incomingPaymentId) === String(existingPaymentId);
+        const cycleId = samePayment
+          ? updatedMembership.pt_cycle_id || randomUUID()
+          : randomUUID();
+        const fields = [
+          "pt_planId", "pt_planName", "pt_price", "pt_pricePaid", "pt_duration",
+          "pt_startDate", "pt_endDate", "pt_paymentMode", "pt_paymentId", "pt_paymentDate",
+          "pt_paymentStatus", "pt_secondPaymentPaid", "pt_status", "pt_trainerId",
+          "pt_trainerName", "pt_discount", "pt_amount",
+        ];
+        if (!updatedMembership.planId && !updatedMembership.planName) {
+          fields.unshift(
+            "status", "price", "pricePaid", "secondPaymentPaid", "paymentMode",
+            "paymentDate", "paymentId", "planId", "startDate", "endDate", "duration",
+            "planName", "paymentStatus", "trainerId", "trainerName", "discount", "amount",
+            "collectedBy",
+          );
+        }
+        const updates = ["has_pt_plan = 1", "pt_cycle_id = ?"];
+        const values = [cycleId];
+        fields.forEach((field) => {
+          if (req.body[field] !== undefined) {
+            updates.push(`${field} = ?`);
+            values.push(req.body[field]);
+          }
+        });
+        updates.push("pt_status = ?");
+        values.push(req.body.pt_status || "active");
+        values.push(id);
+
+        await connection.query(
+          `UPDATE memberships SET ${updates.join(", ")}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+          values,
+        );
+        await connection.commit();
+        updatedMembership = {
+          ...updatedMembership,
+          ...req.body,
+          id: updatedMembership.id,
+          has_pt_plan: 1,
+          pt_status: req.body.pt_status || "active",
+          pt_cycle_id: cycleId,
+        };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
       }
 
-      const newMembership = { ...existingRows[0] };
-      delete newMembership.id;
-      delete newMembership.createdAt;
-      delete newMembership.updatedAt;
-      if (Object.prototype.hasOwnProperty.call(newMembership, 'dues')) {
-        newMembership.dues = null;
-      }
-      [
-        "status", "price", "pricePaid", "secondPaymentPaid", "paymentMode", "paymentDate",
-        "paymentId", "planId", "startDate", "endDate", "duration", "planName",
-        "paymentStatus", "trainerId", "trainerName", "discount", "amount", "collectedBy",
-        "has_pt_plan", "pt_planId", "pt_planName", "pt_price", "pt_pricePaid", "pt_duration",
-        "pt_startDate", "pt_endDate", "pt_paymentMode", "pt_paymentDate", "pt_paymentStatus",
-        "pt_status", "pt_trainerId", "pt_trainerName", "pt_discount", "pt_amount",
-      ].forEach((field) => {
-        if (req.body[field] !== undefined) newMembership[field] = req.body[field];
-      });
-      newMembership.has_pt_plan = 1;
-      newMembership.pt_status = req.body.pt_status || "active";
-
-      const [insertResult] = await db.query('INSERT INTO memberships SET ?', [newMembership]);
-      if (newMembership.userId) {
+      if (updatedMembership.userId) {
         try {
-          const [users] = await db.query('SELECT email, mobile FROM users WHERE id = ?', [newMembership.userId]);
+          const [users] = await db.query('SELECT email, mobile, user_id FROM users WHERE id = ?', [updatedMembership.userId]);
           if (users.length) {
             await db.query(
               `UPDATE gym_members
                SET pt_plan = ?, pt_duration = ?, pt_join_date = ?, pt_expiry_date = ?,
                    pt_status = ?, pt_form_completed = 0
-               WHERE (email = ? AND email IS NOT NULL AND email != '')
+               WHERE (user_id = ? AND user_id IS NOT NULL)
+                  OR (email = ? AND email IS NOT NULL AND email != '')
                   OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
               [
-                newMembership.pt_planName,
-                newMembership.pt_duration,
-                newMembership.pt_startDate,
-                newMembership.pt_endDate,
-                newMembership.pt_status,
+                req.body.pt_planName ?? req.body.planName ?? updatedMembership.pt_planName,
+                req.body.pt_duration ?? req.body.duration ?? updatedMembership.pt_duration,
+                req.body.pt_startDate ?? req.body.startDate ?? updatedMembership.pt_startDate,
+                req.body.pt_endDate ?? req.body.endDate ?? updatedMembership.pt_endDate,
+                req.body.pt_status || "active",
+                users[0].user_id,
                 users[0].email,
                 users[0].mobile,
               ]
@@ -627,9 +833,9 @@ async function updateMembership(req, res) {
       }
       return res.json({
         success: true,
-        message: "New PT plan history created",
-        id: insertResult.insertId,
-        membershipId: insertResult.insertId,
+        message: "PT plan updated",
+        id: updatedMembership.id,
+        membershipId: updatedMembership.id,
       });
     }
 
