@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { selectMemberListMembership } from "./memberMembership.js";
+import {
+  resolveMembershipPricing,
+  selectMemberListMembership,
+} from "./memberMembership.js";
 
 test("selects the same latest-ID regular membership used by the member list", () => {
   const memberships = [
@@ -19,4 +22,37 @@ test("excludes PT rows when the plan flag is encoded as a string", () => {
   ];
 
   assert.equal(selectMemberListMembership(memberships).planName, "Current");
+});
+
+test("falls back to the normal plan catalog when membership prices are zero", () => {
+  const pricing = resolveMembershipPricing({
+    price: 0,
+    amount: 0,
+    discount: 0,
+    catalog_plan_price: 12000,
+    catalog_plan_discount: 10,
+    catalog_plan_final_price: 10800,
+  });
+
+  assert.deepEqual(pricing, { price: 10800, amount: 12000, discount: 1200 });
+});
+
+test("preserves positive membership pricing over catalog prices", () => {
+  const pricing = resolveMembershipPricing({
+    price: 9000,
+    amount: 10000,
+    discount: 1000,
+    catalog_plan_price: 12000,
+    catalog_plan_final_price: 10800,
+  });
+
+  assert.deepEqual(pricing, { price: 9000, amount: 10000, discount: 1000 });
+});
+
+test("resolves zero pricing when no normal membership exists", () => {
+  assert.deepEqual(resolveMembershipPricing(null), {
+    price: 0,
+    amount: 0,
+    discount: 0,
+  });
 });

@@ -10,7 +10,10 @@ import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import AdminJoinForm from "./AdminJoinForm";
-import { selectMemberListMembership } from "../../utils/memberMembership";
+import {
+  resolveMembershipPricing,
+  selectMemberListMembership,
+} from "../../utils/memberMembership";
 
 const MemberDetails = () => {
   const { id } = useParams();
@@ -58,6 +61,7 @@ const MemberDetails = () => {
         // Match the member-list query: latest-ID regular membership, not the first active history row.
         const userMemberships = Array.isArray(membershipRes.data) ? membershipRes.data : [];
         const currentMembership = selectMemberListMembership(userMemberships);
+        const normalPricing = resolveMembershipPricing(currentMembership, memberData);
         const ptMembership = userMemberships.find(m =>
           (m.has_pt_plan === 1 || m.has_pt_plan === true || m.has_pt_plan === '1') &&
           (m.pt_planName || m.pt_plan_name || m.pt_planId || m.pt_endDate || m.pt_end_date || m.pt_startDate || m.pt_start_date)
@@ -76,15 +80,15 @@ const MemberDetails = () => {
           join_date: currentMembership?.startDate ?? memberData.join_date,
           expiry_date: currentMembership?.endDate ?? memberData.expiry_date,
           membership_status: currentMembership?.status ?? memberData.status,
-          price: currentMembership?.price ?? memberData.price,
+          price: normalPricing.price,
           pricePaid: currentMembership?.pricePaid ?? memberData.pricePaid ?? 0,
           secondPaymentPaid: currentMembership?.secondPaymentPaid ?? memberData.secondPaymentPaid ?? 0,
           payment_status: currentMembership?.paymentStatus ?? memberData.payment_status,
           paymentMode: currentMembership?.paymentMode ?? memberData.paymentMode,
           paymentDate: currentMembership?.paymentDate ?? memberData.paymentDate,
           paymentId: currentMembership?.paymentId ?? memberData.paymentId,
-          discount: currentMembership?.discount ?? memberData.discount ?? 0,
-          amount: currentMembership?.amount ?? memberData.amount ?? 0,
+          discount: normalPricing.discount,
+          amount: normalPricing.amount,
           pt_price: ptMembership?.pt_price ?? memberData.pt_price ?? 0,
           pt_pricePaid: ptMembership?.pt_pricePaid ?? memberData.pt_pricePaid ?? 0,
           pt_secondPaymentPaid: ptMembership?.pt_secondPaymentPaid ?? memberData.pt_secondPaymentPaid ?? 0,

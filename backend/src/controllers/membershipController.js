@@ -673,11 +673,15 @@ async function getUserMemberships(req, res) {
 
     const [rows] = await db.query(
       `SELECT memberships.*,
+              gp.price AS catalog_plan_price,
+              gp.discount AS catalog_plan_discount,
+              gp.final_price AS catalog_plan_final_price,
               CASE
                 WHEN has_pt_plan = 1 AND pt_endDate < CURDATE() THEN 'expired'
                 ELSE pt_status
               END AS pt_status
        FROM memberships
+       LEFT JOIN gym_plans gp ON gp.id = memberships.planId
        WHERE userId = ?
        ORDER BY updatedAt DESC, createdAt DESC, id DESC`,
       [userId]
