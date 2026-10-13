@@ -399,7 +399,14 @@ const AdminMemberDietPlan = ({ member, creator }) => {
     }
     const worksheet = rows.length
       ? XLSX.utils.json_to_sheet(rows, { header: dietExportColumns })
-      : XLSX.utils.aoa_to_sheet([dietExportColumns]);
+      : XLSX.utils.aoa_to_sheet([
+          dietExportColumns,
+          [
+            "",
+            selectedMemberId,
+            ...Array(dietExportColumns.length - 2).fill(""),
+          ],
+        ]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan");
     XLSX.writeFile(workbook, `Diet_Plan_${selectedMemberId}.xlsx`);
