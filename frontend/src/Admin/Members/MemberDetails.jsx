@@ -10,6 +10,7 @@ import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import AdminJoinForm from "./AdminJoinForm";
+import { selectMemberListMembership } from "../../utils/memberMembership";
 
 const MemberDetails = () => {
   const { id } = useParams();
@@ -43,18 +44,20 @@ const MemberDetails = () => {
 
       // 2. Fetch Additional Data in parallel
       if (memberData) {
-        const userId = memberData.u_id || memberData.user_id || memberData.id;
+        const userId = memberData.u_id;
         const [workoutRes, dietRes, assignRes, staffRes, membershipRes] = await Promise.all([
           api.get("/workouts").catch(() => ({ data: [] })),
           api.get("/diet-plans").catch(() => ({ data: [] })),
           api.get("/assignments").catch(() => ({ data: [] })),
           api.get("/staff").catch(() => ({ data: [] })),
-          api.get(`/memberships/user/${userId}`).catch(() => ({ data: [] }))
+          userId
+            ? api.get(`/memberships/user/${userId}`).catch(() => ({ data: [] }))
+            : Promise.resolve({ data: [] })
         ]);
 
-        // Get latest membership price if available
+        // Match the member-list query: latest-ID regular membership, not the first active history row.
         const userMemberships = Array.isArray(membershipRes.data) ? membershipRes.data : [];
-        const activeMembership = userMemberships.find(m => m.status === 'active') || userMemberships[0];
+        const currentMembership = selectMemberListMembership(userMemberships);
         const ptMembership = userMemberships.find(m =>
           (m.has_pt_plan === 1 || m.has_pt_plan === true || m.has_pt_plan === '1') &&
           (m.pt_planName || m.pt_plan_name || m.pt_planId || m.pt_endDate || m.pt_end_date || m.pt_startDate || m.pt_start_date)
@@ -67,17 +70,26 @@ const MemberDetails = () => {
 
         const enhancedMember = {
           ...memberData,
-          price: activeMembership?.price || memberData.price,
-          pricePaid: activeMembership?.pricePaid || 0,
-          secondPaymentPaid: activeMembership?.secondPaymentPaid || 0,
-          payment_status: activeMembership?.paymentStatus || memberData.payment_status,
-          discount: activeMembership?.discount || 0,
-          amount: activeMembership?.amount || 0,
-          pt_price: activeMembership?.pt_price || memberData.pt_price || 0,
-          pt_pricePaid: activeMembership?.pt_pricePaid || memberData.pt_pricePaid || 0,
-          pt_secondPaymentPaid: activeMembership?.pt_secondPaymentPaid || memberData.pt_secondPaymentPaid || 0,
-          pt_discount: activeMembership?.pt_discount || memberData.pt_discount || 0,
-          pt_amount: activeMembership?.pt_amount || memberData.pt_amount || 0,
+          plan: currentMembership?.planName ?? memberData.plan,
+          planId: currentMembership?.planId ?? memberData.planId,
+          duration: currentMembership?.duration ?? memberData.duration,
+          join_date: currentMembership?.startDate ?? memberData.join_date,
+          expiry_date: currentMembership?.endDate ?? memberData.expiry_date,
+          membership_status: currentMembership?.status ?? memberData.status,
+          price: currentMembership?.price ?? memberData.price,
+          pricePaid: currentMembership?.pricePaid ?? memberData.pricePaid ?? 0,
+          secondPaymentPaid: currentMembership?.secondPaymentPaid ?? memberData.secondPaymentPaid ?? 0,
+          payment_status: currentMembership?.paymentStatus ?? memberData.payment_status,
+          paymentMode: currentMembership?.paymentMode ?? memberData.paymentMode,
+          paymentDate: currentMembership?.paymentDate ?? memberData.paymentDate,
+          paymentId: currentMembership?.paymentId ?? memberData.paymentId,
+          discount: currentMembership?.discount ?? memberData.discount ?? 0,
+          amount: currentMembership?.amount ?? memberData.amount ?? 0,
+          pt_price: ptMembership?.pt_price ?? memberData.pt_price ?? 0,
+          pt_pricePaid: ptMembership?.pt_pricePaid ?? memberData.pt_pricePaid ?? 0,
+          pt_secondPaymentPaid: ptMembership?.pt_secondPaymentPaid ?? memberData.pt_secondPaymentPaid ?? 0,
+          pt_discount: ptMembership?.pt_discount ?? memberData.pt_discount ?? 0,
+          pt_amount: ptMembership?.pt_amount ?? memberData.pt_amount ?? 0,
           pt_plan: memberData.pt_plan || ptMembership?.pt_planName || ptMembership?.pt_plan_name || null,
           pt_join_date: memberData.pt_join_date || ptMembership?.pt_startDate || ptMembership?.pt_start_date || null,
           pt_expiry_date: memberData.pt_expiry_date || ptMembership?.pt_endDate || ptMembership?.pt_end_date || ptMembership?.pt_expiry_date || null,
@@ -198,8 +210,8 @@ const MemberDetails = () => {
   const handleToggleStatus = async () => {
     const newStatus = displayStatus === 'active' ? 'inactive' : 'active';
     try {
-      const res = await api.put(`/members/${id}`, { ...member, status: newStatus });
-      setMember(res.data);
+      await api.put(`/members/${id}`, { ...member, status: newStatus });
+      await fetchMemberData();
       toast.success(`Member set to ${newStatus}`);
     } catch (err) {
       console.error(err);
