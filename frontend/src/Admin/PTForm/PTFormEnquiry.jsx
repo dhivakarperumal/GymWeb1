@@ -142,7 +142,7 @@ const Enquiry = ({
       
       if (role === 'trainer') {
         // Fetch only members assigned to this trainer
-        const res = await api.get(`/assignments?trainerUserId=${user.id}`);
+        const res = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
         const assignments = Array.isArray(res.data) ? res.data : (res.data?.data || []);
         data = assignments.map(a => ({
           id: a.gymMemberId,

@@ -27,7 +27,7 @@ const UpdateWeight = () => {
     const fetchMembers = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/assignments?trainerUserId=${user.id}`);
+            const res = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
             const data = Array.isArray(res.data) ? res.data : res.data.data || res.data.assignments || [];
             
             const list = data.map(m => ({

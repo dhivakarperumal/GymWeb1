@@ -97,7 +97,7 @@ const SessionTracking = () => {
     setLoading(true);
     try {
       const trainerEmail = user?.email || "";
-      const res = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}`);
+      const res = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}&distinctMembers=true`);
       const data = Array.isArray(res.data) ? res.data : res.data?.data || res.data?.assignments || [];
       const members = data
         .map(normalizeMember)

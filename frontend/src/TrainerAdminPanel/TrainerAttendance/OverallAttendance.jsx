@@ -70,7 +70,7 @@ const OverallAttendance = () => {
   const loadAssignedMembers = async () => {
     if (!trainerUserId) return;
     try {
-      const res = await api.get(`/assignments?trainerUserId=${trainerUserId}`);
+      const res = await api.get(`/assignments?trainerUserId=${trainerUserId}&distinctMembers=true`);
       const membersRaw = Array.isArray(res.data)
         ? res.data
         : res.data?.data || res.data?.assignments || [];

@@ -157,7 +157,7 @@ const Header = ({ onMenuClick }) => {
 
         // 2. Fetch new assignments
         try {
-          const assignRes = await api.get(`/assignments?trainerUserId=${user.id}`);
+          const assignRes = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
           const assigns = assignRes.data || [];
           
           // Filter assignments created/updated today

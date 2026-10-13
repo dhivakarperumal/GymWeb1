@@ -73,7 +73,7 @@ const AddDietPlans = () => {
         setLoading(true);
 
         // Server-side filter -- avoids users.id vs staff.id mismatch
-        const res = await api.get(`/assignments?trainerUserId=${user.id}`);
+        const res = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
         const data = res.data;
 
         const assignments = Array.isArray(data)

@@ -80,33 +80,42 @@ const TrainerDashboard = () => {
 
         /* FETCH ASSIGNMENTS -- server filters by this trainer's user ID */
         const trainerEmail = user?.email || "";
-        const memberRes = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}`);
+        const memberRes = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}&distinctMembers=true`);
         const membersRaw = Array.isArray(memberRes.data)
           ? memberRes.data
           : memberRes.data?.data || memberRes.data?.assignments || [];
 
         console.log("📊 Assignments from server:", membersRaw.length, "trainerUserId:", trainerId, "email:", trainerEmail);
 
-        /* show all assignments */
-        const seen = new Set();
-        const uniqueMembers = membersRaw.filter((m) => {
+        /* Keep one row per member as a safeguard for duplicate API records. */
+        const membersById = new Map();
+        membersRaw.forEach((m, index) => {
           // Check if plan is expired
           const endDate = m.planEndDate || m.ptExpiryDate || m.pt_expiry_date || m.endDate;
           if (endDate) {
-            const end = new Date(endDate);
-            if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
-              return false; // exclude expired plans
+            const today = new Date();
+            const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            const endKey = endDate instanceof Date
+              ? `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`
+              : String(endDate).slice(0, 10);
+            const parsedEnd = new Date(endDate);
+            if (
+              !Number.isNaN(parsedEnd.getTime()) &&
+              /^\d{4}-\d{2}-\d{2}$/.test(endKey) &&
+              endKey < todayKey
+            ) {
+              return;
             }
           }
 
-          // Deduplicate by assignment ID or combination of User+Plan so multiple plans show up
-          const key = String(m.id || `${m.userId}-${m.planId}`);
-          if (!key || key === "undefined" || seen.has(key)) return false;
-          seen.add(key);
-          return true;
+          const memberId = m.userId || m.user_id || m.gymMemberId || m.member_db_id;
+          const key = memberId ? String(memberId) : `missing-member-id-${index}`;
+          if (!membersById.has(key)) membersById.set(key, m);
         });
+        const uniqueMembers = [...membersById.values()];
 
         setAssignedMembers(uniqueMembers);
+        setCurrentPage(1);
 
         const assignedMemberIds = uniqueMembers.map(m => String(m.gymMemberId)).filter(id => id && id !== "null");
         const assignedUserIds = uniqueMembers.map(m => String(m.userId || m.user_id)).filter(id => id && id !== "null");

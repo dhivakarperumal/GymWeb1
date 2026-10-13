@@ -42,6 +42,7 @@ function normalizeAssignment(row) {
 async function getAllAssignments(req, res) {
   try {
     const { trainerUserId, trainerEmail } = req.query;
+    const distinctMembers = req.query.distinctMembers === 'true';
 
     let staffId = null;
 
@@ -123,23 +124,86 @@ async function getAllAssignments(req, res) {
              s.role as trainer_source
       FROM trainer_assignments a
       LEFT JOIN users u ON u.id = a.user_id
-      LEFT JOIN gym_members m ON (m.user_id = u.user_id AND u.user_id IS NOT NULL)
-                              OR (m.email = u.email AND m.email IS NOT NULL AND m.email != '') 
-                              OR (m.phone = u.mobile AND m.phone IS NOT NULL AND m.phone != '')
+      LEFT JOIN gym_members m ON m.id = (
+        SELECT gm_match.id
+        FROM gym_members gm_match
+        WHERE (gm_match.user_id = u.user_id AND u.user_id IS NOT NULL)
+           OR (gm_match.email = u.email AND gm_match.email IS NOT NULL AND gm_match.email != '')
+           OR (gm_match.phone = u.mobile AND gm_match.phone IS NOT NULL AND gm_match.phone != '')
+        ORDER BY CASE
+          WHEN gm_match.user_id = u.user_id AND u.user_id IS NOT NULL THEN 0
+          WHEN gm_match.email = u.email AND gm_match.email IS NOT NULL AND gm_match.email != '' THEN 1
+          ELSE 2
+        END,
+        gm_match.created_at DESC,
+        gm_match.id DESC
+        LIMIT 1
+      )
       LEFT JOIN staff s ON s.id = a.trainer_id
     `;
     const params = [];
 
-    if (staffId) {
+    if (staffId && !distinctMembers) {
       sql += ' WHERE a.trainer_id = ?';
       params.push(staffId);
     }
 
-    sql += ' GROUP BY a.id ORDER BY a.updated_at DESC';
+    sql += ' ORDER BY a.updated_at DESC';
 
     const [rows] = await db.query(sql, params);
-    console.log('[assignments] returning', rows.length, 'rows for staffId', staffId);
-    res.json(rows.map(normalizeAssignment));
+    let selectedRows = rows;
+    if (distinctMembers) {
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const dateKey = (value) => {
+        if (!value) return '';
+        if (value instanceof Date) {
+          return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+        }
+        return String(value).slice(0, 10);
+      };
+      const timestamp = (value) => {
+        const parsed = value ? new Date(value).getTime() : 0;
+        return Number.isNaN(parsed) ? 0 : parsed;
+      };
+      const rank = (row) => [
+        String(row.status || '').toLowerCase() === 'active' ? 1 : 0,
+        (!row.plan_start_date || dateKey(row.plan_start_date) <= todayKey) &&
+          (!row.plan_end_date || dateKey(row.plan_end_date) >= todayKey) ? 1 : 0,
+        timestamp(row.updated_at),
+        dateKey(row.plan_start_date),
+        Number(row.id) || 0,
+      ];
+      const compareRank = (left, right) => {
+        const leftRank = rank(left);
+        const rightRank = rank(right);
+        for (let index = 0; index < leftRank.length; index += 1) {
+          if (leftRank[index] !== rightRank[index]) {
+            return leftRank[index] > rightRank[index] ? 1 : -1;
+          }
+        }
+        return 0;
+      };
+
+      const latestByMember = new Map();
+      for (const row of rows) {
+        const memberKey = String(row.user_id);
+        const endDate = dateKey(row.plan_end_date);
+        if (!memberKey || memberKey === 'undefined' || (endDate && endDate < todayKey)) continue;
+
+        const current = latestByMember.get(memberKey);
+        if (!current || compareRank(row, current) > 0) {
+          latestByMember.set(memberKey, row);
+        }
+      }
+
+      selectedRows = [...latestByMember.values()]
+        .filter((row) => !staffId || Number(row.trainer_id) === Number(staffId))
+        .sort((left, right) => timestamp(right.updated_at) - timestamp(left.updated_at));
+    }
+
+    console.log('[assignments] returning', selectedRows.length, 'rows for staffId', staffId);
+    res.json(selectedRows.map(normalizeAssignment));
   } catch (err) {
     console.error('getAllAssignments error', err);
     res.status(500).json({ error: 'Query failed' });

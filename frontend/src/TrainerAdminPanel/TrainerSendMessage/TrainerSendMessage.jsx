@@ -39,7 +39,7 @@ const TrainerSendMessage = () => {
       try {
         setLoading(true);
         // Server-side filter -- avoids users.id vs staff.id mismatch
-        const aRes = await api.get(`/assignments?trainerUserId=${user.id}`);
+        const aRes = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
         const aData = aRes.data;
         const assignments = Array.isArray(aData) ? aData : aData.data || aData.assignments || [];
 
