@@ -10,6 +10,7 @@ import HealthHistory2Page from './PTFormPages/HealthHistory2Page';
 import FitnessScreening from '../Admin/PTForm/FitnessScreening';
 import FlexibilityAndMeasurements from '../Admin/PTForm/FlexibilityAndMeasurements';
 import SessionTracker from '../Admin/PTForm/SessionTracker';
+import { buildPTSessionCycle, findCurrentPTMembership } from '../utils/ptSessionCycles';
 
 const PTFormUser = () => {
   const { user } = useAuth();
@@ -88,9 +89,23 @@ const PTFormUser = () => {
       setHasEnquiry(!!userEnquiry);
 
       // Check if PT plan is expired
+      let currentPtMembership = null;
+      if (memberData) {
+        try {
+          const membershipsRes = await api.get(`/memberships/user/${user.id}`);
+          currentPtMembership = findCurrentPTMembership(
+            Array.isArray(membershipsRes.data) ? membershipsRes.data : [],
+          );
+        } catch (error) {
+          console.error('Failed to load PT plan history', error);
+        }
+      }
+      const ptExpiryDate = currentPtMembership?.pt_endDate ||
+        currentPtMembership?.pt_end_date ||
+        memberData?.pt_expiry_date;
       const ptExpired =
-        memberData?.pt_expiry_date &&
-        dayjs(memberData.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
+        ptExpiryDate &&
+        dayjs(ptExpiryDate).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
       setIsPtExpired(!!ptExpired);
 
       // Fetch Trainer Assignment
@@ -119,31 +134,35 @@ const PTFormUser = () => {
           if (ptRes.data && ptRes.data.form_data) {
             const savedData = safeParse(ptRes.data.form_data);
 
-            const isRenewed = savedData.pt_join_date && memberData?.pt_join_date && !dayjs(savedData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
-
-            if (ptExpired || isRenewed) {
-              // PT plan expired or renewed — retain ALL saved data but reset sessions only
-              initialForm = {
-                ...initialForm,
-                ...savedData,
-                sessions: [],  // reset session tracker only
-              };
-              if (ptExpired) {
-                setPtExpiredAlert(true);
-              }
-            } else {
-              // PT plan active — merge all saved data as before
-              initialForm = { ...initialForm, ...savedData };
-              if (!hasEnquiry) {
-                setHasEnquiry(!!savedData.name || !!savedData.email);
-              }
+            initialForm = buildPTSessionCycle(
+              { ...initialForm, ...savedData },
+              currentPtMembership,
+              {
+                ...memberData,
+                pt_join_date: currentPtMembership?.pt_startDate || memberData?.pt_join_date,
+                pt_expiry_date: ptExpiryDate,
+              },
+            );
+            if (!ptExpired && !hasEnquiry) {
+              setHasEnquiry(!!savedData.name || !!savedData.email);
             }
+            if (ptExpired) setPtExpiredAlert(true);
           }
         } catch (error) {
           // no saved PT form available
         }
       }
 
+      initialForm = buildPTSessionCycle(
+        initialForm,
+        currentPtMembership,
+        {
+          ...memberData,
+          pt_join_date: currentPtMembership?.pt_startDate || currentPtMembership?.pt_start_date || memberData?.pt_join_date,
+          pt_expiry_date: ptExpiryDate,
+        },
+      );
+      if (ptExpired) setPtExpiredAlert(true);
       setFormData(initialForm);
     } catch (err) {
       console.error('Failed to load PT form data', err);

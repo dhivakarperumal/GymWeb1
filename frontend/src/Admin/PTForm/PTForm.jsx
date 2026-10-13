@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import { normalizeDateForDateInput } from '../../utils/dateUtils';
+import { buildPTSessionCycle, findCurrentPTMembership } from '../../utils/ptSessionCycles';
 import dayjs from 'dayjs';
 import Enquiry from './PTFormEnquiry';
 import HealthHistoy from './HealthHistoy';
@@ -87,10 +88,18 @@ const PTForm = () => {
     if (!member) throw new Error("Member record was not returned by the server.");
 
     const savedMemberId = member.id || selectedMemberId;
-    const [ptFormResult, assignmentsResult] = await Promise.allSettled([
+    const userId = member.u_id || member.user_id;
+    const [ptFormResult, assignmentsResult, membershipsResult] = await Promise.allSettled([
       api.get(`/pt-forms/${savedMemberId}`),
       api.get("/assignments"),
+      userId ? api.get(`/memberships/user/${userId}`) : Promise.resolve({ data: [] }),
     ]);
+    if (membershipsResult.status === "rejected") throw membershipsResult.reason;
+    const currentPtMembership = findCurrentPTMembership(
+      Array.isArray(membershipsResult.value.data) ? membershipsResult.value.data : [],
+    );
+    const ptExpiryDate = currentPtMembership?.pt_endDate || currentPtMembership?.pt_end_date || member.pt_expiry_date;
+    const ptJoinDate = currentPtMembership?.pt_startDate || currentPtMembership?.pt_start_date || member.pt_join_date;
 
       const memberPrefill = {
         member_id: savedMemberId,
@@ -115,15 +124,16 @@ const PTForm = () => {
         fitness_goal: member.fitness_goal || "",
         blood_group: member.blood_group || "",
         gender: member.gender || "",
-        pt_join_date: member.pt_join_date || "",
-        pt_expiry_date: member.pt_expiry_date || "",
+        pt_plan: currentPtMembership?.pt_planName || currentPtMembership?.pt_plan_name || member.pt_plan || "",
+        pt_join_date: ptJoinDate || "",
+        pt_expiry_date: ptExpiryDate || "",
         join_date: member.join_date || "",
         expiry_date: member.expiry_date || "",
       };
 
       const isPtExpired =
-        member.pt_expiry_date &&
-        dayjs(member.pt_expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") < 0;
+        ptExpiryDate &&
+        dayjs(ptExpiryDate).startOf("day").diff(dayjs().startOf("day"), "day") < 0;
 
       let savedData = {};
       if (ptFormResult.status === "fulfilled") {
@@ -154,10 +164,6 @@ const PTForm = () => {
           ? assignmentRows.find((item) => String(item.userId) === String(member.u_id))
           : null) ||
         null;
-      const isRenewed =
-        savedData.pt_join_date &&
-        member.pt_join_date &&
-        !dayjs(savedData.pt_join_date).isSame(dayjs(member.pt_join_date), "day");
       const savedOrMemberData = { ...savedData };
       [
         "name", "email", "phone", "location", "height", "weight", "bmi", "dob",
@@ -172,8 +178,11 @@ const PTForm = () => {
         }
       });
       const mergedData = normalizePTFormDates({
-        ...memberPrefill,
-        ...savedOrMemberData,
+        ...buildPTSessionCycle(
+          { ...memberPrefill, ...savedOrMemberData },
+          currentPtMembership,
+          memberPrefill,
+        ),
         member_id: memberPrefill.member_id,
         u_id: member.u_id || savedData.u_id || savedData.user_id,
         trainer_name_assigned:
@@ -183,7 +192,6 @@ const PTForm = () => {
         session_time: assignment
           ? normalizeTimeForInput(assignment.sessionTime)
           : normalizeTimeForInput(savedData.session_time),
-        ...(isPtExpired || isRenewed ? { sessions: [] } : {}),
       });
 
       const savedConsentData = parseSavedObject(
@@ -620,6 +628,7 @@ const PTForm = () => {
           </div>
         ) : (
           <CurrentComponent
+            key={`${activeMemberId}:${formData?.pt_plan_id || ""}:${currentStep}`}
             onNext={handleNext}
             onPrevious={handlePrevious}
             onSelectMember={handleMemberSelected}

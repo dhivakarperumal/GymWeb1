@@ -840,43 +840,10 @@ const BuyPlanadmin = ({ filterTrainerPlans = false, pageTitle = "Buy Plans" }) =
         membershipId: activeOrPendingMembership?.id,
       });
 
-      // Keep PT plan purchases on the same membership row when one already exists
-      // so we do not create duplicate membership history rows for the same user.
       if (filterTrainerPlans) {
-        if (activeOrPendingMembership) {
-          await api.put(`/memberships/${activeOrPendingMembership.id}`, membershipData);
-        } else if (memberHistory && memberHistory.length > 0) {
-          const latestExistingMembership = memberHistory
-            .filter((h) => h && h.userId === finalUserId)
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-
-          if (latestExistingMembership?.id) {
-            await api.put(`/memberships/${latestExistingMembership.id}`, membershipData);
-          } else {
-            await api.post("/memberships", membershipData);
-          }
-        } else {
-          await api.post("/memberships", membershipData);
-        }
+        await api.post("/memberships", membershipData);
       } else {
         await api.post("/memberships", membershipData);
-      }
-
-      // ===== RESET ONLY SESSION TRACKER FOR NEW PT PLAN =====
-      // When a new PT plan is purchased, reset only the session tracker (step 6)
-      // but keep all previous form data (VA enquiry, health history, fitness screening, flexibility measurement)
-      if (filterTrainerPlans) {
-        try {
-          const memberId = selectedUser.id || selectedUser.member_id || selectedUser.u_id;
-          if (memberId) {
-            await api.delete(`/pt-forms/${memberId}/reset`);
-            console.log("✅ Session tracker reset for new plan (first 5 steps retained)");
-          }
-        } catch (err) {
-          console.warn("⚠️ Failed to reset session tracker (may not exist yet):", err);
-          // Don't fail the entire plan assignment if session tracker reset fails
-          // (it might be a first-time PT plan with no existing form)
-        }
       }
 
       // ===== OPTIONAL ASSIGN TRAINER =====

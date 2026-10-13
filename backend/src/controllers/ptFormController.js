@@ -52,7 +52,84 @@ async function savePTForm(req, res) {
         existingFormData = {};
       }
     }
+    const incomingPlanId = String(
+      formData.pt_plan_id ||
+      formData.active_pt_plan_id ||
+      existingFormData.pt_plan_id ||
+      existingFormData.active_pt_plan_id ||
+      'legacy'
+    );
+    const existingCycles = existingFormData.session_cycles &&
+      typeof existingFormData.session_cycles === 'object' &&
+      !Array.isArray(existingFormData.session_cycles)
+      ? { ...existingFormData.session_cycles }
+      : {};
+    if (Array.isArray(existingFormData.sessions) && existingFormData.sessions.length > 0) {
+      const previousPlanId = existingFormData.pt_plan_id ||
+        existingFormData.active_pt_plan_id ||
+        `legacy:${existingFormData.pt_join_date || 'unassigned'}`;
+      const incomingCurrentCycle = formData.session_cycles?.[incomingPlanId];
+      const incomingContainsLegacySessions =
+        Array.isArray(formData.sessions) &&
+        Array.isArray(incomingCurrentCycle?.sessions) &&
+        JSON.stringify(formData.sessions) === JSON.stringify(existingFormData.sessions);
+      if (!incomingContainsLegacySessions && !existingCycles[String(previousPlanId)]) {
+        existingCycles[String(previousPlanId)] = {
+          pt_plan_id: String(previousPlanId),
+          plan_name: existingFormData.pt_plan || existingFormData.plan_name || 'Previous PT Plan',
+          pt_join_date: existingFormData.pt_join_date || null,
+          pt_expiry_date: existingFormData.pt_expiry_date || null,
+          sessions: existingFormData.sessions,
+        };
+      }
+    }
+
+    if (/^\d+$/.test(incomingPlanId) && Array.isArray(formData.sessions)) {
+      const [planRows] = await connection.query(
+        'SELECT pt_endDate, pt_endDate < CURDATE() AS is_expired FROM memberships WHERE id = ? AND has_pt_plan = 1',
+        [incomingPlanId]
+      );
+      const storedPlanId = String(existingFormData.pt_plan_id || existingFormData.active_pt_plan_id || '');
+      const incomingCurrentCycle = formData.session_cycles?.[incomingPlanId];
+      const incomingMatchesLegacySessions =
+        Array.isArray(existingFormData.sessions) &&
+        Array.isArray(incomingCurrentCycle?.sessions) &&
+        JSON.stringify(incomingCurrentCycle.sessions) === JSON.stringify(existingFormData.sessions);
+      const currentSessions = existingCycles[incomingPlanId]?.sessions ||
+        (storedPlanId === incomingPlanId || incomingMatchesLegacySessions ? existingFormData.sessions : null) ||
+        [];
+      const isExpired = Boolean(planRows[0]?.is_expired);
+      if (isExpired && JSON.stringify(formData.sessions) !== JSON.stringify(currentSessions)) {
+        await connection.rollback();
+        return res.status(409).json({
+          error: 'This PT plan has expired. Its session history is read-only.',
+        });
+      }
+    }
     const updatedFormData = mergeFormData(existingFormData, formData);
+    const incomingCycles = formData.session_cycles &&
+      typeof formData.session_cycles === 'object' &&
+      !Array.isArray(formData.session_cycles)
+      ? formData.session_cycles
+      : {};
+    const sessionCycles = { ...existingCycles };
+    Object.entries(incomingCycles).forEach(([cycleId, cycle]) => {
+      if (!sessionCycles[cycleId]) sessionCycles[cycleId] = cycle;
+    });
+    if (Array.isArray(formData.sessions)) {
+      sessionCycles[incomingPlanId] = {
+        ...(sessionCycles[incomingPlanId] || {}),
+        pt_plan_id: incomingPlanId,
+        plan_name: formData.pt_plan || formData.plan_name || sessionCycles[incomingPlanId]?.plan_name || null,
+        pt_join_date: formData.pt_join_date || sessionCycles[incomingPlanId]?.pt_join_date || null,
+        pt_expiry_date: formData.pt_expiry_date || sessionCycles[incomingPlanId]?.pt_expiry_date || null,
+        sessions: formData.sessions,
+      };
+    }
+    updatedFormData.session_cycles = sessionCycles;
+    updatedFormData.active_pt_plan_id = incomingPlanId;
+    updatedFormData.pt_plan_id = incomingPlanId;
+    updatedFormData.sessions = sessionCycles[incomingPlanId]?.sessions || [];
 
     if (existing.length > 0) {
       await connection.query(
@@ -143,76 +220,9 @@ async function getPTForm(req, res) {
 }
 
 async function resetPTForm(req, res) {
-  const { member_id } = req.params;
-  if (!member_id) {
-    return res.status(400).json({ error: 'Member ID is required' });
-  }
-
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // Get existing form data
-    const [existing] = await connection.query(
-      'SELECT form_data FROM pt_forms WHERE member_id = ?',
-      [member_id]
-    );
-
-    if (existing.length > 0 && existing[0].form_data) {
-      // Parse existing form data safely
-      let formData = existing[0].form_data;
-      let parsedSuccessfully = true;
-
-      if (typeof formData === 'string') {
-        try {
-          formData = JSON.parse(formData);
-        } catch (parseError) {
-          console.warn(`Failed to parse form_data for member ${member_id}:`, parseError);
-          parsedSuccessfully = false;
-          // If parsing fails, don't update - keep original data intact
-        }
-      } else if (typeof formData === 'object' && formData !== null) {
-        // Already an object, use it as-is
-        parsedSuccessfully = true;
-      } else {
-        parsedSuccessfully = false;
-      }
-
-      // Only update if we have valid data to work with
-      if (parsedSuccessfully && formData && Object.keys(formData).length > 0) {
-        // Keep all form data (VA enquiry, health history, fitness screening, flexibility measurement)
-        // but ONLY reset the sessions array (session tracker step)
-        formData.sessions = [];
-
-        // Update pt_forms with cleared sessions but keep all other data
-        await connection.query(
-          'UPDATE pt_forms SET form_data = ? WHERE member_id = ?',
-          [JSON.stringify(formData), member_id]
-        );
-        console.log(`✅ Session tracker cleared for member ${member_id}, first 5 tabs retained`);
-      } else {
-        console.warn(`⚠️ Could not parse form data for member ${member_id}, keeping as-is`);
-      }
-    } else {
-      console.log(`ℹ️ No existing form data for member ${member_id}, skipping reset`);
-    }
-
-    // Reset pt_form_completed flag only for session tracker completion
-    // Users can re-save with new sessions for the new plan
-    await connection.query(
-      'UPDATE gym_members SET pt_form_completed = 0, pt_form_completed_at = NULL WHERE id = ? OR member_id = ?',
-      [member_id, member_id]
-    );
-
-    await connection.commit();
-    res.json({ success: true, message: 'PT Form session tracker reset successfully (first 5 steps retained)' });
-  } catch (err) {
-    await connection.rollback();
-    console.error('resetPTForm error:', err);
-    res.status(500).json({ error: 'Failed to reset PT Form sessions' });
-  } finally {
-    connection.release();
-  }
+  return res.status(410).json({
+    error: 'PT session history is preserved. Resetting session records is no longer supported.',
+  });
 }
 
 module.exports = { savePTForm, getPTForm, resetPTForm };

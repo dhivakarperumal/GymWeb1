@@ -11,6 +11,7 @@ import MemberSBuyPlans from "../WorkoutsDiet/MemberBuyPlans";
 import cache from "../cache";
 import PTFormUser from "./PTFormUser";
 import SessionTracker from "../Admin/PTForm/SessionTracker";
+import { buildPTSessionCycle, findCurrentPTMembership } from "../utils/ptSessionCycles";
 import { toast } from "react-hot-toast";
 import dayjs from "dayjs";
 import { Shield, Key, Eye, EyeOff, CalendarCheck, User, Mail, Phone, Menu, X, Home, ChevronLeft, Users, CreditCard } from "lucide-react";
@@ -237,29 +238,20 @@ const Account = () => {
 
     const fetchPtForm = async () => {
       try {
-        const isExpired = memberData?.pt_expiry_date && dayjs(memberData.pt_expiry_date).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
-
         const res = await api.get(`/pt-forms/${memberData.id}`);
         const ptData = res.data || {};
         const formData = typeof ptData.form_data === 'string' ? JSON.parse(ptData.form_data || '{}') : ptData.form_data || {};
-
-        let finalFormData = { ...formData };
-
-        // Check if plan was renewed by comparing joining dates
-        const isRenewed = formData.pt_join_date && memberData?.pt_join_date && !dayjs(formData.pt_join_date).isSame(dayjs(memberData.pt_join_date), 'day');
-
-        if (isExpired || isRenewed) {
-          finalFormData = {
-            ...formData,
-            sessions: []
-          };
-        }
+        const currentCycleData = buildPTSessionCycle(
+          formData,
+          findCurrentPTMembership(plans),
+          memberData,
+        );
 
         setPtFormData(normalizeSessionForm({
           member_id: memberData.id,
           u_id: userId,
           trainer_name_assigned: memberFormData.trainer_name_assigned || "",
-          ...finalFormData,
+          ...currentCycleData,
         }));
       } catch (err) {
         setPtFormData({
@@ -272,7 +264,7 @@ const Account = () => {
     };
 
     fetchPtForm();
-  }, [memberData?.id, userId, memberFormData]);
+  }, [memberData?.id, userId, memberFormData, plans]);
 
   useEffect(() => {
     if (!user?.email && !user?.mobile) return;
@@ -529,7 +521,7 @@ const Account = () => {
 
     const normalizeSessionForm = (rawData) => {
       const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || "";
-      const sessions = Array.isArray(rawData.sessions) && rawData.sessions.length > 0
+      const sessions = Array.isArray(rawData.sessions)
         ? rawData.sessions.map((session, index) => ({
           session_no: index + 1,
           date: session.date || "",
@@ -538,17 +530,34 @@ const Account = () => {
           client_sign: session.client_sign || "",
           trainer_sign: session.trainer_sign || trainerSign,
         }))
-        : undefined;
+        : [];
+      const activePlanId = String(rawData.active_pt_plan_id || rawData.pt_plan_id || "legacy");
+      const ptMembership = findCurrentPTMembership(plans);
+      const ptJoinDate = ptMembership?.pt_startDate || memberData.pt_join_date;
+      const ptExpiryDate = ptMembership?.pt_endDate || memberData.pt_expiry_date;
 
       return {
         ...rawData,
         member_id: memberData.id,
         u_id: userId,
         trainer_name_assigned: trainerSign,
-        pt_join_date: memberData.pt_join_date,
-        pt_expiry_date: memberData.pt_expiry_date,
+        pt_plan_id: activePlanId,
+        active_pt_plan_id: activePlanId,
+        pt_join_date: ptJoinDate,
+        pt_expiry_date: ptExpiryDate,
         join_date: memberData.join_date,
         expiry_date: memberData.expiry_date,
+        session_cycles: {
+          ...(rawData.session_cycles || {}),
+          [activePlanId]: {
+            ...(rawData.session_cycles?.[activePlanId] || {}),
+            pt_plan_id: activePlanId,
+            plan_name: ptMembership?.pt_planName || rawData.pt_plan || null,
+            pt_join_date: ptJoinDate,
+            pt_expiry_date: ptExpiryDate,
+            sessions,
+          },
+        },
         sessions,
       };
     };
@@ -588,22 +597,39 @@ const Account = () => {
 
   const normalizeSessionForm = (rawData) => {
     const trainerSign = rawData.trainer_name_assigned || memberFormData.trainer_name_assigned || '';
-    const sessions = Array.isArray(rawData.sessions) && rawData.sessions.length > 0
+    const sessions = Array.isArray(rawData.sessions)
       ? rawData.sessions.map((session, index) => ({
         ...normalizeSession(session, trainerSign),
         session_no: index + 1,
       }))
-      : undefined;
+      : [];
+    const activePlanId = String(rawData.active_pt_plan_id || rawData.pt_plan_id || "legacy");
+    const ptMembership = findCurrentPTMembership(plans);
+    const ptJoinDate = ptMembership?.pt_startDate || memberData?.pt_join_date;
+    const ptExpiryDate = ptMembership?.pt_endDate || memberData?.pt_expiry_date;
 
     return {
       ...rawData,
       member_id: memberData.id,
       u_id: userId,
       trainer_name_assigned: trainerSign,
-      pt_join_date: memberData?.pt_join_date,
-      pt_expiry_date: memberData?.pt_expiry_date,
+      pt_plan_id: activePlanId,
+      active_pt_plan_id: activePlanId,
+      pt_join_date: ptJoinDate,
+      pt_expiry_date: ptExpiryDate,
       join_date: memberData?.join_date,
       expiry_date: memberData?.expiry_date,
+      session_cycles: {
+        ...(rawData.session_cycles || {}),
+        [activePlanId]: {
+          ...(rawData.session_cycles?.[activePlanId] || {}),
+          pt_plan_id: activePlanId,
+          plan_name: ptMembership?.pt_planName || rawData.pt_plan || null,
+          pt_join_date: ptJoinDate,
+          pt_expiry_date: ptExpiryDate,
+          sessions,
+        },
+      },
       sessions,
     };
   };

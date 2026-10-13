@@ -46,34 +46,48 @@ const SessionTracker = ({
     return dayjs(d);
   };
 
-  let numRows = 25; // default
-  if (initialFormData?.pt_join_date && initialFormData?.pt_expiry_date) {
-    const diff = parseDate(initialFormData.pt_expiry_date).startOf('day').diff(parseDate(initialFormData.pt_join_date).startOf('day'), 'day');
+  const sessionCycles = initialFormData?.session_cycles &&
+    typeof initialFormData.session_cycles === "object" &&
+    !Array.isArray(initialFormData.session_cycles)
+    ? initialFormData.session_cycles
+    : {};
+  const activePtPlanId = String(initialFormData?.active_pt_plan_id || initialFormData?.pt_plan_id || "legacy");
+  const [selectedCycleId, setSelectedCycleId] = useState(activePtPlanId);
+  const selectedCycle = sessionCycles[selectedCycleId];
+  const cycleFormData = selectedCycle
+    ? { ...initialFormData, ...selectedCycle, sessions: selectedCycle.sessions || [] }
+    : initialFormData;
+  const viewingHistoricalCycle = selectedCycleId !== activePtPlanId;
+  const currentPlanExpired = !viewingHistoricalCycle &&
+    cycleFormData?.pt_expiry_date &&
+    parseDate(cycleFormData.pt_expiry_date).isValid() &&
+    parseDate(cycleFormData.pt_expiry_date).startOf("day").diff(dayjs().startOf("day"), "day") < 0;
+  const cycleReadOnly = readOnly || disabled || viewingHistoricalCycle || currentPlanExpired;
+
+  let numRows = 25;
+  if (cycleFormData?.pt_join_date && cycleFormData?.pt_expiry_date) {
+    const diff = parseDate(cycleFormData.pt_expiry_date).startOf('day').diff(parseDate(cycleFormData.pt_join_date).startOf('day'), 'day');
     if (diff > 0) numRows = diff;
-  } else if (initialFormData?.join_date && initialFormData?.expiry_date) {
-    const diff = parseDate(initialFormData.expiry_date).startOf('day').diff(parseDate(initialFormData.join_date).startOf('day'), 'day');
+  } else if (cycleFormData?.join_date && cycleFormData?.expiry_date) {
+    const diff = parseDate(cycleFormData.expiry_date).startOf('day').diff(parseDate(cycleFormData.join_date).startOf('day'), 'day');
     if (diff > 0) numRows = diff;
   }
 
   const [localFormData, setLocalFormData] = useState(() => {
-    const existingSessions = initialFormData?.sessions && Array.isArray(initialFormData.sessions) 
-      ? initialFormData.sessions 
+    const existingSessions = Array.isArray(cycleFormData?.sessions)
+      ? cycleFormData.sessions
       : [];
-      
-    // Create exactly `numRows` sessions
-    const updatedSessions = Array(numRows).fill(null).map((_, i) => {
-      // Use existing session if available
+    const updatedSessions = Array(Math.max(numRows, existingSessions.length)).fill(null).map((_, i) => {
       if (i < existingSessions.length) {
         return existingSessions[i];
       }
-      // Otherwise pad with new empty session
       return {
         session_no: i + 1,
         date: "",
         workout: "",
         status: "Pending",
         client_sign: "",
-        trainer_sign: initialFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
+        trainer_sign: cycleFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
       };
     });
 
@@ -85,17 +99,15 @@ const SessionTracker = ({
   useEffect(() => {
     if (!initialFormData) return;
 
-    setLocalFormData(prev => {
-      const existingSessions = (initialFormData.sessions && Array.isArray(initialFormData.sessions) && initialFormData.sessions.length > 0)
-        ? initialFormData.sessions
-        : prev.sessions;
-
-      // Create exactly `numRows` sessions
-      const resizedSessions = Array(numRows).fill(null).map((_, i) => {
+    const existingSessions = Array.isArray(cycleFormData?.sessions)
+      ? cycleFormData.sessions
+      : [];
+    setLocalFormData((prev) => {
+      const resizedSessions = Array(Math.max(numRows, existingSessions.length)).fill(null).map((_, i) => {
         if (i < existingSessions.length) {
           return {
             ...existingSessions[i],
-            trainer_sign: existingSessions[i].trainer_sign || initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName)
+            trainer_sign: existingSessions[i].trainer_sign || cycleFormData.trainer_name_assigned || (userMode ? "" : currentLoginName)
           };
         }
         return {
@@ -104,7 +116,7 @@ const SessionTracker = ({
           workout: "",
           status: "Pending",
           client_sign: "",
-          trainer_sign: initialFormData.trainer_name_assigned || (userMode ? "" : currentLoginName),
+          trainer_sign: cycleFormData?.trainer_name_assigned || (userMode ? "" : currentLoginName),
         };
       });
 
@@ -113,10 +125,11 @@ const SessionTracker = ({
         sessions: resizedSessions
       };
     });
-  }, [initialFormData, currentLoginName, userMode, numRows]);
+  }, [initialFormData, currentLoginName, userMode, numRows, selectedCycleId]);
 
   const handleSessionChange = (index, field, value) => {
-    if (userMode && ['date', 'workout', 'trainer_sign', 'client_sign'].includes(field)) {
+    if (cycleReadOnly ||
+      (userMode && ['date', 'workout', 'trainer_sign', 'client_sign'].includes(field))) {
       return;
     }
 
@@ -146,10 +159,28 @@ const SessionTracker = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (cycleReadOnly) return;
+    const updatedFormData = {
+      ...initialFormData,
+      pt_plan_id: activePtPlanId,
+      active_pt_plan_id: activePtPlanId,
+      session_cycles: {
+        ...sessionCycles,
+        [activePtPlanId]: {
+          ...(sessionCycles[activePtPlanId] || {}),
+          pt_plan_id: activePtPlanId,
+          plan_name: initialFormData.pt_plan || sessionCycles[activePtPlanId]?.plan_name || null,
+          pt_join_date: initialFormData.pt_join_date || sessionCycles[activePtPlanId]?.pt_join_date || null,
+          pt_expiry_date: initialFormData.pt_expiry_date || sessionCycles[activePtPlanId]?.pt_expiry_date || null,
+          sessions: localFormData.sessions,
+        },
+      },
+      sessions: localFormData.sessions,
+    };
 
     if (standalone) {
       try {
-        await onSaved({ ...initialFormData, sessions: localFormData.sessions });
+        await onSaved(updatedFormData);
       } catch (error) {
         console.error("Error saving session tracker:", error);
         toast.error("Failed to save session tracker.");
@@ -166,12 +197,12 @@ const SessionTracker = ({
       const payload = {
         member_id: initialFormData.member_id,
         user_id: initialFormData.u_id,
-        formData: { ...initialFormData, sessions: localFormData.sessions },
+        formData: updatedFormData,
         completed: true,
       };
       await api.post(`/pt-forms`, payload);
       toast.success("Sessions approved successfully!");
-      onSaved({ ...initialFormData, sessions: localFormData.sessions });
+      onSaved(updatedFormData);
     } catch (error) {
       console.error("Error updating sessions:", error);
       toast.error("Failed to approve sessions.");
@@ -184,6 +215,31 @@ const SessionTracker = ({
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-white uppercase tracking-widest">Session Tracker</h2>
           {userMode && <p className="text-white/60 text-sm mt-2">Approve your workout sessions</p>}
+          {Object.keys(sessionCycles).length > 1 && (
+            <div className="mt-4">
+              <label htmlFor="pt-session-cycle" className="sr-only">PT plan session history</label>
+              <select
+                id="pt-session-cycle"
+                value={selectedCycleId}
+                onChange={(event) => setSelectedCycleId(event.target.value)}
+                className="max-w-full rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white text-sm"
+              >
+                {Object.entries(sessionCycles).map(([cycleId, cycle]) => (
+                  <option key={cycleId} value={cycleId}>
+                    {cycle.plan_name || "PT Plan"}
+                    {cycle.pt_join_date ? ` - ${parseDate(cycle.pt_join_date).format("MMM DD, YYYY")}` : ""}
+                    {cycleId === activePtPlanId ? " (Current)" : " (History)"}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {viewingHistoricalCycle && (
+            <p className="text-amber-300 text-xs mt-2">Viewing a previous plan. Its session history is read-only.</p>
+          )}
+          {currentPlanExpired && (
+            <p className="text-amber-300 text-xs mt-2">This PT plan has expired. Its session history is read-only.</p>
+          )}
           <div className="w-24 h-1 bg-orange-500 mx-auto mt-2 rounded-full"></div>
         </div>
 
@@ -212,7 +268,7 @@ const SessionTracker = ({
                         value={session.date || ""}
                         onChange={(e) => handleSessionChange(index, "date", e.target.value)}
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center"
-                        readOnly={userMode}
+                        readOnly={cycleReadOnly || userMode}
                       />
                     </td>
                     <td className="p-0 border-r border-white/5">
@@ -222,7 +278,7 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "workout", e.target.value)}
                         placeholder="Describe the workout sessions..."
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors placeholder-white/10"
-                        readOnly={userMode}
+                        readOnly={cycleReadOnly || userMode}
                       />
                     </td>
                     <td className="p-4 border-r border-white/5 text-center">
@@ -245,20 +301,31 @@ const SessionTracker = ({
                             }));
 
                             try {
+                              const updatedFormData = {
+                                ...initialFormData,
+                                pt_plan_id: activePtPlanId,
+                                active_pt_plan_id: activePtPlanId,
+                                sessions: updatedSessions,
+                                session_cycles: {
+                                  ...sessionCycles,
+                                  [activePtPlanId]: {
+                                    ...(sessionCycles[activePtPlanId] || {}),
+                                    pt_plan_id: activePtPlanId,
+                                    sessions: updatedSessions,
+                                  },
+                                },
+                              };
                               await api.post(`/pt-forms`, {
                                 member_id: initialFormData.member_id,
                                 user_id: initialFormData.u_id,
-                                formData: {
-                                  ...initialFormData,
-                                  sessions: updatedSessions,
-                                },
+                                formData: updatedFormData,
                                 completed: true,
                               });
 
                               toast.success("Session completed");
                               if (typeof onSaved === 'function') {
                                 try {
-                                  onSaved({ ...initialFormData, sessions: updatedSessions });
+                                  onSaved(updatedFormData);
                                 } catch (err) {
                                   console.warn('onSaved callback failed', err);
                                 }
@@ -273,7 +340,7 @@ const SessionTracker = ({
                             ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white"
                             : "bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500 hover:text-white"
                           }`}
-                        disabled={!canApproveSession(session)}
+                        disabled={cycleReadOnly || !canApproveSession(session)}
                       >
                         {session.status || "Pending"}
                       </button>
@@ -294,7 +361,7 @@ const SessionTracker = ({
                         onChange={(e) => handleSessionChange(index, "trainer_sign", e.target.value)}
                         placeholder="Sign/Initial"
                         className="w-full p-4 bg-transparent text-white focus:outline-none focus:bg-white/5 transition-colors text-center placeholder-white/10 font-bold"
-                        readOnly={userMode || trainerSignReadOnly}
+                        readOnly={cycleReadOnly || userMode || trainerSignReadOnly}
                       />
                     </td>
                   </tr>
@@ -320,6 +387,7 @@ const SessionTracker = ({
                 )}
                 <button
                   type="submit"
+                  disabled={cycleReadOnly}
                   className="flex-1 px-6 py-4 rounded-xl font-bold shadow-2xl shadow-orange-600/20 transition-all uppercase tracking-widest text-xs bg-orange-600 hover:bg-orange-700 text-white"
                 >
                   {isLastStep ? "Complete Registration" : "Next Step"}

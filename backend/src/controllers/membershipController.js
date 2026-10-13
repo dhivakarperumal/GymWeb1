@@ -282,7 +282,7 @@ async function createMembership(req, res) {
     let membershipId = null;
     let membershipRowUpdated = false;
 
-    if (resolvedUserId) {
+    if (resolvedUserId && !isPTPlan) {
       const [existingRows] = await connection.query(
         'SELECT id FROM memberships WHERE userId = ? ORDER BY createdAt DESC LIMIT 1 FOR UPDATE',
         [resolvedUserId]
@@ -290,51 +290,7 @@ async function createMembership(req, res) {
 
       if (existingRows.length > 0) {
         membershipId = existingRows[0].id;
-        
-        if (isPTPlanPurchase) {
-          await connection.query(
-            `UPDATE memberships
-             SET
-               has_pt_plan = 1,
-               pt_planId = ?,
-               pt_planName = ?,
-               pt_price = ?,
-               pt_pricePaid = ?,
-               pt_duration = ?,
-               pt_startDate = ?,
-               pt_endDate = ?,
-               pt_paymentMode = ?,
-               pt_paymentDate = ?,
-               pt_paymentStatus = ?,
-               pt_trainerId = ?,
-               pt_trainerName = ?,
-               pt_discount = ?,
-               pt_amount = ?,
-               pt_status = ?,
-               updated_by = @web_user_id,
-               updated_by_name = @web_username
-             WHERE id = ?`,
-            [
-              pt_planId || null,
-              pt_planName || null,
-              pt_price || null,
-              pt_pricePaid || null,
-              pt_duration || null,
-              pt_startDate || null,
-              pt_endDate || null,
-              pt_paymentMode || null,
-              pt_paymentDate || null,
-              pt_paymentStatus || null,
-              pt_trainerId || null,
-              pt_trainerName || null,
-              pt_discount !== undefined ? pt_discount : 0,
-              pt_amount !== undefined ? pt_amount : 0,
-              pt_status || 'active',
-              membershipId,
-            ]
-          );
-        } else {
-          await connection.query(
+        await connection.query(
             `UPDATE memberships
              SET
                planId = ?,
@@ -380,7 +336,6 @@ async function createMembership(req, res) {
               membershipId,
             ]
           );
-        }
         membershipRowUpdated = true;
       } else {
         const [result] = await connection.query(membershipInsertQuery, membershipInsertValues);
@@ -392,7 +347,7 @@ async function createMembership(req, res) {
     }
 
     const [ptTableRows] = await connection.query("SHOW TABLES LIKE 'pt_plans'");
-    if (ptTableRows.length > 0) {
+    if (ptTableRows.length > 0 && !isPTPlan) {
       const [ptColumns] = await connection.query("SHOW COLUMNS FROM pt_plans LIKE 'userId'");
       if (ptColumns.length > 0) {
         const [ptPlanRows] = await connection.query(
@@ -518,14 +473,7 @@ async function createMembership(req, res) {
           if (syncResult.affectedRows === 0) {
             console.warn('createMembership: PT plan sync matched 0 gym_members rows for userId:', resolvedUserId);
           } else {
-            try {
-              await db.query(
-                `UPDATE pt_forms SET form_data = NULL WHERE member_id IN (SELECT id FROM gym_members WHERE ${whereStr})`,
-                [...whereParams]
-              );
-            } catch (ptClearErr) {
-              console.error('Failed to clear old PT form data', ptClearErr);
-            }
+            console.log('PT plan updated; existing PT form and session history retained.');
           }
         } else {
           const [syncResult] = await db.query(
@@ -569,7 +517,14 @@ async function getUserMemberships(req, res) {
     const { userId } = req.params;
 
     const [rows] = await db.query(
-      "SELECT * FROM memberships WHERE userId = ? ORDER BY createdAt DESC",
+      `SELECT memberships.*,
+              CASE
+                WHEN has_pt_plan = 1 AND pt_endDate < CURDATE() THEN 'expired'
+                ELSE pt_status
+              END AS pt_status
+       FROM memberships
+       WHERE userId = ?
+       ORDER BY createdAt DESC, id DESC`,
       [userId]
     );
 
@@ -615,6 +570,69 @@ async function getMembershipById(req, res) {
 async function updateMembership(req, res) {
   try {
     const { id } = req.params;
+    if (req.body.isPTPlanPurchase) {
+      const [existingRows] = await db.query(
+        'SELECT * FROM memberships WHERE id = ? LIMIT 1',
+        [id]
+      );
+      if (!existingRows.length) {
+        return res.status(404).json({ success: false, message: "Membership not found" });
+      }
+
+      const newMembership = { ...existingRows[0] };
+      delete newMembership.id;
+      delete newMembership.createdAt;
+      delete newMembership.updatedAt;
+      if (Object.prototype.hasOwnProperty.call(newMembership, 'dues')) {
+        newMembership.dues = null;
+      }
+      [
+        "status", "price", "pricePaid", "secondPaymentPaid", "paymentMode", "paymentDate",
+        "paymentId", "planId", "startDate", "endDate", "duration", "planName",
+        "paymentStatus", "trainerId", "trainerName", "discount", "amount", "collectedBy",
+        "has_pt_plan", "pt_planId", "pt_planName", "pt_price", "pt_pricePaid", "pt_duration",
+        "pt_startDate", "pt_endDate", "pt_paymentMode", "pt_paymentDate", "pt_paymentStatus",
+        "pt_status", "pt_trainerId", "pt_trainerName", "pt_discount", "pt_amount",
+      ].forEach((field) => {
+        if (req.body[field] !== undefined) newMembership[field] = req.body[field];
+      });
+      newMembership.has_pt_plan = 1;
+      newMembership.pt_status = req.body.pt_status || "active";
+
+      const [insertResult] = await db.query('INSERT INTO memberships SET ?', [newMembership]);
+      if (newMembership.userId) {
+        try {
+          const [users] = await db.query('SELECT email, mobile FROM users WHERE id = ?', [newMembership.userId]);
+          if (users.length) {
+            await db.query(
+              `UPDATE gym_members
+               SET pt_plan = ?, pt_duration = ?, pt_join_date = ?, pt_expiry_date = ?,
+                   pt_status = ?, pt_form_completed = 0
+               WHERE (email = ? AND email IS NOT NULL AND email != '')
+                  OR (phone = ? AND phone IS NOT NULL AND phone != '')`,
+              [
+                newMembership.pt_planName,
+                newMembership.pt_duration,
+                newMembership.pt_startDate,
+                newMembership.pt_endDate,
+                newMembership.pt_status,
+                users[0].email,
+                users[0].mobile,
+              ]
+            );
+          }
+        } catch (syncError) {
+          console.error('updateMembership: PT plan was saved but member details could not be synced', syncError);
+        }
+      }
+      return res.json({
+        success: true,
+        message: "New PT plan history created",
+        id: insertResult.insertId,
+        membershipId: insertResult.insertId,
+      });
+    }
+
     const allowedFields = [
       "status",
       "price",

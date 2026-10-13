@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api";
 import SessionTracker from "../../Admin/PTForm/SessionTracker";
+import { buildPTSessionCycle } from "../../utils/ptSessionCycles";
 import dayjs from "dayjs";
 
 const SessionTracking = () => {
@@ -88,6 +89,7 @@ const SessionTracking = () => {
       isExpired,
       hasPtPlan,
       ptFormCompleted: item.ptFormCompleted || item.pt_form_completed || 0,
+      ptPlanId: item.ptPlanId || item.pt_plan_id || "",
     };
   };
 
@@ -99,7 +101,7 @@ const SessionTracking = () => {
       const data = Array.isArray(res.data) ? res.data : res.data?.data || res.data?.assignments || [];
       const members = data
         .map(normalizeMember)
-        .filter((m) => m.id && !m.isExpired && m.hasPtPlan)
+        .filter((m) => m.id && m.hasPtPlan)
         .filter((m, index, arr) => arr.findIndex((u) => String(u.id) === String(m.id)) === index);
       setAssignedMembers(members);
     } catch (err) {
@@ -110,16 +112,6 @@ const SessionTracking = () => {
     }
   };
 
-  const makeEmptySessions = () =>
-    Array.from({ length: 25 }, (_, index) => ({
-      session_no: index + 1,
-      date: "",
-      workout: "",
-      status: "Pending",
-      client_sign: "",
-      trainer_sign: trainerName,
-    }));
-
   const buildFormData = (savedData = {}, member) => {
     const baseData = {
       ...savedData,
@@ -128,27 +120,16 @@ const SessionTracking = () => {
       name: member?.name || savedData.name || "",
       trainer_name_assigned: trainerName || savedData.trainer_name_assigned || "",
     };
-
-    const isExpired = member?.planEndDate && dayjs(member.planEndDate).startOf('day').diff(dayjs().startOf('day'), 'day') < 0;
-    const isRenewed = savedData.pt_join_date && member?.planStartDate && !dayjs(savedData.pt_join_date).isSame(dayjs(member.planStartDate), 'day');
-
-    const sessions = (!isExpired && !isRenewed) && Array.isArray(savedData.sessions) && savedData.sessions.length > 0
-      ? savedData.sessions.map((session, index) => ({
-          session_no: index + 1,
-          date: session.date || "",
-          workout: session.workout || "",
-          status: session.status || "Pending",
-          client_sign: session.client_sign || "",
-          trainer_sign: session.trainer_sign || trainerName,
-        }))
-      : undefined;
-
-    return { 
-      ...baseData, 
-      sessions,
+    return buildPTSessionCycle(baseData, {
+      id: member?.ptPlanId,
+      pt_planName: member?.planName,
+      pt_startDate: member?.planStartDate,
+      pt_endDate: member?.planEndDate,
+    }, {
+      pt_plan: member?.planName,
       pt_join_date: member?.planStartDate,
       pt_expiry_date: member?.planEndDate,
-    };
+    });
   };
 
   const fetchPtForm = async (memberId, member) => {
@@ -156,9 +137,7 @@ const SessionTracking = () => {
     try {
       const res = await api.get(`/pt-forms/${memberId}`);
       let rawFormData = null;
-      if (member?.ptFormCompleted) {
-         rawFormData = res.data?.form_data;
-      }
+      rawFormData = res.data?.form_data;
       const savedData = rawFormData && typeof rawFormData === "string"
         ? JSON.parse(rawFormData)
         : rawFormData || {};
@@ -194,7 +173,19 @@ const SessionTracking = () => {
         completed: true,
       });
       toast.success("Session tracker saved inside PT form");
-      setFormData((prev) => ({ ...prev, sessions: sessionData.sessions }));
+      const activePlanId = String(formData.pt_plan_id || formData.active_pt_plan_id || "legacy");
+      setFormData((prev) => ({
+        ...prev,
+        sessions: sessionData.sessions,
+        session_cycles: {
+          ...(prev.session_cycles || {}),
+          [activePlanId]: {
+            ...(prev.session_cycles?.[activePlanId] || {}),
+            pt_plan_id: activePlanId,
+            sessions: sessionData.sessions,
+          },
+        },
+      }));
     } catch (err) {
       console.error(err);
       toast.error("Failed to save session tracker");
@@ -332,6 +323,7 @@ const SessionTracking = () => {
                 <div className="rounded-3xl bg-black/20 p-10 text-center text-white/40">Loading form data…</div>
               ) : selectedMember ? (
                 <SessionTracker
+                  key={`${selectedMemberId}:${formData?.pt_plan_id || ""}`}
                   standalone
                   onSaved={handleSave}
                   formData={formData}
