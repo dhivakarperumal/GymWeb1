@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
 import api from "../../api";
+import { getLatestPlanPerMember } from "../../utils/latestMemberPlan";
 
 
 const weekDays = [
@@ -72,7 +73,7 @@ const AllDietPlans = () => {
           duration: p.duration,
           title: p.title || "",
         }));
-        setDietPlans(normalized);
+        setDietPlans(getLatestPlanPerMember(normalized));
       } catch (err) {
         console.error(err);
         toast.error("Failed to load diet plans");

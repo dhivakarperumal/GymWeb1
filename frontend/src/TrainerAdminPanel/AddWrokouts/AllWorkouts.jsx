@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import * as XLSX from "xlsx";
 import api from "../../api";
+import { getLatestPlanPerMember } from "../../utils/latestMemberPlan";
 
 const weekDays = [
   "MONDAY",
@@ -61,6 +62,8 @@ const AllWorkouts = () => {
           trainerName: w.trainer_name,
           trainerSource: w.trainer_source,
           memberId: w.member_id,
+          userId: w.user_id,
+          userUuid: w.user_id_uuid,
           memberName: w.member_name,
           level: w.level,
           goal: w.goal,
@@ -70,7 +73,7 @@ const AllWorkouts = () => {
           createdAt: w.created_at,
           updatedAt: w.updated_at,
         }));
-        setWorkouts(normalized);
+        setWorkouts(getLatestPlanPerMember(normalized));
       })
       .catch((err) => {
         console.error(err);
@@ -481,4 +484,3 @@ const AllWorkouts = () => {
 };
 
 export default AllWorkouts;
-
