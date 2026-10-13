@@ -55,6 +55,15 @@ const MemberDetails = () => {
         // Get latest membership price if available
         const userMemberships = Array.isArray(membershipRes.data) ? membershipRes.data : [];
         const activeMembership = userMemberships.find(m => m.status === 'active') || userMemberships[0];
+        const ptMembership = userMemberships.find(m =>
+          (m.has_pt_plan === 1 || m.has_pt_plan === true || m.has_pt_plan === '1') &&
+          (m.pt_planName || m.pt_plan_name || m.pt_planId || m.pt_endDate || m.pt_end_date || m.pt_startDate || m.pt_start_date)
+        ) || userMemberships.find(m =>
+          m.pt_planName || m.pt_plan_name || m.pt_planId || m.pt_endDate || m.pt_end_date || m.pt_startDate || m.pt_start_date
+        );
+        const memberHasPtPlan = memberData.has_pt_plan === 1 ||
+          memberData.has_pt_plan === true ||
+          memberData.has_pt_plan === '1';
 
         const enhancedMember = {
           ...memberData,
@@ -69,6 +78,19 @@ const MemberDetails = () => {
           pt_secondPaymentPaid: activeMembership?.pt_secondPaymentPaid || memberData.pt_secondPaymentPaid || 0,
           pt_discount: activeMembership?.pt_discount || memberData.pt_discount || 0,
           pt_amount: activeMembership?.pt_amount || memberData.pt_amount || 0,
+          pt_plan: memberData.pt_plan || ptMembership?.pt_planName || ptMembership?.pt_plan_name || null,
+          pt_join_date: memberData.pt_join_date || ptMembership?.pt_startDate || ptMembership?.pt_start_date || null,
+          pt_expiry_date: memberData.pt_expiry_date || ptMembership?.pt_endDate || ptMembership?.pt_end_date || ptMembership?.pt_expiry_date || null,
+          pt_duration: memberData.pt_duration || ptMembership?.pt_duration || null,
+          pt_status: memberData.pt_status || ptMembership?.pt_status || null,
+          has_pt_plan: Boolean(
+            memberHasPtPlan ||
+            ptMembership?.pt_planName ||
+            ptMembership?.pt_plan_name ||
+            ptMembership?.pt_planId ||
+            ptMembership?.pt_endDate ||
+            ptMembership?.pt_end_date
+          ),
         };
         setMember(enhancedMember);
 
@@ -457,7 +479,7 @@ const MemberDetails = () => {
                   </div>
                 </div>
 
-                {(member.pt_plan || member.has_pt_plan) && (
+                {(member.pt_plan || member.has_pt_plan || member.pt_expiry_date) && (
                   <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
                       <h3 className="text-sm font-black text-white/20 uppercase tracking-widest">PT Plan</h3>
@@ -553,7 +575,7 @@ const MemberDetails = () => {
                 </div>
               </div>
 
-              {((member.pt_plan || member.has_pt_plan) && !isPtExpired) ? (
+              {(member.pt_plan || member.has_pt_plan || member.pt_expiry_date) ? (
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-2xl ${member.pt_form_completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-500'}`}>
@@ -562,6 +584,12 @@ const MemberDetails = () => {
                     <div>
                       <h4 className="text-white font-bold text-sm">PT Registration Form</h4>
                       <p className="text-white/40 text-xs">{member.pt_form_completed ? 'Form completed' : 'Awaiting completion'}</p>
+                      {member.pt_expiry_date && (
+                        <p className={`text-xs mt-1 ${isPtExpired ? 'text-red-400' : 'text-white/40'}`}>
+                          PT Expiry: {dayjs(member.pt_expiry_date).format('MMM DD, YYYY')}
+                          {isPtExpired ? ' (Expired)' : ''}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
