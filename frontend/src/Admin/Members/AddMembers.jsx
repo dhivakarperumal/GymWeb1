@@ -82,10 +82,11 @@ const AddMember = () => {
           setOriginalPlan(data.plan || null);
 
           // Fetch memberships to check for pending EMIs
+          let memberships = [];
           try {
             const uId = data.u_id || data.user_id || id;
             const membershipsRes = await api.get(`/memberships/user/${uId}`);
-            const memberships = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
+            memberships = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
             const pending = memberships.filter(m => {
               const pMode = (m.paymentMode || m.payment_mode || '').toLowerCase();
               if (pMode !== 'emi') return false;
@@ -96,6 +97,11 @@ const AddMember = () => {
           } catch (err) {
             console.error('Failed to load memberships for EMI check:', err);
           }
+          const ptMembership = memberships.find(m =>
+            (m.has_pt_plan === 1 || m.has_pt_plan === true || m.has_pt_plan === '1') &&
+            (m.pt_endDate || m.pt_end_date || m.pt_expiry_date)
+          ) || memberships.find(m => m.pt_endDate || m.pt_end_date || m.pt_expiry_date);
+          const ptExpiryDate = data.pt_expiry_date || ptMembership?.pt_endDate || ptMembership?.pt_end_date || ptMembership?.pt_expiry_date;
 
           setForm({
             ...data,
@@ -126,6 +132,7 @@ const AddMember = () => {
             expiryDate: data.expiry_date
               ? dayjs(data.expiry_date).format("YYYY-MM-DD")
               : "",
+            pt_expiry_date: ptExpiryDate ? dayjs(ptExpiryDate).format("YYYY-MM-DD") : "",
             fingerprintId: data.fingerprint_id || Math.floor(1000 + Math.random() * 9000).toString(),
           });
         } catch {
@@ -283,6 +290,7 @@ const AddMember = () => {
         bmi: form.bmi ? Number(form.bmi) : null,
         age: form.age ? Number(form.age) : null,
         duration: form.duration ? Number(form.duration) : null,
+        pt_expiry_date: form.pt_expiry_date || null,
         // In edit mode:
         //   - If admin typed a new password → send it
         //   - Otherwise → send the current phone so backend keeps password = mobile
@@ -452,6 +460,19 @@ const AddMember = () => {
                 <span className="text-white text-sm font-medium">PT Form Completed</span>
               </div>
             </div>
+
+            {isEdit && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-white/70 ml-1">PT Expiry Date</label>
+                <input
+                  type="date"
+                  name="pt_expiry_date"
+                  value={form.pt_expiry_date || ""}
+                  onChange={handleChange}
+                  className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            )}
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-white/70 ml-1">Fingerprint ID (For Biometric Attendance)</label>
