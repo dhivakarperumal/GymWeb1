@@ -18,7 +18,13 @@ const meals = [
 const inputClass =
   "w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500";
 
-const createDay = () => ({
+const createDayId = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  `diet-day-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const createDay = (dayName = "Day 1", dayId = createDayId()) => ({
+  dayId,
+  dayName,
   ...Object.fromEntries(meals.map((meal) => [
     meal,
     { time: "", items: [{ food: "", quantity: "", calories: "" }] },
@@ -55,8 +61,11 @@ const createPlanForm = (plan) => {
         .map((key) => rawDays[key])
       : [];
   const days = dayList.length
-    ? dayList.map((rawDay) => {
-      const day = createDay();
+    ? dayList.map((rawDay, dayIndex) => {
+      const day = createDay(
+        rawDay?.dayName ?? `Day ${dayIndex + 1}`,
+        rawDay?.dayId || createDayId(),
+      );
       meals.forEach((meal) => {
         const mealData = rawDay?.[meal];
         if (typeof mealData === "string") {
@@ -140,6 +149,15 @@ const getCell = (row, names) => {
   return matchingKey ? String(row[matchingKey] ?? "").trim() : "";
 };
 
+const getNextDayName = (days) => {
+  const existingNames = new Set(
+    days.map((day) => String(day.dayName || "").trim().toLowerCase()),
+  );
+  let dayNumber = 1;
+  while (existingNames.has(`day ${dayNumber}`)) dayNumber += 1;
+  return `Day ${dayNumber}`;
+};
+
 const normalizeMeal = (value) => {
   const normalized = value.toLowerCase().replace(/[\s_-]+/g, " ").trim();
   const aliases = {
@@ -172,6 +190,7 @@ const AdminMemberDietPlan = ({ member, creator }) => {
   const [form, setForm] = useState(() => createPlanForm(null));
 
   const plan = plans[0] || null;
+  const savedPlanForm = useMemo(() => createPlanForm(plan), [plan]);
   const totalCalories = useMemo(
     () => form.days.reduce((total, day) =>
       total + meals.reduce((mealTotal, meal) =>
@@ -272,25 +291,64 @@ const AdminMemberDietPlan = ({ member, creator }) => {
     }));
   };
 
-  const beginAddingDay = () => {
+  const updateDayName = (dayIndex, value) => {
+    setForm((previous) => ({
+      ...previous,
+      days: previous.days.map((day, index) =>
+        index === dayIndex ? { ...day, dayName: value } : day,
+      ),
+    }));
+  };
+
+  const copyDayToAll = (sourceIndex) => {
+    setForm((previous) => {
+      const sourceDay = previous.days[sourceIndex];
+      return {
+        ...previous,
+        days: previous.days.map((day, index) =>
+          index === sourceIndex
+            ? day
+            : {
+              ...JSON.parse(JSON.stringify(sourceDay)),
+              dayId: day.dayId,
+              dayName: day.dayName,
+            },
+        ),
+      };
+    });
+    toast.success(`${form.days[sourceIndex].dayName} copied to all days.`);
+  };
+
+  const beginAddingDay = (dayIndex = null) => {
     const currentForm = createPlanForm(plan);
     if (currentForm.days.length >= 60) {
       toast.error("Maximum 60 days allowed.");
       return;
     }
+    const insertIndex = dayIndex == null
+      ? currentForm.days.length
+      : dayIndex + 1;
+    const newDay = createDay(getNextDayName(currentForm.days));
+    const days = [...currentForm.days];
+    days.splice(insertIndex, 0, newDay);
     setForm({
       ...currentForm,
-      days: [...currentForm.days, createDay()],
+      days,
     });
     setEditing(true);
   };
 
-  const addDay = () => {
+  const addDay = (dayIndex = null) => {
     if (form.days.length >= 60) {
       toast.error("Maximum 60 days allowed.");
       return;
     }
-    setForm((previous) => ({ ...previous, days: [...previous.days, createDay()] }));
+    setForm((previous) => {
+      const insertIndex = dayIndex == null ? previous.days.length : dayIndex + 1;
+      const days = [...previous.days];
+      days.splice(insertIndex, 0, createDay(getNextDayName(previous.days)));
+      return { ...previous, days };
+    });
   };
 
   const removeDay = () => {
@@ -472,7 +530,7 @@ const AdminMemberDietPlan = ({ member, creator }) => {
 
       const dayCount = Math.max(...Object.keys(parsedDays).map((key) => Number(key.replace(/\D/g, ""))));
       const days = Array.from({ length: dayCount }, (_, index) => {
-        const day = createDay();
+        const day = createDay(`Day ${index + 1}`);
         const importedDay = parsedDays[`Day${index + 1}`] || {};
         meals.forEach((meal) => {
           if (importedDay[meal]) {
@@ -523,7 +581,7 @@ const AdminMemberDietPlan = ({ member, creator }) => {
         </button>
         {plan && !editing && (
           <>
-            <button onClick={beginAddingDay} className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+            <button onClick={() => beginAddingDay()} className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700">
               <Plus size={16} /> Add Day / Meal
             </button>
             <button onClick={() => { setForm(createPlanForm(plan)); setEditing(true); }} className="rounded-lg bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-200 hover:bg-blue-500/30">
@@ -553,9 +611,9 @@ const AdminMemberDietPlan = ({ member, creator }) => {
               {plan.duration || createPlanForm(plan).days.length} day(s) · {plan.total_calories || plan.totalCalories || totalCalories} kcal · {plan.member_weight || "Weight not specified"}{plan.member_weight ? " kg" : ""}
             </p>
           </div>
-          {createPlanForm(plan).days.map((day, dayIndex) => (
-            <section key={dayIndex} className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
-              <h4 className="font-bold text-amber-300">Day {dayIndex + 1}</h4>
+          {savedPlanForm.days.map((day, dayIndex) => (
+            <section key={day.dayId} className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 className="font-bold text-amber-300">{day.dayName ?? `Day ${dayIndex + 1}`}</h4>
               {meals.map((meal) => {
                 const mealData = day[meal];
                 const items = mealData.items.filter((item) => item.food || item.quantity || item.calories);
@@ -604,21 +662,31 @@ const AdminMemberDietPlan = ({ member, creator }) => {
               <span>Duration: {form.days.length} day(s)</span>
               <div className="flex gap-3">
                 <button type="button" onClick={removeDay} className="text-red-300" aria-label="Remove final day">-</button>
-                <button type="button" onClick={addDay} className="text-amber-300" aria-label="Add day"><Plus size={16} /></button>
+                <button type="button" onClick={() => addDay()} className="text-amber-300" aria-label="Add day"><Plus size={16} /></button>
               </div>
             </div>
           </div>
 
           <div className="max-h-[58vh] space-y-5 overflow-y-auto pr-1">
             {form.days.map((day, dayIndex) => (
-              <section key={dayIndex} className="space-y-3 rounded-xl border border-white/10 bg-black/30 p-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-amber-300">Day {dayIndex + 1}</h4>
-                  {dayIndex === 0 && form.days.length > 1 && (
-                    <button type="button" onClick={() => setForm((previous) => ({
-                      ...previous,
-                      days: previous.days.map((item, index) => index === 0 ? item : JSON.parse(JSON.stringify(previous.days[0]))),
-                    }))} className="text-xs text-amber-200">Copy Day 1 to All</button>
+              <React.Fragment key={day.dayId}>
+              <section className="space-y-3 rounded-xl border border-white/10 bg-black/30 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <input
+                    type="text"
+                    aria-label={`Name for day ${dayIndex + 1}`}
+                    value={day.dayName ?? `Day ${dayIndex + 1}`}
+                    onChange={(event) => updateDayName(dayIndex, event.target.value)}
+                    className="w-[130px] shrink-0 rounded-lg border border-white/20 bg-black/30 px-3 py-2 text-sm font-bold text-emerald-300 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                  />
+                  {form.days.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => copyDayToAll(dayIndex)}
+                      className="text-xs font-semibold text-emerald-300 hover:text-emerald-200"
+                    >
+                      Copy to All Days
+                    </button>
                   )}
                 </div>
                 {meals.map((meal) => (
@@ -642,6 +710,19 @@ const AdminMemberDietPlan = ({ member, creator }) => {
                 ))}
                 <textarea className={`${inputClass} min-h-20`} placeholder="Day notes" value={day.notes} onChange={(event) => updateNotes(dayIndex, event.target.value)} />
               </section>
+              {dayIndex < form.days.length - 1 && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => addDay(dayIndex)}
+                    disabled={form.days.length >= 60}
+                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Plus size={16} /> Add Day
+                  </button>
+                </div>
+              )}
+              </React.Fragment>
             ))}
           </div>
 

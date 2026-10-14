@@ -22,8 +22,12 @@ const meals = [
 ];
 
 /* ---------- GENERATE SINGLE DAY ---------- */
-const generateSingleDay = (dayName = "Day 1") => {
-  const day = { dayName };
+const createDayId = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  `diet-day-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const generateSingleDay = (dayName = "Day 1", dayId = createDayId()) => {
+  const day = { dayId, dayName };
   meals.forEach((meal) => {
     day[meal] = {
       time: "",
@@ -172,7 +176,9 @@ const AddDietPlans = () => {
         // Handle both object {Day1: ...} and array [...]
         if (Array.isArray(daysData)) {
           fixedDays = daysData.map((day, dayIndex) => {
-            const normalizedDay = {};
+            const normalizedDay = {
+              dayId: day.dayId || createDayId(),
+            };
             meals.forEach((meal) => {
               const mealData = day[meal];
               if (!mealData) {
@@ -203,7 +209,9 @@ const AddDietPlans = () => {
 
           fixedDays = keys.map((key, dayIndex) => {
             const day = daysData[key];
-            const normalizedDay = {};
+            const normalizedDay = {
+              dayId: day.dayId || createDayId(),
+            };
             meals.forEach((meal) => {
               const mealData = day[meal];
               if (!mealData) {
@@ -344,19 +352,27 @@ const AddDietPlans = () => {
   };
 
   /* ================= ADD DAY ================= */
-  const handleAddDay = () => {
-    const count = form.days.length;
+  const getNextDayName = (days) => {
+    const existingNames = new Set(
+      days.map((day) => String(day.dayName || "").trim().toLowerCase()),
+    );
+    let dayNumber = 1;
+    while (existingNames.has(`day ${dayNumber}`)) dayNumber += 1;
+    return `Day ${dayNumber}`;
+  };
 
-    if (count >= 60) {
+  const handleAddDay = (dayIndex = null) => {
+    if (form.days.length >= 60) {
       toast.error("Maximum 60 days allowed");
       return;
     }
 
-    setForm((prev) => ({
-      ...prev,
-      duration: count + 1,
-      days: [...prev.days, generateSingleDay(`Day ${count + 1}`)],
-    }));
+    setForm((prev) => {
+      const insertIndex = dayIndex == null ? prev.days.length : dayIndex + 1;
+      const days = [...prev.days];
+      days.splice(insertIndex, 0, generateSingleDay(getNextDayName(prev.days)));
+      return { ...prev, duration: days.length, days };
+    });
   };
 
   /* ================= REMOVE DAY ================= */
@@ -375,25 +391,27 @@ const AddDietPlans = () => {
     }));
   };
 
-  /* ================= COPY DAY 1 TO ALL ================= */
-  const handleCopyDay1ToAll = () => {
+  /* ================= COPY DAY TO ALL ================= */
+  const handleCopyDayToAll = (sourceIndex) => {
     if (form.days.length <= 1) {
       toast.error("Add more days first");
       return;
     }
 
-    const day1Data = form.days[0];
-    const getDeepCopy = () => JSON.parse(JSON.stringify(day1Data));
-
     setForm((prev) => {
+      const sourceDay = prev.days[sourceIndex];
       const updatedDays = prev.days.map((day, i) =>
-        i === 0
+        i === sourceIndex
           ? day
-          : { ...getDeepCopy(), dayName: day.dayName ?? `Day ${i + 1}` },
+          : {
+            ...JSON.parse(JSON.stringify(sourceDay)),
+            dayId: day.dayId,
+            dayName: day.dayName ?? `Day ${i + 1}`,
+          },
       );
       return { ...prev, days: updatedDays };
     });
-    toast.success("Day 1 copied to all days");
+    toast.success(`${form.days[sourceIndex].dayName} copied to all days`);
   };
 
   const normalizeString = (value) => {
@@ -822,7 +840,7 @@ const AddDietPlans = () => {
       for (let i = 1; i <= maxDay; i++) {
         const rawDay = parsedDays[`Day${i}`] || {};
         const dayTemplate = generateSingleDay(`Day ${i}`);
-        const mergedDay = {};
+        const mergedDay = { dayId: dayTemplate.dayId };
 
         meals.forEach((meal) => {
           const mealData = rawDay[meal];
@@ -1260,7 +1278,7 @@ const AddDietPlans = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={handleAddDay}
+                      onClick={() => handleAddDay()}
                       className="text-emerald-400 hover:text-emerald-300 font-bold px-1"
                     >
                       +
@@ -1274,8 +1292,8 @@ const AddDietPlans = () => {
           {/* DAYS */}
           <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
             {form.days.map((dayData, dayIndex) => (
+              <div key={dayData.dayId} className="space-y-3">
               <div
-                key={dayIndex}
                 className="bg-black/30 border border-white/10 rounded-lg p-4 space-y-4"
               >
                 <div className="flex items-center justify-between gap-3">
@@ -1288,10 +1306,10 @@ const AddDietPlans = () => {
                     }
                     className="h-[36px] w-[100px] shrink-0 bg-[#191728] border border-[#39354a] rounded-xl px-2 py-1 text-sm font-semibold text-white outline-none focus:outline focus:outline-[3px] focus:outline-solid focus:outline-orange-500 transition"
                   />
-                  {dayIndex === 0 && form.days.length > 1 && (
+                  {form.days.length > 1 && (
                     <button
                       type="button"
-                      onClick={handleCopyDay1ToAll}
+                      onClick={() => handleCopyDayToAll(dayIndex)}
                       className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
                     >
                       Copy to All Days
@@ -1448,6 +1466,19 @@ const AddDietPlans = () => {
                     }
                   />
                 </div>
+              </div>
+              {dayIndex < form.days.length - 1 && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleAddDay(dayIndex)}
+                    disabled={form.days.length >= 60}
+                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span aria-hidden="true">+</span> Add Day
+                  </button>
+                </div>
+              )}
               </div>
             ))}
           </div>
