@@ -153,6 +153,7 @@ const AddWorkout = () => {
   const [form, setForm] = useState(initialForm);
   const [days, setDays] = useState(initialDays);
   const [dayLabels, setDayLabels] = useState({ Day1: formatDayLabel("Day1") });
+  const [dayOrder, setDayOrder] = useState(["Day1"]);
 
   // For debugging - show all assignments
   const [allAssignments, setAllAssignments] = useState([]);
@@ -218,6 +219,8 @@ const AddWorkout = () => {
     if (!isEditMode) {
       setForm(initialForm);
       setDays(initialDays);
+      setDayOrder(["Day1"]);
+      setDayLabels({ Day1: formatDayLabel("Day1") });
       setSelected(new Set());
     }
   }, [isEditMode]);
@@ -231,6 +234,8 @@ const AddWorkout = () => {
         setLoading(true);
         setForm(initialForm);
         setDays(initialDays);
+        setDayOrder(["Day1"]);
+        setDayLabels({ Day1: formatDayLabel("Day1") });
         setSelected(new Set());
 
         const res = await api.get(`/workouts/${id}`);
@@ -248,10 +253,15 @@ const AddWorkout = () => {
           memberWeight: data.member_weight || "",
         });
         const normalized = normalizeDays(data.days || initialDays);
-      setDays(normalized);
-      if (requestedDay && normalized[requestedDay]) {
-        setHighlightDay(requestedDay);
-      }
+        const normalizedKeys = getSortedDayKeys(normalized);
+        setDays(normalized);
+        setDayOrder(normalizedKeys);
+        setDayLabels(Object.fromEntries(
+          normalizedKeys.map((key) => [key, normalized[key][0]?.dayName ?? formatDayLabel(key)]),
+        ));
+        if (requestedDay && normalized[requestedDay]) {
+          setHighlightDay(requestedDay);
+        }
       } catch (err) {
         console.error(err);
         toast.error("Failed to load workout");
@@ -265,12 +275,25 @@ const AddWorkout = () => {
   }, [id, isEditMode]);
 
   /* ---------------- ADD DAY ---------------- */
-  const addDay = (focusNewDay = false) => {
+  const addDay = (afterDayIndex = null, focusNewDay = false) => {
+    const keys = dayOrder.filter((key) => days[key]);
+    if (keys.length >= 60) {
+      toast.error("Maximum 60 days allowed");
+      return;
+    }
     const nextDay = getNextDayKey(days);
-    setDays({
-      ...days,
-      [nextDay]: [createExercise()],
-    });
+    const nextLabel = (() => {
+      const usedNames = new Set(Object.values(dayLabels).map((name) => String(name).trim().toLowerCase()));
+      let number = 1;
+      while (usedNames.has(`day ${number}`)) number += 1;
+      return `Day ${number}`;
+    })();
+    const insertIndex = afterDayIndex == null ? keys.length : afterDayIndex + 1;
+    const nextOrder = [...keys];
+    nextOrder.splice(insertIndex, 0, nextDay);
+    setDays((previous) => ({ ...previous, [nextDay]: [createExercise()] }));
+    setDayOrder(nextOrder);
+    setDayLabels((previous) => ({ ...previous, [nextDay]: nextLabel }));
 
     if (focusNewDay) {
       window.requestAnimationFrame(() => {
@@ -287,6 +310,12 @@ const AddWorkout = () => {
     const nextDays = { ...days };
     delete nextDays[dayKeys[dayKeys.length - 1]];
     setDays(nextDays);
+    setDayOrder((previous) => previous.filter((key) => key !== dayKeys[dayKeys.length - 1]));
+    setDayLabels((previous) => {
+      const next = { ...previous };
+      delete next[dayKeys[dayKeys.length - 1]];
+      return next;
+    });
   };
 
   const removeDayKey = (dayKey) => {
@@ -295,18 +324,29 @@ const AddWorkout = () => {
     const nextDays = { ...days };
     delete nextDays[dayKey];
     setDays(nextDays);
+    setDayOrder((previous) => previous.filter((key) => key !== dayKey));
+    setDayLabels((previous) => {
+      const next = { ...previous };
+      delete next[dayKey];
+      return next;
+    });
   };
 
-  /* ---------------- COPY DAY 1 TO ALL ---------------- */
-  const copyDay1ToAll = () => {
-    if (!window.confirm("Copy Day 1 to all other days? This will overwrite existing data.")) return;
-    const day1Data = days["Day1"] && days["Day1"].length > 0 ? days["Day1"] : [createExercise()];
+  /* ---------------- COPY DAY TO ALL ---------------- */
+  const copyDayToAll = (sourceDayKey) => {
+    if (!window.confirm(`${dayLabels[sourceDayKey] || formatDayLabel(sourceDayKey)} copied to all other days? This will overwrite existing data.`)) return;
+    const sourceData = days[sourceDayKey] && days[sourceDayKey].length > 0 ? days[sourceDayKey] : [createExercise()];
     const newDays = {};
-    Object.keys(days).forEach((day) => {
-      newDays[day] = JSON.parse(JSON.stringify(day1Data));
+    dayOrder.forEach((day) => {
+      newDays[day] = day === sourceDayKey
+        ? sourceData
+        : JSON.parse(JSON.stringify(sourceData)).map((exercise) => ({
+          ...exercise,
+          dayName: dayLabels[day] ?? formatDayLabel(day),
+        }));
     });
     setDays(newDays);
-    toast.success("Day 1 copied to all days!");
+    toast.success(`${dayLabels[sourceDayKey] || formatDayLabel(sourceDayKey)} copied to all days!`);
   };
 
   /* ---------------- ADD EXERCISE ---------------- */
@@ -351,7 +391,7 @@ const AddWorkout = () => {
     setDayLabels((prev) => {
       const next = {};
       getSortedDayKeys(days).forEach((key) => {
-        next[key] = prev[key] || formatDayLabel(key);
+        next[key] = prev[key] ?? formatDayLabel(key);
       });
       return next;
     });
@@ -368,12 +408,12 @@ const AddWorkout = () => {
 
     const rowDayKey = exerciseRow.dataset.dayKey;
     const rowIndex = Number(exerciseRow.dataset.exerciseIndex);
-    const sortedKeys = getSortedDayKeys(days);
+    const sortedKeys = dayOrder.filter((key) => days[key]);
     const lastDayKey = sortedKeys[sortedKeys.length - 1];
     const lastIndex = (days[lastDayKey] || []).length - 1;
 
     if (rowDayKey === lastDayKey && rowIndex === lastIndex) {
-      addDay(true);
+      addDay(null, true);
     }
   };
 
@@ -589,7 +629,11 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
         });
 
         if (Object.keys(importedDays).length > 0) {
-          setDays(normalizeDays(importedDays));
+          const normalizedImportedDays = normalizeDays(importedDays);
+          const importedKeys = getSortedDayKeys(normalizedImportedDays);
+          setDays(normalizedImportedDays);
+          setDayOrder(importedKeys);
+          setDayLabels(Object.fromEntries(importedKeys.map((key) => [key, formatDayLabel(key)])));
         }
 
         setSelected(newSelected);
@@ -857,18 +901,18 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
           </div>
 
           {/* DAYS */}
-          {getSortedDayKeys(days).map((dayKey) => {
+          {dayOrder.filter((key) => days[key]).map((dayKey, dayIndex) => {
               const dayExercises = Array.isArray(days[dayKey]) && days[dayKey].length > 0 ? days[dayKey] : [createExercise()];
               return (
+                <React.Fragment key={dayKey}>
                 <div
                   id={dayKey}
-                  key={dayKey}
                   className={`bg-black/40 p-4 rounded-xl ${highlightDay === dayKey ? "border border-orange-500/50 shadow-lg shadow-orange-500/10" : ""}`}
                 >
                   <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2 gap-3">
                     <input
                       type="text"
-                      value={dayLabels[dayKey] || formatDayLabel(dayKey)}
+                      value={dayLabels[dayKey] ?? formatDayLabel(dayKey)}
                       onChange={(e) => updateDayLabel(dayKey, e.target.value)}
                       onBlur={(e) => {
                         if (!e.target.value.trim()) {
@@ -878,10 +922,10 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
                       className="w-32 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <div className="flex items-center gap-2">
-                      {dayKey === "Day1" && Object.keys(days).length > 1 && (
+                      {dayOrder.filter((key) => days[key]).length > 1 && (
                         <button
                           type="button"
-                          onClick={copyDay1ToAll}
+                          onClick={() => copyDayToAll(dayKey)}
                           className="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition flex items-center gap-1"
                         >
                           Copy to All Days
@@ -1092,9 +1136,22 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
                   onClick={() => addExercise(dayKey)}
                   className="text-sm text-orange-400 mt-2"
                 >
-                  + Add Exercise
-                </button>
+                + Add Exercise
+              </button>
               </div>
+              {dayIndex < dayOrder.filter((key) => days[key]).length - 1 && (
+                <div className="flex justify-center py-1">
+                  <button
+                    type="button"
+                    onClick={() => addDay(dayIndex)}
+                    disabled={dayOrder.filter((key) => days[key]).length >= 60}
+                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span aria-hidden="true">+</span> Add Day
+                  </button>
+                </div>
+              )}
+              </React.Fragment>
             )})}
 
           <button
@@ -1123,4 +1180,3 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
 };
 
 export default AddWorkout;
-
