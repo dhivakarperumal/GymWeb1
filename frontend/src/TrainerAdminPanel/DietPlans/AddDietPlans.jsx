@@ -22,8 +22,8 @@ const meals = [
 ];
 
 /* ---------- GENERATE SINGLE DAY ---------- */
-const generateSingleDay = () => {
-  const day = {};
+const generateSingleDay = (dayName = "Day 1") => {
+  const day = { dayName };
   meals.forEach((meal) => {
     day[meal] = {
       time: "",
@@ -171,7 +171,7 @@ const AddDietPlans = () => {
 
         // Handle both object {Day1: ...} and array [...]
         if (Array.isArray(daysData)) {
-          fixedDays = daysData.map((day) => {
+          fixedDays = daysData.map((day, dayIndex) => {
             const normalizedDay = {};
             meals.forEach((meal) => {
               const mealData = day[meal];
@@ -189,6 +189,7 @@ const AddDietPlans = () => {
                 };
               }
             });
+            normalizedDay.dayName = day.dayName ?? `Day ${dayIndex + 1}`;
             normalizedDay.notes = day.notes || day.note || "";
             return normalizedDay;
           });
@@ -200,7 +201,7 @@ const AddDietPlans = () => {
             return numA - numB;
           });
 
-          fixedDays = keys.map((key) => {
+          fixedDays = keys.map((key, dayIndex) => {
             const day = daysData[key];
             const normalizedDay = {};
             meals.forEach((meal) => {
@@ -219,6 +220,7 @@ const AddDietPlans = () => {
                 };
               }
             });
+            normalizedDay.dayName = day.dayName ?? `Day ${dayIndex + 1}`;
             normalizedDay.notes = day.notes || day.note || "";
             return normalizedDay;
           });
@@ -293,6 +295,17 @@ const AddDietPlans = () => {
     });
   };
 
+  const handleDayNameChange = (dayIndex, value) => {
+    setForm((prev) => {
+      const updatedDays = [...prev.days];
+      updatedDays[dayIndex] = {
+        ...updatedDays[dayIndex],
+        dayName: value,
+      };
+      return { ...prev, days: updatedDays };
+    });
+  };
+
   const handleAddFoodItem = (dayIndex, meal) => {
     setForm((prev) => {
       const updatedDays = [...prev.days];
@@ -342,7 +355,7 @@ const AddDietPlans = () => {
     setForm((prev) => ({
       ...prev,
       duration: count + 1,
-      days: [...prev.days, generateSingleDay()],
+      days: [...prev.days, generateSingleDay(`Day ${count + 1}`)],
     }));
   };
 
@@ -374,7 +387,9 @@ const AddDietPlans = () => {
 
     setForm((prev) => {
       const updatedDays = prev.days.map((day, i) =>
-        i === 0 ? day : getDeepCopy(),
+        i === 0
+          ? day
+          : { ...getDeepCopy(), dayName: day.dayName ?? `Day ${i + 1}` },
       );
       return { ...prev, days: updatedDays };
     });
@@ -806,7 +821,7 @@ const AddDietPlans = () => {
 
       for (let i = 1; i <= maxDay; i++) {
         const rawDay = parsedDays[`Day${i}`] || {};
-        const dayTemplate = generateSingleDay();
+        const dayTemplate = generateSingleDay(`Day ${i}`);
         const mergedDay = {};
 
         meals.forEach((meal) => {
@@ -824,6 +839,7 @@ const AddDietPlans = () => {
             mergedDay[meal] = dayTemplate[meal];
           }
         });
+        mergedDay.dayName = dayTemplate.dayName;
         mergedDay.notes = "";
         newDaysArray.push(mergedDay);
       }
@@ -1262,10 +1278,16 @@ const AddDietPlans = () => {
                 key={dayIndex}
                 className="bg-black/30 border border-white/10 rounded-lg p-4 space-y-4"
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-emerald-400">
-                    Day {dayIndex + 1}
-                  </h3>
+                <div className="flex items-center justify-between gap-3">
+                  <input
+                    type="text"
+                    aria-label={`Name for day ${dayIndex + 1}`}
+                    value={dayData.dayName ?? `Day ${dayIndex + 1}`}
+                    onChange={(e) =>
+                      handleDayNameChange(dayIndex, e.target.value)
+                    }
+                    className="h-[36px] w-[100px] shrink-0 bg-[#191728] border border-[#39354a] rounded-xl px-2 py-1 text-sm font-semibold text-white outline-none focus:outline focus:outline-[3px] focus:outline-solid focus:outline-orange-500 transition"
+                  />
                   {dayIndex === 0 && form.days.length > 1 && (
                     <button
                       type="button"
