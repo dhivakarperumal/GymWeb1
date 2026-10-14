@@ -149,14 +149,13 @@ const getCell = (row, names) => {
   return matchingKey ? String(row[matchingKey] ?? "").trim() : "";
 };
 
-const getNextDayName = (days) => {
-  const existingNames = new Set(
-    days.map((day) => String(day.dayName || "").trim().toLowerCase()),
-  );
-  let dayNumber = 1;
-  while (existingNames.has(`day ${dayNumber}`)) dayNumber += 1;
-  return `Day ${dayNumber}`;
-};
+const renumberDefaultDayNames = (days) =>
+  days.map((day, index) => ({
+    ...day,
+    dayName: /^Day\s*\d+$/i.test(String(day.dayName ?? "").trim())
+      ? `Day ${index + 1}`
+      : day.dayName,
+  }));
 
 const normalizeMeal = (value) => {
   const normalized = value.toLowerCase().replace(/[\s_-]+/g, " ").trim();
@@ -328,12 +327,12 @@ const AdminMemberDietPlan = ({ member, creator }) => {
     const insertIndex = dayIndex == null
       ? currentForm.days.length
       : dayIndex + 1;
-    const newDay = createDay(getNextDayName(currentForm.days));
     const days = [...currentForm.days];
+    const newDay = createDay(`Day ${insertIndex + 1}`);
     days.splice(insertIndex, 0, newDay);
     setForm({
       ...currentForm,
-      days,
+      days: renumberDefaultDayNames(days),
     });
     setEditing(true);
   };
@@ -346,8 +345,8 @@ const AdminMemberDietPlan = ({ member, creator }) => {
     setForm((previous) => {
       const insertIndex = dayIndex == null ? previous.days.length : dayIndex + 1;
       const days = [...previous.days];
-      days.splice(insertIndex, 0, createDay(getNextDayName(previous.days)));
-      return { ...previous, days };
+      days.splice(insertIndex, 0, createDay(`Day ${insertIndex + 1}`));
+      return { ...previous, days: renumberDefaultDayNames(days) };
     });
   };
 
@@ -356,7 +355,10 @@ const AdminMemberDietPlan = ({ member, creator }) => {
       toast.error("Minimum 1 day required.");
       return;
     }
-    setForm((previous) => ({ ...previous, days: previous.days.slice(0, -1) }));
+    setForm((previous) => ({
+      ...previous,
+      days: renumberDefaultDayNames(previous.days.slice(0, -1)),
+    }));
   };
 
   const savePlan = async () => {
