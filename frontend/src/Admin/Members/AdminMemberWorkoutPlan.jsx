@@ -83,13 +83,33 @@ const belongsToMember = (workout, member) => {
   );
 };
 
-const createFormFromWorkout = (workout) => ({
-  category: workout?.category || "",
-  level: workout?.level || "Beginner",
-  goal: workout?.goal || "",
-  memberWeight: workout?.member_weight || "",
-  days: normalizeDays(workout?.days),
-});
+const createFormFromWorkout = (workout) => {
+  const days = normalizeDays(workout?.days);
+  return {
+    category: workout?.category || "",
+    level: workout?.level || "Beginner",
+    goal: workout?.goal || "",
+    memberWeight: workout?.member_weight || "",
+    days,
+    dayNames: Object.fromEntries(
+      Object.entries(days).map(([dayKey, exercises]) => [
+        dayKey,
+        exercises[0]?.dayName || dayKey.replace(/(\D)(\d+)/, "$1 $2"),
+      ]),
+    ),
+  };
+};
+
+const getDaysWithNames = (days, dayNames) =>
+  Object.fromEntries(
+    Object.entries(days).map(([dayKey, exercises]) => [
+      dayKey,
+      exercises.map((exercise) => ({
+        ...exercise,
+        dayName: dayNames[dayKey] || dayKey.replace(/(\D)(\d+)/, "$1 $2"),
+      })),
+    ]),
+  );
 
 const sortedDays = (days) =>
   Object.keys(days).sort((left, right) =>
@@ -200,6 +220,10 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
         ...currentForm.days,
         [`Day${nextDayNumber}`]: [createExercise()],
       },
+      dayNames: {
+        ...currentForm.dayNames,
+        [`Day${nextDayNumber}`]: `Day ${nextDayNumber}`,
+      },
     });
     setEditing(true);
   };
@@ -224,6 +248,10 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
     setForm((previous) => ({
       ...previous,
       days: { ...previous.days, [`Day${nextNumber}`]: [createExercise()] },
+      dayNames: {
+        ...previous.dayNames,
+        [`Day${nextNumber}`]: `Day ${nextNumber}`,
+      },
     }));
   };
 
@@ -231,11 +259,25 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
     setForm((previous) => {
       const nextDays = { ...previous.days };
       delete nextDays[dayKey];
+      const nextDayNames = { ...previous.dayNames };
+      delete nextDayNames[dayKey];
+      if (Object.keys(nextDays).length === 0) {
+        nextDays.Day1 = [createExercise()];
+        nextDayNames.Day1 = "Day 1";
+      }
       return {
         ...previous,
-        days: Object.keys(nextDays).length ? nextDays : { Day1: [createExercise()] },
+        days: nextDays,
+        dayNames: nextDayNames,
       };
     });
+  };
+
+  const updateDayName = (dayKey, value) => {
+    setForm((previous) => ({
+      ...previous,
+      dayNames: { ...previous.dayNames, [dayKey]: value },
+    }));
   };
 
   const addExercise = (dayKey) => {
@@ -290,7 +332,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
       level: form.level,
       goal: form.goal,
       durationWeeks: Math.ceil(Object.keys(form.days).length / 7),
-      days: form.days,
+      days: getDaysWithNames(form.days, form.dayNames),
       status: plan?.status || "active",
     };
 
@@ -339,7 +381,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
             "Training Level": plan.level || "Beginner",
             "Workout Goal": plan.goal || "",
             "Duration (Weeks)": plan.duration_weeks || Math.ceil(Object.keys(days).length / 7),
-            Day: day,
+            Day: days[day][0]?.dayName || day,
             Time: exercise.time || "",
             Type: exercise.type || "Weight Training",
             "Exercise Name": exercise.name || "",
@@ -429,6 +471,12 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
         ...previous,
         ...metadata,
         days: importedDays,
+        dayNames: Object.fromEntries(
+          Object.keys(importedDays).map((dayKey) => [
+            dayKey,
+            dayKey.replace(/(\D)(\d+)/, "$1 $2"),
+          ]),
+        ),
       }));
       setEditing(true);
       toast.success("Workout file imported. Review it, then save the plan.");
@@ -512,7 +560,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
           </div>
           {sortedDays(normalizeDays(plan.days)).map((dayKey) => (
             <section key={dayKey} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <h4 className="mb-3 font-bold text-white">{dayKey.replace(/(\D)(\d+)/, "$1 $2")}</h4>
+              <h4 className="mb-3 font-bold text-white">{normalizeDays(plan.days)[dayKey][0]?.dayName || dayKey.replace(/(\D)(\d+)/, "$1 $2")}</h4>
               <div className="space-y-2">
                 {normalizeDays(plan.days)[dayKey].map((exercise, index) => (
                   <div key={`${dayKey}-${index}`} className="grid grid-cols-2 gap-2 rounded-lg bg-black/20 p-3 text-sm text-white/80 sm:grid-cols-4">
@@ -554,7 +602,13 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
           {dayKeys.map((dayKey) => (
             <section key={dayKey} className="space-y-3 rounded-xl border border-white/10 bg-black/30 p-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <h4 className="font-bold text-white">{dayKey.replace(/(\D)(\d+)/, "$1 $2")}</h4>
+                <input
+                  type="text"
+                  aria-label={`Name for ${dayKey.replace(/(\D)(\d+)/, "$1 $2")}`}
+                  value={form.dayNames[dayKey] || dayKey.replace(/(\D)(\d+)/, "$1 $2")}
+                  onChange={(event) => updateDayName(dayKey, event.target.value)}
+                  className="w-[130px] shrink-0 rounded-lg border border-white/20 bg-black/30 px-3 py-2 text-sm font-bold text-white outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500"
+                />
                 {dayKeys.length > 1 && <button type="button" onClick={() => removeDay(dayKey)} className="text-xs text-red-300 hover:text-red-200">Remove day</button>}
               </div>
               {form.days[dayKey].map((exercise, index) => (
