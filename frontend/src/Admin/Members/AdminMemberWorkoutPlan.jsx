@@ -91,30 +91,46 @@ const createFormFromWorkout = (workout) => {
     goal: workout?.goal || "",
     memberWeight: workout?.member_weight || "",
     days,
+    dayOrder: Object.keys(days),
     dayNames: Object.fromEntries(
       Object.entries(days).map(([dayKey, exercises]) => [
         dayKey,
-        exercises[0]?.dayName || dayKey.replace(/(\D)(\d+)/, "$1 $2"),
+        exercises[0]?.dayName ?? dayKey.replace(/(\D)(\d+)/, "$1 $2"),
       ]),
     ),
   };
 };
 
-const getDaysWithNames = (days, dayNames) =>
+const getDaysWithNames = (days, dayNames, dayOrder = Object.keys(days)) =>
   Object.fromEntries(
-    Object.entries(days).map(([dayKey, exercises]) => [
+    dayOrder.filter((dayKey) => days[dayKey]).map((dayKey) => [
       dayKey,
-      exercises.map((exercise) => ({
+      days[dayKey].map((exercise) => ({
         ...exercise,
-        dayName: dayNames[dayKey] || dayKey.replace(/(\D)(\d+)/, "$1 $2"),
+        dayName: dayNames[dayKey] ?? dayKey.replace(/(\D)(\d+)/, "$1 $2"),
       })),
     ]),
   );
 
-const sortedDays = (days) =>
-  Object.keys(days).sort((left, right) =>
-    Number(left.replace(/\D/g, "")) - Number(right.replace(/\D/g, "")),
+const sortedDays = (days) => Object.keys(days);
+
+const getNextDayKey = (days) => {
+  const existingNumbers = new Set(
+    Object.keys(days).map((dayKey) => Number(dayKey.replace(/\D/g, ""))),
   );
+  let number = 1;
+  while (existingNumbers.has(number)) number += 1;
+  return `Day${number}`;
+};
+
+const getNextDayName = (dayNames) => {
+  const existing = new Set(
+    Object.values(dayNames).map((name) => String(name).trim().toLowerCase()),
+  );
+  let number = 1;
+  while (existing.has(`day ${number}`)) number += 1;
+  return `Day ${number}`;
+};
 
 const memberName = (member) => member?.name || member?.username || "Member";
 const memberEmail = (member) => member?.email || member?.user_email || "";
@@ -147,7 +163,10 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
   const [form, setForm] = useState(() => createFormFromWorkout(null));
 
   const plan = plans[0] || null;
-  const dayKeys = useMemo(() => sortedDays(form.days), [form.days]);
+  const dayKeys = useMemo(
+    () => form.dayOrder.filter((dayKey) => form.days[dayKey]),
+    [form.dayOrder, form.days],
+  );
   const exerciseCount = useMemo(
     () => Object.values(form.days).reduce((count, exercises) => count + exercises.length, 0),
     [form.days],
@@ -210,19 +229,21 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
 
   const beginAddingDay = () => {
     const currentForm = createFormFromWorkout(plan);
-    const nextDayNumber = sortedDays(currentForm.days).reduce(
-      (max, key) => Math.max(max, Number(key.replace(/\D/g, "")) || 0),
-      0,
-    ) + 1;
+    if (currentForm.dayOrder.length >= 60) {
+      toast.error("Maximum 60 days allowed.");
+      return;
+    }
+    const nextDayKey = getNextDayKey(currentForm.days);
     setForm({
       ...currentForm,
       days: {
         ...currentForm.days,
-        [`Day${nextDayNumber}`]: [createExercise()],
+        [nextDayKey]: [createExercise()],
       },
+      dayOrder: [...currentForm.dayOrder, nextDayKey],
       dayNames: {
         ...currentForm.dayNames,
-        [`Day${nextDayNumber}`]: `Day ${nextDayNumber}`,
+        [nextDayKey]: getNextDayName(currentForm.dayNames),
       },
     });
     setEditing(true);
@@ -240,19 +261,28 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
     }));
   };
 
-  const addDay = () => {
-    const nextNumber = dayKeys.reduce(
-      (max, key) => Math.max(max, Number(key.replace(/\D/g, "")) || 0),
-      0,
-    ) + 1;
-    setForm((previous) => ({
-      ...previous,
-      days: { ...previous.days, [`Day${nextNumber}`]: [createExercise()] },
-      dayNames: {
-        ...previous.dayNames,
-        [`Day${nextNumber}`]: `Day ${nextNumber}`,
-      },
-    }));
+  const addDay = (afterDayIndex = null) => {
+    if (dayKeys.length >= 60) {
+      toast.error("Maximum 60 days allowed.");
+      return;
+    }
+    setForm((previous) => {
+      const nextDayKey = getNextDayKey(previous.days);
+      const insertIndex = afterDayIndex == null
+        ? previous.dayOrder.length
+        : afterDayIndex + 1;
+      const dayOrder = [...previous.dayOrder];
+      dayOrder.splice(insertIndex, 0, nextDayKey);
+      return {
+        ...previous,
+        days: { ...previous.days, [nextDayKey]: [createExercise()] },
+        dayOrder,
+        dayNames: {
+          ...previous.dayNames,
+          [nextDayKey]: getNextDayName(previous.dayNames),
+        },
+      };
+    });
   };
 
   const removeDay = (dayKey) => {
@@ -261,13 +291,16 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
       delete nextDays[dayKey];
       const nextDayNames = { ...previous.dayNames };
       delete nextDayNames[dayKey];
+      const dayOrder = previous.dayOrder.filter((key) => key !== dayKey);
       if (Object.keys(nextDays).length === 0) {
         nextDays.Day1 = [createExercise()];
         nextDayNames.Day1 = "Day 1";
+        dayOrder.push("Day1");
       }
       return {
         ...previous,
         days: nextDays,
+        dayOrder,
         dayNames: nextDayNames,
       };
     });
@@ -278,6 +311,22 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
       ...previous,
       dayNames: { ...previous.dayNames, [dayKey]: value },
     }));
+  };
+
+  const copyDayToAll = (sourceDayKey) => {
+    setForm((previous) => {
+      const sourceExercises = previous.days[sourceDayKey];
+      const days = Object.fromEntries(
+        previous.dayOrder.map((dayKey) => [
+          dayKey,
+          dayKey === sourceDayKey
+            ? sourceExercises
+            : sourceExercises.map((exercise) => ({ ...exercise })),
+        ]),
+      );
+      return { ...previous, days };
+    });
+    toast.success(`${form.dayNames[sourceDayKey]} copied to all days.`);
   };
 
   const addExercise = (dayKey) => {
@@ -332,7 +381,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
       level: form.level,
       goal: form.goal,
       durationWeeks: Math.ceil(Object.keys(form.days).length / 7),
-      days: getDaysWithNames(form.days, form.dayNames),
+      days: getDaysWithNames(form.days, form.dayNames, form.dayOrder),
       status: plan?.status || "active",
     };
 
@@ -471,6 +520,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
         ...previous,
         ...metadata,
         days: importedDays,
+        dayOrder: sortedDays(importedDays),
         dayNames: Object.fromEntries(
           Object.keys(importedDays).map((dayKey) => [
             dayKey,
@@ -595,21 +645,33 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
             </div>
             <div className="flex items-end justify-between rounded-lg bg-black/30 px-3 py-2 text-sm text-white/70">
               <span>{dayKeys.length} workout day(s)</span>
-              <button type="button" onClick={addDay} className="inline-flex items-center gap-1 text-green-300"><Plus size={16} /> Add day</button>
+              <button type="button" onClick={() => addDay()} disabled={dayKeys.length >= 60} className="inline-flex items-center gap-1 text-green-300 disabled:cursor-not-allowed disabled:opacity-50"><Plus size={16} /> Add day</button>
             </div>
           </div>
 
-          {dayKeys.map((dayKey) => (
-            <section key={dayKey} className="space-y-3 rounded-xl border border-white/10 bg-black/30 p-4">
+          {dayKeys.map((dayKey, dayIndex) => (
+            <React.Fragment key={dayKey}>
+            <section className="space-y-3 rounded-xl border border-white/10 bg-black/30 p-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <input
                   type="text"
                   aria-label={`Name for ${dayKey.replace(/(\D)(\d+)/, "$1 $2")}`}
-                  value={form.dayNames[dayKey] || dayKey.replace(/(\D)(\d+)/, "$1 $2")}
+                  value={form.dayNames[dayKey] ?? dayKey.replace(/(\D)(\d+)/, "$1 $2")}
                   onChange={(event) => updateDayName(dayKey, event.target.value)}
                   className="w-[130px] shrink-0 rounded-lg border border-white/20 bg-black/30 px-3 py-2 text-sm font-bold text-white outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500"
                 />
-                {dayKeys.length > 1 && <button type="button" onClick={() => removeDay(dayKey)} className="text-xs text-red-300 hover:text-red-200">Remove day</button>}
+                <div className="flex items-center gap-3">
+                  {dayKeys.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => copyDayToAll(dayKey)}
+                      className="text-xs font-semibold text-green-300 hover:text-green-200"
+                    >
+                      Copy to All Days
+                    </button>
+                  )}
+                  {dayKeys.length > 1 && <button type="button" onClick={() => removeDay(dayKey)} className="text-xs text-red-300 hover:text-red-200">Remove day</button>}
+                </div>
               </div>
               {form.days[dayKey].map((exercise, index) => (
                 <div key={`${dayKey}-${index}`} className="grid grid-cols-1 gap-3 rounded-lg border border-white/10 bg-white/5 p-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -633,6 +695,19 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
               ))}
               <button type="button" onClick={() => addExercise(dayKey)} className="inline-flex items-center gap-1 text-sm text-green-300 hover:text-green-200"><Plus size={16} /> Add exercise</button>
             </section>
+            {dayIndex < dayKeys.length - 1 && (
+              <div className="flex justify-center py-1">
+                <button
+                  type="button"
+                  onClick={() => addDay(dayIndex)}
+                  disabled={dayKeys.length >= 60}
+                  className="inline-flex items-center gap-1 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-300 transition hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Plus size={16} /> Add Day
+                </button>
+              </div>
+            )}
+            </React.Fragment>
           ))}
 
           <div className="flex flex-wrap justify-end gap-2">
