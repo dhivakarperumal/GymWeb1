@@ -45,10 +45,19 @@ const formatDuesEntry = (due) => {
   return `₹${amount} · ${dateLabel} · ${collectedBy} · ${paymentId}`;
 };
 
+const getMembershipPaymentBaseDate = (membership) =>
+  membership.paymentDate ||
+  membership.payment_date ||
+  membership.pt_paymentDate ||
+  membership.pt_payment_date ||
+  membership.createdAt ||
+  membership.created_at;
+
 // Calculate next payment date based on the initial payment date or membership creation date
 const calculateNextPaymentDate = (membership) => {
-  const baseDate = membership.paymentDate || membership.createdAt;
-  return (baseDate ? dayjs(baseDate) : dayjs()).add(30, "day").toDate();
+  const baseDate = getMembershipPaymentBaseDate(membership);
+  const parsedDate = baseDate ? dayjs(baseDate) : null;
+  return parsedDate?.isValid() ? parsedDate.add(30, "day").toDate() : null;
 };
 
 const EMIList = () => {
@@ -162,15 +171,21 @@ const EMIList = () => {
 
         const raw = Array.isArray(membershipsRes.data) ? membershipsRes.data : [];
         const normalized = raw.map((m) => {
+          const normalizedMembership = {
+            ...m,
+            paymentMode: m.paymentMode ?? m.payment_mode ?? "",
+            paymentDate: getMembershipPaymentBaseDate(m),
+            createdAt: m.createdAt ?? m.created_at,
+          };
           try {
-            if (m && typeof m.dues === "string") {
-              m.dues = JSON.parse(m.dues || "[]");
+            if (typeof normalizedMembership.dues === "string") {
+              normalizedMembership.dues = JSON.parse(normalizedMembership.dues || "[]");
             }
           } catch (e) {
-            m.dues = [];
+            normalizedMembership.dues = [];
           }
-          if (!m.dues) m.dues = [];
-          return m;
+          if (!normalizedMembership.dues) normalizedMembership.dues = [];
+          return normalizedMembership;
         });
         setMemberships(normalized);
         setPlans(Array.isArray(plansRes.data) ? plansRes.data : []);
@@ -216,23 +231,17 @@ const EMIList = () => {
       (statusFilter === "pending" && currentStatus === "pending") ||
       (statusFilter === "completed" && currentStatus === "completed");
 
-    // Match the record/payment date or its scheduled next payment date.
-    const dateCandidates = [m.createdAt, m.paymentDate];
-    if ((m.paymentDate || m.createdAt) && getStatusKey(m) === "pending") {
-      dateCandidates.push(calculateNextPaymentDate(m));
-    }
+    const nextPaymentDate = calculateNextPaymentDate(m);
     const matchesDate =
       dateRange.type === "All Time" ||
-      dateCandidates.some(
-        (date) =>
-          date &&
-          filterByDateRange(
-            [{ date }],
-            "date",
-            dateRange.type,
-            dateRange.range,
-          ).length > 0,
-      );
+      (currentStatus === "pending" &&
+        nextPaymentDate &&
+        filterByDateRange(
+          [{ date: nextPaymentDate }],
+          "date",
+          dateRange.type,
+          dateRange.range,
+        ).length > 0);
 
     const assignedTrainerId = getAssignedTrainerId(m);
     const matchesTrainer =
@@ -753,7 +762,9 @@ const EMIList = () => {
                           </div>
                           {remainingDue > 0 ? (
                             <div className="text-xs font-bold text-blue-300">
-                              Next: {dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              Next: {dueDate
+                                ? dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                                : "Not scheduled"}
                             </div>
                           ) : (
                             <div className="text-xs text-emerald-400 font-bold">Completed</div>
@@ -1071,13 +1082,14 @@ const EMIList = () => {
                         <p className="text-xs text-white/60">
                           Due by{" "}
                           {(() => {
-                            const dueDate = new Date();
-                            dueDate.setDate(dueDate.getDate() + 30);
-                            return dueDate.toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            });
+                            const dueDate = calculateNextPaymentDate(selectedMembership);
+                            return dueDate
+                              ? dueDate.toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                              : "Not scheduled";
                           })()}
                         </p>
                       </div>
@@ -1237,10 +1249,10 @@ const EMIList = () => {
                     ).toFixed(2);
                   })()} · due ${(() => {
                     const dueDate = calculateNextPaymentDate(viewingDetails);
-                    return dueDate.toLocaleDateString("en-IN", {
+                    return dueDate?.toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
-                    });
+                    }) || "not scheduled";
                   })()}`}
                   color="text-blue-400"
                 />
@@ -1282,11 +1294,11 @@ const EMIList = () => {
                       Due by{" "}
                       {(() => {
                         const dueDate = calculateNextPaymentDate(viewingDetails);
-                        return dueDate.toLocaleDateString("en-IN", {
+                        return dueDate?.toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
-                        });
+                        }) || "Not scheduled";
                       })()}
                     </p>
                   </div>
