@@ -123,14 +123,14 @@ const getNextDayKey = (days) => {
   return `Day${number}`;
 };
 
-const getNextDayName = (dayNames) => {
-  const existing = new Set(
-    Object.values(dayNames).map((name) => String(name).trim().toLowerCase()),
-  );
-  let number = 1;
-  while (existing.has(`day ${number}`)) number += 1;
-  return `Day ${number}`;
-};
+const renumberDefaultDayNames = (dayOrder, dayNames) =>
+  dayOrder.reduce((nextNames, dayKey, index) => {
+    const name = dayNames[dayKey] ?? dayKey.replace(/(\D)(\d+)/, "$1 $2");
+    nextNames[dayKey] = /^Day\s*\d+$/i.test(String(name).trim())
+      ? `Day ${index + 1}`
+      : name;
+    return nextNames;
+  }, {});
 
 const memberName = (member) => member?.name || member?.username || "Member";
 const memberEmail = (member) => member?.email || member?.user_email || "";
@@ -234,17 +234,19 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
       return;
     }
     const nextDayKey = getNextDayKey(currentForm.days);
+    const dayOrder = [...currentForm.dayOrder, nextDayKey];
+    const dayNames = renumberDefaultDayNames(dayOrder, {
+      ...currentForm.dayNames,
+      [nextDayKey]: `Day ${dayOrder.length}`,
+    });
     setForm({
       ...currentForm,
       days: {
         ...currentForm.days,
         [nextDayKey]: [createExercise()],
       },
-      dayOrder: [...currentForm.dayOrder, nextDayKey],
-      dayNames: {
-        ...currentForm.dayNames,
-        [nextDayKey]: getNextDayName(currentForm.dayNames),
-      },
+      dayOrder,
+      dayNames,
     });
     setEditing(true);
   };
@@ -273,14 +275,15 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
         : afterDayIndex + 1;
       const dayOrder = [...previous.dayOrder];
       dayOrder.splice(insertIndex, 0, nextDayKey);
+      const dayNames = renumberDefaultDayNames(dayOrder, {
+        ...previous.dayNames,
+        [nextDayKey]: `Day ${insertIndex + 1}`,
+      });
       return {
         ...previous,
         days: { ...previous.days, [nextDayKey]: [createExercise()] },
         dayOrder,
-        dayNames: {
-          ...previous.dayNames,
-          [nextDayKey]: getNextDayName(previous.dayNames),
-        },
+        dayNames,
       };
     });
   };
@@ -297,11 +300,12 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
         nextDayNames.Day1 = "Day 1";
         dayOrder.push("Day1");
       }
+      const dayNames = renumberDefaultDayNames(dayOrder, nextDayNames);
       return {
         ...previous,
         days: nextDays,
         dayOrder,
-        dayNames: nextDayNames,
+        dayNames,
       };
     });
   };

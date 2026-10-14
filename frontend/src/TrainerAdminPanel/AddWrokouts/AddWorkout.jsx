@@ -76,12 +76,7 @@ const normalizeDays = (rawDays) => {
     }
   });
 
-  return Object.keys(normalized)
-    .sort((a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")))
-    .reduce((acc, key) => {
-      acc[key] = normalized[key];
-      return acc;
-    }, {});
+  return normalized;
 };
 
 const getDayNumber = (dayKey) => {
@@ -102,6 +97,26 @@ const formatDayLabel = (dayKey) => {
   const dayNumber = getDayNumber(dayKey);
   return dayNumber ? `Day ${dayNumber}` : dayKey;
 };
+
+const renumberDefaultDayLabels = (dayOrder, dayLabels) =>
+  dayOrder.reduce((labels, dayKey, index) => {
+    const label = dayLabels[dayKey] ?? formatDayLabel(dayKey);
+    labels[dayKey] = /^Day\s*\d+$/i.test(String(label).trim())
+      ? `Day ${index + 1}`
+      : label;
+    return labels;
+  }, {});
+
+const getOrderedWorkoutDays = (days, dayOrder, dayLabels) =>
+  Object.fromEntries(
+    dayOrder.filter((dayKey) => days[dayKey]).map((dayKey) => [
+      dayKey,
+      days[dayKey].map((exercise) => ({
+        ...exercise,
+        dayName: dayLabels[dayKey] ?? formatDayLabel(dayKey),
+      })),
+    ]),
+  );
 
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return "";
@@ -253,7 +268,7 @@ const AddWorkout = () => {
           memberWeight: data.member_weight || "",
         });
         const normalized = normalizeDays(data.days || initialDays);
-        const normalizedKeys = getSortedDayKeys(normalized);
+        const normalizedKeys = Object.keys(normalized);
         setDays(normalized);
         setDayOrder(normalizedKeys);
         setDayLabels(Object.fromEntries(
@@ -282,18 +297,15 @@ const AddWorkout = () => {
       return;
     }
     const nextDay = getNextDayKey(days);
-    const nextLabel = (() => {
-      const usedNames = new Set(Object.values(dayLabels).map((name) => String(name).trim().toLowerCase()));
-      let number = 1;
-      while (usedNames.has(`day ${number}`)) number += 1;
-      return `Day ${number}`;
-    })();
     const insertIndex = afterDayIndex == null ? keys.length : afterDayIndex + 1;
     const nextOrder = [...keys];
     nextOrder.splice(insertIndex, 0, nextDay);
     setDays((previous) => ({ ...previous, [nextDay]: [createExercise()] }));
     setDayOrder(nextOrder);
-    setDayLabels((previous) => ({ ...previous, [nextDay]: nextLabel }));
+    setDayLabels((previous) => renumberDefaultDayLabels(
+      nextOrder,
+      { ...previous, [nextDay]: `Day ${insertIndex + 1}` },
+    ));
 
     if (focusNewDay) {
       window.requestAnimationFrame(() => {
@@ -305,30 +317,32 @@ const AddWorkout = () => {
 
   /* ---------------- REMOVE DAY ---------------- */
   const removeDay = () => {
-    const dayKeys = getSortedDayKeys(days);
+    const dayKeys = dayOrder.filter((key) => days[key]);
     if (dayKeys.length <= 1) return;
     const nextDays = { ...days };
     delete nextDays[dayKeys[dayKeys.length - 1]];
+    const nextOrder = dayKeys.slice(0, -1);
     setDays(nextDays);
-    setDayOrder((previous) => previous.filter((key) => key !== dayKeys[dayKeys.length - 1]));
+    setDayOrder(nextOrder);
     setDayLabels((previous) => {
       const next = { ...previous };
       delete next[dayKeys[dayKeys.length - 1]];
-      return next;
+      return renumberDefaultDayLabels(nextOrder, next);
     });
   };
 
   const removeDayKey = (dayKey) => {
-    const dayKeys = getSortedDayKeys(days);
+    const dayKeys = dayOrder.filter((key) => days[key]);
     if (dayKeys.length <= 1) return;
     const nextDays = { ...days };
     delete nextDays[dayKey];
+    const nextOrder = dayKeys.filter((key) => key !== dayKey);
     setDays(nextDays);
-    setDayOrder((previous) => previous.filter((key) => key !== dayKey));
+    setDayOrder(nextOrder);
     setDayLabels((previous) => {
       const next = { ...previous };
       delete next[dayKey];
-      return next;
+      return renumberDefaultDayLabels(nextOrder, next);
     });
   };
 
@@ -390,12 +404,12 @@ const AddWorkout = () => {
   useEffect(() => {
     setDayLabels((prev) => {
       const next = {};
-      getSortedDayKeys(days).forEach((key) => {
+      dayOrder.filter((key) => days[key]).forEach((key) => {
         next[key] = prev[key] ?? formatDayLabel(key);
       });
       return next;
     });
-  }, [days]);
+  }, [days, dayOrder]);
 
   const handleFormKeyDown = (e) => {
     if (e.key !== "Enter") return;
@@ -447,7 +461,7 @@ const AddWorkout = () => {
             massGain: form.massGain,
             durationWeeks: calculatedWeeks,
             memberWeight: form.memberWeight,
-            days,
+            days: getOrderedWorkoutDays(days, dayOrder, dayLabels),
             status: "active",
           };
           await api.put(`/workouts/${id}`, payload);
@@ -472,7 +486,7 @@ const AddWorkout = () => {
                 memberWeight: m.weight,
                 massGain: form.massGain,
                 durationWeeks: calculatedWeeks,
-                days,
+                days: getOrderedWorkoutDays(days, dayOrder, dayLabels),
               status: "active",
             };
             await api.post(`/workouts`, payload);
@@ -633,7 +647,7 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
           const importedKeys = getSortedDayKeys(normalizedImportedDays);
           setDays(normalizedImportedDays);
           setDayOrder(importedKeys);
-          setDayLabels(Object.fromEntries(importedKeys.map((key) => [key, formatDayLabel(key)])));
+          setDayLabels(Object.fromEntries(importedKeys.map((key, index) => [key, `Day ${index + 1}`])));
         }
 
         setSelected(newSelected);
@@ -893,7 +907,7 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
                 <span>{Object.keys(days).length} Days</span>
                 <div className="flex gap-2">
                   <button type="button" onClick={removeDay} className="text-red-400 hover:text-red-300 font-bold px-1">-</button>
-                  <button type="button" onClick={addDay} className="text-emerald-400 hover:text-emerald-300 font-bold px-1">+</button>
+                  <button type="button" onClick={() => addDay()} className="text-emerald-400 hover:text-emerald-300 font-bold px-1">+</button>
                 </div>
               </div>
             </div>
