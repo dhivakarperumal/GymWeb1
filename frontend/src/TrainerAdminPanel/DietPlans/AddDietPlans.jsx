@@ -26,6 +26,14 @@ const createDayId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `diet-day-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+const renumberDefaultDayNames = (days) =>
+  days.map((day, index) => ({
+    ...day,
+    dayName: /^Day\s*\d+$/i.test(String(day.dayName || ""))
+      ? `Day ${index + 1}`
+      : day.dayName,
+  }));
+
 const generateSingleDay = (dayName = "Day 1", dayId = createDayId()) => {
   const day = { dayId, dayName };
   meals.forEach((meal) => {
@@ -352,15 +360,6 @@ const AddDietPlans = () => {
   };
 
   /* ================= ADD DAY ================= */
-  const getNextDayName = (days) => {
-    const existingNames = new Set(
-      days.map((day) => String(day.dayName || "").trim().toLowerCase()),
-    );
-    let dayNumber = 1;
-    while (existingNames.has(`day ${dayNumber}`)) dayNumber += 1;
-    return `Day ${dayNumber}`;
-  };
-
   const handleAddDay = (dayIndex = null) => {
     if (form.days.length >= 60) {
       toast.error("Maximum 60 days allowed");
@@ -370,8 +369,12 @@ const AddDietPlans = () => {
     setForm((prev) => {
       const insertIndex = dayIndex == null ? prev.days.length : dayIndex + 1;
       const days = [...prev.days];
-      days.splice(insertIndex, 0, generateSingleDay(getNextDayName(prev.days)));
-      return { ...prev, duration: days.length, days };
+      days.splice(insertIndex, 0, generateSingleDay(`Day ${insertIndex + 1}`));
+      return {
+        ...prev,
+        duration: days.length,
+        days: renumberDefaultDayNames(days),
+      };
     });
   };
 
@@ -387,7 +390,7 @@ const AddDietPlans = () => {
     setForm((prev) => ({
       ...prev,
       duration: count - 1,
-      days: prev.days.slice(0, -1),
+      days: renumberDefaultDayNames(prev.days.slice(0, -1)),
     }));
   };
 
