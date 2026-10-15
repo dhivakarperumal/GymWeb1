@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 import AdminMemberWorkoutPlan from "./AdminMemberWorkoutPlan";
 import AdminMemberDietPlan from "./AdminMemberDietPlan";
+import AdminJoinForm from "./AdminJoinForm";
 
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return "";
@@ -260,6 +261,9 @@ const Members = () => {
   const [dietTitle, setDietTitle] = useState("");
   const [activeDietDay, setActiveDietDay] = useState(null);
   const [expandedActionRow, setExpandedActionRow] = useState(null);
+  const [joinFormMember, setJoinFormMember] = useState(null);
+  const [isJoinFormOpen, setIsJoinFormOpen] = useState(false);
+  const [joinFormLoadingId, setJoinFormLoadingId] = useState(null);
 
   const fetchTrainers = async () => {
     try {
@@ -316,6 +320,30 @@ const Members = () => {
       if (!cache.adminMembers) toast.error("Failed to load members");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openJoinForm = async (member) => {
+    const memberId = member.id || member.member_id;
+    if (!memberId) {
+      toast.error("Unable to open the Join Form for this member");
+      return;
+    }
+
+    setExpandedActionRow(null);
+    setJoinFormLoadingId(memberId);
+    try {
+      const res = await api.get(`/members/${memberId}`);
+      if (!res.data || Array.isArray(res.data)) {
+        throw new Error("Member details were not returned");
+      }
+      setJoinFormMember(res.data);
+      setIsJoinFormOpen(true);
+    } catch (err) {
+      console.error("Failed to load member Join Form", err);
+      toast.error("Failed to load the full Join Form");
+    } finally {
+      setJoinFormLoadingId(null);
     }
   };
 
@@ -1073,6 +1101,14 @@ const Members = () => {
                               <Pencil size={15} className="text-yellow-400" />
                               {m.source === "users" ? "Convert to Member" : "Edit Member"}
                             </button>
+                            <button
+                              onClick={() => openJoinForm(m)}
+                              disabled={joinFormLoadingId === (m.id || m.member_id)}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-orange-500/20 transition disabled:opacity-50"
+                            >
+                              <Printer size={15} className="text-orange-400" />
+                              {joinFormLoadingId === (m.id || m.member_id) ? "Loading Join Form..." : "Print Join Form"}
+                            </button>
                             {role !== "trainer" && (
                               <>
                                 <div className="border-t border-white/10 my-1"></div>
@@ -1622,6 +1658,12 @@ const Members = () => {
           </div>
         </div>
       )}
+
+      <AdminJoinForm
+        isOpen={isJoinFormOpen}
+        onClose={() => setIsJoinFormOpen(false)}
+        memberData={joinFormMember}
+      />
 
     </div>
   );

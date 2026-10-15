@@ -3,6 +3,9 @@ import { createPortal } from "react-dom";
 import { X, Printer, User, Phone, MapPin, Activity, FileText, Clock } from "lucide-react";
 import dayjs from "dayjs";
 
+const isConsentAccepted = (value) =>
+  value === true || value === 1 || value === "1" || value === "true";
+
 const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
 
   const [member, setMember] = useState(null);
@@ -35,8 +38,8 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
         emergency_contact_phone_home: m.emergency_contact_phone_home || "",
         emergency_contact_phone_work: m.emergency_contact_phone_work || "",
         participant_name: consentData.participant_name || m.participant_name || m.name || "",
-        consent_agree: consentData.agree === true || consentData.agree === "true" || m.consent_agree === true,
-        termsAccepted: m.termsAccepted === true || m.termsAccepted === "true" || consentData.agree === true,
+        consent_agree: isConsentAccepted(consentData.agree) || isConsentAccepted(m.consent_agree),
+        termsAccepted: isConsentAccepted(m.termsAccepted) || isConsentAccepted(consentData.agree),
       });
     }
   }, [isOpen, memberData]);

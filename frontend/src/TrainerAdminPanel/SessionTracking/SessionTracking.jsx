@@ -20,6 +20,9 @@ const SessionTracking = () => {
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const hasActivePtPlan = (value) =>
+    value === true || value === 1 || value === "1" || value === "true";
+
   useEffect(() => {
     if (!trainerId) return;
     fetchAssignedMembers();
@@ -38,13 +41,9 @@ const SessionTracking = () => {
   }, [selectedMemberId, assignedMembers]);
 
   const normalizeMember = (item) => {
-    // Check if this is a PT plan member
-    const hasPtPlan = Boolean(
-      item.hasPtPlan ||
-      item.has_pt_plan ||
-      item.pt_plan ||
-      item.ptPlan
-    );
+    const hasPtPlan = hasActivePtPlan(item.hasPtPlan) ||
+      hasActivePtPlan(item.has_pt_plan) ||
+      Boolean(item.pt_plan || item.ptPlan || item.pt_planName || item.pt_plan_name);
 
     // If it's a PT plan, use PT plan details; otherwise, use regular plan details
     const planName = hasPtPlan
@@ -69,16 +68,14 @@ const SessionTracking = () => {
 
     let isExpired = false;
     if (planEndDate) {
-      const end = new Date(planEndDate);
-      if (end instanceof Date && !Number.isNaN(end.getTime()) && end < new Date()) {
-        isExpired = true;
-      }
+      const end = dayjs(planEndDate);
+      isExpired = end.isValid() && end.startOf("day").isBefore(dayjs().startOf("day"));
     }
 
     return {
       id: item.gymMemberId || item.id || item.gm_id || item.member_id || "",
       userId: item.userId || item.user_id || "",
-      name: item.username || item.name || item.user_name || item.full_name || "Member",
+      name: String(item.username || item.name || item.user_name || item.full_name || "Member"),
       email: item.userEmail || item.user_email || item.email || "",
       phone: item.userMobile || item.user_mobile || item.phone || "",
       planName,
@@ -98,12 +95,16 @@ const SessionTracking = () => {
     setLoading(true);
     try {
       const trainerEmail = user?.email || "";
-      const res = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}&distinctMembers=true`);
+      const res = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}`);
       const data = Array.isArray(res.data) ? res.data : res.data?.data || res.data?.assignments || [];
-      const members = data
-        .map(normalizeMember)
-        .filter((m) => m.id && m.hasPtPlan)
-        .filter((m, index, arr) => arr.findIndex((u) => String(u.id) === String(m.id)) === index);
+      const membersById = new Map();
+      data.forEach((item) => {
+        const member = normalizeMember(item);
+        if (!member.id || !member.hasPtPlan || member.isExpired) return;
+        const key = String(member.id);
+        if (!membersById.has(key)) membersById.set(key, member);
+      });
+      const members = [...membersById.values()];
       setAssignedMembers(members);
     } catch (err) {
       console.error(err);
