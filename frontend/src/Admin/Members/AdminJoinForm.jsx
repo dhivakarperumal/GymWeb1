@@ -6,6 +6,10 @@ import dayjs from "dayjs";
 const isConsentAccepted = (value) =>
   value === true || value === 1 || value === "1" || value === "true";
 
+const hasConsentResponse = (value) =>
+  value === true || value === false || value === 1 || value === 0 ||
+  value === "1" || value === "0" || value === "true" || value === "false";
+
 const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
 
   const [member, setMember] = useState(null);
@@ -16,7 +20,7 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
     emergency_contact_name: "", emergency_contact_relationship: "",
     emergency_contact_address: "", emergency_contact_phone_home: "",
     emergency_contact_phone_work: "", participant_name: "",
-    consent_agree: false, termsAccepted: false,
+    consent_agree: true, termsAccepted: false,
   });
 
   useEffect(() => {
@@ -25,6 +29,8 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
       setMember(m);
       let consentData = {};
       try { consentData = typeof m.consent_data === "string" ? JSON.parse(m.consent_data) : (m.consent_data || {}); } catch (e) {}
+      const savedConsent = [consentData.agree, m.consent_agree, m.terms_accepted]
+        .find(hasConsentResponse);
       setFormData({
         name: m.name || "", email: m.email || m.user_email || "", phone: m.phone || "",
         dob: m.dob ? dayjs(m.dob).format("YYYY-MM-DD") : "", age: m.age || "",
@@ -38,8 +44,8 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
         emergency_contact_phone_home: m.emergency_contact_phone_home || "",
         emergency_contact_phone_work: m.emergency_contact_phone_work || "",
         participant_name: consentData.participant_name || m.participant_name || m.name || "",
-        consent_agree: isConsentAccepted(consentData.agree) || isConsentAccepted(m.consent_agree),
-        termsAccepted: isConsentAccepted(m.termsAccepted) || isConsentAccepted(consentData.agree),
+        consent_agree: savedConsent === undefined ? true : isConsentAccepted(savedConsent),
+        termsAccepted: isConsentAccepted(m.termsAccepted) || isConsentAccepted(m.terms_accepted) || isConsentAccepted(consentData.agree),
       });
     }
   }, [isOpen, memberData]);
