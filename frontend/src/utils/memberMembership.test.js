@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  getMemberDisplayStatus,
   resolveMembershipPricing,
   selectMemberListMembership,
 } from "./memberMembership.js";
@@ -13,6 +14,38 @@ test("selects the same latest-ID regular membership used by the member list", ()
   ];
 
   assert.equal(selectMemberListMembership(memberships).planName, "Current");
+});
+
+test("keeps an explicitly inactive member inactive despite an active membership", () => {
+  assert.equal(
+    getMemberDisplayStatus({
+      status: "inactive",
+      plan: "Monthly",
+      expiry_date: "2099-12-31",
+    }),
+    "inactive",
+  );
+});
+
+test("reports active only when a regular or PT plan is not expired", () => {
+  assert.equal(
+    getMemberDisplayStatus({
+      status: "active",
+      plan: "Monthly",
+      expiry_date: "2000-01-01",
+      pt_plan: "PT",
+      pt_expiry_date: "2099-12-31",
+    }),
+    "active",
+  );
+  assert.equal(
+    getMemberDisplayStatus({
+      status: "active",
+      plan: "Monthly",
+      expiry_date: "2000-01-01",
+    }),
+    "inactive",
+  );
 });
 
 test("excludes PT rows when the plan flag is encoded as a string", () => {

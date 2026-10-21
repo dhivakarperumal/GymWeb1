@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export const selectMemberListMembership = (memberships = []) => {
   const regularMemberships = memberships.filter((membership) => {
     const hasPTPlan =
@@ -13,6 +15,24 @@ export const selectMemberListMembership = (memberships = []) => {
     const membershipId = Number(membership.id) || 0;
     return membershipId > latestId ? membership : latest;
   }, null);
+};
+
+export const getMemberDisplayStatus = (member = {}) => {
+  const today = dayjs().startOf("day");
+  const hasActivePlan = (plan, expiryDate) => {
+    if (!plan || String(plan).toLowerCase() === "user") return false;
+    if (!expiryDate) return true;
+
+    const expiry = dayjs(expiryDate);
+    return !expiry.isValid() || expiry.startOf("day").isAfter(today);
+  };
+  const hasAnyActivePlan =
+    hasActivePlan(member.plan, member.expiry_date) ||
+    hasActivePlan(member.pt_plan, member.pt_expiry_date);
+
+  return hasAnyActivePlan && String(member.status || "").trim().toLowerCase() !== "inactive"
+    ? "active"
+    : "inactive";
 };
 
 const positiveNumber = (value) => {

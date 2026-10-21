@@ -49,7 +49,10 @@ async function getAllMembers(req, res) {
           m_pay.referredBy,
           m_pay.trainerName,
           COALESCE(m_pay.m_duration, gm.duration) AS duration,
-          COALESCE(m_pay.m_status, NULLIF(gm.status, ''), 'active') AS status,
+          CASE
+            WHEN LOWER(TRIM(NULLIF(gm.status, ''))) = 'inactive' THEN 'inactive'
+            ELSE COALESCE(m_pay.m_status, NULLIF(gm.status, ''), 'active')
+          END AS status,
           gm.pt_plan,
           gm.pt_status,
           gm.address,
@@ -191,7 +194,10 @@ async function getAllMembers(req, res) {
           m_pay.referredBy,
           m_pay.trainerName,
           COALESCE(m_pay.m_duration, gm.duration) AS duration,
-          COALESCE(m_pay.m_status, NULLIF(gm.status, ''), 'active') AS status,
+          CASE
+            WHEN LOWER(TRIM(NULLIF(gm.status, ''))) = 'inactive' THEN 'inactive'
+            ELSE COALESCE(m_pay.m_status, NULLIF(gm.status, ''), 'active')
+          END AS status,
           gm.pt_plan,
           gm.pt_status,
           gm.address,

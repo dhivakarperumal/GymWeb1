@@ -16,6 +16,7 @@ import PTFormPreviewContent from "../PTForm/PTFormPreviewContent";
 import AdminMemberWorkoutPlan from "./AdminMemberWorkoutPlan";
 import AdminMemberDietPlan from "./AdminMemberDietPlan";
 import AdminJoinForm from "./AdminJoinForm";
+import { getMemberDisplayStatus } from "../../utils/memberMembership";
 
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return "";
@@ -465,7 +466,7 @@ const Members = () => {
       Source: m.source === "users" ? "User" : "Gym Member",
       "Join Date": (hasActiveOrPendingPlan(m) && m.join_date) ? dayjs(m.join_date).format("YYYY-MM-DD") : "-",
       "Expiry Date": (hasActiveOrPendingPlan(m) && m.expiry_date) ? dayjs(m.expiry_date).format("YYYY-MM-DD") : "-",
-      Status: m.status || "active",
+      Status: getMemberDisplayStatus(m),
       "Plan Price": m.price || "-",
       "Payment Status": String(m.paymentMode || "").toLowerCase().startsWith('emi') ? "Pending" : m.plan ? "Paid" : "N/A",
       "Remaining Amount": String(m.paymentMode || "").toLowerCase().startsWith('emi') ? (Number(m.price || 0) - Number(m.pricePaid || 0) - Number(m.secondPaymentPaid || 0)) : 0

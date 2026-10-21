@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import AdminJoinForm from "./AdminJoinForm";
 import {
+  getMemberDisplayStatus,
   resolveMembershipPricing,
   selectMemberListMembership,
 } from "../../utils/memberMembership";
@@ -301,7 +302,7 @@ const MemberDetails = () => {
 
   const isPtActive = member?.pt_plan && member.pt_plan !== "user" && !isPtExpired;
 
-  const displayStatus = (isNormalActive || isPtActive) && member?.status !== 'inactive' ? "active" : "inactive";
+  const displayStatus = getMemberDisplayStatus(member);
 
   const statusText = displayStatus === 'inactive'
     ? "Inactive"
