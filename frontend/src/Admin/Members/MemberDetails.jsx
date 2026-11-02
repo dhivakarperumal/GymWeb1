@@ -52,7 +52,11 @@ const MemberDetails = () => {
         const [workoutRes, dietRes, assignRes, staffRes, membershipRes] = await Promise.all([
           api.get("/workouts").catch(() => ({ data: [] })),
           api.get("/diet-plans").catch(() => ({ data: [] })),
-          api.get("/assignments").catch(() => ({ data: [] })),
+          api.get("/assignments").catch((error) => {
+            console.error("Failed to load member trainer assignment", error);
+            toast.error("Could not load assigned trainer");
+            return { data: [] };
+          }),
           api.get("/staff").catch(() => ({ data: [] })),
           userId
             ? api.get(`/memberships/user/${userId}`).catch(() => ({ data: [] }))
@@ -156,21 +160,48 @@ const MemberDetails = () => {
         const allAssignments = Array.isArray(assignRes.data) ? assignRes.data : [];
         const allStaff = Array.isArray(staffRes.data) ? staffRes.data : [];
 
-        const myAssignment = allAssignments.find(a =>
-          String(a.member_id || a.memberId) === String(memberData.id) ||
-          String(a.userId) === String(memberData.u_id || memberData.user_id) ||
-          String(a.userId) === `m_${memberData.id}` ||
-          (a.userEmail && a.userEmail.toLowerCase() === memberData.email?.toLowerCase())
+        const memberDbIds = [memberData.id, memberData.member_id].filter(value => value != null).map(String);
+        const memberUserIds = [memberData.u_id].filter(value => value != null).map(String);
+        const memberUserUuids = [memberData.u_uuid, memberData.user_id].filter(Boolean).map(value => String(value).toLowerCase());
+        const memberEmails = [memberData.email, memberData.user_email].filter(Boolean).map(value => value.trim().toLowerCase());
+        const memberPhones = [memberData.phone].filter(Boolean).map(value => String(value).replace(/\D/g, ""));
+        const matchesAny = (values, candidates) => values.some(value =>
+          value != null && candidates.includes(String(value).trim().toLowerCase())
         );
+
+        const myAssignment = allAssignments.find(assignment => {
+          const assignmentDbIds = [
+            assignment.gymMemberId,
+            assignment.member_db_id,
+            assignment.member_id,
+            assignment.memberId,
+          ].filter(value => value != null).map(value => String(value).trim().toLowerCase());
+          const assignmentUserIds = [assignment.userId, assignment.user_id]
+            .filter(value => value != null).map(value => String(value).trim().toLowerCase());
+          const assignmentUserUuids = [assignment.userUuid, assignment.user_id_uuid]
+            .filter(Boolean).map(value => String(value).trim().toLowerCase());
+          const assignmentEmails = [assignment.userEmail, assignment.user_email, assignment.email]
+            .filter(Boolean).map(value => String(value).trim().toLowerCase());
+          const assignmentPhones = [assignment.userMobile, assignment.user_mobile, assignment.phone]
+            .filter(Boolean).map(value => String(value).replace(/\D/g, ""));
+
+          return matchesAny(memberDbIds, assignmentDbIds) ||
+            matchesAny(memberUserIds, assignmentUserIds) ||
+            matchesAny(memberUserUuids, assignmentUserUuids) ||
+            matchesAny(memberEmails, assignmentEmails) ||
+            matchesAny(memberPhones, assignmentPhones);
+        });
 
         if (myAssignment) {
           const trainerInfo = allStaff.find(s => String(s.id) === String(myAssignment.trainerId || myAssignment.trainer_id));
           setTrainer({
-            name: myAssignment.trainer_name || myAssignment.trainerName || trainerInfo?.name,
-            role: myAssignment.trainer_role || "Trainer",
-            phone: trainerInfo?.phone || myAssignment.trainer_phone || "N/A",
-            email: trainerInfo?.email || "N/A"
+            name: myAssignment.trainer_name || myAssignment.trainerName || trainerInfo?.name || "Trainer",
+            role: myAssignment.trainer_role || trainerInfo?.role || "Trainer",
+            phone: myAssignment.trainer_phone || myAssignment.trainerPhone || trainerInfo?.phone || "N/A",
+            email: myAssignment.trainer_email || myAssignment.trainerEmail || trainerInfo?.email || "N/A"
           });
+        } else {
+          setTrainer(null);
         }
       }
     } catch (err) {
