@@ -37,8 +37,22 @@ const createExercise = (data = {}) => ({
   ...data,
 });
 
+const normalizeDayLabel = (value, fallback = "") => {
+  if (typeof value === "string" || typeof value === "number") {
+    const label = String(value).trim();
+    return label && !/\[object Object\]/i.test(label) ? label : fallback;
+  }
+
+  if (value && typeof value === "object") {
+    const label = value.dayName ?? value.label ?? value.name ?? value.title ?? value.day ?? value.value;
+    if (label !== value) return normalizeDayLabel(label, fallback);
+  }
+
+  return fallback;
+};
+
 const normalizeDayKey = (rawKey) => {
-  const key = String(rawKey || "").trim();
+  const key = normalizeDayLabel(rawKey, "");
   const match = key.match(/\d+/);
   const dayNumber = match ? Number(match[0]) : 1;
   return `Day${dayNumber > 0 ? dayNumber : 1}`;
@@ -46,9 +60,11 @@ const normalizeDayKey = (rawKey) => {
 
 const normalizeExercise = (entry) => {
   if (!entry || typeof entry !== "object") return createExercise();
+  const dayName = normalizeDayLabel(entry.dayName);
   return createExercise({
     ...entry,
     time: normalizeExcelTime(entry.time),
+    ...(dayName ? { dayName } : {}),
   });
 };
 
@@ -140,7 +156,7 @@ const formatDayLabel = (dayKey) => {
 
 const renumberDefaultDayLabels = (dayOrder, dayLabels) =>
   dayOrder.reduce((labels, dayKey, index) => {
-    const label = dayLabels[dayKey] ?? formatDayLabel(dayKey);
+    const label = normalizeDayLabel(dayLabels[dayKey], formatDayLabel(dayKey));
     labels[dayKey] = /^Day\s*\d+$/i.test(String(label).trim())
       ? `Day ${index + 1}`
       : label;
@@ -153,7 +169,7 @@ const getOrderedWorkoutDays = (days, dayOrder, dayLabels) =>
       dayKey,
       days[dayKey].map((exercise) => ({
         ...exercise,
-        dayName: dayLabels[dayKey] ?? formatDayLabel(dayKey),
+        dayName: normalizeDayLabel(dayLabels[dayKey], formatDayLabel(dayKey)),
       })),
     ]),
   );
@@ -312,7 +328,10 @@ const AddWorkout = () => {
         setDays(normalized);
         setDayOrder(normalizedKeys);
         setDayLabels(Object.fromEntries(
-          normalizedKeys.map((key) => [key, normalized[key][0]?.dayName ?? formatDayLabel(key)]),
+          normalizedKeys.map((key) => [
+            key,
+            normalizeDayLabel(normalized[key][0]?.dayName, formatDayLabel(key)),
+          ]),
         ));
         if (requestedDay && normalized[requestedDay]) {
           setHighlightDay(requestedDay);
@@ -388,7 +407,8 @@ const AddWorkout = () => {
 
   /* ---------------- COPY DAY TO ALL ---------------- */
   const copyDayToAll = (sourceDayKey) => {
-    if (!window.confirm(`${dayLabels[sourceDayKey] || formatDayLabel(sourceDayKey)} copied to all other days? This will overwrite existing data.`)) return;
+    const sourceDayLabel = normalizeDayLabel(dayLabels[sourceDayKey], formatDayLabel(sourceDayKey));
+    if (!window.confirm(`${sourceDayLabel} copied to all other days? This will overwrite existing data.`)) return;
     const sourceData = days[sourceDayKey] && days[sourceDayKey].length > 0 ? days[sourceDayKey] : [createExercise()];
     const newDays = {};
     dayOrder.forEach((day) => {
@@ -396,11 +416,11 @@ const AddWorkout = () => {
         ? sourceData
         : JSON.parse(JSON.stringify(sourceData)).map((exercise) => ({
           ...exercise,
-          dayName: dayLabels[day] ?? formatDayLabel(day),
+          dayName: normalizeDayLabel(dayLabels[day], formatDayLabel(day)),
         }));
     });
     setDays(newDays);
-    toast.success(`${dayLabels[sourceDayKey] || formatDayLabel(sourceDayKey)} copied to all days!`);
+    toast.success(`${sourceDayLabel} copied to all days!`);
   };
 
   /* ---------------- ADD EXERCISE ---------------- */
@@ -437,7 +457,7 @@ const AddWorkout = () => {
   const updateDayLabel = (dayKey, value) => {
     setDayLabels((prev) => ({
       ...prev,
-      [dayKey]: value,
+      [dayKey]: typeof value === "string" ? value : normalizeDayLabel(value, formatDayLabel(dayKey)),
     }));
   };
 
@@ -445,7 +465,7 @@ const AddWorkout = () => {
     setDayLabels((prev) => {
       const next = {};
       dayOrder.filter((key) => days[key]).forEach((key) => {
-        next[key] = prev[key] ?? formatDayLabel(key);
+        next[key] = normalizeDayLabel(prev[key], formatDayLabel(key));
       });
       return next;
     });
@@ -651,11 +671,13 @@ const AddWorkout = () => {
           }
 
           // 2. Build Exercises Structure
-          const dayValue = getExcelCell(row, "Day", "Day Number") || "Day1";
+          const rawDayValue = getExcelCell(row, "Day", "Day Number");
+          const dayValue = normalizeDayLabel(rawDayValue, "Day 1");
           const dayKey = normalizeDayKey(dayValue);
           if (!importedDays[dayKey]) importedDays[dayKey] = [];
-          importedDayLabels[dayKey] = getExcelCell(row, "Day Label") || (
-            /^Day\s*\d+$/i.test(String(dayValue).trim()) ? formatDayLabel(dayKey) : String(dayValue)
+          importedDayLabels[dayKey] = normalizeDayLabel(
+            getExcelCell(row, "Day Label"),
+            /^Day\s*\d+$/i.test(dayValue) ? formatDayLabel(dayKey) : dayValue,
           );
 
           const rawTime = getExcelCell(row, "Time", "Time Slot", "Workout Time");
@@ -704,7 +726,7 @@ const AddWorkout = () => {
           setDayOrder(importedKeys);
           setDayLabels(Object.fromEntries(importedKeys.map((key) => [
             key,
-            importedDayLabels[key] || formatDayLabel(key),
+            normalizeDayLabel(importedDayLabels[key], formatDayLabel(key)),
           ])));
         }
 
@@ -740,7 +762,7 @@ const AddWorkout = () => {
           "Workout Goal": form.goal || "",
           "Duration (Weeks)": form.durationWeeks || Math.ceil(dayOrder.length / 7),
           "Day": dayKey,
-          "Day Label": dayLabels[dayKey] || formatDayLabel(dayKey),
+          "Day Label": normalizeDayLabel(dayLabels[dayKey], formatDayLabel(dayKey)),
           "Time": exercise.time || "",
           "Type": exercise.type || "Weight Training",
           "Exercise Name": exercise.name || "",
@@ -1038,11 +1060,12 @@ const AddWorkout = () => {
                   <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2 gap-3">
                     <input
                       type="text"
-                      value={dayLabels[dayKey] ?? formatDayLabel(dayKey)}
+                      value={normalizeDayLabel(dayLabels[dayKey], formatDayLabel(dayKey))}
                       onChange={(e) => updateDayLabel(dayKey, e.target.value)}
                       onBlur={(e) => {
-                        if (!e.target.value.trim()) {
-                          updateDayLabel(dayKey, formatDayLabel(dayKey));
+                        const normalizedLabel = normalizeDayLabel(e.target.value, formatDayLabel(dayKey));
+                        if (normalizedLabel !== e.target.value) {
+                          updateDayLabel(dayKey, normalizedLabel);
                         }
                       }}
                       className="w-32 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500"
