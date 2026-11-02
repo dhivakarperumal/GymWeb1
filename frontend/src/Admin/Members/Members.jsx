@@ -118,6 +118,8 @@ const TrainerWorkoutPlanPreview = ({ workoutData }) => (
   )
 );
 
+const getMemberIdentifier = (member) => member?.id ?? member?.member_id ?? member?.u_id ?? null;
+
 const formatDobToDDMMYYYY = (dateString) => {
   if (!dateString || dateString.includes('0000-00-00') || dateString.includes('1899')) return "-";
   if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) return dateString;
@@ -325,7 +327,7 @@ const Members = () => {
   };
 
   const openJoinForm = async (member) => {
-    const memberId = member.id || member.member_id;
+    const memberId = getMemberIdentifier(member);
     if (!memberId) {
       toast.error("Unable to open the Join Form for this member");
       return;
@@ -432,7 +434,7 @@ const Members = () => {
       return;
     }
 
-    const idToDelete = m.id || m.member_id;
+    const idToDelete = getMemberIdentifier(m);
     if (!idToDelete) {
       toast.error("Missing member identifier.");
       return;
@@ -458,7 +460,7 @@ const Members = () => {
     }
 
     const dataToExport = members.map((m, index) => ({
-      "Member ID": m.member_id || "-",
+      "Member ID": m.id || m.member_id || "-",
       Name: m.name || "N/A",
       "Mobile Number": m.phone || "N/A",
       Email: m.email || m.user_email || "-",
@@ -622,7 +624,7 @@ const Members = () => {
     setWorkoutMember(member);
     if (isTrainer) {
       try {
-        const response = await api.get(`/workouts?memberId=${member.id || member.member_id}`);
+        const response = await api.get(`/workouts?memberId=${getMemberIdentifier(member)}`);
         setTrainerWorkoutData(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching workouts:", error);
@@ -634,7 +636,7 @@ const Members = () => {
 
   // 🥗 FETCH DIET
   const openDietModal = async (member) => {
-    const memberId = member.id || member.member_id;
+    const memberId = getMemberIdentifier(member);
     setDietMember(member);
     setDietMemberId(memberId);
     setDietData(null);
@@ -876,9 +878,7 @@ const Members = () => {
           <table className="w-full min-w-[700px] text-base text-gray-200">
             <thead className="bg-white/10 text-white">
               <tr>
-                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">
-                  Member ID
-                </th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">ID</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
@@ -900,7 +900,7 @@ const Members = () => {
                 paginatedData.map((m, index) => (
                   <tr key={m.id || `u-${m.u_id}`} className="border-b border-white/5 hover:bg-white/5 transition">
                     <td className="px-4 py-5 font-medium text-gray-400">
-                      {m.member_id || "-"}
+                      {m.id || "-"}
                     </td>
                     <td className="px-4 py-5">
                       <div className="font-medium text-white">{m.name || "N/A"}</div>
@@ -1006,7 +1006,7 @@ const Members = () => {
                       <div className="flex items-center gap-1.5 relative action-dropdown-wrapper">
                         {/* Primary actions - always visible */}
                         <button
-                          onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
+                          onClick={() => navigate(`${basePath}/member_details/${getMemberIdentifier(m)}`, { state: { returnUrl: location.pathname + location.search } })}
                           className="p-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white transition"
                           title="View Details"
                         >
@@ -1051,9 +1051,12 @@ const Members = () => {
 
                         {/* Ellipsis toggle */}
                         <button
-                          onClick={() => setExpandedActionRow(expandedActionRow === (m.id || m.member_id) ? null : (m.id || m.member_id))}
+                          onClick={() => {
+                            const memberId = getMemberIdentifier(m);
+                            setExpandedActionRow(expandedActionRow === memberId ? null : memberId);
+                          }}
                           className={`p-2 rounded-lg text-white transition ${
-                            expandedActionRow === (m.id || m.member_id)
+                            expandedActionRow === getMemberIdentifier(m)
                               ? "bg-white/20 ring-2 ring-white/30"
                               : "bg-white/10 hover:bg-white/20"
                           }`}
@@ -1063,7 +1066,7 @@ const Members = () => {
                         </button>
 
                         {/* Dropdown menu */}
-                        {expandedActionRow === (m.id || m.member_id) && (
+                        {expandedActionRow === getMemberIdentifier(m) && (
                           <div className="absolute right-0 top-full mt-2 z-50 bg-[#1a1a2e] border border-white/20 rounded-xl shadow-2xl shadow-black/40 p-2 min-w-[180px] animate-in fade-in slide-in-from-top-2">
                             {!isTrainer && canChangePlan(m) && (
                               <button
@@ -1104,11 +1107,11 @@ const Members = () => {
                             </button>
                             <button
                               onClick={() => openJoinForm(m)}
-                              disabled={joinFormLoadingId === (m.id || m.member_id)}
+                              disabled={joinFormLoadingId === getMemberIdentifier(m)}
                               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white hover:bg-orange-500/20 transition disabled:opacity-50"
                             >
                               <Printer size={15} className="text-orange-400" />
-                              {joinFormLoadingId === (m.id || m.member_id) ? "Loading Join Form..." : "Print Join Form"}
+                              {joinFormLoadingId === getMemberIdentifier(m) ? "Loading Join Form..." : "Print Join Form"}
                             </button>
                             {role !== "trainer" && (
                               <>
@@ -1153,15 +1156,13 @@ const Members = () => {
                       </div>
                       <div>
                         <p className="text-lg font-bold text-white line-clamp-1">{m.name || "N/A"}</p>
-                        <p className="text-xs text-gray-400">
-                          Member ID: #{m.member_id || "N/A"}
-                        </p>
+                        <p className="text-xs text-gray-400">ID: #{m.id || "N/A"}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       {m.pt_form_completed && (
                         <button
-                          onClick={() => navigate(`${basePath}/pt-form/print/${m.id || m.member_id}`)}
+                          onClick={() => navigate(`${basePath}/pt-form/print/${getMemberIdentifier(m)}`)}
                           className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition"
                           title="Print PT Form"
                         >
@@ -1169,7 +1170,7 @@ const Members = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => navigate(`${basePath}/member_details/${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
+                        onClick={() => navigate(`${basePath}/member_details/${getMemberIdentifier(m)}`, { state: { returnUrl: location.pathname + location.search } })}
                         className="p-2 rounded-lg bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition"
                         title="View Details"
                       >
@@ -1301,7 +1302,7 @@ const Members = () => {
                           </span>
                           <button
                             onClick={() => {
-                              setPtViewMemberId(m.id || m.member_id);
+                              setPtViewMemberId(getMemberIdentifier(m));
                               setIsPtModalOpen(true);
                             }}
                             className="p-1 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition"
@@ -1312,7 +1313,7 @@ const Members = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => navigate(`${basePath}/pt-form?member_id=${m.id || m.member_id}`, { state: { returnUrl: location.pathname + location.search } })}
+                          onClick={() => navigate(`${basePath}/pt-form?member_id=${getMemberIdentifier(m)}`, { state: { returnUrl: location.pathname + location.search } })}
                           className="flex items-center gap-1 text-orange-400 hover:text-orange-500 text-[10px] font-bold underline decoration-dotted underline-offset-2"
                         >
                           <Clock size={12} /> PENDING
@@ -1445,7 +1446,6 @@ const Members = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">Personal Training Registration View</h3>
-                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{ptViewMemberId}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1502,7 +1502,6 @@ const Members = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">Workout Plan</h3>
-                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{workoutMember?.id || workoutMember?.member_id}</p>
                 </div>
               </div>
               <button
@@ -1551,7 +1550,6 @@ const Members = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">{isTrainer ? dietTitle || "Diet Plan" : "Diet Plan"}</h3>
-                  <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Member ID: #{dietMemberId}</p>
                 </div>
               </div>
               <button
