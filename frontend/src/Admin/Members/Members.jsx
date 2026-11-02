@@ -128,15 +128,6 @@ const formatDobToDDMMYYYY = (dateString) => {
   return dateString;
 };
 
-const formatDayLabel = (day) => {
-  if (day == null) return "";
-  const s = String(day);
-  if (/^\d+$/.test(s)) return `Day ${parseInt(s, 10) + 1}`;
-  const m = s.match(/^Day\s*(\d+)$/i) || s.match(/^Day(\d+)$/i);
-  if (m) return `Day ${parseInt(m[1], 10)}`;
-  return s;
-};
-
 const isUpdatePlanEnabled = (m) => {
   // If the member does not have an active plan, they need a plan
   if (!m.plan || m.plan === 'user' || m.status !== 'active') {
@@ -257,12 +248,8 @@ const Members = () => {
   const [workoutMember, setWorkoutMember] = useState(null);
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
   const [trainerWorkoutData, setTrainerWorkoutData] = useState([]);
-  const [dietMemberId, setDietMemberId] = useState(null);
   const [dietMember, setDietMember] = useState(null);
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
-  const [dietData, setDietData] = useState(null);
-  const [dietTitle, setDietTitle] = useState("");
-  const [activeDietDay, setActiveDietDay] = useState(null);
   const [expandedActionRow, setExpandedActionRow] = useState(null);
   const [joinFormMember, setJoinFormMember] = useState(null);
   const [isJoinFormOpen, setIsJoinFormOpen] = useState(false);
@@ -620,52 +607,16 @@ const Members = () => {
   };
 
   // 🏋️ FETCH WORKOUTS
-  const openWorkoutModal = async (member) => {
+  const openWorkoutModal = (member) => {
+    setTrainerWorkoutData([]);
     setWorkoutMember(member);
-    if (isTrainer) {
-      try {
-        const response = await api.get(`/workouts?memberId=${getMemberIdentifier(member)}`);
-        setTrainerWorkoutData(Array.isArray(response.data) ? response.data : []);
-      } catch (error) {
-        console.error("Error fetching workouts:", error);
-        setTrainerWorkoutData([]);
-      }
-    }
     setIsWorkoutModalOpen(true);
   };
 
   // 🥗 FETCH DIET
-  const openDietModal = async (member) => {
-    const memberId = getMemberIdentifier(member);
+  const openDietModal = (member) => {
     setDietMember(member);
-    setDietMemberId(memberId);
-    setDietData(null);
-    setDietTitle("");
     setIsDietModalOpen(true);
-    if (!isTrainer) return;
-
-    try {
-      const memberEmail = member.email || member.user_email || "";
-      const res = await api.get(`/diet-plans?email=${encodeURIComponent(memberEmail)}`);
-      const diets = Array.isArray(res.data) ? res.data : [];
-      const latestDiet = diets.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
-      if (!latestDiet) return;
-
-      setDietTitle(latestDiet.title || "Diet Plan");
-      let daysData = latestDiet.days;
-      if (typeof daysData === "string") {
-        try { daysData = JSON.parse(daysData); } catch (error) {
-          console.error("Failed to parse trainer diet plan days", error);
-          toast.error("Diet plan data could not be displayed.");
-          return;
-        }
-      }
-      setDietData(daysData);
-      if (daysData && typeof daysData === "object") setActiveDietDay(Object.keys(daysData)[0]);
-    } catch (error) {
-      console.error("Error fetching trainer diet:", error);
-      toast.error("Failed to load diet data");
-    }
   };
 
   return (
@@ -1514,7 +1465,7 @@ const Members = () => {
 
             {/* Modal Content */}
             <div className={`flex-1 overflow-y-auto custom-scrollbar ${isTrainer ? "p-6" : "p-4 sm:p-6"}`}>
-              {isTrainer ? (
+              {isTrainer && !workoutMember ? (
                 <TrainerWorkoutPlanPreview workoutData={trainerWorkoutData} />
               ) : workoutMember && (
                 <AdminMemberWorkoutPlan
@@ -1549,7 +1500,7 @@ const Members = () => {
                   <Utensils size={20} className="text-amber-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">{isTrainer ? dietTitle || "Diet Plan" : "Diet Plan"}</h3>
+                  <h3 className="text-lg font-bold text-white">Diet Plan</h3>
                 </div>
               </div>
               <button
@@ -1562,81 +1513,12 @@ const Members = () => {
 
             {/* Modal Content */}
             <div className={`flex-1 overflow-y-auto custom-scrollbar ${isTrainer ? "p-6" : "p-4 sm:p-6"}`}>
-              {!isTrainer && dietMember ? (
+              {dietMember ? (
                 <AdminMemberDietPlan
                   key={dietMember.id || dietMember.member_id}
                   member={dietMember}
                   creator={user}
                 />
-              ) : dietData ? (
-                <div className="space-y-4">
-                  <div className="flex gap-2 flex-wrap mb-4">
-                    {Object.keys(dietData).map((day) => (
-                      <button
-                        key={day}
-                        onClick={() => setActiveDietDay(day)}
-                        className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
-                          activeDietDay === day
-                            ? "bg-amber-500 text-white"
-                            : "bg-white/5 text-white/40 hover:bg-white/10"
-                        }`}
-                      >
-                        {formatDayLabel(day)}
-                      </button>
-                    ))}
-                  </div>
-
-                  {activeDietDay && dietData[activeDietDay] && (
-                    <div className="space-y-3">
-                      {Object.entries(dietData[activeDietDay]).map(([time, meal], idx) => (
-                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                          <h4 className="text-sm font-bold text-amber-400 mb-2 uppercase">{time}</h4>
-                          {/* meal may be a string, an array, or an object like { time, items } */}
-                          {typeof meal === 'string' ? (
-                            <p className="text-white whitespace-pre-wrap">{meal}</p>
-                          ) : Array.isArray(meal) ? (
-                            <div className="space-y-2">
-                              {meal.map((it, i) => (
-                                <div key={i} className="flex items-center justify-between">
-                                  <div className="text-white text-sm">{typeof it === 'string' ? it : it.food || it.name || JSON.stringify(it)}</div>
-                                  <div className="text-sm text-gray-200">{(it.calories || it.kcal) ? `${it.calories || it.kcal} kcal` : ''}</div>
-                                </div>
-                              ))}
-                              {/* total calories */}
-                              <div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-sm text-white/80">
-                                <div>Total</div>
-                                <div className="font-bold text-amber-400">{meal.reduce((s, it) => s + (parseInt(it.calories || it.kcal) || 0), 0)} kcal</div>
-                              </div>
-                            </div>
-                          ) : meal && Array.isArray(meal.items) ? (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="text-sm text-white/40">Time</div>
-                                {meal.time && <div className="text-sm font-semibold text-amber-400">{meal.time}</div>}
-                              </div>
-                              {meal.items.map((it, i) => (
-                                <div key={i} className="flex items-center justify-between">
-                                  <div className="text-white text-sm">
-                                    <div className="font-semibold">{it.food || it.name || JSON.stringify(it)}</div>
-                                    <div className="text-xs text-gray-400">Qty: <span className="text-white/80">{it.quantity ?? it.qty ?? '--'}</span></div>
-                                  </div>
-                                  <div className="text-sm text-emerald-400 font-bold">{(it.calories || it.kcal) ? `${it.calories || it.kcal} kcal` : '0 kcal'}</div>
-                                </div>
-                              ))}
-                              {/* total calories */}
-                              <div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-sm text-white/80">
-                                <div>Total</div>
-                                <div className="font-bold text-amber-400">{meal.items.reduce((s, it) => s + (parseInt(it.calories || it.kcal) || 0), 0)} kcal</div>
-                              </div>
-                            </div>
-                          ) : (
-                            <pre className="text-white whitespace-pre-wrap">{JSON.stringify(meal)}</pre>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Utensils size={48} className="text-white/20 mb-3" />

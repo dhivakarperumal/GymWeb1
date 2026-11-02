@@ -33,14 +33,23 @@ const createDay = (dayName = "Day 1", dayId = createDayId()) => ({
 });
 
 const normalizeTime = (value) => {
-  const time = String(value || "").trim();
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const minutes = Math.round(((value % 1) + 1) % 1 * 24 * 60) % (24 * 60);
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  }
+
+  const time = String(value ?? "").trim();
   const twelveHour = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (twelveHour) {
     let hours = Number(twelveHour[1]) % 12;
     if (twelveHour[3].toUpperCase() === "PM") hours += 12;
-    return `${String(hours).padStart(2, "0")}:${twelveHour[2]}`;
+    const minutes = Number(twelveHour[2]);
+    return minutes <= 59 ? `${String(hours).padStart(2, "0")}:${twelveHour[2]}` : "";
   }
-  const twentyFourHour = time.match(/^([01]?\d|2[0-3]):([0-5]\d)/);
+  const twentyFourHour = time.match(/^([01]?\d|2[0-3]):([0-5]\d)(?::\d{2}(?:\.\d+)?)?$/);
   return twentyFourHour ? `${twentyFourHour[1].padStart(2, "0")}:${twentyFourHour[2]}` : "";
 };
 
@@ -120,11 +129,13 @@ const dietExportColumns = [
   "Member Weight (kg)",
   "Duration (Days)",
   "Day",
+  "Day Name",
   "Meal",
-  "time",
+  "Time",
   "Food",
   "Qty",
   "Kcal",
+  "Day Notes",
 ];
 
 const matchesMember = (plan, member) => {
@@ -146,7 +157,10 @@ const getCell = (row, names) => {
   const matchingKey = keys.find((key) =>
     names.some((name) => key.trim().toLowerCase() === name.trim().toLowerCase()),
   );
-  return matchingKey ? String(row[matchingKey] ?? "").trim() : "";
+  const value = matchingKey ? row[matchingKey] : "";
+  return value instanceof Date && !Number.isNaN(value.getTime())
+    ? `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`
+    : String(value ?? "").trim();
 };
 
 const renumberDefaultDayNames = (days) =>
@@ -443,17 +457,34 @@ const AdminMemberDietPlan = ({ member, creator }) => {
                 "Member Weight (kg)": plan.member_weight || "",
                 "Duration (Days)": plan.duration || savedForm.days.length,
                 Day: dayIndex + 1,
+                "Day Name": day.dayName || `Day ${dayIndex + 1}`,
                 Meal: meal,
-                time: normalizeTime(mealData.time),
+                Time: normalizeTime(mealData.time),
                 Food: item.food || "",
                 Qty: item.quantity || "",
                 Kcal: item.calories || "",
+                "Day Notes": day.notes || "",
               });
             }
           });
         });
         if (day.notes) {
-          rows.push({ Day: dayIndex + 1, Meal: "Notes", time: "", Food: day.notes, Qty: "", Kcal: "" });
+          rows.push({
+            "Diet Title": plan.title || "",
+            "Member ID": selectedMemberId,
+            "Member Name": memberNameOf(member),
+            Mobile: memberMobileOf(member),
+            "Member Weight (kg)": plan.member_weight || "",
+            "Duration (Days)": plan.duration || savedForm.days.length,
+            Day: dayIndex + 1,
+            "Day Name": day.dayName || `Day ${dayIndex + 1}`,
+            Meal: "Notes",
+            Time: "",
+            Food: day.notes,
+            Qty: "",
+            Kcal: "",
+            "Day Notes": day.notes,
+          });
         }
       });
     }
@@ -478,7 +509,7 @@ const AdminMemberDietPlan = ({ member, creator }) => {
     event.target.value = "";
     if (!file) return;
     try {
-      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
       const sheetName = workbook.SheetNames[0];
       if (!sheetName) throw new Error("The workbook does not contain a worksheet.");
       const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
@@ -507,23 +538,29 @@ const AdminMemberDietPlan = ({ member, creator }) => {
         }
         const meal = normalizeMeal(getCell(row, ["Meal", "Meal Name", "Meal Type", "MealType", "meal"]));
         const time = getCell(row, ["Time", "Timing", "Meal Time", "MealTime", "time"]);
+        const normalizedTime = normalizeTime(time);
+        if (time && !normalizedTime) {
+          throw new Error(`Invalid time for Day ${dayNumber}. Use HH:mm, such as 08:30 or 20:30.`);
+        }
         const food = getCell(row, ["Food", "Food Item", "FoodItem", "Item", "Description", "food"]);
         const quantity = getCell(row, ["Qty", "Quantity", "QTY", "Serving", "quantity"]);
         const calories = getCell(row, ["Kcal", "Calories", "Cal", "Energy", "calories"]);
+        const dayKey = `Day${dayNumber}`;
+        parsedDays[dayKey] ||= {};
+        const dayName = getCell(row, ["Day Name", "Day Label"]);
+        if (dayName) parsedDays[dayKey].dayName = dayName;
+        const dayNotes = getCell(row, ["Day Notes", "Notes"]);
+        if (dayNotes) parsedDays[dayKey].notes = dayNotes;
         if (/^notes?$/i.test(getCell(row, ["Meal", "Meal Name", "Meal Type", "MealType"]))) {
-          const noteDay = `Day${dayNumber}`;
-          parsedDays[noteDay] ||= {};
-          parsedDays[noteDay].notes = food;
+          parsedDays[dayKey].notes = food || dayNotes;
           return;
         }
         if (!meal) throw new Error("Every imported row must specify a supported meal.");
         if (!food && !quantity && !calories) {
           throw new Error(`Add a food item or nutritional detail for Day ${dayNumber}, ${meal}.`);
         }
-        const dayKey = `Day${dayNumber}`;
-        parsedDays[dayKey] ||= {};
         parsedDays[dayKey][meal] ||= { time: "", items: [] };
-        if (time) parsedDays[dayKey][meal].time = time;
+        if (normalizedTime) parsedDays[dayKey][meal].time = normalizedTime;
         parsedDays[dayKey][meal].items.push({ food, quantity, calories });
       });
       if (!Object.keys(parsedDays).length) {
@@ -532,8 +569,8 @@ const AdminMemberDietPlan = ({ member, creator }) => {
 
       const dayCount = Math.max(...Object.keys(parsedDays).map((key) => Number(key.replace(/\D/g, ""))));
       const days = Array.from({ length: dayCount }, (_, index) => {
-        const day = createDay(`Day ${index + 1}`);
         const importedDay = parsedDays[`Day${index + 1}`] || {};
+        const day = createDay(importedDay.dayName || `Day ${index + 1}`);
         meals.forEach((meal) => {
           if (importedDay[meal]) {
             day[meal] = {

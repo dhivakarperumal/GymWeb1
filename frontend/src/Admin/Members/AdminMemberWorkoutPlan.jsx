@@ -33,6 +33,31 @@ const createExercise = (exercise = {}) => ({
   ...exercise,
 });
 
+const normalizeExcelTime = (value) => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const minutes = Math.round(((value % 1) + 1) % 1 * 24 * 60) % (24 * 60);
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  }
+
+  const text = String(value ?? "").trim();
+  const match = text.match(/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?\s*(AM|PM)?$/i);
+  if (match) {
+    let hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (minutes > 59 || hours > 23 || (match[3] && hours > 12)) return "";
+    if (match[3]) {
+      hours %= 12;
+      if (match[3].toUpperCase() === "PM") hours += 12;
+    }
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  }
+  if (/^(0(\.\d+)?|1(\.0+)?)$/.test(text)) return normalizeExcelTime(Number(text));
+  return "";
+};
+
 const normalizeDayKey = (key) => {
   const number = Number(String(key || "").match(/\d+/)?.[0] || 1);
   return `Day${number > 0 ? number : 1}`;
@@ -74,7 +99,7 @@ const belongsToMember = (workout, member) => {
   const email = String(member?.email || member?.user_email || "").trim().toLowerCase();
   const mobile = String(member?.phone || member?.mobile || "").replace(/\D/g, "");
 
-  if (workout.member_id != null) return memberIds.includes(String(workout.member_id));
+  if (workout.member_id != null && [...memberIds, ...userIds].includes(String(workout.member_id))) return true;
   if (workout.user_id != null && userIds.includes(String(workout.user_id))) return true;
   if (workout.user_id_uuid && uuids.includes(String(workout.user_id_uuid))) return true;
   return (
@@ -144,6 +169,7 @@ const workoutExportColumns = [
   "Workout Goal",
   "Duration (Weeks)",
   "Day",
+  "Day Label",
   "Time",
   "Type",
   "Exercise Name",
@@ -374,7 +400,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
     const payload = {
       trainerId,
       trainerName: plan?.trainer_name ?? creator?.username ?? creator?.name ?? null,
-      trainerSource: plan?.trainer_source ?? (creator ? "admin-members" : null),
+      trainerSource: plan?.trainer_source ?? creator?.role ?? (creator ? "admin-members" : null),
       memberId: gymMemberId,
       userId,
       memberName: memberName(member),
@@ -434,7 +460,8 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
             "Training Level": plan.level || "Beginner",
             "Workout Goal": plan.goal || "",
             "Duration (Weeks)": plan.duration_weeks || Math.ceil(Object.keys(days).length / 7),
-            Day: days[day][0]?.dayName || day,
+            Day: day,
+            "Day Label": days[day][0]?.dayName || day.replace(/(\D)(\d+)/, "$1 $2"),
             Time: exercise.time || "",
             Type: exercise.type || "Weight Training",
             "Exercise Name": exercise.name || "",
@@ -464,7 +491,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
     if (!file) return;
 
     try {
-      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
       const firstSheet = workbook.SheetNames[0];
       if (!firstSheet) throw new Error("The workbook does not contain a worksheet.");
       const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
@@ -473,6 +500,7 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
       const expectedMobile = memberMobile(member).replace(/\D/g, "");
       const expectedName = memberName(member).trim().toLowerCase();
       const importedDays = {};
+      const importedDayNames = {};
       let metadata = {};
 
       rows.forEach((row, index) => {
@@ -503,10 +531,18 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
 
         const name = String(row["Exercise Name"] || row.exercise || row.name || "").trim();
         if (!name) return;
-        const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNumber);
+        const dayValue = row.Day || row.day || row.DayNumber || row.dayNumber;
+        const dayKey = normalizeDayKey(dayValue);
         if (!importedDays[dayKey]) importedDays[dayKey] = [];
+        importedDayNames[dayKey] = String(row["Day Label"] || row.dayLabel || dayValue || dayKey)
+          .trim() || dayKey.replace(/(\D)(\d+)/, "$1 $2");
+        const rawTime = row.Time || row.time || "";
+        const time = normalizeExcelTime(rawTime);
+        if (rawTime && !time) {
+          throw new Error(`Invalid time in Excel row ${index + 2}. Use HH:mm, such as 10:30 or 14:30.`);
+        }
         importedDays[dayKey].push(createExercise({
-          time: row.Time || row.time || "",
+          time,
           type: row.Type || row.type || "Weight Training",
           name,
           sets: row.Sets || row.sets || "",
@@ -525,12 +561,10 @@ const AdminMemberWorkoutPlan = ({ member, creator }) => {
         ...metadata,
         days: importedDays,
         dayOrder: sortedDays(importedDays),
-        dayNames: Object.fromEntries(
-          Object.keys(importedDays).map((dayKey) => [
-            dayKey,
-            dayKey.replace(/(\D)(\d+)/, "$1 $2"),
-          ]),
-        ),
+        dayNames: Object.fromEntries(Object.keys(importedDays).map((dayKey) => [
+          dayKey,
+          importedDayNames[dayKey],
+        ])),
       }));
       setEditing(true);
       toast.success("Workout file imported. Review it, then save the plan.");
