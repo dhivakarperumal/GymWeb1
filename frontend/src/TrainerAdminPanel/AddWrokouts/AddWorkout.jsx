@@ -46,7 +46,47 @@ const normalizeDayKey = (rawKey) => {
 
 const normalizeExercise = (entry) => {
   if (!entry || typeof entry !== "object") return createExercise();
-  return createExercise(entry);
+  return createExercise({
+    ...entry,
+    time: normalizeExcelTime(entry.time),
+  });
+};
+
+const normalizeExcelTime = (value) => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const minutes = Math.round(((value % 1) + 1) % 1 * 24 * 60) % (24 * 60);
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  }
+
+  const text = String(value ?? "").trim();
+  const match = text.match(/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?\s*(AM|PM)?$/i);
+  if (match) {
+    let hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (minutes > 59 || hours > 23 || (match[3] && hours > 12)) return "";
+    if (match[3]) {
+      hours %= 12;
+      if (match[3].toUpperCase() === "PM") hours += 12;
+    }
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  }
+
+  if (/^(0(\.\d+)?|1(\.0+)?)$/.test(text)) {
+    return normalizeExcelTime(Number(text));
+  }
+  return "";
+};
+
+const getExcelCell = (row, ...aliases) => {
+  const normalizedAliases = aliases.map((alias) => alias.toLowerCase().replace(/[^a-z0-9]/g, ""));
+  const key = Object.keys(row).find((cellKey) =>
+    normalizedAliases.includes(cellKey.toLowerCase().replace(/[^a-z0-9]/g, "")),
+  );
+  return key ? row[key] : "";
 };
 
 const normalizeDays = (rawDays) => {
@@ -578,62 +618,77 @@ const AddWorkout = () => {
   const handleExcelImport = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    e.target.value = "";
 
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
         const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
+        const workbook = XLSX.read(data, { type: "array", cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
         const newSelected = new Set(selected);
         let matchCount = 0;
         const importedDays = {};
+        const importedDayLabels = {};
+        const invalidTimeRows = [];
 
         jsonData.forEach((row, index) => {
           // 1. Auto-fill Metadata from first row
           if (index === 0) {
-            const level = row.Level || row.level || row["Training Level"];
-            const category = row.Category || row.category || row["Training Category"];
-            const goal = row.Goal || row.goal || row["Workout Goal"];
-            const duration = row.Duration || row["Duration (Weeks)"] || row.duration || row["Weeks"];
+            const level = getExcelCell(row, "Level", "Training Level");
+            const goal = getExcelCell(row, "Goal", "Workout Goal");
+            const duration = getExcelCell(row, "Duration", "Duration (Weeks)", "Weeks");
 
             setForm(prev => ({
               ...prev,
-              ...(level && { level: level.charAt(0).toUpperCase() + level.slice(1).toLowerCase() }),
-              ...(goal && { goal }),
+              ...(level && { level: String(level).charAt(0).toUpperCase() + String(level).slice(1).toLowerCase() }),
+              ...(goal && { goal: String(goal) }),
               ...(duration && { durationWeeks: String(duration) }),
             }));
           }
 
           // 2. Build Exercises Structure
-const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNumber || "Day1");
+          const dayValue = getExcelCell(row, "Day", "Day Number") || "Day1";
+          const dayKey = normalizeDayKey(dayValue);
           if (!importedDays[dayKey]) importedDays[dayKey] = [];
+          importedDayLabels[dayKey] = getExcelCell(row, "Day Label") || (
+            /^Day\s*\d+$/i.test(String(dayValue).trim()) ? formatDayLabel(dayKey) : String(dayValue)
+          );
+
+          const rawTime = getExcelCell(row, "Time", "Time Slot", "Workout Time");
+          const time = normalizeExcelTime(rawTime);
+          if (rawTime !== "" && !time) invalidTimeRows.push(index + 2);
 
           const exercise = {
-            time: row.Time || row.time || "",
-            type: row.Type || row.type || "Weight Training",
-            name: row["Exercise Name"] || row.exercise || row.name || "",
-            sets: row.Sets || row.sets || "",
-            count: row.Count || row.count || row.Reps || row.reps || "",
-            media: row.Media || row.media || "",
+            time,
+            type: getExcelCell(row, "Type", "Workout Type") || "Weight Training",
+            name: getExcelCell(row, "Exercise Name", "Exercise", "Name"),
+            sets: getExcelCell(row, "Sets"),
+            count: getExcelCell(row, "Count", "Reps"),
+            massGain: getExcelCell(row, "Muscle Type", "Mass Gain"),
+            media: getExcelCell(row, "Media", "Media URL"),
             mediaType: "url"
           };
 
-          if (exercise.name) {
+          if (exercise.name || exercise.time || exercise.sets || exercise.count || exercise.media) {
             importedDays[dayKey].push(exercise);
           }
 
           // 3. Match Members
-          const nameInput = (row["Member Name"] || row.MemberName || row.name || "").toString().trim().toLowerCase();
-          const mobileInput = (row.Mobile || row.Phone || row.mobile || "").toString().trim();
+          const memberIdInput = String(getExcelCell(row, "Member ID", "Member ID Number", "Member Database ID")).trim();
+          const nameInput = String(getExcelCell(row, "Member Name", "MemberName")).trim().toLowerCase();
+          const mobileInput = String(getExcelCell(row, "Mobile", "Phone", "Mobile Number")).trim();
 
-          const match = members.find(m => {
+          const match = !isEditMode && members.find(m => {
             const mName = (m.name || "").toLowerCase();
             const mMobile = (m.mobile || "");
-            return (nameInput && mName === nameInput) || (mobileInput && mMobile === mobileInput);
+            const mIds = [m.gymMemberId, m.userId, m.id].filter(Boolean).map(String);
+            return (memberIdInput && mIds.includes(memberIdInput)) ||
+              (nameInput && mName === nameInput) ||
+              (mobileInput && mMobile === mobileInput);
           });
 
           if (match && !newSelected.has(match.id)) {
@@ -647,14 +702,22 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
           const importedKeys = getSortedDayKeys(normalizedImportedDays);
           setDays(normalizedImportedDays);
           setDayOrder(importedKeys);
-          setDayLabels(Object.fromEntries(importedKeys.map((key, index) => [key, `Day ${index + 1}`])));
+          setDayLabels(Object.fromEntries(importedKeys.map((key) => [
+            key,
+            importedDayLabels[key] || formatDayLabel(key),
+          ])));
         }
 
         setSelected(newSelected);
         if (matchCount > 0 || Object.keys(importedDays).length > 0) {
-          toast.success(`Imported ${matchCount} members and full workout schedule! 🏋️‍♂️`);
+          toast.success(isEditMode
+            ? "Workout schedule imported. Save to apply the changes."
+            : `Imported ${matchCount} members and full workout schedule! 🏋️‍♂️`);
         } else {
           toast.error("No valid data found in Excel.");
+        }
+        if (invalidTimeRows.length > 0) {
+          toast.error(`Invalid time in Excel row${invalidTimeRows.length > 1 ? "s" : ""} ${invalidTimeRows.slice(0, 5).join(", ")}. Use HH:mm (for example 10:30 or 14:30).`);
         }
       } catch (err) {
         console.error(err);
@@ -668,8 +731,28 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
     // If we have members, create a row for each. Otherwise use samples.
     let template = [];
 
-    if (members && members.length > 0) {
+    if (isEditMode) {
+      template = dayOrder.flatMap((dayKey) =>
+        (days[dayKey] || []).map((exercise) => ({
+          "Member ID": form.memberId || "",
+          "Member Name": form.memberName || "",
+          "Training Level": form.level || "Beginner",
+          "Workout Goal": form.goal || "",
+          "Duration (Weeks)": form.durationWeeks || Math.ceil(dayOrder.length / 7),
+          "Day": dayKey,
+          "Day Label": dayLabels[dayKey] || formatDayLabel(dayKey),
+          "Time": exercise.time || "",
+          "Type": exercise.type || "Weight Training",
+          "Exercise Name": exercise.name || "",
+          "Sets": exercise.sets || "",
+          "Count": exercise.count || "",
+          "Muscle Type": exercise.massGain || "",
+          "Media": exercise.media || "",
+        })),
+      );
+    } else if (members && members.length > 0) {
       template = members.map(m => ({
+        "Member ID": m.gymMemberId || m.userId || m.id || "",
         "Member Name": m.name || "",
         "Mobile": m.mobile || "",
         "Training Level": "Beginner",
@@ -686,25 +769,25 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
     } else {
       // Fallback to 10-day sample if no members loaded
       template = [
-        { "Member Name": "Sakthivel", "Mobile": "9876543210", "Training Level": "Beginner", "Workout Goal": "Muscle Gain", "Duration (Weeks)": "12", "Day": "Day1", "Time": "10:00", "Type": "Weight Training", "Exercise Name": "Bench Press", "Sets": "3", "Count": "12", "Media": "" },
-        { "Member Name": "Sakthivel", "Mobile": "9876543210", "Day": "Day2", "Time": "10:00", "Type": "Cardio", "Exercise Name": "Running", "Sets": "1", "Count": "20 mins", "Media": "" },
-        { "Member Name": "Nishanth", "Mobile": "8887776665", "Day": "Day1", "Time": "10:00", "Type": "HIIT", "Exercise Name": "Burpees", "Sets": "4", "Count": "20", "Media": "" }
+        { "Member ID": "", "Member Name": "Sakthivel", "Mobile": "9876543210", "Training Level": "Beginner", "Workout Goal": "Muscle Gain", "Duration (Weeks)": "12", "Day": "Day1", "Time": "10:00", "Type": "Weight Training", "Exercise Name": "Bench Press", "Sets": "3", "Count": "12", "Media": "" },
+        { "Member ID": "", "Member Name": "Sakthivel", "Mobile": "9876543210", "Day": "Day2", "Time": "10:00", "Type": "Cardio", "Exercise Name": "Running", "Sets": "1", "Count": "20 mins", "Media": "" },
+        { "Member ID": "", "Member Name": "Nishanth", "Mobile": "8887776665", "Day": "Day1", "Time": "10:00", "Type": "HIIT", "Exercise Name": "Burpees", "Sets": "4", "Count": "20", "Media": "" }
       ];
     }
 
     const ws = XLSX.utils.json_to_sheet(template);
 
     // Set column widths
-    const wscols = [
-      { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 15 },
-      { wch: 10 }, { wch: 10 }, { wch: 15 }, { wch: 20 }, { wch: 8 }, { wch: 12 }, { wch: 20 }
-    ];
+    const wscols = [12, 15, 15, 20, 18, 15, 15, 12, 20, 15, 10, 10, 15, 20]
+      .map((wch) => ({ wch }));
     ws['!cols'] = wscols;
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Member_Workout_List");
-    XLSX.writeFile(wb, "Gym_Member_Workout_Template.xlsx");
-    toast.success(`${members.length > 0 ? `Exported ${members.length} members!` : "Sample template downloaded!"} 📥`);
+    XLSX.writeFile(wb, isEditMode ? `Workout_Schedule_${id}.xlsx` : "Gym_Member_Workout_Template.xlsx");
+    toast.success(isEditMode
+      ? "Current workout schedule downloaded."
+      : `${members.length > 0 ? `Exported ${members.length} members!` : "Sample template downloaded!"} 📥`);
   };
 
 
@@ -869,6 +952,35 @@ const dayKey = normalizeDayKey(row.Day || row.day || row.DayNumber || row.dayNum
               <p className="text-yellow-400 text-[10px] mt-2 italic">
                 (Member cannot be changed in edit mode)
               </p>
+            </div>
+          )}
+
+          {isEditMode && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 p-4">
+              <p className="text-sm text-white/60">
+                Import an edited schedule or download the current schedule as an Excel file.
+              </p>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 rounded-lg border border-indigo-500/20 bg-indigo-500/10 px-3 py-2 text-indigo-300 transition hover:bg-indigo-500/20 cursor-pointer">
+                  <FileText size={16} />
+                  <span className="text-xs font-bold uppercase tracking-tight">Import Excel</span>
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    className="hidden"
+                    onChange={handleExcelImport}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={downloadExcelTemplate}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+                  title="Download current workout schedule"
+                >
+                  <span className="text-xs font-bold uppercase tracking-tight">Download Excel</span>
+                  <Download size={16} />
+                </button>
+              </div>
             </div>
           )}
 

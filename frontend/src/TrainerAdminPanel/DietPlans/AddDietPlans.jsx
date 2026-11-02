@@ -134,25 +134,42 @@ const AddDietPlans = () => {
   }, [form.days]);
 
   /* ================= TIME FORMAT HELPERS ================= */
+  const normalizeExcelTime = (value) => {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      const minutes = Math.round(((value % 1) + 1) % 1 * 24 * 60) % (24 * 60);
+      return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+    }
+
+    const text = String(value ?? "").trim();
+    const match = text.match(/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?\s*(AM|PM)?$/i);
+    if (match) {
+      let hours = Number(match[1]);
+      const minutes = Number(match[2]);
+      if (minutes > 59 || hours > 23 || (match[3] && hours > 12)) return "";
+      if (match[3]) {
+        hours %= 12;
+        if (match[3].toUpperCase() === "PM") hours += 12;
+      }
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+    }
+
+    if (/^(0(\.\d+)?|1(\.0+)?)$/.test(text)) {
+      return normalizeExcelTime(Number(text));
+    }
+    return "";
+  };
+
   const convertTo24Hour = (timeStr) => {
     if (!timeStr) return "";
-    const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (!match) return timeStr; // Already 24h or invalid
-
-    let hours = parseInt(match[1]);
-    const minutes = match[2];
-    const ampm = match[3].toUpperCase();
-
-    if (ampm === "PM" && hours < 12) hours += 12;
-    if (ampm === "AM" && hours === 12) hours = 0;
-
-    return `${String(hours).padStart(2, "0")}:${minutes}`;
+    return normalizeExcelTime(timeStr);
   };
 
   const formatTo12Hour = (time24) => {
     if (!time24) return "";
-    const [hours, minutes] = time24.split(":");
-    let h = parseInt(hours);
+    const normalized = normalizeExcelTime(time24);
+    if (!normalized) return "";
+    const [hours, minutes] = normalized.split(":");
+    let h = Number(hours);
     const ampm = h >= 12 ? "PM" : "AM";
     h = h % 12 || 12;
     return `${String(h).padStart(2, "0")}:${minutes} ${ampm}`;
@@ -517,6 +534,20 @@ const AddDietPlans = () => {
     return "";
   };
 
+  const getMemberDirectoryRows = () => {
+    const directory = id
+      ? [{ id: form.memberId, name: form.memberName }]
+      : members.map((member) => ({
+        id: member.gymMemberId,
+        name: member.name,
+      }));
+
+    return directory.map((member) => ({
+      "Member ID": member.id || "",
+      "Member Name": member.name || "",
+    }));
+  };
+
   const downloadDietPlanTemplate = () => {
     const template = [
       // Day 1
@@ -723,10 +754,58 @@ const AddDietPlans = () => {
     ];
 
     const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(template);
+    const worksheet = XLSX.utils.json_to_sheet(template.map((row) => ({
+      "Member ID": "",
+      "Member Name": "",
+      "Diet Plan Title": "",
+      "Member Weight (kg)": "",
+      ...row,
+    })));
     XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan Sample");
+    const memberWorksheet = XLSX.utils.json_to_sheet(getMemberDirectoryRows(), {
+      header: ["Member ID", "Member Name"],
+    });
+    XLSX.utils.book_append_sheet(workbook, memberWorksheet, "Members");
 
     XLSX.writeFile(workbook, "Diet_Plan_Sample.xlsx");
+  };
+
+  const downloadCurrentDietPlan = () => {
+    const rows = form.days.flatMap((day, dayIndex) =>
+      meals.flatMap((meal) => {
+        const mealData = day[meal] || { time: "", items: [] };
+        const items = Array.isArray(mealData.items) && mealData.items.length
+          ? mealData.items
+          : [{ food: "", quantity: "", calories: "" }];
+
+        return items.map((item) => ({
+          "Member ID": form.memberId || "",
+          "Member Name": form.memberName || "",
+          "Diet Plan Title": form.title || "",
+          "Member Weight (kg)": form.memberWeight || "",
+          Day: dayIndex + 1,
+          "Day Name": day.dayName || `Day ${dayIndex + 1}`,
+          Meal: meal,
+          Time: convertTo24Hour(mealData.time || ""),
+          Food: item.food || "",
+          Qty: item.quantity || "",
+          Kcal: item.calories || "",
+          "Day Notes": day.notes || "",
+        }));
+      }),
+    );
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    worksheet["!cols"] = [14, 22, 24, 18, 8, 16, 18, 12, 24, 14, 10, 36]
+      .map((wch) => ({ wch }));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Diet Plan");
+    const memberWorksheet = XLSX.utils.json_to_sheet(getMemberDirectoryRows(), {
+      header: ["Member ID", "Member Name"],
+    });
+    XLSX.utils.book_append_sheet(workbook, memberWorksheet, "Members");
+    XLSX.writeFile(workbook, `Diet_Plan_${id}.xlsx`);
+    toast.success("Current diet plan downloaded.");
   };
 
   const handleImportExcel = async (event) => {
@@ -748,8 +827,15 @@ const AddDietPlans = () => {
 
       const parsedDays = {};
       let rowsParsed = 0;
+      const newSelected = new Set(selected);
+      let matchedMembers = 0;
+      const invalidTimeRows = [];
+      const getFirstValue = (keys) =>
+        rows.map((row) => getRowValue(row, keys)).find(Boolean) || "";
+      const importedTitle = getFirstValue(["Diet Plan Title", "Title", "Plan Title"]);
+      const importedWeight = getFirstValue(["Member Weight (kg)", "Member Weight", "Weight"]);
 
-      rows.forEach((row) => {
+      rows.forEach((row, rowIndex) => {
         const dayRaw = getRowValue(row, [
           "Day",
           "Day Number",
@@ -774,6 +860,8 @@ const AddDietPlans = () => {
           "MealTime",
           "time",
         ]);
+        const time24 = normalizeExcelTime(time);
+        if (time && !time24) invalidTimeRows.push(rowIndex + 2);
         const food = getRowValue(row, [
           "Food",
           "Food Item",
@@ -801,10 +889,22 @@ const AddDietPlans = () => {
           return;
         }
 
+        if (dayNumber < 1 || dayNumber > 60) {
+          return;
+        }
+
         const dayKey = `Day${dayNumber}`;
         if (!parsedDays[dayKey]) {
-          parsedDays[dayKey] = {};
+          parsedDays[dayKey] = {
+            dayName: "",
+            notes: "",
+          };
         }
+
+        const importedDayName = getRowValue(row, ["Day Name", "Day Label"]);
+        if (importedDayName) parsedDays[dayKey].dayName = importedDayName;
+        const dayNotes = getRowValue(row, ["Day Notes", "Notes"]);
+        if (dayNotes) parsedDays[dayKey].notes = dayNotes;
 
         if (!parsedDays[dayKey][mealName]) {
           parsedDays[dayKey][mealName] = {
@@ -814,8 +914,8 @@ const AddDietPlans = () => {
         }
 
         const mealData = parsedDays[dayKey][mealName];
-        if (time) {
-          mealData.time = time;
+        if (time24) {
+          mealData.time = formatTo12Hour(time24);
         }
 
         const rowItem = { food, quantity, calories };
@@ -824,6 +924,24 @@ const AddDietPlans = () => {
         }
 
         rowsParsed += 1;
+
+        if (!id) {
+          const memberId = getRowValue(row, ["Member ID", "Member Database ID"]);
+          const memberName = getRowValue(row, ["Member Name", "Name"]).toLowerCase();
+          const memberMobile = getRowValue(row, ["Mobile", "Phone", "Mobile Number"]);
+          const matched = members.find((member) => {
+            const ids = [member.gymMemberId, member.userId, member.id]
+              .filter(Boolean)
+              .map(String);
+            return (memberId && ids.includes(memberId)) ||
+              (memberName && String(member.name || "").toLowerCase() === memberName) ||
+              (memberMobile && String(member.mobile || "") === memberMobile);
+          });
+          if (matched && !newSelected.has(matched.id)) {
+            newSelected.add(matched.id);
+            matchedMembers += 1;
+          }
+        }
       });
 
       const dayIndices = Object.keys(parsedDays)
@@ -837,12 +955,21 @@ const AddDietPlans = () => {
         return;
       }
 
+      if (rows.some((row) => {
+        const dayNumber = parseDayNumber(getRowValue(row, ["Day", "Day Number", "Day No", "DayNo", "Day#"])) || 1;
+        return dayNumber > 60;
+      })) {
+        toast.error("Diet plans can contain a maximum of 60 days.");
+        return;
+      }
+
       const maxDay = Math.max(...dayIndices);
       const newDaysArray = [];
 
       for (let i = 1; i <= maxDay; i++) {
         const rawDay = parsedDays[`Day${i}`] || {};
-        const dayTemplate = generateSingleDay(`Day ${i}`);
+        const importedDay = parsedDays[`Day${i}`] || {};
+        const dayTemplate = generateSingleDay(importedDay.dayName || `Day ${i}`);
         const mergedDay = { dayId: dayTemplate.dayId };
 
         meals.forEach((meal) => {
@@ -860,18 +987,26 @@ const AddDietPlans = () => {
             mergedDay[meal] = dayTemplate[meal];
           }
         });
-        mergedDay.dayName = dayTemplate.dayName;
-        mergedDay.notes = "";
+        mergedDay.dayName = importedDay.dayName || dayTemplate.dayName;
+        mergedDay.notes = importedDay.notes || "";
         newDaysArray.push(mergedDay);
       }
 
       setForm((prev) => ({
         ...prev,
+        ...(importedTitle && { title: importedTitle }),
+        ...(importedWeight && { memberWeight: importedWeight }),
         days: newDaysArray,
         duration: newDaysArray.length,
       }));
+      if (!id) setSelected(newSelected);
 
-      toast.success(`Imported diet plan for ${newDaysArray.length} day(s)`);
+      toast.success(id
+        ? `Imported diet plan for ${newDaysArray.length} day(s). Save to apply changes.`
+        : `Imported diet plan for ${newDaysArray.length} day(s)${matchedMembers ? ` and matched ${matchedMembers} member(s)` : ""}.`);
+      if (invalidTimeRows.length > 0) {
+        toast.error(`Invalid time in Excel row${invalidTimeRows.length > 1 ? "s" : ""} ${invalidTimeRows.slice(0, 5).join(", ")}. Use HH:mm (for example 08:30 or 20:30).`);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to import Excel. Please check the file format.");
@@ -925,7 +1060,7 @@ const AddDietPlans = () => {
           memberMobile: form.memberMobile,
           memberWeight: form.memberWeight,
           title: form.title,
-          totalCalories: Number(form.totalCalories) || 0,
+          totalCalories: Number(totalCalories) || 0,
           duration: Number(form.duration) || form.days.length,
           days: form.days,
           status: "active",
@@ -1048,10 +1183,10 @@ const AddDietPlans = () => {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={downloadDietPlanTemplate}
+                onClick={id ? downloadCurrentDietPlan : downloadDietPlanTemplate}
                 className="px-4 py-2 rounded-lg bg-slate-700/80 border border-white/10 text-white text-sm hover:bg-slate-700 transition"
               >
-                Download Example Excel
+                {id ? "Download Current Excel" : "Download Example Excel"}
               </button>
 
               <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 cursor-pointer hover:bg-emerald-500/30 transition text-sm font-semibold">
@@ -1066,8 +1201,9 @@ const AddDietPlans = () => {
             </div>
 
             <label className="text-[10px] text-white/50 max-w-md text-right">
-              Excel must include columns: Day, Meal, Time, Food, Qty, Kcal. Use
-              meal names: Early-morning, Breakfast, Mid-morning, Lunch, Evening,
+              Excel columns: Day, Meal, Time, Food, Qty, Kcal. Optional: Day Name,
+              Day Notes, Diet Plan Title, Member ID, Member Name, Member Weight (kg).
+              Meal names: Early-morning, Breakfast, Mid-morning, Lunch, Evening,
               Dinner, Pre-workout, Post-workout.
             </label>
           </div>
