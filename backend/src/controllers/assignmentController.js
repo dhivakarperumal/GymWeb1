@@ -27,7 +27,9 @@ function normalizeAssignment(row) {
     trainerName: row.current_trainer_name || row.trainer_name,
     trainerEmail: row.trainer_email || "",
     trainerPhone: row.trainer_mobile || "",
+    trainerPhoto: row.trainer_photo || "",
     trainerSource: row.trainer_source,
+    assignmentDate: row.created_at || row.updated_at,
     sessionTime: row.session_time || null,
     status: row.status,
     ptFormCompleted: row.pt_form_completed || 0,
@@ -123,6 +125,7 @@ async function getAllAssignments(req, res) {
              s.name as current_trainer_name,
              s.email as trainer_email,
              s.phone as trainer_mobile,
+             s.photo as trainer_photo,
              s.role as trainer_source
       FROM trainer_assignments a
       LEFT JOIN users u ON u.id = a.user_id
@@ -224,14 +227,54 @@ async function upsertAssignments(req, res) {
     try {
       await connection.beginTransaction();
 
+      const seenAssignments = new Set();
       for (const a of assignments) {
+        const userId = Number(a.userId);
+        const trainerId = Number(a.trainerId);
+        if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(trainerId) || trainerId <= 0) {
+          const error = new Error('A valid member and trainer are required');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        const assignmentKey = a.assignmentId != null
+          ? `id:${a.assignmentId}`
+          : `member:${userId}:plan:${a.planId ?? ''}`;
+        if (seenAssignments.has(assignmentKey)) {
+          const error = new Error('Duplicate assignment in request');
+          error.statusCode = 400;
+          throw error;
+        }
+        seenAssignments.add(assignmentKey);
+
+        const [userRows] = await connection.query('SELECT id, user_id FROM users WHERE id = ?', [userId]);
+        if (userRows.length === 0) {
+          const error = new Error('Member account was not found');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        const [trainerRows] = await connection.query(
+          "SELECT id, name, role, status FROM staff WHERE id = ?",
+          [trainerId]
+        );
+        const trainerRecord = trainerRows[0];
+        if (
+          !trainerRecord ||
+          String(trainerRecord.role || '').toLowerCase() !== 'trainer' ||
+          String(trainerRecord.status || '').toLowerCase() !== 'active'
+        ) {
+          const error = new Error('Selected trainer is unavailable');
+          error.statusCode = 400;
+          throw error;
+        }
+
         // Resolve UUID if not provided
-        const [userUuidResult] = await connection.query('SELECT user_id FROM users WHERE id = ?', [a.userId]);
-        const finalUuid = a.userUuid || (userUuidResult[0] ? userUuidResult[0].user_id : null);
+        const finalUuid = a.userUuid || userRows[0].user_id || null;
 
         // simple upsert using unique(user_id, plan_id)
         const params = [
-          a.userId,
+          userId,
           finalUuid,
           a.username || null,
           a.userEmail || null,
@@ -241,8 +284,8 @@ async function upsertAssignments(req, res) {
           a.planStartDate || null,
           a.planEndDate || null,
           a.planPrice || null,
-          a.trainerId,
-          a.trainerName || null,
+          trainerId,
+          a.trainerName || trainerRecord.name || null,
           a.trainerSource || 'unknown',
           a.sessionTime || null,
           a.status || 'active',
@@ -269,16 +312,61 @@ async function upsertAssignments(req, res) {
             updated_at=CURRENT_TIMESTAMP
         `;
 
-        await connection.query(sql, params);
+        if (a.assignmentId != null) {
+          const assignmentId = Number(a.assignmentId);
+          if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+            const error = new Error('Invalid assignment record');
+            error.statusCode = 400;
+            throw error;
+          }
+          const [assignmentRows] = await connection.query(
+            'SELECT id FROM trainer_assignments WHERE id = ? AND user_id = ? FOR UPDATE',
+            [assignmentId, userId]
+          );
+          if (assignmentRows.length === 0) {
+            const error = new Error('Assignment record was not found');
+            error.statusCode = 404;
+            throw error;
+          }
+
+          await connection.query(
+            `UPDATE trainer_assignments SET
+              user_id_uuid = ?, username = ?, user_email = ?, plan_id = ?, plan_name = ?,
+              plan_duration = ?, plan_start_date = ?, plan_end_date = ?, plan_price = ?,
+              trainer_id = ?, trainer_name = ?, trainer_source = ?, session_time = ?,
+              status = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND user_id = ?`,
+            [
+              finalUuid,
+              a.username || null,
+              a.userEmail || null,
+              a.planId || null,
+              a.planName || null,
+              a.planDuration || null,
+              a.planStartDate || null,
+              a.planEndDate || null,
+              a.planPrice || null,
+              trainerId,
+              a.trainerName || trainerRecord.name || null,
+              a.trainerSource || 'unknown',
+              a.sessionTime || null,
+              a.status || 'active',
+              assignmentId,
+              userId,
+            ]
+          );
+        } else {
+          await connection.query(sql, params);
+        }
 
         // Also update existing diet/workout plans for this member to the new trainer
         await connection.query(
           'UPDATE diet_plans SET trainer_id = ?, trainer_name = ?, trainer_source = ?, user_id_uuid = ? WHERE user_id = ?',
-          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', finalUuid, a.userId]
+          [trainerId, a.trainerName || trainerRecord.name || null, a.trainerSource || 'unknown', finalUuid, userId]
         );
         await connection.query(
           'UPDATE workout_programs SET trainer_id = ?, trainer_name = ?, trainer_source = ?, user_id_uuid = ? WHERE user_id = ?',
-          [a.trainerId, a.trainerName || null, a.trainerSource || 'unknown', finalUuid, a.userId]
+          [trainerId, a.trainerName || trainerRecord.name || null, a.trainerSource || 'unknown', finalUuid, userId]
         );
       }
 
@@ -287,7 +375,9 @@ async function upsertAssignments(req, res) {
     } catch (err) {
       await connection.rollback();
       console.error('upsertAssignments error', err);
-      res.status(500).json({ error: 'Failed to save assignments' });
+      res.status(err.statusCode || 500).json({
+        error: err.statusCode ? err.message : 'Failed to save assignments',
+      });
     } finally {
       connection.release();
     }

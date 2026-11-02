@@ -7,6 +7,28 @@ import { filterByDateRange } from "../utils/dateUtils";
 import { toast } from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 
+const indexAssignments = (records) => {
+  const index = {};
+  (Array.isArray(records) ? records : []).forEach((assignment) => {
+    const keys = [
+      assignment.userId,
+      assignment.userUuid,
+      assignment.userEmail,
+    ].filter(Boolean).map((value) => String(value).trim().toLowerCase());
+    keys.forEach((key) => {
+      if (!index[key]) index[key] = [];
+      const alreadyAdded = index[key].some((item) =>
+        item.id != null && assignment.id != null
+          ? String(item.id) === String(assignment.id)
+          : String(item.userId) === String(assignment.userId) &&
+            String(item.planId || "") === String(assignment.planId || "")
+      );
+      if (!alreadyAdded) index[key].push(assignment);
+    });
+  });
+  return index;
+};
+
 const AssingnedTrainers = () => {
   const [members, setMembers] = useState([]);
   const [trainers, setTrainers] = useState([]);
@@ -18,7 +40,7 @@ const AssingnedTrainers = () => {
   const [assigning, setAssigning] = useState(false);
   const [assignments, setAssignments] = useState({});
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("unassigned"); // all, assigned, unassigned
+  const [filterType, setFilterType] = useState("assigned"); // all, assigned, unassigned
   const [viewMode, setViewMode] = useState("table"); // card, table
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -84,6 +106,7 @@ const AssingnedTrainers = () => {
         cache.adminAssignmentsMembers = usersData;
       } catch (error) {
         console.error("Error fetching memberships:", error);
+        toast.error(error.response?.data?.error || "Could not load members");
       } finally {
         setLoading(false);
       }
@@ -100,7 +123,10 @@ const AssingnedTrainers = () => {
       }
       try {
         const res = await api.get("/staff", { params: { role: "trainer" } });
-        const trainers = Array.isArray(res.data) ? res.data.filter(t => String(t.status).toLowerCase() === "active") : [];
+        const trainers = Array.isArray(res.data) ? res.data.filter(t =>
+          String(t.status).toLowerCase() === "active" &&
+          String(t.role).toLowerCase() === "trainer"
+        ) : [];
         const normalized = trainers.map((t) => ({
           id: t.id.toString(),
           name: t.name || t.username || "Trainer",
@@ -111,6 +137,7 @@ const AssingnedTrainers = () => {
         cache.adminTrainers = normalized;
       } catch (err) {
         console.error("Error fetching trainers:", err);
+        toast.error(err.response?.data?.error || "Could not load trainers");
       }
     };
 
@@ -127,43 +154,12 @@ const AssingnedTrainers = () => {
       delete cache.adminAssignments;
       try {
         const res = await api.get("/assignments");
-        const assignData = {};
-
-        (Array.isArray(res.data) ? res.data : []).forEach((a) => {
-          // Index by numeric userId
-          const userId = a.userId?.toString();
-          if (userId) {
-            if (!assignData[userId]) assignData[userId] = [];
-            assignData[userId].push(a);
-          }
-          // ALSO index by email (lowercased) — m.uid is now email after dedup fix
-          const emailKey = (a.userEmail || "").toLowerCase().trim();
-          if (emailKey) {
-            if (!assignData[emailKey]) assignData[emailKey] = [];
-            // avoid duplicate push if same key
-            if (!assignData[emailKey].some(x => x.id === a.id)) {
-              assignData[emailKey].push(a);
-            }
-          }
-        });
-
-        const dedupedAssignments = Object.fromEntries(
-          Object.entries(assignData).map(([key, list]) => {
-            const uniqueList = list.filter((assign, index, self) =>
-              index === self.findIndex((item) =>
-                (item.trainerId || '') === (assign.trainerId || '') &&
-                (item.trainerName || '') === (assign.trainerName || '') &&
-                (item.planId || '') === (assign.planId || '')
-              )
-            );
-            return [key, uniqueList];
-          })
-        );
-
-        setAssignments(dedupedAssignments);
-        cache.adminAssignments = dedupedAssignments;
+        const indexedAssignments = indexAssignments(res.data);
+        setAssignments(indexedAssignments);
+        cache.adminAssignments = indexedAssignments;
       } catch (error) {
         console.error("Error fetching assignments:", error);
+        toast.error(error.response?.data?.error || "Could not load trainer assignments");
       }
     };
 
@@ -175,7 +171,19 @@ const AssingnedTrainers = () => {
 
   const getAssigned = (m) => {
     if (!m) return [];
-    return assignments[m.uid] || (m.userId && assignments[m.userId]) || [];
+    const keys = [m.uid, m.userId, m.email, m.userEmail]
+      .filter(Boolean)
+      .map((value) => String(value).trim().toLowerCase());
+    const byId = new Map();
+    keys.forEach((key) => {
+      (assignments[key] || []).forEach((assignment) => {
+        const uniqueId = assignment.id != null
+          ? String(assignment.id)
+          : `${assignment.userId}:${assignment.planId || ""}:${assignment.trainerId || ""}`;
+        byId.set(uniqueId, assignment);
+      });
+    });
+    return [...byId.values()];
   };
 
   useEffect(() => {
@@ -232,70 +240,104 @@ const AssingnedTrainers = () => {
     }
 
     const safeTrainerName = trainer.name || trainer.username || trainer.email || "Trainer";
-
-    setAssigning(true);
-    try {
-      const payload = [];
-      for (const member of members.filter((m) => selectedUsers.includes(m.uid))) {
-        // Use the real backend userId if available, otherwise fall back to email
-        const backendUserId = member.userId || member.uid;
-        for (const plan of member.plans) {
+    const selectedMembers = members.filter((member) => selectedUsers.includes(member.uid));
+    const payload = [];
+    for (const member of selectedMembers) {
+      if (isReassignMode) {
+        const existingAssignments = getAssigned(member);
+        if (existingAssignments.length === 0) {
+          toast.error(`${member.username || "Selected member"} no longer has an assignment`);
+          return;
+        }
+        if (existingAssignments.some((assignment) => String(assignment.trainerId) === String(trainer.id))) {
+          toast.error(`${member.username || "Selected member"} is already assigned to this trainer`);
+          return;
+        }
+        existingAssignments.forEach((assignment) => {
           payload.push({
-            userId: backendUserId,
-            username: member.username || "No Name",
-            userEmail: member.email || "",
-            userMobile: member.userMobile || "",
-            planId: plan.id,
-            planName: plan.planName,
-            planDuration: plan.duration,
-            planStartDate: plan.startDate,
-            planEndDate: plan.endDate,
-            planPrice: plan.pricePaid,
+            assignmentId: assignment.id,
+            userId: assignment.userId || member.userId,
+            userUuid: assignment.userUuid,
+            username: assignment.username || member.username,
+            userEmail: assignment.userEmail || member.email,
+            planId: assignment.planId,
+            planName: assignment.planName,
+            planDuration: assignment.planDuration,
+            planStartDate: assignment.planStartDate,
+            planEndDate: assignment.planEndDate,
+            planPrice: assignment.planPrice,
             trainerId: trainer.id,
             trainerName: safeTrainerName,
             trainerSource: trainer.source || "staff",
-            status: "active",
-            updatedAt: new Date().toISOString(),
+            sessionTime: assignment.sessionTime,
+            status: assignment.status || "active",
           });
-        }
+        });
+        continue;
       }
 
+      for (const plan of member.plans) {
+        payload.push({
+          userId: member.userId,
+          username: member.username || "No Name",
+          userEmail: member.email || "",
+          userMobile: member.userMobile || "",
+          planId: plan.id,
+          planName: plan.planName,
+          planDuration: plan.duration,
+          planStartDate: plan.startDate,
+          planEndDate: plan.endDate,
+          planPrice: plan.pricePaid,
+          trainerId: trainer.id,
+          trainerName: safeTrainerName,
+          trainerSource: trainer.source || "staff",
+          status: "active",
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    }
+
+    if (payload.some((assignment) => !Number.isInteger(Number(assignment.userId)) || Number(assignment.userId) <= 0)) {
+      toast.error("A valid member account is required for this assignment");
+      return;
+    }
+    if (payload.some((assignment) => isReassignMode && !assignment.assignmentId)) {
+      toast.error("An assignment record is missing; refresh the page and try again");
+      return;
+    }
+    if (payload.length === 0) {
+      toast.error("No valid member plans were selected");
+      return;
+    }
+
+    const actionLabel = isReassignMode ? "reassign" : "assign";
+    if (!window.confirm(`Are you sure you want to ${actionLabel} ${selectedMembers.length} member(s) to ${safeTrainerName}?`)) {
+      return;
+    }
+
+    setAssigning(true);
+    try {
       await api.post("/assignments", { assignments: payload });
 
-      toast.success("Trainer assigned successfully");
+      toast.success(isReassignMode ? "Trainer reassigned successfully" : "Trainer assigned successfully");
       setShowAssignModal(false);
       setSelectedUsers([]);
       setSelectedTrainer("");
       setModalSearch("");
 
       // refresh assignments list
-      const res = await api.get("/assignments");
-      const assignData = {};
-      (Array.isArray(res.data) ? res.data : []).forEach((a) => {
-        const userId = a.userId?.toString();
-        if (!assignData[userId]) assignData[userId] = [];
-        assignData[userId].push(a);
-      });
-
-      const dedupedAssignments = Object.fromEntries(
-        Object.entries(assignData).map(([userId, list]) => {
-          const uniqueList = list.filter((assign, index, self) => {
-            const key = `${assign.trainerId || ''}:${assign.trainerName || ''}:${assign.planId || ''}`;
-            return index === self.findIndex((item) =>
-              (item.trainerId || '') === (assign.trainerId || '') &&
-              (item.trainerName || '') === (assign.trainerName || '') &&
-              (item.planId || '') === (assign.planId || '')
-            );
-          });
-          return [userId, uniqueList];
-        })
-      );
-
-      setAssignments(dedupedAssignments);
-      cache.adminAssignments = dedupedAssignments;
+      try {
+        const res = await api.get("/assignments");
+        const indexedAssignments = indexAssignments(res.data);
+        setAssignments(indexedAssignments);
+        cache.adminAssignments = indexedAssignments;
+      } catch (refreshError) {
+        console.error("Assignment saved, but refreshing trainer assignments failed:", refreshError);
+        toast.error("Assignment saved, but the list could not be refreshed");
+      }
     } catch (err) {
       console.error(err);
-      toast.error("Assignment failed");
+      toast.error(err.response?.data?.error || (isReassignMode ? "Trainer reassignment failed" : "Assignment failed"));
     } finally {
       setAssigning(false);
     }
@@ -303,6 +345,7 @@ const AssingnedTrainers = () => {
 
   const handleQuickAssign = (memberUid, reassign = false) => {
     setSelectedUsers([memberUid]);
+    setSelectedTrainer("");
     setIsReassignMode(reassign);
     setShowAssignModal(true);
   };
@@ -357,7 +400,12 @@ const AssingnedTrainers = () => {
 
         <div className="flex gap-4">
           <button
-            onClick={() => { setIsReassignMode(false); setShowAssignModal(true); }}
+            onClick={() => {
+              setSelectedUsers([]);
+              setSelectedTrainer("");
+              setIsReassignMode(false);
+              setShowAssignModal(true);
+            }}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold"
           >
             <Dumbbell size={20} />
@@ -365,7 +413,12 @@ const AssingnedTrainers = () => {
           </button>
 
           <button
-            onClick={() => { setIsReassignMode(true); setShowAssignModal(true); }}
+            onClick={() => {
+              setSelectedUsers([]);
+              setSelectedTrainer("");
+              setIsReassignMode(true);
+              setShowAssignModal(true);
+            }}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:shadow-lg hover:scale-105 transition-all font-semibold"
           >
             <Users size={20} />
