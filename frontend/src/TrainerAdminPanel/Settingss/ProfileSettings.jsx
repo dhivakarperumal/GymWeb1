@@ -9,6 +9,7 @@ import {
   FaSave,
   FaArrowLeft,
 } from "react-icons/fa";
+
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import api from "../../api"; // axios wrapper for backend
@@ -17,8 +18,10 @@ import api from "../../api"; // axios wrapper for backend
 const glassCard =
   "bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)]";
 
+
 const glassInput =
   "w-full bg-white/10 border border-white/20 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 disabled:bg-white/5 disabled:cursor-not-allowed";
+
 
 const ProfileSettings = () => {
   const { user, login } = useAuth();
@@ -36,6 +39,7 @@ const ProfileSettings = () => {
     createdAt: null,
   });
 
+
   // prefill form when auth user available
   useEffect(() => {
     if (user) {
@@ -51,11 +55,13 @@ const ProfileSettings = () => {
     }
   }, [user]);
 
+
   // no Firebase auth/profile - using backend user object from context
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  
   /* ================= SAVE ================= */
   const handleSave = async () => {
     if (!form.username.trim()) {
