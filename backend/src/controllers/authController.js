@@ -3,23 +3,33 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../config/logger');
+const { normalizePhone, normalizeEmail } = require('../utils/memberIdentity');
 
 // register a new user
 async function register(req, res) {
-  const { username, email, mobile, password } = req.body;
+  const { username, password } = req.body;
+  const email = normalizeEmail(req.body.email);
+  const mobile = normalizePhone(req.body.mobile);
   if (!email || !password || !mobile) {
     return res.status(400).json({ message: 'email, mobile and password are required' });
+  }
+  if (mobile.length !== 10) {
+    return res.status(400).json({ message: 'A valid 10-digit mobile number is required' });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ message: 'A valid email address is required' });
   }
 
   try {
     const [existing] = await pool.query(
-      `SELECT email, mobile FROM users WHERE email = ? OR mobile = ?`,
+      `SELECT email_identity, phone_identity FROM users
+       WHERE email_identity = ? OR phone_identity = ?`,
       [email, mobile]
     );
 
     if (existing.length > 0) {
-      const emailExists = existing.some((u) => u.email === email);
-      const mobileExists = existing.some((u) => u.mobile === mobile);
+      const emailExists = existing.some((u) => u.email_identity === email);
+      const mobileExists = existing.some((u) => u.phone_identity === mobile);
 
       let message = 'A user with this email or mobile already exists';
       if (emailExists && mobileExists) {
@@ -29,7 +39,7 @@ async function register(req, res) {
       } else if (mobileExists) {
         message = 'Mobile number already exists';
       }
-      return res.status(400).json({ message });
+      return res.status(409).json({ message });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -55,10 +65,10 @@ async function register(req, res) {
       let message = 'Email or mobile already exists';
       if (duplicateKey.includes('email')) {
         message = 'Email already exists';
-      } else if (duplicateKey.includes('mobile')) {
+      } else if (duplicateKey.includes('mobile') || duplicateKey.includes('phone')) {
         message = 'Mobile number already exists';
       }
-      return res.status(400).json({ message });
+      return res.status(409).json({ message });
     }
 
     logger.error('register error: %O', err);
@@ -113,7 +123,8 @@ async function login(req, res) {
 
 // Google login
 async function googleLogin(req, res) {
-  const { name, email, googleId, picture } = req.body;
+  const { name, googleId, picture } = req.body;
+  const email = normalizeEmail(req.body.email);
   
   if (!email) {
     return res.status(400).json({ message: 'Email is required from Google' });
@@ -121,7 +132,7 @@ async function googleLogin(req, res) {
 
   try {
     // Check if user exists
-    let [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    let [rows] = await pool.query('SELECT * FROM users WHERE email_identity = ?', [email]);
     let user;
 
     if (rows.length === 0) {
@@ -161,6 +172,9 @@ async function googleLogin(req, res) {
 
   } catch (err) {
     logger.error('googleLogin error: %O', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'An account with this email already exists' });
+    }
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 }

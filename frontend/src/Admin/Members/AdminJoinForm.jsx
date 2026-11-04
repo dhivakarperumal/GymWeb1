@@ -15,9 +15,11 @@ const AdminJoinForm = ({ isOpen, onClose, memberData }) => {
   const [member, setMember] = useState(null);
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", dob: "", age: "", gender: "",
+
     blood_group: "", address: "", employer: "", occupation: "",
     height: "", weight: "", bmi: "", fitness_goal: "", medical_history: "",
     emergency_contact_name: "", emergency_contact_relationship: "",
+    
     emergency_contact_address: "", emergency_contact_phone_home: "",
     emergency_contact_phone_work: "", participant_name: "",
     consent_agree: true, termsAccepted: false,

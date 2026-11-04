@@ -176,6 +176,7 @@ const PlansAll = ({
           className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-orange-500 to-orange-600 hover:scale-105 transition shadow-lg flex items-center justify-center"
         >
           <FaPlus className="mr-2" />
+          
           {currentButtonLabel}
         </button>
       </div>

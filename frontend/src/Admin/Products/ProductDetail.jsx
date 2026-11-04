@@ -8,6 +8,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [img, setImg] = useState("");
   const [variant, setVariant] = useState("");
+  
 
   /* ================= LOAD PRODUCT ================= */
   useEffect(() => {

@@ -12,10 +12,13 @@ const PlanHistory = () => {
   const [memberships, setMemberships] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+
   const [viewMode, setViewMode] = useState("table");
+  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 

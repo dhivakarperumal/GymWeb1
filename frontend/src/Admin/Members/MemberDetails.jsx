@@ -33,6 +33,7 @@ const MemberDetails = () => {
   const [workouts, setWorkouts] = useState([]);
   const [dietPlan, setDietPlan] = useState(null);
   const [trainer, setTrainer] = useState(null);
+  
   const [activeDietDay, setActiveDietDay] = useState(null);
 
   useEffect(() => {

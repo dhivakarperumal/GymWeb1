@@ -14,6 +14,7 @@ const StockDetails = () => {
   const [addQty, setAddQty] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  
 
   useEffect(() => {
     loadProducts();

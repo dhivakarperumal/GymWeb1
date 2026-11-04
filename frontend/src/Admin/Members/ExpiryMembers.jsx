@@ -136,6 +136,7 @@ const ExpiryMembers = () => {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-6">
         <div className="w-16 h-16 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+        
         <p className="text-white/40 text-xs uppercase tracking-[0.4em]">Analyzing Plan Expirations...</p>
       </div>
     );

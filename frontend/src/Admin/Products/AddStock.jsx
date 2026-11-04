@@ -11,6 +11,7 @@ const AddStock = () => {
   const [products, setProducts] = useState([]);
   const [selected, setSelected] = useState("");
   const [stockInputs, setStockInputs] = useState({});
+  
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 

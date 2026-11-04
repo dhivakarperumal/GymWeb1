@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const { normalizePhone, normalizeEmail } = require('../utils/memberIdentity');
 
 async function getAllMembers(req, res) {
   try {
@@ -463,7 +464,7 @@ async function getMemberById(req, res) {
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
         FROM gym_members gm
-        LEFT JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
+        LEFT JOIN users u ON (u.email_identity = gm.email_identity AND gm.email_identity IS NOT NULL) OR (u.phone_identity = gm.phone_identity AND gm.phone_identity IS NOT NULL)
         WHERE gm.id = ? OR gm.member_id = ?
     `;
     const params = [idStr, idStr];
@@ -528,23 +529,45 @@ async function createMemberRecord(connection, payload) {
   } = payload;
 
   const resolvedName = name || "Unknown";
-  const resolvedPhone = phone || "";
+  const resolvedPhone = normalizePhone(phone);
+  const normalizedEmail = normalizeEmail(email);
 
-  if (resolvedPhone || email) {
-    const [existingMember] = await connection.query(
-      "SELECT id FROM gym_members WHERE (phone != '' AND phone = ?) OR (email IS NOT NULL AND email != '' AND email = ?)",
-      [resolvedPhone, email]
-    );
+  if (resolvedPhone.length !== 10) {
+    const error = new Error('A valid 10-digit phone number is required');
+    error.statusCode = 400;
+    throw error;
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail || '')) {
+    const error = new Error('A valid email address is required');
+    error.statusCode = 400;
+    throw error;
+  }
 
-    if (existingMember.length > 0) {
-      throw new Error("A member with this phone or email already exists in members directory");
-    }
+  const [existingMember] = await connection.query(
+    `SELECT id FROM gym_members
+     WHERE phone_identity = ? OR (? IS NOT NULL AND email_identity = ?)
+     LIMIT 1`,
+    [resolvedPhone, normalizedEmail, normalizedEmail]
+  );
+
+  if (existingMember.length > 0) {
+    const error = new Error('A member with this phone number or email already exists');
+    error.statusCode = 409;
+    throw error;
   }
 
   const [existingUser] = await connection.query(
-    "SELECT id, user_id FROM users WHERE (mobile = ? AND mobile != '') OR (email = ? AND email IS NOT NULL AND email != '')",
-    [resolvedPhone, email]
+    `SELECT id, user_id, phone_identity, email_identity FROM users
+     WHERE phone_identity = ? OR (? IS NOT NULL AND email_identity = ?)
+     LIMIT 2`,
+    [resolvedPhone, normalizedEmail, normalizedEmail]
   );
+
+  if (existingUser.length > 1) {
+    const error = new Error('This phone number and email belong to different user accounts');
+    error.statusCode = 409;
+    throw error;
+  }
 
   let userId_uuid = existingUser.length > 0 ? existingUser[0].user_id : uuidv4();
 
@@ -574,7 +597,7 @@ async function createMemberRecord(connection, payload) {
        fitness_goal, blood_group, pt_form_completed, fingerprint_id)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
-          userId_uuid, memberId, resolvedName, resolvedPhone, email, gender, numHeight, numWeight, numBmi,
+          userId_uuid, memberId, resolvedName, resolvedPhone, normalizedEmail, gender, numHeight, numWeight, numBmi,
           plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
           dob || null, age || null, employer || null, occupation || null,
           emergency_contact_name || null, emergency_contact_relationship || null, emergency_contact_address || null,
@@ -599,7 +622,7 @@ async function createMemberRecord(connection, payload) {
     throw new Error('Failed to generate unique member_id');
   }
 
-  if (email || resolvedPhone) {
+  if (normalizedEmail || resolvedPhone) {
     try {
       const pwd = password || resolvedPhone || 'Gym123';
       const hashed = await bcrypt.hash(pwd, 10);
@@ -613,12 +636,14 @@ async function createMemberRecord(connection, payload) {
         await connection.query(
           `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
                VALUES (?, ?, ?, ?, ?, ?)`,
-          [userId_uuid, email || null, hashed, 'user', username || null, resolvedPhone || null]
+          [userId_uuid, normalizedEmail, hashed, 'user', username || null, resolvedPhone || null]
         );
       }
     } catch (userErr) {
       if (userErr.code === 'ER_DUP_ENTRY') {
-        console.warn('createMember: user already exists (duplicate entry), skipping user insert');
+        const error = new Error('This phone number or email is already registered');
+        error.statusCode = 409;
+        throw error;
       } else {
         throw userErr;
       }
@@ -645,7 +670,7 @@ async function createMemberRecord(connection, payload) {
     member_id: memberId,
     name: resolvedName,
     phone: resolvedPhone,
-    email,
+    email: normalizedEmail,
     gender,
     height: numHeight,
     weight: numWeight,
@@ -671,8 +696,10 @@ async function createMember(req, res) {
   } catch (err) {
     await connection.rollback();
     console.error('createMember error:', err.message || err);
-    if (err.message && err.message.includes('already exists')) {
-      return res.status(400).json({ message: err.message });
+    if (err.statusCode || err.code === 'ER_DUP_ENTRY') {
+      return res.status(err.statusCode || 409).json({
+        message: err.message || 'A member with this phone number or email already exists'
+      });
     }
     res.status(500).json({ message: 'Server error', error: err.message });
   } finally {
@@ -697,15 +724,12 @@ async function updateMember(req, res) {
 
     // Fetch linked user BEFORE updating gym_members (so old email/phone still matches)
     let linkedUserId = null;
-    try {
-      const [userLookup] = await connection.query(
-        `SELECT id FROM users WHERE email = ? OR mobile = ? LIMIT 1`,
-        [existingMember.email || '', existingMember.phone || '']
-      );
-      if (userLookup.length > 0) linkedUserId = userLookup[0].id;
-    } catch (e) {
-      console.warn('updateMember: could not pre-fetch linked user', e.message);
-    }
+    const [userLookup] = await connection.query(
+      `SELECT id FROM users
+       WHERE email_identity = ? OR phone_identity = ? LIMIT 1`,
+      [normalizeEmail(existingMember.email), normalizePhone(existingMember.phone)]
+    );
+    if (userLookup.length > 0) linkedUserId = userLookup[0].id;
     const rawBody = req.body || {};
     const getField = (camel, snake) => {
       if (Object.prototype.hasOwnProperty.call(rawBody, camel)) return rawBody[camel];
@@ -714,8 +738,8 @@ async function updateMember(req, res) {
     };
 
     const name = getField('name', 'name');
-    const phone = getField('phone', 'phone');
-    const email = getField('email', 'email');
+    const phone = normalizePhone(getField('phone', 'phone'));
+    const email = normalizeEmail(getField('email', 'email'));
     const gender = getField('gender', 'gender');
     const height = getField('height', 'height');
     const weight = getField('weight', 'weight');
@@ -754,26 +778,35 @@ async function updateMember(req, res) {
     const numBmi = bmi != null && !isNaN(bmi) ? Number(bmi) : null;
     const numDuration = duration != null && !isNaN(duration) ? Number(duration) : null;
 
-    // Check for duplicate phone in gym_members AND users
-    if (phone && phone !== existingMember.phone) {
-      const dupQuery = `SELECT id FROM gym_members WHERE phone = ? AND id != ?`;
-      const dupParams = [phone, existingMember.id];
-      const [existing] = await connection.query(dupQuery, dupParams);
-      if (existing.length > 0) {
-        await connection.rollback();
-        return res.status(400).json({ message: "Mobile number already in use by another member" });
-      }
-      // Also check in users table (excluding the linked user)
-      if (linkedUserId) {
-        const [existingInUsers] = await connection.query(
-          `SELECT id FROM users WHERE mobile = ? AND id != ?`,
-          [phone, linkedUserId]
-        );
-        if (existingInUsers.length > 0) {
-          await connection.rollback();
-          return res.status(400).json({ message: "Mobile number already registered in user accounts" });
-        }
-      }
+    if (phone.length !== 10) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'A valid 10-digit phone number is required' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      await connection.rollback();
+      return res.status(400).json({ message: 'A valid email address is required' });
+    }
+
+    const [existingMemberIdentity] = await connection.query(
+      `SELECT id FROM gym_members
+       WHERE id != ? AND (phone_identity = ? OR (? IS NOT NULL AND email_identity = ?))
+       LIMIT 1`,
+      [existingMember.id, phone, email, email]
+    );
+    if (existingMemberIdentity.length > 0) {
+      await connection.rollback();
+      return res.status(409).json({ message: 'Another member already uses this phone number or email' });
+    }
+
+    const [existingUserIdentity] = await connection.query(
+      `SELECT id FROM users
+       WHERE id != ? AND (phone_identity = ? OR (? IS NOT NULL AND email_identity = ?))
+       LIMIT 1`,
+      [linkedUserId || 0, phone, email, email]
+    );
+    if (existingUserIdentity.length > 0) {
+      await connection.rollback();
+      return res.status(409).json({ message: 'Another user account already uses this phone number or email' });
     }
 
     const updateQuery = `UPDATE gym_members SET
@@ -1028,6 +1061,9 @@ async function updateMember(req, res) {
   } catch (err) {
     await connection.rollback();
     console.error('updateMember error', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Another member or user already uses this phone number or email' });
+    }
     res.status(500).json({ message: "Server error" });
   } finally {
     connection.release();

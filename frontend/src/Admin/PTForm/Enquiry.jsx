@@ -9,6 +9,7 @@ const Enquiry = ({ onNext, onPrevious, formData: initialFormData, isFirstStep, i
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(!isModal); // Don't show loading in modal mode
   const [error, setError] = useState(null);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [dateRange, setDateRange] = useState({ type: 'All Time', range: null });

@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
+const { normalizePhone, normalizeEmail } = require('../utils/memberIdentity');
 const { v4: uuidv4 } = require('uuid');
 
 const enquiryController = {
@@ -77,35 +78,45 @@ const enquiryController = {
                 return res.status(400).json({ error: 'Phone number is required' });
             }
 
-            const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-            const normalizedPhone = String(phone).replace(/\D/g, '');
+            const normalizedEmail = normalizeEmail(email);
+            const normalizedPhone = normalizePhone(phone);
 
             if (normalizedPhone.length !== 10) {
                 return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
             }
 
-            // Check for duplicate in users / gym_members
+            await connection.beginTransaction();
+
             const [existingUsers] = await connection.query(
-                `SELECT id, user_id, username, email, mobile FROM users
-                 WHERE (LOWER(TRIM(email)) = ? AND email IS NOT NULL AND TRIM(email) != '')
-                    OR REPLACE(REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '-', ''), '+91', ''), '(', '') = ?`,
-                [normalizedEmail, normalizedPhone]
+                `SELECT id, user_id, username, email, mobile, phone_identity, email_identity FROM users
+                 WHERE phone_identity = ? OR (? IS NOT NULL AND email_identity = ?)`,
+                [normalizedPhone, normalizedEmail, normalizedEmail]
             );
 
             const [existingMembers] = await connection.query(
                 `SELECT id, name, email, phone FROM gym_members
-                 WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+91', ''), '(', '') = ?
-                    OR (LOWER(TRIM(email)) = ? AND email IS NOT NULL AND TRIM(email) != '')`,
-                [normalizedPhone, normalizedEmail]
+                 WHERE phone_identity = ? OR (? IS NOT NULL AND email_identity = ?)`,
+                [normalizedPhone, normalizedEmail, normalizedEmail]
             );
 
             const existingUser = existingUsers.find(userRecord =>
-                String(userRecord.mobile || '').replace(/\D/g, '') === normalizedPhone
+                userRecord.phone_identity === normalizedPhone
             );
+
+            if (existingUsers.length > 1) {
+                await connection.rollback();
+                return res.status(409).json({
+                    error: 'This phone number and email belong to different user accounts.',
+                    duplicate: true
+                });
+            }
 
             if (existingMembers.length > 0 || (existingUsers.length > 0 && !existingUser)) {
                 const matchedRecord = existingMembers[0] || existingUsers[0];
-                const matchedByPhone = matchedRecord && String(matchedRecord.mobile || matchedRecord.phone || '').replace(/\D/g, '') === normalizedPhone;
+                const matchedByPhone = matchedRecord &&
+                    (matchedRecord.phone_identity === normalizedPhone ||
+                     normalizePhone(matchedRecord.mobile || matchedRecord.phone) === normalizedPhone);
+                await connection.rollback();
                 return res.status(409).json({
                     error: matchedByPhone
                         ? 'This mobile number is already registered. Please log in or use a different number.'
@@ -114,8 +125,6 @@ const enquiryController = {
                     field: matchedByPhone ? 'phone' : 'email'
                 });
             }
-
-            await connection.beginTransaction();
 
             // Reuse an account that exists without a member record; otherwise create both records.
             let userId_uuid;
@@ -170,6 +179,12 @@ const enquiryController = {
         } catch (error) {
             if (connection) await connection.rollback();
             console.error('Error registering member directly:', error);
+            if (error.code === 'ER_DUP_ENTRY') {
+                return res.status(409).json({
+                    error: 'This phone number or email is already registered.',
+                    duplicate: true
+                });
+            }
             res.status(500).json({ error: 'Internal server error', details: error.message });
         } finally {
             if (connection) connection.release();
@@ -315,13 +330,24 @@ const enquiryController = {
                 return res.status(400).json({ error: 'Enquiry must have a phone number to convert' });
             }
 
+            const normalizedPhone = normalizePhone(enquiry.phone);
+            const normalizedEmail = normalizeEmail(enquiry.email);
+            if (normalizedPhone.length !== 10) {
+                return res.status(400).json({ error: 'Enquiry must have a valid 10-digit phone number' });
+            }
+
             await connection.beginTransaction();
 
             // 2. Check if user already exists
             const [existingUsers] = await connection.query(
-                'SELECT * FROM users WHERE (email = ? AND email IS NOT NULL AND email != "") OR mobile = ?',
-                [enquiry.email, enquiry.phone]
+                `SELECT * FROM users
+                 WHERE phone_identity = ? OR (? IS NOT NULL AND email_identity = ?)`,
+                [normalizedPhone, normalizedEmail, normalizedEmail]
             );
+            if (existingUsers.length > 1) {
+                await connection.rollback();
+                return res.status(409).json({ error: 'This phone number and email belong to different user accounts' });
+            }
 
             let userId_uuid;
             let db_userId_int;
@@ -340,15 +366,16 @@ const enquiryController = {
                 const [userResult] = await connection.query(
                     `INSERT INTO users (user_id, username, email, mobile, password_hash, role, status, created_at)
                      VALUES (?, ?, ?, ?, ?, 'user', 'active', NOW())`,
-                    [userId_uuid, enquiry.name, enquiry.email || null, enquiry.phone, passwordHash]
+                    [userId_uuid, enquiry.name, normalizedEmail, normalizedPhone, passwordHash]
                 );
                 db_userId_int = userResult.insertId;
             }
 
             // 4. Check if gym_member already exists
             const [existingMembers] = await connection.query(
-                'SELECT id FROM gym_members WHERE phone = ? OR (email = ? AND email IS NOT NULL AND email != "")',
-                [enquiry.phone, enquiry.email]
+                `SELECT id FROM gym_members
+                 WHERE phone_identity = ? OR (? IS NOT NULL AND email_identity = ?)`,
+                [normalizedPhone, normalizedEmail, normalizedEmail]
             );
 
             if (existingMembers.length === 0) {
@@ -369,7 +396,7 @@ const enquiryController = {
                         fitness_goal, blood_group
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
-                        userId_uuid, memberId, enquiry.name, enquiry.phone, enquiry.email || null, enquiry.gender, 
+                        userId_uuid, memberId, enquiry.name, normalizedPhone, normalizedEmail, enquiry.gender,
                         enquiry.height, enquiry.weight, enquiry.bmi, null, null,
                         enquiry.address, enquiry.dob, enquiry.age, enquiry.employer, enquiry.occupation,
                         enquiry.emergency_contact_name, enquiry.emergency_contact_relationship,
@@ -399,6 +426,9 @@ const enquiryController = {
         } catch (error) {
             if (connection) await connection.rollback();
             console.error('Error converting enquiry to user:', error);
+            if (error.code === 'ER_DUP_ENTRY') {
+                return res.status(409).json({ error: 'This phone number or email is already registered.' });
+            }
             res.status(500).json({ error: 'Internal server error', details: error.message });
         } finally {
             if (connection) connection.release();

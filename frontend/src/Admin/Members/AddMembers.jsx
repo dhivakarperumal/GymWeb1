@@ -257,6 +257,7 @@ const AddMember = () => {
   // 💾 SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     if (!form.name.trim()) {
       toast.error("Name is required");
       setLoading(false);

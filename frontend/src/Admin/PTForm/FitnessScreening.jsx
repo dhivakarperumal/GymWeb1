@@ -16,6 +16,7 @@ const FitnessScreening = ({
 
     fs_fat_percentage: initialFormData?.fs_fat_percentage || "",
     fs_fat_level: initialFormData?.fs_fat_level || "",
+    
 
     fs_speed_km: initialFormData?.fs_speed_km || "",
     fs_heart_rate: initialFormData?.fs_heart_rate || "",

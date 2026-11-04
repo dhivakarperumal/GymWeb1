@@ -5,16 +5,6 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const als = require("./src/config/context");
 
-// optionally run migrations on start, helps when launching dev server
-(async () => {
-  try {
-    const { runMigrations } = require("./src/config/migrate");
-    await runMigrations();
-  } catch (err) {
-    console.error("migration startup error:", err.message);
-  }
-})();
-
 // Import routes
 const productRoutes = require("./src/routes/productRoutes");
 const memberRoutes = require("./src/routes/memberRoutes");
@@ -127,8 +117,23 @@ app.use("/api/followups", followupRoutes);
 app.use("/api/sessions", sessionRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
-});
+
+async function startServer() {
+  try {
+    const { runMigrations } = require("./src/config/migrate");
+    await runMigrations();
+  } catch (err) {
+    console.error("migration startup error:", err);
+    await require("./src/config/db").end();
+    process.exitCode = 1;
+    return;
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
+  });
+}
+
+startServer();
 
 module.exports = app;
