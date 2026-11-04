@@ -38,6 +38,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+
 const OverallAttendance = () => {
   const { user } = useAuth();
   const trainerUserId = user?.id;
@@ -52,7 +53,9 @@ const OverallAttendance = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [showMarkModal, setShowMarkModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // true = editing existing attendance
+  const [isEditMode, setIsEditMode] = useState(false); 
+
+  // true = editing existing attendance
 
   // States for marking attendance (Checklist)
   const [savingMulti, setSavingMulti] = useState(false);
@@ -61,10 +64,12 @@ const OverallAttendance = () => {
   const [trainerCoords, setTrainerCoords] = useState(null);
   const [locationName, setLocationName] = useState("");
 
+
   // Edit single member modal
   const [editMember, setEditMember] = useState(null); // { id, name, status, recordId }
   const [editStatus, setEditStatus] = useState("Present");
   const [savingEdit, setSavingEdit] = useState(false);
+
 
   /* ---------------- LOAD ASSIGNMENTS (SQL) ---------------- */
   const loadAssignedMembers = async () => {
@@ -92,6 +97,7 @@ const OverallAttendance = () => {
     }
   };
 
+  
   /* ---------------- LOAD ATTENDANCE (MYSQL API) ---------------- */
   const loadAttendanceData = async (selectedDate) => {
     if (!trainerUserId) return;
