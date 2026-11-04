@@ -63,9 +63,12 @@ const AllWorkouts = () => {
           trainerSource: w.trainer_source,
           memberId: w.member_id,
           userId: w.user_id,
+
           userUuid: w.user_id_uuid,
           memberName: w.member_name,
+
           level: w.level,
+          
           goal: w.goal,
           durationWeeks: w.duration_weeks || Math.ceil(Object.keys(typeof w.days === 'string' ? JSON.parse(w.days || '{}') : (w.days || {})).length / 7) || 1,
           days: typeof w.days === 'string' ? JSON.parse(w.days || '{}') : w.days,

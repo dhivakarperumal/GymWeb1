@@ -871,7 +871,9 @@ const AddWorkout = () => {
                               <span className="text-orange-500/60">{m.planName}</span>
                             </>
                           )}
+
                         </div>
+                        
                       </button>
                     ))}
                   </div>

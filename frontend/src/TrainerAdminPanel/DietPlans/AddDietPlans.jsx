@@ -7,8 +7,10 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import { CheckSquare, RefreshCw, Search, Square, Users, X } from "lucide-react";
 import api from "../../api";
 
+
 const inputClass =
   "w-full bg-black/40 border border-white/20 rounded-lg px-3 py-3.5 text-white text-sm";
+
 
 const meals = [
   "Early-morning",
@@ -25,6 +27,7 @@ const meals = [
 const createDayId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `diet-day-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  
 
 const renumberDefaultDayNames = (days) =>
   days.map((day, index) => ({
