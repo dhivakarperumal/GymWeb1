@@ -220,6 +220,7 @@ const AddWorkout = () => {
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [workoutLoaded, setWorkoutLoaded] = useState(false);
 
   const [form, setForm] = useState(initialForm);
   const [days, setDays] = useState(initialDays);
@@ -303,6 +304,7 @@ const AddWorkout = () => {
     const fetchWorkout = async () => {
       try {
         setLoading(true);
+        setWorkoutLoaded(false);
         setForm(initialForm);
         setDays(initialDays);
         setDayOrder(["Day1"]);
@@ -333,6 +335,7 @@ const AddWorkout = () => {
             normalizeDayLabel(normalized[key][0]?.dayName, formatDayLabel(key)),
           ]),
         ));
+        setWorkoutLoaded(true);
         if (requestedDay && normalized[requestedDay]) {
           setHighlightDay(requestedDay);
         }
@@ -750,6 +753,16 @@ const AddWorkout = () => {
   };
 
   const downloadExcelTemplate = () => {
+    if (isEditMode && !workoutLoaded) {
+      toast.error("Workout is still loading. Please try again.");
+      return;
+    }
+
+    if (isEditMode && !form.userId && !form.memberId) {
+      toast.error("Member information is unavailable for this workout.");
+      return;
+    }
+
     // If we have members, create a row for each. Otherwise use samples.
     let template = [];
 
@@ -757,6 +770,7 @@ const AddWorkout = () => {
       template = dayOrder.flatMap((dayKey) =>
         (days[dayKey] || []).map((exercise) => ({
           "Member ID": form.memberId || "",
+          "User ID": form.userId || "",
           "Member Name": form.memberName || "",
           "Training Level": form.level || "Beginner",
           "Workout Goal": form.goal || "",
@@ -998,6 +1012,7 @@ const AddWorkout = () => {
                 <button
                   type="button"
                   onClick={downloadExcelTemplate}
+                  disabled={!workoutLoaded}
                   className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white/70 transition hover:bg-white/10 hover:text-white"
                   title="Download current workout schedule"
                 >
