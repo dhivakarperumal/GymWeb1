@@ -7,16 +7,19 @@ async function generateEmployeeId(req, res) {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
+    await connection.query(
+      "INSERT IGNORE INTO counters(name, current) VALUES (?, 0)",
+      ['employees']
+    );
     const [select] = await connection.query("SELECT current FROM counters WHERE name = ? FOR UPDATE", ['employees']);
-    
-    if (select.length === 0) {
-      await connection.query("INSERT INTO counters(name, current) VALUES (?, ?)", ['employees', 1]);
-      await connection.commit();
-      return res.json({ employeeId: `EMP${String(1).padStart(3, '0')}` });
-    }
-
-    const current = select[0].current || 0;
-    const next = current + 1;
+    const [maxRows] = await connection.query(`
+      SELECT COALESCE(MAX(CAST(SUBSTRING(employee_id, 4) AS UNSIGNED)), 0) AS maxnum
+      FROM staff
+      WHERE employee_id REGEXP '^EMP[0-9]+$'
+    `);
+    const current = Number(select[0].current) || 0;
+    const maxExisting = Number(maxRows[0].maxnum) || 0;
+    const next = Math.max(current, maxExisting) + 1;
     await connection.query('UPDATE counters SET current = ? WHERE name = ?', [next, 'employees']);
     await connection.commit();
     return res.json({ employeeId: `EMP${String(next).padStart(3, '0')}` });
@@ -376,7 +379,11 @@ async function getAllStaff(req, res) {
       sql += ' WHERE role = ?';
       params.push(role);
     }
-    sql += ' ORDER BY created_at DESC';
+    sql += ` ORDER BY
+      CASE WHEN employee_id REGEXP '^EMP[0-9]+$' THEN 0 ELSE 1 END,
+      CAST(SUBSTRING(employee_id, 4) AS UNSIGNED),
+      employee_id,
+      created_at`;
     const [rows] = await db.query(sql, params);
     res.json(rows);
   } catch (err) {

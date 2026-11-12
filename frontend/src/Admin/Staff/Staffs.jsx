@@ -19,6 +19,15 @@ const statCard =
    bg-white/5 backdrop-blur-xl border border-white/10 \
    shadow-[0_0_40px_rgba(255,140,0,0.08)]";
 
+const sortByEmployeeId = (rows) => [...rows].sort((a, b) => {
+  const aMatch = /^EMP(\d+)$/i.exec(a.employeeId || "");
+  const bMatch = /^EMP(\d+)$/i.exec(b.employeeId || "");
+  if (aMatch && bMatch) return Number(aMatch[1]) - Number(bMatch[1]);
+  if (aMatch) return -1;
+  if (bMatch) return 1;
+  return String(a.employeeId || "").localeCompare(String(b.employeeId || ""));
+});
+
 const Staffs = () => {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +42,7 @@ const Staffs = () => {
 
   const loadStaff = async () => {
     if (cache.adminStaff) {
-      setStaff(cache.adminStaff);
+      setStaff(sortByEmployeeId(cache.adminStaff));
       setLoading(false);
     } else {
       setLoading(true);
@@ -54,8 +63,9 @@ const Staffs = () => {
         timeOut: r.time_out,
         status: r.status,
       }));
-      setStaff(mapped);
-      cache.adminStaff = mapped;
+      const sorted = sortByEmployeeId(mapped);
+      setStaff(sorted);
+      cache.adminStaff = sorted;
     } catch (err) {
       console.error(err);
       if (!cache.adminStaff) toast.error('Failed to load staff');
