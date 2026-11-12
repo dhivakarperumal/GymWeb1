@@ -2,7 +2,24 @@ const db = require('../config/db');
 
 async function getAllUsers(req, res) {
   try {
-    const [rows] = await db.query('SELECT id, user_id, username, email, mobile, role, status, created_at FROM users ORDER BY created_at DESC');
+    const [rows] = await db.query(`
+      SELECT u.id, u.user_id, u.username, u.email, u.mobile, u.role, u.status, u.created_at,
+             gm.member_id, s.employee_id
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, MAX(CAST(member_id AS UNSIGNED)) AS member_id
+        FROM gym_members
+        WHERE user_id IS NOT NULL AND member_id IS NOT NULL
+        GROUP BY user_id
+      ) gm ON gm.user_id = u.user_id
+      LEFT JOIN (
+        SELECT user_id, MAX(employee_id) AS employee_id
+        FROM staff
+        WHERE user_id IS NOT NULL AND employee_id IS NOT NULL
+        GROUP BY user_id
+      ) s ON s.user_id = u.user_id
+      ORDER BY (gm.member_id IS NULL) ASC, gm.member_id DESC, u.created_at DESC, u.id DESC
+    `);
     res.json(rows);
   } catch (err) {
     console.error('getAllUsers error', err);

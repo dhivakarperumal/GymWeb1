@@ -1,5 +1,7 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
+const { normalizePhone, normalizeEmail } = require('../utils/memberIdentity');
 
 async function generateEmployeeId(req, res) {
   const connection = await db.getConnection();
@@ -30,8 +32,8 @@ async function generateEmployeeId(req, res) {
 async function getStaffById(req, res) {
   try {
     const { id } = req.params;
-    const idNum = parseInt(id, 10);
-    const isNum = !isNaN(idNum);
+    const isNum = /^\d+$/.test(id);
+    const idNum = isNum ? Number(id) : null;
     
     let query;
     let params;
@@ -45,14 +47,36 @@ async function getStaffById(req, res) {
     
     const [rows] = await db.query(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Staff not found' });
-    res.json(rows[0]);
+    const staff = rows[0];
+    let linkedUsers = [];
+    if (staff.user_id) {
+      [linkedUsers] = await db.query(
+        'SELECT id, user_id, name, email, mobile, username FROM users WHERE user_id = ?',
+        [staff.user_id]
+      );
+    } else if (staff.email || staff.username) {
+      [linkedUsers] = await db.query(
+        `SELECT id, user_id, name, email, mobile, username FROM users
+         WHERE (? IS NOT NULL AND email = ?) OR (? IS NOT NULL AND username = ?)
+         ORDER BY id LIMIT 2`,
+        [staff.email || null, staff.email || null, staff.username || null, staff.username || null]
+      );
+    }
+
+    res.json({
+      ...staff,
+      linked_user_id: linkedUsers.length === 1 ? linkedUsers[0].id : null,
+      linked_user_uuid: linkedUsers.length === 1 ? linkedUsers[0].user_id : null,
+      linked_user_name: linkedUsers.length === 1 ? linkedUsers[0].name : null,
+      linked_user_email: linkedUsers.length === 1 ? linkedUsers[0].email : null,
+      linked_user_mobile: linkedUsers.length === 1 ? linkedUsers[0].mobile : null,
+      linked_username: linkedUsers.length === 1 ? linkedUsers[0].username : null,
+    });
   } catch (err) {
     console.error('getStaffById error', err);
     res.status(500).json({ error: 'Query failed' });
   }
 }
-
-const bcrypt = require('bcryptjs');
 
 async function createStaff(req, res) {
   // create staff record and also add a user entry for login (trainer role)
@@ -108,9 +132,9 @@ async function createStaff(req, res) {
       const hashed = passwordToHash ? await bcrypt.hash(passwordToHash, 10) : null;
       const userRole = body.role || 'trainer';
       await connection.query(
-        `INSERT INTO users (user_id, email, password_hash, role, username, mobile)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-        [staffUuid, body.email || null, hashed, userRole, body.username || null, body.phone || null]
+        `INSERT INTO users (user_id, name, email, password_hash, role, username, mobile)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [staffUuid, body.name || null, body.email || null, hashed, userRole, body.username || null, body.phone || null]
       );
     } catch (userErr) {
       // duplicate user entries should not block staff creation,
@@ -154,20 +178,111 @@ async function updateStaff(req, res) {
     await connection.beginTransaction();
 
     const { id } = req.params;
-    const idNum = parseInt(id, 10);
-    const isNum = !isNaN(idNum);
-    
+    const isNum = /^\d+$/.test(id);
+    const idNum = isNum ? Number(id) : null;
     const body = req.body;
+
+    const [staffRows] = await connection.query(
+      `SELECT * FROM staff WHERE ${isNum ? 'id = ?' : 'employee_id = ?'} FOR UPDATE`,
+      [isNum ? idNum : id]
+    );
+    if (staffRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Staff not found' });
+    }
+    const currentStaff = staffRows[0];
+
+    if (!body.name?.trim() || !body.email?.trim() || !body.phone?.trim() || !body.username?.trim()) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Name, email, mobile number, and username are required' });
+    }
+
+    const email = normalizeEmail(body.email);
+    const phone = String(body.phone).trim();
+    const phoneIdentity = normalizePhone(phone);
+    const username = String(body.username).trim();
+    const newPassword = typeof body.password === 'string' ? body.password.trim() : '';
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '')) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'A valid email address is required' });
+    }
+    if (phoneIdentity.length !== 10) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'A valid 10-digit mobile number is required' });
+    }
+    if (newPassword && newPassword.length < 6) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    let linkedUsers = [];
+    if (currentStaff.user_id) {
+      [linkedUsers] = await connection.query(
+        'SELECT id, user_id FROM users WHERE user_id = ? FOR UPDATE',
+        [currentStaff.user_id]
+      );
+    } else {
+      [linkedUsers] = await connection.query(
+        `SELECT id, user_id FROM users
+         WHERE (? IS NOT NULL AND email = ?) OR (? IS NOT NULL AND username = ?)
+         ORDER BY id LIMIT 2 FOR UPDATE`,
+        [
+          currentStaff.email || null,
+          currentStaff.email || null,
+          currentStaff.username || null,
+          currentStaff.username || null,
+        ]
+      );
+    }
+
+    if (linkedUsers.length !== 1) {
+      await connection.rollback();
+      return res.status(409).json({
+        error: linkedUsers.length
+          ? 'Staff account link is ambiguous; no records were changed'
+          : 'Linked user account was not found; no records were changed',
+      });
+    }
+    const linkedUser = linkedUsers[0];
+    if (body.linked_user_id != null && Number(body.linked_user_id) !== linkedUser.id) {
+      await connection.rollback();
+      return res.status(409).json({ error: 'Linked user does not match this staff member' });
+    }
+
+    const [duplicateUsers] = await connection.query(
+      `SELECT id FROM users
+       WHERE id <> ? AND (email_identity = ? OR phone_identity = ?)
+       LIMIT 1`,
+      [linkedUser.id, email, phoneIdentity]
+    );
+    if (duplicateUsers.length) {
+      await connection.rollback();
+      return res.status(409).json({ error: 'Email or mobile number is already used by another account' });
+    }
+
+    const [otherStaff] = await connection.query(
+      'SELECT id, email, phone FROM staff WHERE id <> ?',
+      [currentStaff.id]
+    );
+    const duplicateStaff = otherStaff.some((staff) =>
+      (normalizeEmail(staff.email) && normalizeEmail(staff.email) === email) ||
+      (normalizePhone(staff.phone) && normalizePhone(staff.phone) === phoneIdentity)
+    );
+    if (duplicateStaff) {
+      await connection.rollback();
+      return res.status(409).json({ error: 'Email or mobile number is already used by another staff member' });
+    }
 
     let query;
     let params;
     
     const baseParams = [
       body.employee_id || null,
-      body.username || null,
-      body.name || null,
-      body.email || null,
-      body.phone || null,
+      username,
+      body.name.trim(),
+      email,
+      phone,
       body.role || null,
       body.gender || null,
       body.blood_group || null,
@@ -209,70 +324,43 @@ async function updateStaff(req, res) {
       params = [...baseParams, id];
     }
 
-    const [result] = await connection.query(query, params);
-    if (result.affectedRows === 0) {
-      await connection.rollback();
-      return res.status(404).json({ error: 'Staff not found' });
-    }
+    await connection.query(query, params);
 
-    // try to update user entry if it exists
-    try {
-      const userUpdateFields = [];
-      const userParams = [];
-      if (body.email !== undefined) {
-        userUpdateFields.push('email = ?');
-        userParams.push(body.email);
-      }
-      if (body.username !== undefined) {
-        userUpdateFields.push('username = ?');
-        userParams.push(body.username);
-      }
-      if (body.phone !== undefined) {
-        userUpdateFields.push('mobile = ?');
-        userParams.push(body.phone);
-      }
-      // we do not update role here; users created from staff are always trainers
-      if (userUpdateFields.length > 0) {
-        // identify user by email or username before update
-        // we cannot guarantee unique id, so use existing email/username from body
-        const whereClause = [];
-        const whereParams = [];
-        if (body.email) {
-          whereClause.push('email = ?');
-          whereParams.push(body.email);
-        }
-        if (body.username) {
-          whereClause.push('username = ?');
-          whereParams.push(body.username);
-        }
-        if (whereClause.length > 0) {
-          const updateSql = `UPDATE users SET ${userUpdateFields.join(', ')} WHERE ${whereClause.join(' OR ')}`;
-          await connection.query(updateSql, [...userParams, ...whereParams]);
-        }
-      }
-    } catch (userErr) {
-      console.warn('updateStaff: failed to sync user record', userErr.message);
-      // not fatal; continue
+    const userParams = [
+      body.name.trim(),
+      email,
+      phone,
+      username,
+      body.role || null,
+      body.status || 'active',
+    ];
+    const passwordUpdate = newPassword ? ', password_hash = ?' : '';
+    if (newPassword) {
+      userParams.push(await bcrypt.hash(newPassword, 10));
     }
+    userParams.push(linkedUser.id);
+    await connection.query(
+      `UPDATE users
+       SET name = ?, email = ?, mobile = ?, username = ?, role = ?, status = ?${passwordUpdate}
+       WHERE id = ?`,
+      userParams
+    );
 
-    // Fetch the updated staff record
-    let fetchQuery;
-    let fetchParams;
-    if (isNum) {
-      fetchQuery = `SELECT * FROM staff WHERE id = ?`;
-      fetchParams = [idNum];
-    } else {
-      fetchQuery = `SELECT * FROM staff WHERE employee_id = ?`;
-      fetchParams = [id];
-    }
-    
-    const [rows] = await db.query(fetchQuery, fetchParams);
+    const [rows] = await connection.query(
+      `SELECT s.*, u.id AS linked_user_id, u.user_id AS linked_user_uuid
+       FROM staff s JOIN users u ON u.id = ?
+       WHERE s.${isNum ? 'id' : 'employee_id'} = ?`,
+      [linkedUser.id, isNum ? idNum : id]
+    );
 
     await connection.commit();
     res.json(rows[0]);
   } catch (err) {
     await connection.rollback();
     console.error('updateStaff error', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Email or mobile number is already in use' });
+    }
     res.status(500).json({ error: 'Failed to update staff' });
   } finally {
     connection.release();

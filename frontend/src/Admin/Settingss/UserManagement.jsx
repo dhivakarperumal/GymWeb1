@@ -38,6 +38,8 @@ const UserManagement = () => {
       setUsers(
         data.map((u) => ({
           id: u.id,
+          memberId: u.member_id,
+          employeeId: u.employee_id,
           username: u.username || u.email || "Unknown",
           email: u.email,
           mobile: u.mobile,
@@ -81,7 +83,9 @@ const UserManagement = () => {
   const filteredUsers = users.filter((u) => {
     const matchSearch =
       u.username?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase());
+      u.email?.toLowerCase().includes(search.toLowerCase()) ||
+      String(u.memberId || "").toLowerCase().includes(search.toLowerCase()) ||
+      String(u.employeeId || "").toLowerCase().includes(search.toLowerCase());
 
     const matchRole = roleFilter === "all" || u.role === roleFilter;
     const matchStatus =
@@ -193,6 +197,7 @@ const UserManagement = () => {
           <thead className="bg-white/20">
             <tr>
               <th className="px-4 py-4 text-left">S No</th>
+              <th className="px-4 py-4 text-left">Member / Employee ID</th>
               <th className="px-4 py-4 text-left">Name</th>
               <th className="px-4 py-4 text-left">Email</th>
               <th className="px-4 py-4 text-left">Phone</th>
@@ -206,6 +211,9 @@ const UserManagement = () => {
             {pagedUsers.map((u, index) => (
               <tr key={u.id} className="border-b border-white/10 hover:bg-white/5 transition">
                 <td className="px-4 py-3">{(page - 1) * pageSize + index + 1}</td>
+                <td className="px-4 py-3">
+                  {u.role === "trainer" ? u.employeeId || "-" : u.memberId || "-"}
+                </td>
                 <td className="px-4 py-3 font-medium">{u.username}</td>
                 <td className="px-4 py-3">{u.email}</td>
                 <td className="px-4 py-3">{u.mobile || "N/A"}</td>
@@ -372,4 +380,3 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
-

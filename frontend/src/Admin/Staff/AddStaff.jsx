@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import imageCompression from "browser-image-compression";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
 
 /* ---------------- CONSTANTS ---------------- */
 
@@ -37,8 +37,10 @@ const AddEditStaff = () => {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [form, setForm] = useState({
+    linkedUserId: null,
     name: "",
     username: "",
     email: "",
@@ -86,10 +88,11 @@ const AddEditStaff = () => {
         // Map backend snake_case to frontend camelCase
         setForm((prev) => ({
           ...prev,
-          name: data.name || "",
-          username: data.username || "",
-          email: data.email || "",
-          phone: data.phone || "",
+          linkedUserId: data.linked_user_id || null,
+          name: data.linked_user_name || data.name || "",
+          username: data.linked_username || data.username || "",
+          email: data.linked_user_email || data.email || "",
+          phone: data.linked_user_mobile || data.phone || "",
           employeeId: data.employee_id || "",
           role: data.role || "",
           gender: data.gender || "",
@@ -135,12 +138,12 @@ const AddEditStaff = () => {
         username: usernameFromEmail, // Auto-set username from email
       }));
     }
-    // Auto-populate password from mobile number
+    // Keep the login password in sync with a newly entered mobile number.
     else if (name === "phone") {
       setForm((prev) => ({
         ...prev,
         [name]: value,
-        password: value, // Auto-set password from mobile number
+        password: value,
       }));
     }
     else {
@@ -228,6 +231,8 @@ const AddEditStaff = () => {
       } else if (form.password.length < 6) {
         newErrors.password = "Password must be at least 6 characters";
       }
+    } else if (form.password?.trim() && form.password.trim().length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     // Mobile validation
@@ -341,6 +346,7 @@ const AddEditStaff = () => {
 
       const {
         password,
+        linkedUserId,
         photo,
         aadharDoc,
         idDoc,
@@ -362,8 +368,8 @@ const AddEditStaff = () => {
         id_doc: idDoc || null,
         certificate_doc: certificateDoc || null,
         photo: photo || null,
-        // include password if creating new user; backend may handle auth creation
-        password: !isEdit ? password : undefined,
+        linked_user_id: linkedUserId || undefined,
+        password: !isEdit || password?.trim() ? password : undefined,
       };
 
       try {
@@ -382,7 +388,7 @@ const AddEditStaff = () => {
 
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Failed to save staff");
+      toast.error(err.response?.data?.error || err.response?.data?.message || err.message || "Failed to save staff");
     } finally {
       setLoading(false);
     }
@@ -472,7 +478,7 @@ const AddEditStaff = () => {
           <ErrorText field="email" />
         </div>
 
-        {/* PASSWORD (ADD ONLY) */}
+        {/* PASSWORD */}
         {!isEdit && (
           <div>
             <label className="text-sm font-medium">
@@ -489,6 +495,32 @@ const AddEditStaff = () => {
               />
             </div>
             <p className="text-xs text-gray-400 mt-1">This will be the password for the staff account.</p>
+            <ErrorText field="password" />
+          </div>
+        )}
+        {isEdit && (
+          <div>
+            <label className="text-sm font-medium">New Login Password (optional)</label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Leave blank to keep current password"
+                autoComplete="new-password"
+                className={`${inputClass} pr-12 ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword((visible) => !visible)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+              >
+                {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Entering a new mobile number automatically sets it as the login password. Leave unchanged to keep the current password.</p>
             <ErrorText field="password" />
           </div>
         )}
