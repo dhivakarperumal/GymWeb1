@@ -119,6 +119,13 @@ const TrainerWorkoutPlanPreview = ({ workoutData }) => (
 );
 
 const getMemberIdentifier = (member) => member?.id ?? member?.member_id ?? member?.u_id ?? null;
+const getMemberId = (member) => member?.member_id ?? member?.id ?? null;
+const sortMembersByIdDescending = (members) =>
+  [...members].sort((a, b) => {
+    const aId = Number(getMemberId(a));
+    const bId = Number(getMemberId(b));
+    return bId - aId;
+  });
 
 const formatDobToDDMMYYYY = (dateString) => {
   if (!dateString || dateString.includes('0000-00-00') || dateString.includes('1899')) return "-";
@@ -270,7 +277,7 @@ const Members = () => {
   // 🔄 FETCH MEMBERS
   const fetchMembers = async () => {
     if (cache.adminMembers && selectedTrainer === "all") {
-      setMembers(cache.adminMembers.filter((m) => m.source !== "users"));
+      setMembers(sortMembersByIdDescending(cache.adminMembers.filter((m) => m.source !== "users")));
     } else {
       setLoading(true);
     }
@@ -302,9 +309,10 @@ const Members = () => {
         return m;
       });
 
-      setMembers(onlyGymMembers);
+      const sortedMembers = sortMembersByIdDescending(onlyGymMembers);
+      setMembers(sortedMembers);
       if (role !== "trainer" && selectedTrainer === "all") {
-        cache.adminMembers = onlyGymMembers;
+        cache.adminMembers = sortedMembers;
       }
     } catch {
       if (!cache.adminMembers) toast.error("Failed to load members");
@@ -447,7 +455,7 @@ const Members = () => {
     }
 
     const dataToExport = members.map((m, index) => ({
-      "Member ID": m.id || m.member_id || "-",
+      "Member ID": getMemberId(m) || "-",
       Name: m.name || "N/A",
       "Mobile Number": m.phone || "N/A",
       Email: m.email || m.user_email || "-",
@@ -829,7 +837,7 @@ const Members = () => {
           <table className="w-full min-w-[700px] text-base text-gray-200">
             <thead className="bg-white/10 text-white">
               <tr>
-                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">ID</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Member ID</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
@@ -851,7 +859,7 @@ const Members = () => {
                 paginatedData.map((m, index) => (
                   <tr key={m.id || `u-${m.u_id}`} className="border-b border-white/5 hover:bg-white/5 transition">
                     <td className="px-4 py-5 font-medium text-gray-400">
-                      {m.id || "-"}
+                      {getMemberId(m) || "-"}
                     </td>
                     <td className="px-4 py-5">
                       <div className="font-medium text-white">{m.name || "N/A"}</div>
