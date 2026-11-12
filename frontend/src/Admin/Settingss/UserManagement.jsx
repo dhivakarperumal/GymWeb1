@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { FaUsers, FaUserPlus, FaSearch, FaArrowLeft, FaEdit, FaCheck, FaTimes } from "react-icons/fa";
+import { FaUsers, FaUserPlus, FaUserTie, FaSearch, FaArrowLeft, FaEdit, FaCheck, FaTimes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
@@ -77,8 +77,10 @@ const UserManagement = () => {
     }
   };
 
-  const totalUsers = users.length;
+  const totalUsers = users.filter((u) => u.role === "user").length;
   const activeUsers = users.filter((u) => u.active).length;
+  const trainerCount = users.filter((u) => u.role === "trainer").length;
+  const adminCount = users.filter((u) => u.role === "admin").length;
 
   const filteredUsers = users.filter((u) => {
     const matchSearch =
@@ -133,7 +135,7 @@ const UserManagement = () => {
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         <div className={`${glassCard} p-6 flex justify-between items-center`}>
           <div>
             <p className="text-xs uppercase tracking-widest text-gray-300">
@@ -155,6 +157,30 @@ const UserManagement = () => {
           </div>
           <div className="p-4 rounded-xl bg-emerald-500/30 text-emerald-200 text-xl">
             <FaUserPlus />
+          </div>
+        </div>
+
+        <div className={`${glassCard} p-6 flex justify-between items-center`}>
+          <div>
+            <p className="text-xs uppercase tracking-widest text-gray-300">
+              Trainers
+            </p>
+            <h2 className="text-3xl font-bold">{trainerCount}</h2>
+          </div>
+          <div className="p-4 rounded-xl bg-violet-500/30 text-violet-200 text-xl">
+            <FaUserTie />
+          </div>
+        </div>
+
+        <div className={`${glassCard} p-6 flex justify-between items-center`}>
+          <div>
+            <p className="text-xs uppercase tracking-widest text-gray-300">
+              Admins
+            </p>
+            <h2 className="text-3xl font-bold">{adminCount}</h2>
+          </div>
+          <div className="p-4 rounded-xl bg-orange-500/30 text-orange-200 text-xl">
+            <FaUsers />
           </div>
         </div>
       </div>
