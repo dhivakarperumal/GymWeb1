@@ -42,3 +42,19 @@ test('buildDashboardStats filters date-based metrics by the selected range', () 
   assert.equal(stats.pendingPayments, 1);
   assert.equal(stats.lowStockCount, 1);
 });
+
+test('buildDashboardStats counts unique gym member records and excludes unregistered users', () => {
+  const { stats, filteredMembers } = buildDashboardStats({
+    members: [
+      { id: 1, source: 'members', created_at: '2026-01-01' },
+      { id: 1, source: 'members', created_at: '2026-01-01' },
+      { id: 2, source: 'members', created_at: '2026-01-02' },
+      { id: null, source: 'users', created_at: '2026-01-03' },
+    ],
+    filterRange: { type: 'All Time', range: null },
+  });
+
+  assert.equal(stats.members, 2);
+  assert.equal(stats.newMembersToday, 2);
+  assert.equal(filteredMembers.length, 2);
+});

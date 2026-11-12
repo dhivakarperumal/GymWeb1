@@ -13,6 +13,15 @@ export const buildDashboardStats = ({
 }) => {
   const activePlans = plans.filter((p) => p.active);
   const activeStaff = staff.filter((s) => s.status === 'active');
+  const seenMemberIds = new Set();
+  const gymMembers = members.filter((member) => {
+    if (member.source === 'users') return false;
+    const memberId = member.id ?? member.member_id;
+    if (memberId == null) return true;
+    if (seenMemberIds.has(String(memberId))) return false;
+    seenMemberIds.add(String(memberId));
+    return true;
+  });
   const { start, end } = getDateRangeBounds(filterRange.type, filterRange.range);
   const isAllTime = filterRange.type === 'All Time';
 
@@ -25,11 +34,11 @@ export const buildDashboardStats = ({
   };
 
   const filteredOrders = orders.filter((order) => isWithinRange(order.created_at || order.createdAt));
-  const filteredMembers = members.filter((member) => isWithinRange(member.created_at || member.createdAt));
+  const filteredMembers = gymMembers.filter((member) => isWithinRange(member.created_at || member.createdAt));
   const filteredAttendance = attendance.filter((record) => isWithinRange(record.date || record.check_in));
 
   const newStats = {
-    members: members.length,
+    members: gymMembers.length,
     checkinsToday: filteredAttendance.filter((a) => String(a.status || '').toLowerCase().includes('present')).length,
     activePlans: activePlans.length,
     pendingPayments: orders.filter((o) => String(o.status || '').toLowerCase() === 'pending').length,
