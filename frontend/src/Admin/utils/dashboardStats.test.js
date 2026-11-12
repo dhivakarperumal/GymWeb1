@@ -58,3 +58,15 @@ test('buildDashboardStats counts unique gym member records and excludes unregist
   assert.equal(stats.newMembersToday, 2);
   assert.equal(filteredMembers.length, 2);
 });
+
+test('buildDashboardStats uses the highest assigned numeric member ID for the total', () => {
+  const { stats } = buildDashboardStats({
+    members: [
+      { id: 1, member_id: '736', source: 'members' },
+      { id: 2, member_id: '738', source: 'members' },
+      { id: null, member_id: null, source: 'users' },
+    ],
+  });
+
+  assert.equal(stats.members, 738);
+});

@@ -22,6 +22,10 @@ export const buildDashboardStats = ({
     seenMemberIds.add(String(memberId));
     return true;
   });
+  const numericMemberIds = gymMembers
+    .map((member) => String(member.member_id ?? '').trim())
+    .filter((memberId) => /^\d+$/.test(memberId))
+    .map(Number);
   const { start, end } = getDateRangeBounds(filterRange.type, filterRange.range);
   const isAllTime = filterRange.type === 'All Time';
 
@@ -38,7 +42,7 @@ export const buildDashboardStats = ({
   const filteredAttendance = attendance.filter((record) => isWithinRange(record.date || record.check_in));
 
   const newStats = {
-    members: gymMembers.length,
+    members: numericMemberIds.length ? Math.max(...numericMemberIds) : gymMembers.length,
     checkinsToday: filteredAttendance.filter((a) => String(a.status || '').toLowerCase().includes('present')).length,
     activePlans: activePlans.length,
     pendingPayments: orders.filter((o) => String(o.status || '').toLowerCase() === 'pending').length,
