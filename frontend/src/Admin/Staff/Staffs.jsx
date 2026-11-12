@@ -68,7 +68,8 @@ const Staffs = () => {
     const matchesSearch =
       s.name?.toLowerCase().includes(search.toLowerCase()) ||
       s.email?.toLowerCase().includes(search.toLowerCase()) ||
-      s.phone?.includes(search);
+      s.phone?.includes(search) ||
+      s.employeeId?.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus =
       statusFilter === "all" || s.status === statusFilter;
@@ -135,40 +136,40 @@ const Staffs = () => {
       </div>
 
       {/* ===== TOP CARDS ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-      {/* Total Staff */}
-      <div className={statCard}>
-        <div>
-          <p className="text-sm text-white/60">Total Staff</p>
-          <h2 className="text-3xl font-bold text-white">{totalStaff}</h2>
+        {/* Total Staff */}
+        <div className={statCard}>
+          <div>
+            <p className="text-sm text-white/60">Total Staff</p>
+            <h2 className="text-3xl font-bold text-white">{totalStaff}</h2>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+            <FaUsers className="text-blue-400 text-xl" />
+          </div>
         </div>
-        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-          <FaUsers className="text-blue-400 text-xl" />
-        </div>
-      </div>
 
-      {/* Active Staff */}
-      <div className={statCard}>
-        <div>
-          <p className="text-sm text-white/60">Active Staff</p>
-          <h2 className="text-3xl font-bold text-white">{activeStaff}</h2>
+        {/* Active Staff */}
+        <div className={statCard}>
+          <div>
+            <p className="text-sm text-white/60">Active Staff</p>
+            <h2 className="text-3xl font-bold text-white">{activeStaff}</h2>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+            <FaUserCheck className="text-green-400 text-xl" />
+          </div>
         </div>
-        <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-          <FaUserCheck className="text-green-400 text-xl" />
-        </div>
-      </div>
 
-      {/* Inactive Staff */}
-      <div className={statCard}>
-        <div>
-          <p className="text-sm text-white/60">Inactive Staff</p>
-          <h2 className="text-3xl font-bold text-white">{inactiveStaff}</h2>
+        {/* Inactive Staff */}
+        <div className={statCard}>
+          <div>
+            <p className="text-sm text-white/60">Inactive Staff</p>
+            <h2 className="text-3xl font-bold text-white">{inactiveStaff}</h2>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+            <FaUserTimes className="text-red-400 text-xl" />
+          </div>
         </div>
-        <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
-          <FaUserTimes className="text-red-400 text-xl" />
-        </div>
-      </div>
       </div>
 
 
@@ -183,12 +184,12 @@ const Staffs = () => {
 ">
 
 
-       <input
-  type="text"
-  placeholder="Search by name, email or mobile..."
-  value={search}
-  onChange={(e) => setSearch(e.target.value)}
-  className="
+        <input
+          type="text"
+          placeholder="Search by employee ID, name, email or mobile..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="
     w-full sm:w-80
     px-4 py-2.5
     rounded-lg
@@ -200,14 +201,14 @@ const Staffs = () => {
     outline-none
     transition
   "
-/>
+        />
 
-       <div className="flex gap-3">
-  {/* STATUS FILTER */}
-  <select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-    className="
+        <div className="flex gap-3">
+          {/* STATUS FILTER */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="
       px-4 py-2
       rounded-lg
       bg-white/10 text-white
@@ -218,152 +219,153 @@ const Staffs = () => {
       [&>option]:bg-white
       [&>option]:text-black
     "
-  >
-    <option value="all">All Status</option>
-    <option value="active">Active</option>
-    <option value="inactive">Inactive</option>
-  </select>
-</div>
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
 
       </div>
 
 
       {/* ===== HEADER ===== */}
 
-    {/* ===== DESKTOP TABLE ===== */}
-<div className="hidden md:block backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
-  <table className="w-full text-sm text-gray-200">
-    <thead className="border-b border-white/10">
-      <tr>
-        <th className="px-4 py-4 text-left font-semibold">S.No</th>
-        <th className="px-4 py-4 text-left font-semibold">Name</th>
-        <th className="px-4 py-4 text-left font-semibold">Email</th>
-        <th className="px-4 py-4 text-left font-semibold">Mobile Number</th>
-        <th className="px-4 py-4 text-left font-semibold">Role</th>
-        <th className="px-4 py-4 text-left font-semibold">Time In</th>
-        <th className="px-4 py-4 text-left font-semibold">Time Out</th>
-        <th className="px-4 py-4 text-left font-semibold">Status</th>
-        <th className="px-4 py-4 text-left font-semibold">Actions</th>
-      </tr>
-    </thead>
+      {/* ===== DESKTOP TABLE ===== */}
+      <div className="hidden md:block backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl overflow-x-auto">
+        <table className="w-full text-sm text-gray-200">
+          <thead className="border-b border-white/10">
+            <tr>
+              <th className="px-4 py-4 text-left font-semibold">S.No</th>
+              <th className="px-4 py-4 text-left font-semibold">Employee ID</th>
+              <th className="px-4 py-4 text-left font-semibold">Name</th>
+              <th className="px-4 py-4 text-left font-semibold">Email</th>
+              <th className="px-4 py-4 text-left font-semibold">Mobile Number</th>
+              <th className="px-4 py-4 text-left font-semibold">Role</th>
+              <th className="px-4 py-4 text-left font-semibold">Time In</th>
+              <th className="px-4 py-4 text-left font-semibold">Time Out</th>
+              <th className="px-4 py-4 text-left font-semibold">Status</th>
+              <th className="px-4 py-4 text-left font-semibold">Actions</th>
+            </tr>
+          </thead>
 
-    <tbody>
-      {filteredStaff.length === 0 && (
-        <tr>
-          <td colSpan="9" className="text-center py-12">
-            <div className="flex flex-col items-center justify-center gap-2">
-              <FaUsers className="text-white/10 text-4xl" />
-              <p className="text-white/40 font-medium italic">No staff records found</p>
+          <tbody>
+            {filteredStaff.length === 0 && (
+              <tr>
+                <td colSpan="10" className="text-center py-12">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <FaUsers className="text-white/10 text-4xl" />
+                    <p className="text-white/40 font-medium italic">No staff records found</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {paginatedStaff.map((s, index) => (
+              <tr key={s.id} className="border-b border-white/10">
+                <td className="px-4 py-4">{index + 1}</td>
+                <td className="px-4 py-4">{s.employeeId || "-"}</td>
+                <td className="px-4 py-4 font-medium">{s.name}</td>
+                <td className="px-4 py-4">{s.email}</td>
+                <td className="px-4 py-4">{s.phone}</td>
+                <td className="px-4 py-4">{s.role}</td>
+                <td className="px-4 py-4">{s.timeIn || "N/A"}</td>
+                <td className="px-4 py-4">{s.timeOut || "N/A"}</td>
+                <td className="px-4 py-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${s.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                      }`}
+                  >
+                    {s.status}
+                  </span>
+                </td>
+                <td className="px-4 py-4 flex gap-2">
+                  <button
+                    onClick={() => navigate(`/admin/viewstaff/${s.id}`)}
+                    className="p-2 rounded-lg bg-yellow-500/80 text-white"
+                  >
+                    <FaEye />
+                  </button>
+                  <button
+                    onClick={() => navigate(`/admin/addstaff/${s.id}`)}
+                    className="p-2 rounded-lg bg-green-500/80 text-white"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    className="px-2 py-2 rounded-lg bg-red-500/80 text-white"
+                  >
+                    <FaTrash />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+
+      {/* ===== MOBILE CARD VIEW ===== */}
+      <div className="md:hidden space-y-4">
+        {filteredStaff.length === 0 && (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 backdrop-blur-xl">
+            <FaUsers className="text-white/10 text-5xl" />
+            <p className="text-white/40 font-medium italic">No staff records found</p>
+          </div>
+        )}
+
+        {paginatedStaff.map((s, index) => (
+          <div
+            key={s.id}
+            className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-xl shadow-lg"
+          >
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="font-semibold text-lg">{s.name}</h2>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-semibold ${s.status === "active"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                  }`}
+              >
+                {s.status}
+              </span>
             </div>
-          </td>
-        </tr>
-      )}
 
-      {paginatedStaff.map((s, index) => (
-       <tr key={s.id} className="border-b border-white/10">
-          <td className="px-4 py-4">{index + 1}</td>
-          <td className="px-4 py-4 font-medium">{s.name}</td>
-          <td className="px-4 py-4">{s.email}</td>
-          <td className="px-4 py-4">{s.phone}</td>
-          <td className="px-4 py-4">{s.role}</td>
-          <td className="px-4 py-4">{s.timeIn || "N/A"}</td>
-          <td className="px-4 py-4">{s.timeOut || "N/A"}</td>
-          <td className="px-4 py-4">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                s.status === "active"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {s.status}
-            </span>
-          </td>
-          <td className="px-4 py-4 flex gap-2">
-            <button
-              onClick={() => navigate(`/admin/viewstaff/${s.id}`)}
-              className="p-2 rounded-lg bg-yellow-500/80 text-white"
-            >
-              <FaEye />
-            </button>
-            <button
-              onClick={() => navigate(`/admin/addstaff/${s.id}`)}
-              className="p-2 rounded-lg bg-green-500/80 text-white"
-            >
-              <FaEdit />
-            </button>
-            <button
-              onClick={() => handleDelete(s.id)}
-              className="px-2 py-2 rounded-lg bg-red-500/80 text-white"
-            >
-              <FaTrash />
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+            <div className="text-sm text-gray-300 space-y-1">
+              <p><strong>Employee ID:</strong> {s.employeeId || "-"}</p>
+              <p><strong>Email:</strong> {s.email}</p>
+              <p><strong>Mobile:</strong> {s.phone}</p>
+              <p><strong>Role:</strong> {s.role}</p>
+              <p><strong>Time In:</strong> {s.timeIn || "N/A"}</p>
+              <p><strong>Time Out:</strong> {s.timeOut || "N/A"}</p>
+            </div>
 
-
-{/* ===== MOBILE CARD VIEW ===== */}
-<div className="md:hidden space-y-4">
-  {filteredStaff.length === 0 && (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 backdrop-blur-xl">
-      <FaUsers className="text-white/10 text-5xl" />
-      <p className="text-white/40 font-medium italic">No staff records found</p>
-    </div>
-  )}
-
-  {paginatedStaff.map((s, index) => (
-    <div
-      key={s.id}
-      className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-xl shadow-lg"
-    >
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="font-semibold text-lg">{s.name}</h2>
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-            s.status === "active"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}
-        >
-          {s.status}
-        </span>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => navigate(`/admin/viewstaff/${s.id}`)}
+                className=" p-2 rounded-lg bg-yellow-500 text-white"
+              >
+                <FaEye />
+              </button>
+              <button
+                onClick={() => navigate(`/admin/addstaff/${s.id}`)}
+                className=" p-2 rounded-lg bg-green-500 text-white"
+              >
+                <FaEdit />
+              </button>
+              <button
+                onClick={() => handleDelete(s.id)}
+                className=" p-2 rounded-lg bg-red-500 text-white"
+              >
+                <FaTrash />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
-
-      <div className="text-sm text-gray-300 space-y-1">
-        <p><strong>Email:</strong> {s.email}</p>
-        <p><strong>Mobile:</strong> {s.phone}</p>
-        <p><strong>Role:</strong> {s.role}</p>
-        <p><strong>Time In:</strong> {s.timeIn || "N/A"}</p>
-        <p><strong>Time Out:</strong> {s.timeOut || "N/A"}</p>
-      </div>
-
-      <div className="flex gap-3 mt-4">
-        <button
-          onClick={() => navigate(`/admin/viewstaff/${s.id}`)}
-          className=" p-2 rounded-lg bg-yellow-500 text-white"
-        >
-          <FaEye />
-        </button>
-        <button
-          onClick={() => navigate(`/admin/addstaff/${s.id}`)}
-          className=" p-2 rounded-lg bg-green-500 text-white"
-        >
-          <FaEdit />
-        </button>
-        <button
-          onClick={() => handleDelete(s.id)}
-          className=" p-2 rounded-lg bg-red-500 text-white"
-        >
-          <FaTrash />
-        </button>
-      </div>
-    </div>
-  ))}
-</div>
       {totalPages > 1 && (
         <div className="flex justify-between items-center px-6 py-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
 
