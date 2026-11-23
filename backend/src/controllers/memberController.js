@@ -2,6 +2,25 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { normalizePhone, normalizeEmail } = require('../utils/memberIdentity');
+const als = require('../config/context');
+
+const createdByDisplayNameSql = `COALESCE(
+  (
+    SELECT CASE
+      WHEN LOWER(COALESCE(creator.role, '')) = 'trainer' THEN
+        COALESCE(NULLIF(creator_staff.name, ''), NULLIF(creator.name, ''), NULLIF(creator.username, ''), creator.email)
+      WHEN LOWER(COALESCE(creator.role, '')) = 'user' THEN
+        COALESCE(NULLIF(creator.username, ''), NULLIF(creator.name, ''), creator.email)
+      ELSE
+        COALESCE(NULLIF(creator.name, ''), NULLIF(creator.username, ''), creator.email)
+    END
+    FROM users creator
+    LEFT JOIN staff creator_staff ON creator_staff.user_id = creator.user_id
+    WHERE creator.user_id = gm.created_by
+    LIMIT 1
+  ),
+  NULLIF(gm.created_by_name, '')
+)`;
 
 async function getAllMembers(req, res) {
   try {
@@ -81,6 +100,7 @@ async function getAllMembers(req, res) {
           gm.pt_expiry_date,
           gm.pt_duration,
           gm.created_at,
+          ${createdByDisplayNameSql} AS created_by_display_name,
           m_pay.paymentMode,
           m_pay.price,
           m_pay.pricePaid,
@@ -149,6 +169,7 @@ async function getAllMembers(req, res) {
           NULL as pt_expiry_date,
           NULL as pt_duration,
           u.created_at,
+          NULL as created_by_display_name,
           m_pay.paymentMode,
           m_pay.price,
           m_pay.pricePaid,
@@ -226,6 +247,7 @@ async function getAllMembers(req, res) {
           gm.pt_expiry_date,
           gm.pt_duration,
           gm.created_at,
+          ${createdByDisplayNameSql} AS created_by_display_name,
           m_pay.paymentMode,
           m_pay.price,
           m_pay.pricePaid,
@@ -293,6 +315,7 @@ async function getAllMembers(req, res) {
           NULL as pt_expiry_date,
           NULL as pt_duration,
           u.created_at,
+          NULL as created_by_display_name,
           m_pay.paymentMode,
           m_pay.price,
           m_pay.pricePaid,
@@ -378,6 +401,7 @@ async function getAllMembers(req, res) {
           gm.pt_expiry_date,
           gm.pt_duration,
           gm.created_at,
+          ${createdByDisplayNameSql} AS created_by_display_name,
           NULL AS paymentMode,
           NULL AS price,
           NULL AS pricePaid,
@@ -433,6 +457,7 @@ async function getAllMembers(req, res) {
           gm.pt_expiry_date,
           gm.pt_duration,
           gm.created_at,
+          ${createdByDisplayNameSql} AS created_by_display_name,
           NULL AS paymentMode,
           NULL AS price,
           NULL AS pricePaid,
@@ -531,6 +556,7 @@ async function createMemberRecord(connection, payload) {
   const resolvedName = name || "Unknown";
   const resolvedPhone = normalizePhone(phone);
   const normalizedEmail = normalizeEmail(email);
+  const requestUser = als.getStore() ? als.getStore().get('user') : null;
 
   if (resolvedPhone.length !== 10) {
     const error = new Error('A valid 10-digit phone number is required');
@@ -594,8 +620,8 @@ async function createMemberRecord(connection, payload) {
        dob, age, employer, occupation,
        emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
        emergency_contact_phone_home, emergency_contact_phone_work,
-       fitness_goal, blood_group, pt_form_completed, fingerprint_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       fitness_goal, blood_group, pt_form_completed, fingerprint_id, created_by, created_by_name)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           userId_uuid, memberId, resolvedName, resolvedPhone, normalizedEmail, gender, numHeight, numWeight, numBmi,
           plan, numDuration, joinDate, expiryDate, status, photo, notes, address,
@@ -604,7 +630,9 @@ async function createMemberRecord(connection, payload) {
           emergency_contact_phone_home || null, emergency_contact_phone_work || null,
           fitness_goal || null, blood_group || null,
           pt_form_completed ? 1 : 0,
-          fingerprintId || null
+          fingerprintId || null,
+          requestUser ? requestUser.user_id || requestUser.userId || null : null,
+          requestUser ? requestUser.username || requestUser.email || null : null
         ]
       );
       inserted = true;

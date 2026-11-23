@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { normalizePhone, normalizeEmail } = require('../utils/memberIdentity');
 const { v4: uuidv4 } = require('uuid');
+const als = require('../config/context');
 
 const enquiryController = {
     // Get all enquiries
@@ -80,6 +81,7 @@ const enquiryController = {
 
             const normalizedEmail = normalizeEmail(email);
             const normalizedPhone = normalizePhone(phone);
+            const requestUser = als.getStore() ? als.getStore().get('user') : null;
 
             if (normalizedPhone.length !== 10) {
                 return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
@@ -156,15 +158,17 @@ const enquiryController = {
                     plan, duration, join_date, status, address, dob, age,
                     employer, occupation, emergency_contact_name, emergency_contact_relationship,
                     emergency_contact_address, emergency_contact_phone_home, emergency_contact_phone_work,
-                    fitness_goal, blood_group
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    fitness_goal, blood_group, created_by, created_by_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     userId_uuid, memberId, name, normalizedPhone, memberEmail, gender,
                     height || null, weight || null, bmi || null, plan_name || null, plan_duration || null,
                     address || null, dob || null, age || null, employer || null, occupation || null,
                     emergency_contact_name || null, emergency_contact_relationship || null,
                     emergency_contact_address || null, emergency_contact_phone_home || null,
-                    emergency_contact_phone_work || null, fitness_goal || null, blood_group || null
+                    emergency_contact_phone_work || null, fitness_goal || null, blood_group || null,
+                    requestUser ? requestUser.user_id || requestUser.userId || null : userId_uuid,
+                    requestUser ? requestUser.username || requestUser.email || null : name
                 ]
             );
 

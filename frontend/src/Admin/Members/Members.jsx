@@ -839,6 +839,7 @@ const Members = () => {
               <tr>
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Member ID</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold">Name</th>
+                <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Added By</th>
                 {/* <th className="px-4 py-5 text-left text-sm font-semibold">Email</th> */}
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">Plan</th>
                 <th className="px-4 py-5 text-left text-sm font-semibold whitespace-nowrap">PT Plan</th>
@@ -851,7 +852,7 @@ const Members = () => {
             <tbody className="divide-y divide-white/10">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="p-8 text-center text-gray-400">
+                  <td colSpan="8" className="p-8 text-center text-gray-400">
                     {loading ? "Loading members..." : filtered.length === 0 ? "No records found" : "No data on this page"}
                   </td>
                 </tr>
@@ -864,6 +865,9 @@ const Members = () => {
                     <td className="px-4 py-5">
                       <div className="font-medium text-white">{m.name || "N/A"}</div>
                       <div className="text-xs text-gray-400 mt-0.5">{m.phone || ""}</div>
+                    </td>
+                    <td className="px-4 py-5 text-white/70 text-sm whitespace-nowrap">
+                      {m.created_by_display_name || "-"}
                     </td>
 
 

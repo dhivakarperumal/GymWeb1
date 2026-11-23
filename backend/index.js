@@ -77,7 +77,7 @@ app.use((req, res, next) => {
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     try {
-      user = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey');
+      user = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     } catch (err) {
       // Ignore token errors here, just proceed without user context
     }
