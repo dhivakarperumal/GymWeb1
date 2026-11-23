@@ -4,23 +4,27 @@ const { v4: uuidv4 } = require('uuid');
 const { normalizePhone, normalizeEmail } = require('../utils/memberIdentity');
 const als = require('../config/context');
 
-const createdByDisplayNameSql = `COALESCE(
-  (
-    SELECT CASE
-      WHEN LOWER(COALESCE(creator.role, '')) = 'trainer' THEN
-        COALESCE(NULLIF(creator_staff.name, ''), NULLIF(creator.name, ''), NULLIF(creator.username, ''), creator.email)
-      WHEN LOWER(COALESCE(creator.role, '')) = 'user' THEN
-        COALESCE(NULLIF(creator.username, ''), NULLIF(creator.name, ''), creator.email)
-      ELSE
-        COALESCE(NULLIF(creator.name, ''), NULLIF(creator.username, ''), creator.email)
-    END
-    FROM users creator
-    LEFT JOIN staff creator_staff ON creator_staff.user_id = creator.user_id
-    WHERE creator.user_id = gm.created_by
-    LIMIT 1
-  ),
-  NULLIF(gm.created_by_name, '')
-)`;
+const createdByDisplayNameSql = `CASE
+  WHEN gm.created_by_name IN ('UserEnquiry', 'Self Join')
+    OR (gm.created_by IS NOT NULL AND gm.created_by = gm.user_id) THEN 'Self Join'
+  ELSE COALESCE(
+    (
+      SELECT CASE
+        WHEN LOWER(COALESCE(creator.role, '')) = 'trainer' THEN
+          COALESCE(NULLIF(creator_staff.name, ''), NULLIF(creator.name, ''), NULLIF(creator.username, ''), creator.email)
+        WHEN LOWER(COALESCE(creator.role, '')) = 'user' THEN
+          COALESCE(NULLIF(creator.username, ''), NULLIF(creator.name, ''), creator.email)
+        ELSE
+          COALESCE(NULLIF(creator.name, ''), NULLIF(creator.username, ''), creator.email)
+      END
+      FROM users creator
+      LEFT JOIN staff creator_staff ON creator_staff.user_id = creator.user_id
+      WHERE creator.user_id = gm.created_by
+      LIMIT 1
+    ),
+    NULLIF(gm.created_by_name, '')
+  )
+END`;
 
 async function getAllMembers(req, res) {
   try {
