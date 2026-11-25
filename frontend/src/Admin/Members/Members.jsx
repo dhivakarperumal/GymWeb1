@@ -807,7 +807,7 @@ const Members = () => {
       {/* 📑 TABS & ACTIONS */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8" data-aos="fade-up">
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit mx-auto sm:mx-0">
+        <div className="flex min-w-0 w-full items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 overflow-x-auto scrollbar-hide mx-auto sm:mx-0 lg:flex-1">
           {[
             { id: 'all', label: 'All Members', count: tabCounts.all, icon: <Users size={16} /> },
             { id: 'withPlan', label: 'Active Plan', count: tabCounts.withPlan, icon: <Calendar size={16} /> },
@@ -821,14 +821,15 @@ const Members = () => {
                 setFilterType(tab.id);
                 setCurrentPage(1);
               }}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300
+              className={`flex shrink-0 items-center justify-center gap-2 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 lg:flex-1
                 ${filterType === tab.id
                   ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20 scale-105 z-10'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
             >
-              {tab.icon}
-                {tab.label} ({loading ? "…" : tab.count})
+              <span className="shrink-0">{tab.icon}</span>
+              <span>{tab.label}</span>
+              <span>({loading ? "…" : tab.count})</span>
             </button>
           ))}
         </div>
