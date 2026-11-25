@@ -255,7 +255,9 @@ const AddWorkout = () => {
         setLoading(true);
 
         // Server-side filter by trainer's user ID -- avoids the users.id vs staff.id mismatch
-        const aRes = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
+        const aRes = await api.get(
+          `/assignments?trainerUserId=${user.id}&distinctMembers=true&includeExpired=true&validMembersOnly=true`,
+        );
         const aData = aRes.data;
         const assignments = Array.isArray(aData)
           ? aData

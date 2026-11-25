@@ -39,24 +39,24 @@ const TrainerSendMessage = () => {
       try {
         setLoading(true);
         // Server-side filter -- avoids users.id vs staff.id mismatch
-        const aRes = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
+        const aRes = await api.get(
+          `/assignments?trainerUserId=${user.id}&distinctMembers=true&includeExpired=true&validMembersOnly=true`,
+        );
         const aData = aRes.data;
         const assignments = Array.isArray(aData) ? aData : aData.data || aData.assignments || [];
 
-        const assignedMembers = assignments
-          .filter((a) => a.userEmail || a.user_email || a.userMobile || a.user_mobile)
-          .map((a) => {
-            const uId = a.userId || a.user_id || a.u_id;
-            const mId = a.gymMemberId || a.member_db_id || a.id;
-            return {
-              id: String(uId || mId),
-              userId: uId ? Number(uId) : null,
-              memberId: mId ? Number(mId) : null,
-              name: a.username || a.user_name || a.name || "Member",
-              email: a.userEmail || a.user_email || a.email || "",
-              phone: a.userMobile || a.user_mobile || a.phone || "",
-            };
-          });
+        const assignedMembers = assignments.map((a) => {
+          const uId = a.userId || a.user_id || a.u_id;
+          const mId = a.gymMemberId || a.member_db_id || a.gm_id;
+          return {
+            id: String(uId || a.userUuid || a.user_id_uuid || mId),
+            userId: uId ? Number(uId) : null,
+            memberId: mId ? Number(mId) : null,
+            name: a.username || a.user_name || a.name || "Member",
+            email: a.userEmail || a.user_email || a.email || "",
+            phone: a.userMobile || a.user_mobile || a.phone || "",
+          };
+        });
 
         // Remove duplicates
         const uniqueIds = new Set();

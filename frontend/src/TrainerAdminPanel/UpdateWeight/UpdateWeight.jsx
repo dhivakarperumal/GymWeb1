@@ -27,16 +27,21 @@ const UpdateWeight = () => {
     const fetchMembers = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/assignments?trainerUserId=${user.id}&distinctMembers=true`);
+            const res = await api.get(
+                `/assignments?trainerUserId=${user.id}&distinctMembers=true&includeExpired=true&validMembersOnly=true`,
+            );
             const data = Array.isArray(res.data) ? res.data : res.data.data || res.data.assignments || [];
             
-            const list = data.map(m => ({
-                id: m.userId || m.user_id || m.id,
-                gmId: m.gymMemberId || m.gm_id || m.id, // Try to find the gym_members table reference
-                name: m.username || m.user_name || m.memberName || "Member",
-                email: m.userEmail || m.user_email || m.memberEmail || "",
-                phone: m.userMobile || m.user_mobile || m.memberMobile || ""
-            }));
+            const list = data.map(m => {
+                const gymMemberId = m.gymMemberId || m.gm_id || m.member_db_id;
+                return {
+                    id: String(m.userId || m.user_id || m.id),
+                    gmId: gymMemberId == null ? "" : String(gymMemberId),
+                    name: m.username || m.user_name || m.memberName || "Member",
+                    email: m.userEmail || m.user_email || m.memberEmail || "",
+                    phone: String(m.userMobile || m.user_mobile || m.memberMobile || "")
+                };
+            });
             setMembers(list);
         } catch (err) {
             console.error(err);
@@ -47,6 +52,10 @@ const UpdateWeight = () => {
     };
 
     const handleSelectMember = async (member) => {
+        if (!member.gmId) {
+            toast.error("This assigned member has no member profile to update");
+            return;
+        }
         setSelectedMember(member);
         try {
             // Fetch latest profile details including current measurements
@@ -160,7 +169,9 @@ const UpdateWeight = () => {
                                     <button
                                         key={m.id}
                                         onClick={() => handleSelectMember(m)}
-                                        className={`w-full text-left p-4 rounded-xl transition-all border flex items-center gap-3 ${
+                                        disabled={!m.gmId}
+                                        title={!m.gmId ? "No member profile is linked to this assignment" : undefined}
+                                        className={`w-full text-left p-4 rounded-xl transition-all border flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed ${
                                             isSelected 
                                             ? "bg-orange-500/20 border-orange-500/50 shadow-lg shadow-orange-500/10" 
                                             : "bg-white/5 border-white/5 hover:bg-white/10"
@@ -173,7 +184,7 @@ const UpdateWeight = () => {
                                         )}
                                         <div className="min-w-0">
                                             <div className="font-medium text-sm truncate">{m.name}</div>
-                                            <div className="text-[10px] text-white/40 mt-1 uppercase tracking-wider font-semibold truncate">{m.phone || "No Phone"}</div>
+                                            <div className="text-[10px] text-white/40 mt-1 uppercase tracking-wider font-semibold truncate">{m.gmId ? m.phone || "No Phone" : "No Member Profile"}</div>
                                         </div>
                                     </button>
                                 );
