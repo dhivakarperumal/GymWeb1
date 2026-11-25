@@ -37,6 +37,7 @@ const AssingnedTrainers = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [isReassignMode, setIsReassignMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
   const [assignments, setAssignments] = useState({});
   const [search, setSearch] = useState("");
@@ -161,6 +162,8 @@ const AssingnedTrainers = () => {
       } catch (error) {
         console.error("Error fetching assignments:", error);
         toast.error(error.response?.data?.error || "Could not load trainer assignments");
+      } finally {
+        setAssignmentsLoading(false);
       }
     };
 
@@ -352,7 +355,7 @@ const AssingnedTrainers = () => {
   };
 
   /* ================= FILTER & SEARCH LOGIC ================= */
-  const filteredMembers = members.filter((m) => {
+  const baseFilteredMembers = members.filter((m) => {
     // Search filter
     const searchLower = search.toLowerCase();
     const matchesSearch =
@@ -361,16 +364,7 @@ const AssingnedTrainers = () => {
 
     if (!matchesSearch) return false;
 
-    // Filter type
-    let matchesType = true;
     const memberAssignments = getAssigned(m);
-    if (filterType === "assigned") {
-      matchesType = memberAssignments.length > 0;
-    } else if (filterType === "unassigned") {
-      matchesType = memberAssignments.length === 0;
-    }
-
-    if (!matchesType) return false;
 
     // Trainer filter
     if (trainerFilter !== "all") {
@@ -390,6 +384,19 @@ const AssingnedTrainers = () => {
     // Date Range Filter (using startDate of first plan)
     const firstPlanDate = (m.plans || []).length > 0 ? m.plans[0].startDate : null;
     return filterByDateRange([{ date: firstPlanDate }], 'date', dateRange.type, dateRange.range).length > 0;
+  });
+
+  const memberCounts = baseFilteredMembers.reduce((counts, member) => {
+    counts.all += 1;
+    counts[getAssigned(member).length > 0 ? "assigned" : "unassigned"] += 1;
+    return counts;
+  }, { all: 0, assigned: 0, unassigned: 0 });
+
+  const filteredMembers = baseFilteredMembers.filter((member) => {
+    const isAssigned = getAssigned(member).length > 0;
+    return filterType === "all" ||
+      (filterType === "assigned" && isAssigned) ||
+      (filterType === "unassigned" && !isAssigned);
   });
 
   // 📄 PAGINATION LOGIC
@@ -489,7 +496,7 @@ const AssingnedTrainers = () => {
                   : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
                 }`}
             >
-              All Members
+              All Members ({loading || assignmentsLoading ? "…" : memberCounts.all})
             </button>
 
             <button
@@ -499,7 +506,7 @@ const AssingnedTrainers = () => {
                   : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
                 }`}
             >
-              ✓ Assigned
+              ✓ Assigned ({loading || assignmentsLoading ? "…" : memberCounts.assigned})
             </button>
 
             <button
@@ -509,7 +516,7 @@ const AssingnedTrainers = () => {
                   : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
                 }`}
             >
-              ✗ Not Assigned
+              ✗ Not Assigned ({loading || assignmentsLoading ? "…" : memberCounts.unassigned})
             </button>
 
             {/* 🖥 View Toggle */}
