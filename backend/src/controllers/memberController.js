@@ -40,9 +40,14 @@ async function getAllMembers(req, res) {
       );
       if (userRows.length > 0) {
         const u = userRows[0];
+        const email = String(u.email || '').trim().toLowerCase();
+        const username = String(u.username || '').trim().toLowerCase();
         const [staffRows] = await db.query(
-          'SELECT id FROM staff WHERE email = ? OR username = ? LIMIT 1',
-          [u.email, u.username]
+          `SELECT id FROM staff WHERE
+            (? != '' AND LOWER(TRIM(email)) = ?) OR
+            (? != '' AND LOWER(TRIM(username)) = ?)
+           LIMIT 1`,
+          [email, email, username, username]
         );
         if (staffRows.length > 0) {
           staffId = staffRows[0].id;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Trash2, Pencil, Plus, Printer, ChevronLeft, ChevronRight, ChevronDown, Clock, CheckCircle, LayoutGrid, List, Search, Users, Mail, Phone, Calendar, Eye, Download, Import, CreditCard, Zap, Dumbbell, Utensils, X, Award, MoreHorizontal } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
@@ -168,7 +168,24 @@ const getMemberReferralDisplay = (m) => {
 };
 
 const hasActiveOrPendingPlan = (m) => {
-  return !!(m.plan && m.plan !== 'user' && (m.status === 'active' || m.status === 'pending'));
+  const plan = String(m.plan || '').trim().toLowerCase();
+  const status = String(m.status || '').trim().toLowerCase();
+  return Boolean(plan && plan !== 'user' && (status === 'active' || status === 'pending'));
+};
+
+const hasCurrentPTPlan = (member) => {
+  const expiryDate = member.pt_expiry_date || member.ptExpiryDate || member.pt_endDate;
+  const isExpired = expiryDate &&
+    dayjs(expiryDate).isValid() &&
+    dayjs(expiryDate).startOf('day').isBefore(dayjs().startOf('day'));
+  const hasPtFlag = member.has_pt_plan === true ||
+    member.has_pt_plan === 1 ||
+    member.has_pt_plan === '1' ||
+    member.has_pt_plan === 'true';
+  return Boolean(
+    !isExpired &&
+    (member.pt_plan || String(member.plan || '').toLowerCase().includes('pt') || hasPtFlag)
+  );
 };
 
 const canChangePlan = (m) => {
@@ -244,6 +261,7 @@ const Members = () => {
   }, [search, selectedTrainer, filterType, viewMode, currentPage, dateRange, setSearchParams]);
 
   const [loading, setLoading] = useState(false);
+  const membersRequestId = useRef(0);
   const [importErrors, setImportErrors] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -276,7 +294,14 @@ const Members = () => {
 
   // 🔄 FETCH MEMBERS
   const fetchMembers = async () => {
-    if (cache.adminMembers && selectedTrainer === "all") {
+    const requestId = ++membersRequestId.current;
+    if (isTrainer && !user?.id) {
+      setMembers([]);
+      setLoading(true);
+      return;
+    }
+
+    if (!isTrainer && cache.adminMembers && selectedTrainer === "all") {
       setMembers(sortMembersByIdDescending(cache.adminMembers.filter((m) => m.source !== "users")));
     } else {
       setLoading(true);
@@ -284,13 +309,14 @@ const Members = () => {
 
     try {
       let query = "/members";
-      if (role === "trainer" && user?.id) {
-        query = `/members?trainerUserId=${user.id}`;
+      if (isTrainer && user?.id) {
+        query = `/members?trainerUserId=${encodeURIComponent(user.id)}`;
       } else if (selectedTrainer !== "all") {
-        query = `/members?trainerUserId=${selectedTrainer}`;
+        query = `/members?trainerUserId=${encodeURIComponent(selectedTrainer)}`;
       }
 
       const res = await api.get(query);
+      if (requestId !== membersRequestId.current) return;
       const data = Array.isArray(res.data) ? res.data : [];
       let onlyGymMembers = data.filter((m) => m.source !== "users");
       
@@ -311,13 +337,15 @@ const Members = () => {
 
       const sortedMembers = sortMembersByIdDescending(onlyGymMembers);
       setMembers(sortedMembers);
-      if (role !== "trainer" && selectedTrainer === "all") {
+      if (!isTrainer && selectedTrainer === "all") {
         cache.adminMembers = sortedMembers;
       }
-    } catch {
-      if (!cache.adminMembers) toast.error("Failed to load members");
+    } catch (error) {
+      if (requestId !== membersRequestId.current) return;
+      console.error("Failed to load members", error);
+      if (isTrainer || !cache.adminMembers) toast.error("Failed to load members");
     } finally {
-      setLoading(false);
+      if (requestId === membersRequestId.current) setLoading(false);
     }
   };
 
@@ -362,7 +390,7 @@ const Members = () => {
 
   useEffect(() => {
     fetchMembers();
-  }, [selectedTrainer, role, user]); 
+  }, [selectedTrainer, role, user, isTrainer]);
 
   useEffect(() => {
     // If search/filter settings change, go back to the first page.
@@ -370,12 +398,10 @@ const Members = () => {
   }, [search, filterType, selectedTrainer, dateRange.type, dateRange.range, itemsPerPage]);
 
   // 🔎 SEARCH & DATE FILTER - Robust filtering
-  const filtered = (members || []).filter((m) => {
-    // 1. Text Search
-    let matchesText = true;
+  const matchesSearchAndDate = (m) => {
     if (search) {
       const s = search.toLowerCase();
-      matchesText = (
+      const matchesText = (
         String(m.name || "").toLowerCase().includes(s) ||
         String(m.username || "").toLowerCase().includes(s) ||
         String(m.phone || "").includes(s) ||
@@ -384,25 +410,25 @@ const Members = () => {
         String(m.user_email || "").toLowerCase().includes(s) ||
         String(m.plan || "").toLowerCase().includes(s)
       );
+      if (!matchesText) return false;
     }
 
-    if (!matchesText) return false;
-
-    // 2. Plan Filter
-    let matchesPlanFilter = true;
-    const hasPlan = hasActiveOrPendingPlan(m);
-    const isPtExpired = m.pt_expiry_date && new Date(m.pt_expiry_date) < new Date();
-    const hasPTPlan = !isPtExpired && (Boolean(m.pt_plan) || Boolean(m.plan?.toLowerCase().includes("pt")) || Boolean(m.has_pt_plan));
-    
-    if (filterType === "withPlan") matchesPlanFilter = hasPlan;
-    if (filterType === "withoutPlan") matchesPlanFilter = !hasPlan;
-    if (filterType === "withPTPlan") matchesPlanFilter = hasPTPlan;
-    if (filterType === "withoutPTPlan") matchesPlanFilter = !hasPTPlan;
-
-    if (!matchesPlanFilter) return false;
-
-    // 3. Date Range Filter
     return filterByDateRange([m], 'join_date', dateRange.type, dateRange.range).length > 0;
+  };
+  const membersForCounts = (members || []).filter(matchesSearchAndDate);
+  const tabCounts = {
+    all: membersForCounts.length,
+    withPlan: membersForCounts.filter(hasActiveOrPendingPlan).length,
+    withoutPlan: membersForCounts.filter((member) => !hasActiveOrPendingPlan(member)).length,
+    withPTPlan: membersForCounts.filter(hasCurrentPTPlan).length,
+    withoutPTPlan: membersForCounts.filter((member) => !hasCurrentPTPlan(member)).length,
+  };
+  const filtered = membersForCounts.filter((member) => {
+    if (filterType === "withPlan") return hasActiveOrPendingPlan(member);
+    if (filterType === "withoutPlan") return !hasActiveOrPendingPlan(member);
+    if (filterType === "withPTPlan") return hasCurrentPTPlan(member);
+    if (filterType === "withoutPTPlan") return !hasCurrentPTPlan(member);
+    return true;
   });
 
   // 📄 PAGINATION
@@ -783,11 +809,11 @@ const Members = () => {
         {/* Filter Tabs */}
         <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit mx-auto sm:mx-0">
           {[
-            { id: 'all', label: 'All Members', icon: <Users size={16} /> },
-            { id: 'withPlan', label: 'Active Plan', icon: <Calendar size={16} /> },
-            { id: 'withoutPlan', label: 'No Plan', icon: <Mail size={16} /> },
-            { id: 'withPTPlan', label: 'PT Plan Buy', icon: <Calendar size={16} /> },
-            { id: 'withoutPTPlan', label: 'Not Buy PT', icon: <Mail size={16} /> },
+            { id: 'all', label: 'All Members', count: tabCounts.all, icon: <Users size={16} /> },
+            { id: 'withPlan', label: 'Active Plan', count: tabCounts.withPlan, icon: <Calendar size={16} /> },
+            { id: 'withoutPlan', label: 'No Plan', count: tabCounts.withoutPlan, icon: <Mail size={16} /> },
+            { id: 'withPTPlan', label: 'PT Plan Buy', count: tabCounts.withPTPlan, icon: <Calendar size={16} /> },
+            { id: 'withoutPTPlan', label: 'Not Buy PT', count: tabCounts.withoutPTPlan, icon: <Mail size={16} /> },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -802,7 +828,7 @@ const Members = () => {
                 }`}
             >
               {tab.icon}
-              {tab.label}
+                {tab.label} ({loading ? "…" : tab.count})
             </button>
           ))}
         </div>
