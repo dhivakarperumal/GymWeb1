@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { selectDistinctAssignments } = require('../utils/assignmentSelection');
 
 function normalizeAssignment(row) {
   return {
@@ -46,6 +47,8 @@ async function getAllAssignments(req, res) {
   try {
     const { trainerUserId, trainerEmail } = req.query;
     const distinctMembers = req.query.distinctMembers === 'true';
+    const includeExpired = req.query.includeExpired === 'true';
+    const validMembersOnly = req.query.validMembersOnly === 'true';
 
     let staffId = null;
 
@@ -147,10 +150,19 @@ async function getAllAssignments(req, res) {
       LEFT JOIN staff s ON s.id = a.trainer_id
     `;
     const params = [];
+    const whereClauses = [];
 
     if (staffId && !distinctMembers) {
-      sql += ' WHERE a.trainer_id = ?';
+      whereClauses.push('a.trainer_id = ?');
       params.push(staffId);
+    }
+
+    if (validMembersOnly) {
+      whereClauses.push('u.id IS NOT NULL');
+    }
+
+    if (whereClauses.length > 0) {
+      sql += ` WHERE ${whereClauses.join(' AND ')}`;
     }
 
     sql += ' ORDER BY a.updated_at DESC';
@@ -158,53 +170,7 @@ async function getAllAssignments(req, res) {
     const [rows] = await db.query(sql, params);
     let selectedRows = rows;
     if (distinctMembers) {
-      const today = new Date();
-      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const dateKey = (value) => {
-        if (!value) return '';
-        if (value instanceof Date) {
-          return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
-        }
-        return String(value).slice(0, 10);
-      };
-      const timestamp = (value) => {
-        const parsed = value ? new Date(value).getTime() : 0;
-        return Number.isNaN(parsed) ? 0 : parsed;
-      };
-      const rank = (row) => [
-        String(row.status || '').toLowerCase() === 'active' ? 1 : 0,
-        (!row.plan_start_date || dateKey(row.plan_start_date) <= todayKey) &&
-          (!row.plan_end_date || dateKey(row.plan_end_date) >= todayKey) ? 1 : 0,
-        timestamp(row.updated_at),
-        dateKey(row.plan_start_date),
-        Number(row.id) || 0,
-      ];
-      const compareRank = (left, right) => {
-        const leftRank = rank(left);
-        const rightRank = rank(right);
-        for (let index = 0; index < leftRank.length; index += 1) {
-          if (leftRank[index] !== rightRank[index]) {
-            return leftRank[index] > rightRank[index] ? 1 : -1;
-          }
-        }
-        return 0;
-      };
-
-      const latestByMember = new Map();
-      for (const row of rows) {
-        const memberKey = String(row.user_id);
-        const endDate = dateKey(row.plan_end_date);
-        if (!memberKey || memberKey === 'undefined' || (endDate && endDate < todayKey)) continue;
-
-        const current = latestByMember.get(memberKey);
-        if (!current || compareRank(row, current) > 0) {
-          latestByMember.set(memberKey, row);
-        }
-      }
-
-      selectedRows = [...latestByMember.values()]
-        .filter((row) => !staffId || Number(row.trainer_id) === Number(staffId))
-        .sort((left, right) => timestamp(right.updated_at) - timestamp(left.updated_at));
+      selectedRows = selectDistinctAssignments(rows, { includeExpired, trainerId: staffId });
     }
 
     console.log('[assignments] returning', selectedRows.length, 'rows for staffId', staffId);

@@ -57,7 +57,7 @@ const TrainerDashboard = () => {
 
   const [ptViewMember, setPtViewMember] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
   const memberHasPtPlan = (member) => {
     const planName = String(member.planName || member.plan_name || member.plan || "").toLowerCase();
@@ -80,7 +80,7 @@ const TrainerDashboard = () => {
 
         /* FETCH ASSIGNMENTS -- server filters by this trainer's user ID */
         const trainerEmail = user?.email || "";
-        const memberRes = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}&distinctMembers=true`);
+        const memberRes = await api.get(`/assignments?trainerUserId=${trainerId}&trainerEmail=${encodeURIComponent(trainerEmail)}&distinctMembers=true&includeExpired=true&validMembersOnly=true`);
         const membersRaw = Array.isArray(memberRes.data)
           ? memberRes.data
           : memberRes.data?.data || memberRes.data?.assignments || [];
@@ -90,24 +90,6 @@ const TrainerDashboard = () => {
         /* Keep one row per member as a safeguard for duplicate API records. */
         const membersById = new Map();
         membersRaw.forEach((m, index) => {
-          // Check if plan is expired
-          const endDate = m.planEndDate || m.ptExpiryDate || m.pt_expiry_date || m.endDate;
-          if (endDate) {
-            const today = new Date();
-            const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-            const endKey = endDate instanceof Date
-              ? `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`
-              : String(endDate).slice(0, 10);
-            const parsedEnd = new Date(endDate);
-            if (
-              !Number.isNaN(parsedEnd.getTime()) &&
-              /^\d{4}-\d{2}-\d{2}$/.test(endKey) &&
-              endKey < todayKey
-            ) {
-              return;
-            }
-          }
-
           const memberId = m.userId || m.user_id || m.gymMemberId || m.member_db_id;
           const key = memberId ? String(memberId) : `missing-member-id-${index}`;
           if (!membersById.has(key)) membersById.set(key, m);
@@ -583,22 +565,39 @@ const TrainerDashboard = () => {
           </div>
 
           {/* PAGINATION CONTROLS */}
-          {totalPages > 1 && (
+          {assignedMembers.length > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 px-2">
               <span className="text-xs text-gray-400 uppercase tracking-widest">
                 Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, assignedMembers.length)} of {assignedMembers.length} entries
               </span>
-              <div className="flex gap-2">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 hover:bg-white/10"
-                >
-                  Prev
-                </button>
-
-                <div className="flex gap-1">
-                  {Array.from({ length: totalPages }).map((_, i) => (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <label className="flex items-center gap-2 text-xs text-gray-400">
+                  Show
+                  <select
+                    aria-label="Members per page"
+                    value={itemsPerPage}
+                    onChange={(event) => {
+                      setItemsPerPage(Number(event.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="rounded-lg border border-white/10 bg-white/10 px-2 py-2 text-white"
+                  >
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </label>
+                {totalPages > 1 && (
+                  <>
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 hover:bg-white/10"
+                    >
+                      Prev
+                    </button>
+                    <div className="flex gap-1">
+                      {Array.from({ length: totalPages }).map((_, i) => (
                     <button
                       key={i + 1}
                       onClick={() => setCurrentPage(i + 1)}
@@ -609,16 +608,17 @@ const TrainerDashboard = () => {
                     >
                       {i + 1}
                     </button>
-                  ))}
-                </div>
-
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 hover:bg-white/10"
-                >
-                  Next
-                </button>
+                      ))}
+                    </div>
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50 hover:bg-white/10"
+                    >
+                      Next
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}

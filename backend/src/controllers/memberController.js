@@ -116,7 +116,6 @@ async function getAllMembers(req, res) {
         FROM gym_members gm
         INNER JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '') 
                           OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
         LEFT JOIN (
           SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
                  m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration,
@@ -129,6 +128,10 @@ async function getAllMembers(req, res) {
             GROUP BY userId
           ) mm ON m.userId = mm.userId AND m.id = mm.max_id
         ) m_pay ON m_pay.userId = u.id
+        WHERE EXISTS (
+          SELECT 1 FROM trainer_assignments ta
+          WHERE ta.user_id = u.id AND ta.trainer_id = ?
+        )
         
         UNION ALL
         
@@ -183,7 +186,6 @@ async function getAllMembers(req, res) {
           IF((SELECT COUNT(*) FROM memberships pt_m WHERE pt_m.userId = u.id AND pt_m.has_pt_plan = 1 AND (pt_m.status = 'active' OR pt_m.pt_status = 'active')) > 0, 1, 0) as has_pt_plan,
           'users' as source
         FROM users u
-        INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
         LEFT JOIN (
           SELECT m.userId, m.paymentMode, m.price, m.pricePaid, m.secondPaymentPaid, m.has_pt_plan,
                  m.planName AS m_planName, m.startDate AS m_startDate, m.endDate AS m_endDate, m.status AS m_status, m.duration AS m_duration,
@@ -200,6 +202,9 @@ async function getAllMembers(req, res) {
           SELECT 1 FROM gym_members gm2 
           WHERE (gm2.email = u.email AND u.email IS NOT NULL AND u.email != '') 
              OR (gm2.phone = u.mobile AND u.mobile IS NOT NULL AND u.mobile != '')
+        ) AND EXISTS (
+          SELECT 1 FROM trainer_assignments ta
+          WHERE ta.user_id = u.id AND ta.trainer_id = ?
         )
         
         ORDER BY created_at DESC
@@ -416,7 +421,10 @@ async function getAllMembers(req, res) {
         FROM gym_members gm
         INNER JOIN users u ON (u.email = gm.email AND gm.email IS NOT NULL AND gm.email != '')
                           OR (u.mobile = gm.phone AND gm.phone IS NOT NULL AND gm.phone != '')
-        INNER JOIN trainer_assignments ta ON ta.user_id = u.id AND ta.trainer_id = ?
+        WHERE EXISTS (
+          SELECT 1 FROM trainer_assignments ta
+          WHERE ta.user_id = u.id AND ta.trainer_id = ?
+        )
         ORDER BY gm.created_at DESC
       `;
       fallbackParams = [staffId];
