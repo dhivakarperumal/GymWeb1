@@ -404,7 +404,10 @@ const MemberDetails = () => {
                   {member.name?.charAt(0).toUpperCase()}
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-1">{member.name}</h2>
-                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">ID: #{member.id}</p>
+                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-1">Member ID: #{member.member_id || member.id}</p>
+                <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-6 break-all">
+                  User ID: {member.u_uuid || member.user_id || member.u_id || 'N/A'}
+                </p>
 
                 <div
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl transition-all ${displayStatus === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}
@@ -456,7 +459,20 @@ const MemberDetails = () => {
                 <div className="space-y-4">
                   <InfoRow icon={<Phone size={18} className="text-orange-500" />} label="Phone" value={member.phone || 'N/A'} />
                   <InfoRow icon={<Mail size={18} className="text-orange-500" />} label="Email" value={member.email || member.user_email || 'N/A'} />
+                  {member.user_email && member.user_email !== member.email && (
+                    <InfoRow icon={<Mail size={18} className="text-orange-500" />} label="Account Email" value={member.user_email} />
+                  )}
                   <InfoRow icon={<MapPin size={18} className="text-orange-500" />} label="Address" value={member.address || 'N/A'} />
+                </div>
+              </div>
+
+              {/* Added By */}
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
+                <h3 className="text-sm font-black text-white/20 uppercase tracking-widest border-b border-white/5 pb-4">Added By</h3>
+                <div className="space-y-4">
+                  <InfoRow icon={<User size={18} className="text-orange-500" />} label="Name" value={member.created_by_display_name || member.added_by_name || 'N/A'} />
+                  <InfoRow icon={<Shield size={18} className="text-orange-500" />} label="User ID" value={member.added_by_user_id || 'N/A'} />
+                  <InfoRow icon={<Mail size={18} className="text-orange-500" />} label="Email" value={member.added_by_email || 'N/A'} />
                 </div>
               </div>
             </div>

@@ -20,6 +20,8 @@ const createdByDisplayNameSql = `CASE
       FROM users creator
       LEFT JOIN staff creator_staff ON creator_staff.user_id = creator.user_id
       WHERE creator.user_id = gm.created_by
+         OR (gm.created_by REGEXP '^[0-9]+$'
+             AND creator.id = CAST(gm.created_by AS UNSIGNED))
       LIMIT 1
     ),
     NULLIF(gm.created_by_name, '')
@@ -490,10 +492,24 @@ async function getMemberById(req, res) {
                u.id AS u_id,
                COALESCE(gm.user_id, u.user_id) AS u_uuid,
                u.email AS user_email,
+               ${createdByDisplayNameSql} AS created_by_display_name,
+               gm.created_by AS added_by_user_id,
+               gm.created_by_name AS added_by_name,
+               creator.username AS added_by_username,
+               creator.email AS added_by_email,
                (SELECT COUNT(*) FROM workout_programs wp WHERE wp.member_id = gm.id) AS workout_count,
                (SELECT COUNT(*) FROM diet_plans dp WHERE dp.member_id = gm.id) AS diet_count
         FROM gym_members gm
         LEFT JOIN users u ON (u.email_identity = gm.email_identity AND gm.email_identity IS NOT NULL) OR (u.phone_identity = gm.phone_identity AND gm.phone_identity IS NOT NULL)
+        LEFT JOIN users creator ON creator.id = (
+          SELECT c.id
+          FROM users c
+          WHERE c.user_id = gm.created_by
+             OR (gm.created_by REGEXP '^[0-9]+$'
+                 AND c.id = CAST(gm.created_by AS UNSIGNED))
+          ORDER BY CASE WHEN c.user_id = gm.created_by THEN 0 ELSE 1 END
+          LIMIT 1
+        )
         WHERE gm.id = ? OR gm.member_id = ?
     `;
     const params = [idStr, idStr];

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import api from "../../api"; // backend HTTP client
 import cache from "../../cache";
-import { X, Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Users, Dumbbell, Mail, Phone, Calendar, AlertCircle, Search, LayoutGrid, List, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import DateRangeFilter from "../DateRangeFilter";
 import { filterByDateRange } from "../utils/dateUtils";
 import { toast } from "react-hot-toast";
@@ -41,6 +41,7 @@ const AssingnedTrainers = () => {
   const [assignments, setAssignments] = useState({});
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("assigned"); // all, assigned, unassigned
+  const [trainerFilter, setTrainerFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table"); // card, table
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -371,6 +372,21 @@ const AssingnedTrainers = () => {
 
     if (!matchesType) return false;
 
+    // Trainer filter
+    if (trainerFilter !== "all") {
+      const selectedTrainerId = trainerFilter.toString();
+      const selectedTrainer = trainers.find((trainer) =>
+        String(trainer.id) === selectedTrainerId
+      );
+      const selectedTrainerName = selectedTrainer?.name || selectedTrainer?.username || "";
+      const matchesTrainer = memberAssignments.some((assignment) =>
+        String(assignment.trainerId || "") === selectedTrainerId ||
+        (selectedTrainerName &&
+          String(assignment.trainerName || "").toLowerCase() === selectedTrainerName.toLowerCase())
+      );
+      if (!matchesTrainer) return false;
+    }
+
     // Date Range Filter (using startDate of first plan)
     const firstPlanDate = (m.plans || []).length > 0 ? m.plans[0].startDate : null;
     return filterByDateRange([{ date: firstPlanDate }], 'date', dateRange.type, dateRange.range).length > 0;
@@ -393,12 +409,19 @@ const AssingnedTrainers = () => {
 
   return (
     <div className="min-h-screen p-4 md:p-8 text-white" dir="ltr">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-        <div>
-
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8">
+        <div className="relative w-full lg:w-64">
+          <Search className="absolute left-4 top-3 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
           <button
             onClick={() => {
               setSelectedUsers([]);
@@ -429,26 +452,39 @@ const AssingnedTrainers = () => {
 
       {/* SEARCH AND FILTER */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-          {/* 🔍 Search Bar -- Left */}
-          <div className="relative w-full md:w-1/3">
-            <Search className="absolute left-4 top-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+        <div className="flex flex-col md:flex-row md:justify-between gap-3 items-start md:items-center overflow-visible pb-1">
+          <div className="flex flex-wrap gap-3 items-center">
+            <DateRangeFilter
+              onRangeChange={(type, range) => setDateRange({ type, range })}
+              buttonClassName="!py-3"
             />
+            <div className="relative inline-flex items-center">
+              <select
+                value={trainerFilter}
+                onChange={(e) => {
+                  setTrainerFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="appearance-none px-4 pr-10 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-orange-500 transition backdrop-blur-md"
+              >
+                <option value="all" className="bg-[#403a68] text-white">All Trainers</option>
+                {trainers.map((trainer) => (
+                  <option key={trainer.id} value={trainer.id} className="bg-[#403a68] text-white">
+                    {trainer.name || trainer.username || `Trainer ${trainer.id}`}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className="pointer-events-none absolute right-3 text-white"
+              />
+            </div>
           </div>
 
-          {/* 🎛 Filter Buttons -- Right */}
-          <div className="flex flex-wrap gap-3 justify-start md:justify-end items-center">
-            <DateRangeFilter onRangeChange={(type, range) => setDateRange({ type, range })} />
+          <div className="flex flex-wrap gap-3 items-center">
             <button
               onClick={() => handleFilterChange("all")}
-              className={`px-4 py-2 rounded-lg font-medium transition ${filterType === "all"
+              className={`px-4 py-3 rounded-lg font-medium transition ${filterType === "all"
                   ? "bg-orange-500 text-white"
                   : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
                 }`}
@@ -458,7 +494,7 @@ const AssingnedTrainers = () => {
 
             <button
               onClick={() => handleFilterChange("assigned")}
-              className={`px-4 py-2 rounded-lg font-medium transition ${filterType === "assigned"
+              className={`px-4 py-3 rounded-lg font-medium transition ${filterType === "assigned"
                   ? "bg-green-500 text-white"
                   : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
                 }`}
@@ -468,7 +504,7 @@ const AssingnedTrainers = () => {
 
             <button
               onClick={() => handleFilterChange("unassigned")}
-              className={`px-4 py-2 rounded-lg font-medium transition ${filterType === "unassigned"
+              className={`px-4 py-3 rounded-lg font-medium transition ${filterType === "unassigned"
                   ? "bg-red-500 text-white"
                   : "bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20"
                 }`}
@@ -477,10 +513,10 @@ const AssingnedTrainers = () => {
             </button>
 
             {/* 🖥 View Toggle */}
-            <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 ml-0 md:ml-4">
+            <div className="flex bg-white/10 p-1 rounded-xl border border-white/20">
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-2 rounded-lg transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
+                className={`p-3 rounded-lg transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
                   }`}
                 title="Card View"
               >
@@ -488,7 +524,7 @@ const AssingnedTrainers = () => {
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-2 rounded-lg transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
+                className={`p-3 rounded-lg transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-gray-400 hover:text-white"
                   }`}
                 title="Table View"
               >
@@ -496,7 +532,6 @@ const AssingnedTrainers = () => {
               </button>
             </div>
           </div>
-
         </div>
       </div>
 

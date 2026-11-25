@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaCalendarAlt, FaChevronDown } from 'react-icons/fa';
 
-const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range: null } }) => {
+const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range: null }, buttonClassName = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState(dateRange.type || 'All Time');
   const [customRange, setCustomRange] = useState(dateRange.range || { start: '', end: '' });
@@ -65,7 +65,7 @@ const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range:
     <div className="relative inline-block text-left">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/20 transition backdrop-blur-md"
+        className={`flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/20 transition backdrop-blur-md ${buttonClassName}`}
       >
         <FaCalendarAlt className="text-orange-500" />
         <span className="text-sm font-medium">
@@ -79,7 +79,7 @@ const DateRangeFilter = ({ onRangeChange, dateRange = { type: 'All Time', range:
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2">
+        <div className="absolute left-0 mt-2 w-64 rounded-2xl bg-[#1e293b] border border-white/10 shadow-2xl z-[100] p-2">
           {!showCustom ? (
             <div className="space-y-1">
               {ranges.map((range) => (
